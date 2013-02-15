@@ -25,6 +25,67 @@ open OptimizedClosures
 open ExtCore
 
 
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal ResizeArray =
+    open System.Collections.Generic
+
+
+    //
+    let [<NoDynamicInvocation>] inline length (resizeArray : ResizeArray<'T>) =
+        resizeArray.Count
+
+    //
+    let [<NoDynamicInvocation>] inline add item (resizeArray : ResizeArray<'T>) =
+        resizeArray.Add item
+
+    //
+    let [<NoDynamicInvocation>] inline toArray (resizeArray : ResizeArray<'T>) =
+        resizeArray.ToArray ()
+
+    //
+    let [<NoDynamicInvocation>] inline ofArray (arr : 'T[]) : ResizeArray<'T> =
+        ResizeArray (arr)
+
+    //
+    let [<NoDynamicInvocation>] inline ofSeq (sequence : seq<'T>) : ResizeArray<'T> =
+        ResizeArray (sequence)
+
+    //
+    let [<NoDynamicInvocation>] inline get (resizeArray : ResizeArray<'T>) index =
+        resizeArray.[index]
+
+    //
+    let [<NoDynamicInvocation>] inline set (resizeArray : ResizeArray<'T>) index value =
+        resizeArray.[index] <- value
+
+    //
+    let [<NoDynamicInvocation>] inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
+        resizeArray.Sort ()
+
+    //
+    let [<NoDynamicInvocation>] inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
+            (projection : 'T -> 'Key) (resizeArray : ResizeArray<'T>) =
+        resizeArray.Sort (fun x y ->
+            compare (projection x) (projection y))
+
+    //
+    let [<NoDynamicInvocation>] inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
+        resizeArray.Sort (comparer)
+
+    // TODO:
+    // map, mapi
+    // iter, iteri
+    // fold, foldBack
+    // reduce, reduceBack
+    // exists, forall
+    // find, tryFind
+    // findIndex, tryFindIndex
+    // pick, tryPick
+    // choose
+    // singleton
+
+
 /// Functional programming operators related to the System.Collections.Generic.IDictionary type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal Dict =
@@ -136,7 +197,7 @@ module internal Dict =
         dictionary.[k]
             
     /// Attempts to retrieve the value associated with the specified key.
-    let inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
+    let [<NoDynamicInvocation>] inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
         match dictionary.TryGetValue k with
         | false, _ -> None
         | true, v -> Some v
@@ -147,7 +208,9 @@ module internal Dict =
         if dictionary.ContainsKey k then
             dictionary.[k] <- v
             dictionary
-        else raise <| System.Collections.Generic.KeyNotFoundException ()
+        else
+            // TODO : Add an error message which includes the key.
+            raise <| System.Collections.Generic.KeyNotFoundException ()
 
     /// Updates the value of an entry (which has the specified key) in
     /// the Dictionary, or creates a new entry if one doesn't exist.
@@ -168,6 +231,7 @@ module internal Dict =
         match tryPick f dictionary with
         | Some res -> res
         | None ->
+            // TODO : Add an error message which includes the key.
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     /// Views the Dictionary as a sequence of tuples.
@@ -240,7 +304,7 @@ module internal Dict =
 module internal Seq =
     /// Returns the length of the sequence as an unsigned integer.
     let [<NoDynamicInvocation>] inline natLength s =
-        Checked.uint32 <| Seq.length s
+        uint32 <| Seq.length s
 
     //
     let [<NoDynamicInvocation>] inline appendSingleton s el =
@@ -268,7 +332,24 @@ module internal List =
 
     /// Returns the length of the list as an unsigned integer.
     let [<NoDynamicInvocation>] inline natLength (list : 'T list) =
-        Checked.uint32 <| List.length list
+        uint32 <| List.length list
+
+    //
+    let [<NoDynamicInvocation>] inline tryHead (list : 'T list) =
+        match list with
+        | [] -> None
+        | hd :: _ ->
+            Some hd
+
+    //
+    let [<NoDynamicInvocation>] inline ofOption (value : 'T option) =
+        match value with
+        | None -> []
+        | Some x -> [x]
+
+    //
+    let [<NoDynamicInvocation>] inline singleton (value : 'T) =
+        [value]
 
     /// Converts a list into an array (similar to List.toArray) but copies the elements into
     /// the array from right-to-left, so there's no need to call List.rev before List.toArray.
@@ -291,8 +372,8 @@ module internal List =
     /// <summary>Applies the given function to each element of a list,
     /// and copies the results into an array from right-to-left so the
     /// produced array represents the mapped original list in reverse order.</summary>
-    /// <remarks><para>This represents an optimized version of:</para>
-    /// <para>'fun mapping -> (List.map mapping) >> List.rev >> List.toArray'.</para></remarks>
+    /// <remarks><para>This represents an optimized version of:
+    /// <c>fun mapping -> (List.map mapping) >> List.rev >> List.toArray</c>.</para></remarks>
     [<CompiledName("MapAndReverseIntoArray")>]
     let mapAndRevIntoArray (mapping : 'T -> 'U) (list : 'T list) =
         checkNonNull "list" list
@@ -314,33 +395,230 @@ module internal List =
     let project (mapping : 'T -> 'U) (source : 'T list) =
         source |> List.map (fun x -> x, mapping x)
 
-    //
-    let rec private takeImpl<'T> (arr : 'T[]) idx (lst : 'T list) =
-        if idx = -1 then arr, lst
-        else
-            arr.[idx] <- List.head lst
-            takeImpl arr (idx - 1) (List.tail lst)
-
-    /// Takes a specified number of items from a list, returning them in an array (along with the remaining list).
+    /// Takes a specified number of items from a list, returning them (as a new list) along with the remaining list.
     [<CompiledName("Take")>]
-    let take<'T> count (lst : 'T list) =
+    let take count (list : 'T list) =
         // Preconditions
         if count < 0 then
             invalidArg "count" "The number of items to take from the list is negative."
-        checkNonNull "lst" lst
-        if count > List.length lst then
+        checkNonNull "list" list
+        if count > List.length list then
             invalidArg "count" "The number of items to take from the list is greater than the length of the list."
 
-        (* OPTIMIZE : Re-implement this in imperative style for simplicity and performance. *)
-
-        // If we're not taking any items, return an empty
-        // array and the unchanged list.
+        // OPTIMIZATION : If count = 0 return immediately.
         if count = 0 then
-            Array.empty, lst
+            [], list
         else
-            takeImpl (Array.zeroCreate count) (count - 1) lst
+            /// The result list.
+            let mutable taken = []
+            let mutable list = list
+            
+            // Take the elements from the input list and cons them onto the 'taken' list.
+            for i = 0 to count - 1 do
+                taken <- (List.head list) :: taken
+                list <- List.tail list
 
-    // TODO : foldPairs, foldBackPairs
+            // Return the 'taken' list and the remaining part of the list.
+            // Reverse the 'taken' list so it's in the correct order.
+            List.rev taken, list
+
+    /// Takes a specified number of items from a list, returning them (in an array) along with the remaining list.
+    [<CompiledName("TakeArray")>]
+    let takeArray count (list : 'T list) =
+        // Preconditions
+        if count < 0 then
+            invalidArg "count" "The number of items to take from the list is negative."
+        checkNonNull "list" list
+        if count > List.length list then
+            invalidArg "count" "The number of items to take from the list is greater than the length of the list."
+
+        // OPTIMIZATION : If count = 0 return immediately.
+        if count = 0 then
+            Array.empty, list
+        else
+            /// The result array.
+            let takenElements = Array.zeroCreate count
+
+            let mutable list = list
+            
+            // Take the elements from the list and store them in the array.
+            for i = 0 to count - 1 do
+                takenElements.[i] <- List.head list
+                list <- List.tail list
+
+            // Return the taken elements and the remaining part of the list.
+            takenElements, list
+
+    //
+    let rec private foldPairsImpl (folder : FSharpFunc<'State,'T,_,_>) state prevElement lst =
+        match lst with
+        | [] ->
+            state
+        | hd :: tl ->
+            let state = folder.Invoke (state, prevElement, hd)
+            foldPairsImpl folder state hd tl
+
+    //
+    [<CompiledName("FoldPairs")>]
+    let foldPairs (folder : 'State -> 'T -> 'T -> 'State) state lst =
+        // Preconditions
+        checkNonNull "lst" lst
+
+        // OPTIMIZATION : If the list is empty or contains just one element,
+        // immediately return the input state.
+        match lst with
+        | []
+        | [_] ->
+            state
+        | hd :: tl ->
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            foldPairsImpl folder state hd tl
+
+    //
+    [<CompiledName("MapPartition")>]
+    let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) list : 'U1 list * 'U2 list =
+        // Preconditions
+        checkNonNull "list" list
+
+        // OPTIMIZATION : If the input list is empty, immediately return empty results.
+        if List.isEmpty list then
+            [], []
+        else
+            // Mutable variables are used here instead of List.fold for maximum performance.
+            let mutable list = list
+            let mutable resultList1 = []
+            let mutable resultList2 = []
+
+            // Partition the list, consing the elements onto the list
+            // specified by the partition function.
+            while not <| List.isEmpty list do
+                match partitioner <| List.head list with
+                | Choice1Of2 element ->
+                    resultList1 <- element :: resultList1
+                | Choice2Of2 element ->
+                    resultList2 <- element :: resultList2
+
+                // Remove the first element from the input list.
+                list <- List.tail list
+
+            // Reverse the result lists and return them.
+            List.rev resultList1,
+            List.rev resultList2
+
+    //
+    [<CompiledName("MapPartition3")>]
+    let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) list : 'U1 list * 'U2 list * 'U3 list =
+        // Preconditions
+        checkNonNull "list" list
+
+        // OPTIMIZATION : If the input list is empty, immediately return empty results.
+        if List.isEmpty list then
+            [], [], []
+        else
+            // Mutable variables are used here instead of List.fold for maximum performance.
+            let mutable list = list
+            let mutable resultList1 = []
+            let mutable resultList2 = []
+            let mutable resultList3 = []
+
+            // Partition the list, consing the elements onto the list
+            // specified by the partition function.
+            while not <| List.isEmpty list do
+                match partitioner <| List.head list with
+                | Choice1Of3 element ->
+                    resultList1 <- element :: resultList1
+                | Choice2Of3 element ->
+                    resultList2 <- element :: resultList2
+                | Choice3Of3 element ->
+                    resultList3 <- element :: resultList3
+
+                // Remove the first element from the input list.
+                list <- List.tail list
+
+            // Reverse the result lists and return them.
+            List.rev resultList1,
+            List.rev resultList2,
+            List.rev resultList3
+
+    //
+    [<CompiledName("Choose2")>]
+    let choose2 (chooser : 'T1 -> 'T2 -> 'U option) list1 list2 : ('U option) list =
+        notImpl "choose2"
+
+    //
+    [<CompiledName("Unfold")>]
+    let unfold (generator : 'State -> ('T * 'State) option) (state : 'State) : 'T list =
+        let mutable resultList = []
+        let mutable state = state
+        let mutable finished = false
+
+        // Generate elements and cons them onto the result list.
+        while not finished do
+            match generator state with
+            | Some (result, state') ->
+                resultList <- result :: resultList
+                state <- state'
+            | None ->
+                finished <- true
+
+        // Reverse the result list before returning.
+        List.rev resultList
+
+    //
+    [<CompiledName("ZipWith")>]
+    let zipWith (mapping : 'T1 -> 'T2 -> 'U) list1 list2 : 'U list =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+        // OPTIMIZE : Instead of checking List.length on both lists (which is O(n)),
+        // just detect mismatched lengths on-the-fly.
+        if List.length list1 <> List.length list2 then
+            invalidArg "list2" "The lists have different lengths."
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+        
+        let mutable list1 = list1
+        let mutable list2 = list2
+        let mutable resultList = []
+
+        while not <| List.isEmpty list1 do
+            resultList <-
+                mapping.Invoke (List.head list1, List.head list2) :: resultList
+            list1 <- List.tail list1
+            list2 <- List.tail list2
+
+        // Reverse the result list before returning.
+        List.rev resultList
+
+    //
+    [<CompiledName("UnzipWith")>]
+    let unzipWith (mapping : 'T -> 'U * 'V) list : 'U list * 'V list =
+        // Preconditions
+        checkNonNull "list" list
+
+        // OPTIMIZATION : If the input list is empty return immediately.
+        if List.isEmpty list then
+            [], []
+        else
+            let mutable list = list
+            let mutable resultList1 = []
+            let mutable resultList2 = []
+
+            while not <| List.isEmpty list do
+                let result1, result2 =
+                    mapping <| List.head list
+                list <- List.tail list
+                resultList1 <- result1 :: resultList1
+                resultList2 <- result2 :: resultList2
+
+            // Reverse the result lists before returning.
+            List.rev resultList1,
+            List.rev resultList2
+
+    // TODO :
+    // foldBackPairs
+    // zip4, unzip4
+    // zipWith3, unzipWith3
 
 
 /// Additional functional operators on arrays.
@@ -348,11 +626,14 @@ module internal List =
 module internal Array =
     /// Returns the length of the array as an unsigned integer.
     let [<NoDynamicInvocation>] inline natLength (arr : 'T[]) =
-        Checked.uint32 arr.Length
+        uint32 arr.Length
+
+    //
+    let [<NoDynamicInvocation>] inline singleton (value : 'T) =
+        [| value |]
 
     /// Wraps the array in a ReadOnlyCollection<'T> to only allow
     /// read access while still providing O(n) lookup.
-    [<CompiledName("AsReadOnly")>]
     let [<NoDynamicInvocation>] inline readonly (arr : 'T[]) =
         System.Array.AsReadOnly arr
 
@@ -524,6 +805,7 @@ module internal Array =
         expandedArr
 
     // TODO : foldPairs, foldBackPairs
+    // TODO : derive    // takes a 'T -> 'T -> 'T like reduce, but only performs one step; used to perform 'divided differences'
 
 
 //
@@ -574,9 +856,9 @@ module TaggedArray =
 /// Functional operators on ArraySegments.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal ArraySegment =
-    (* TODO :   Get rid of the recursive implementation functions below and
-                re-implement functions using imperative loops. This simplifies
-                the code and should also be slightly faster. *)
+    (* OPTIMIZE :   Get rid of the recursive implementation functions below and
+                    re-implement functions using imperative loops. This simplifies
+                    the code and should also be slightly faster. *)
 
     //
     let [<NoDynamicInvocation>] inline array (segment : ArraySegment<'T>) =
@@ -626,20 +908,20 @@ module internal ArraySegment =
 
     /// Gets the index of the last element in an ArraySegment<'T>, within the original array.
     /// NOTE : This implemention is meant for internal use only, and does NOT perform bounds checking.
-    let [<NoDynamicInvocation>] inline private lastIndexImpl (segment : ArraySegment<'T>) =
+    let [<NoDynamicInvocation>] inline private lastIndexUnsafe (segment : ArraySegment<'T>) =
         segment.Offset + (segment.Count - 1)
 
     /// Gets the index of the last element in an ArraySegment<'T>, within the original array.
     let [<NoDynamicInvocation>] inline lastIndex (segment : ArraySegment<'T>) =
         if segment.Count = 0 then
             invalidOp "The ArraySegment<'T> is empty."
-        else lastIndexImpl segment
+        else lastIndexUnsafe segment
 
     /// Gets the last element in an ArraySegment<'T>.
     let [<NoDynamicInvocation>] inline last (segment : ArraySegment<'T>) =
         if segment.Count = 0 then
             invalidOp "Cannot retrieve the last element of an empty ArraySegment<'T>."
-        else segment.Array.[lastIndexImpl segment]
+        else segment.Array.[lastIndexUnsafe segment]
 
     (* NOTE :   For the functions below, 'lastIdx' is *inclusive* -- which is
                 why the guard in the recursive functions is (>) instead of (=). *)
@@ -662,7 +944,7 @@ module internal ArraySegment =
     //
     [<CompiledName("Find")>]
     let find f (arrSeg : ArraySegment<'T>) =
-        match tryFindImpl f arrSeg.Array arrSeg.Offset (lastIndexImpl arrSeg) with
+        match tryFindImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg) with
         | Some el -> el
         | None ->
             raise <| System.Collections.Generic.KeyNotFoundException ()
@@ -670,12 +952,12 @@ module internal ArraySegment =
     //
     [<CompiledName("TryFind")>]
     let tryFind f (arrSeg : ArraySegment<'T>) =
-        tryFindImpl f arrSeg.Array arrSeg.Offset (lastIndexImpl arrSeg)
+        tryFindImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
 
     //
     [<CompiledName("FindIndex")>]
     let findIndex f (arrSeg : ArraySegment<'T>) =
-        match tryFindIndexImpl f arrSeg.Array arrSeg.Offset (lastIndexImpl arrSeg) with
+        match tryFindIndexImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg) with
         | Some idx -> idx
         | None ->
             raise <| System.Collections.Generic.KeyNotFoundException ()
@@ -683,7 +965,7 @@ module internal ArraySegment =
     //
     [<CompiledName("TryFindIndex")>]
     let tryFindIndex f (arrSeg : ArraySegment<'T>) =
-        tryFindIndexImpl f arrSeg.Array arrSeg.Offset (lastIndexImpl arrSeg)
+        tryFindIndexImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
 
     //
     let rec private iterImpl f (arr : 'T[]) currIdx lastIdx =
@@ -694,7 +976,7 @@ module internal ArraySegment =
     //
     [<CompiledName("Iterate")>]
     let iter f (arrSeg : ArraySegment<'T>) =
-        iterImpl f arrSeg.Array arrSeg.Offset (lastIndexImpl arrSeg)
+        iterImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
 
     //
     let rec private foldImpl folder state (arr : 'T[]) currIdx lastIdx =
@@ -706,7 +988,7 @@ module internal ArraySegment =
     //
     [<CompiledName("Fold")>]
     let fold folder (state : 'State) (arrSeg : ArraySegment<'T>) =
-        foldImpl folder state arrSeg.Array arrSeg.Offset (lastIndexImpl arrSeg)
+        foldImpl folder state arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
 
     //
     let rec private existsImpl f (arr : 'T[]) currIdx lastIdx =
@@ -717,7 +999,7 @@ module internal ArraySegment =
     //
     [<CompiledName("Exists")>]
     let exists f (arrSeg : ArraySegment<'T>) =
-        existsImpl f arrSeg.Array arrSeg.Offset (lastIndexImpl arrSeg)
+        existsImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
 
     /// Builds a new array from the elements within the ArraySegment<'T>.
     [<CompiledName("ToArray")>]
@@ -725,7 +1007,7 @@ module internal ArraySegment =
         if isEmpty segment then
             Array.empty
         else
-            segment.Array.[segment.Offset .. (lastIndexImpl segment)]
+            segment.Array.[segment.Offset .. (lastIndexUnsafe segment)]
 
     //
     [<CompiledName("MapToArray")>]
@@ -734,7 +1016,7 @@ module internal ArraySegment =
             Array.empty
         else
             //
-            let lastIndex = lastIndexImpl segment
+            let lastIndex = lastIndexUnsafe segment
             //
             let results = Array.zeroCreate (count segment)
 
@@ -755,7 +1037,7 @@ module internal ArraySegment =
 
         let arr = array segment
         let segmentOffset = offset segment
-        foldImpl reduction arr.[segmentOffset] arr (segmentOffset + 1) (lastIndexImpl segment)
+        foldImpl reduction arr.[segmentOffset] arr (segmentOffset + 1) (lastIndexUnsafe segment)
 
 
     // TODO : Need to implement foldBack for this
@@ -769,7 +1051,7 @@ module internal ArraySegment =
 module internal Set =
     /// Returns the number of elements in the set as an unsigned integer.
     let [<NoDynamicInvocation>] inline natCount s =
-        Checked.uint32 <| Set.count s
+        uint32 <| Set.count s
 
     //
     [<CompiledName("FoldIndexed")>]
