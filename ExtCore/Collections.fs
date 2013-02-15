@@ -27,7 +27,7 @@ open ExtCore
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal ResizeArray =
+module ResizeArray =
     open System.Collections.Generic
 
 
@@ -88,7 +88,7 @@ module internal ResizeArray =
 
 /// Functional programming operators related to the System.Collections.Generic.IDictionary type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Dict =
+module Dict =
     open System.Collections.Generic
 
     /// Thread-safe functional programming operators for mutable instances of System.Collections.Generic.IDictionary.
@@ -301,7 +301,7 @@ module internal Dict =
 
 /// Additional functional operators on sequences.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Seq =
+module Seq =
     /// Returns the length of the sequence as an unsigned integer.
     let [<NoDynamicInvocation>] inline natLength s =
         uint32 <| Seq.length s
@@ -319,7 +319,7 @@ module internal Seq =
 
 /// Additional functional operators on immutable lists.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal List =
+module List =
     /// A curried "cons" operator.
     let [<NoDynamicInvocation>] inline cons (list : 'T list) value =
         value :: list
@@ -391,9 +391,14 @@ module internal List =
         loop (len - 1, list)
 
     //
-    [<CompiledName("Project")>]
-    let project (mapping : 'T -> 'U) (source : 'T list) =
-        source |> List.map (fun x -> x, mapping x)
+    [<CompiledName("ProjectValues")>]
+    let projectValues (projection : 'Key -> 'T) (list : 'Key list) =
+        list |> List.map (fun x -> x, projection x)
+
+    //
+    [<CompiledName("ProjectKeys")>]
+    let projectKeys (projection : 'T -> 'Key) (list : 'T list) =
+        list |> List.map (fun x -> projection x, x)
 
     /// Takes a specified number of items from a list, returning them (as a new list) along with the remaining list.
     [<CompiledName("Take")>]
@@ -450,29 +455,60 @@ module internal List =
             takenElements, list
 
     //
-    let rec private foldPairsImpl (folder : FSharpFunc<'State,'T,_,_>) state prevElement lst =
-        match lst with
-        | [] ->
-            state
-        | hd :: tl ->
-            let state = folder.Invoke (state, prevElement, hd)
-            foldPairsImpl folder state hd tl
-
-    //
     [<CompiledName("FoldPairs")>]
-    let foldPairs (folder : 'State -> 'T -> 'T -> 'State) state lst =
+    let foldPairs (folder : 'State -> 'T -> 'T -> 'State) state list =
         // Preconditions
-        checkNonNull "lst" lst
+        checkNonNull "list" list
 
         // OPTIMIZATION : If the list is empty or contains just one element,
         // immediately return the input state.
-        match lst with
+        match list with
         | []
         | [_] ->
             state
         | hd :: tl ->
+            // OPTIMIZATION : Imperative-style implementation for maximum performance.            
             let folder = FSharpFunc<_,_,_,_>.Adapt folder
-            foldPairsImpl folder state hd tl
+            let mutable previousElement = hd
+            let mutable list = tl
+            let mutable state = state
+
+            while not <| List.isEmpty list do
+                let currentElement = List.head list
+                state <- folder.Invoke (state, previousElement, currentElement)
+                previousElement <- currentElement
+                list <- List.tail list
+
+            // Return the final state value
+            state
+
+    //
+    [<CompiledName("FoldPairsBack")>]
+    let foldPairsBack (folder : 'T -> 'T -> 'State -> 'State) state list =
+        // Preconditions
+        checkNonNull "list" list
+
+        // OPTIMIZATION : If the list is empty or contains just one element,
+        // immediately return the input state.
+        match list with
+        | []
+        | [_] ->
+            state
+        | list ->
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            // OPTIMIZATION : To fold backwards over a single-linked list, we normally need to traverse
+            // it and create a reversed copy -- this means O(n) time and memory complexity.
+            // Here, we squeeze out a bit more performance by using an array to hold the reversed list
+            // so we benefit from memory locality.
+            let reversed = revIntoArray list
+            let mutable state = state
+            
+            let len = Array.length reversed
+            for i = 1 to len - 1 do
+                state <- folder.Invoke (reversed.[i - 1], reversed.[i], state)
+
+            // Return the final state value
+            state
 
     //
     [<CompiledName("MapPartition")>]
@@ -542,8 +578,32 @@ module internal List =
 
     //
     [<CompiledName("Choose2")>]
-    let choose2 (chooser : 'T1 -> 'T2 -> 'U option) list1 list2 : ('U option) list =
-        notImpl "choose2"
+    let choose2 (chooser : 'T1 -> 'T2 -> 'U option) list1 list2 : 'U list =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+        // OPTIMIZE : Instead of checking List.length on both lists (which is O(n)),
+        // just detect mismatched lengths on-the-fly.
+        if List.length list1 <> List.length list2 then
+            invalidArg "list2" "The lists have different lengths."
+
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        let mutable list1 = list1
+        let mutable list2 = list2
+        let mutable resultList = []
+
+        while not <| List.isEmpty list1 do
+            match chooser.Invoke (List.head list1, List.head list2) with
+            | None -> ()
+            | Some result ->
+                resultList <- result :: resultList
+
+            list1 <- List.tail list1
+            list2 <- List.tail list2
+
+        // Reverse the result list before returning.
+        List.rev resultList
 
     //
     [<CompiledName("Unfold")>]
@@ -615,15 +675,10 @@ module internal List =
             List.rev resultList1,
             List.rev resultList2
 
-    // TODO :
-    // foldBackPairs
-    // zip4, unzip4
-    // zipWith3, unzipWith3
-
 
 /// Additional functional operators on arrays.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Array =
+module Array =
     /// Returns the length of the array as an unsigned integer.
     let [<NoDynamicInvocation>] inline natLength (arr : 'T[]) =
         uint32 arr.Length
@@ -651,11 +706,14 @@ module internal Array =
 
     /// Applies a function to each element of the array, returning a new array whose elements are
     /// tuples of the original element and the function result for that element.
-    [<CompiledName("Project")>]
-    let project (mapping : 'T -> 'U) (source : 'T[]) =
-        source
-        |> Array.map (fun x ->
-            x, mapping x)
+    [<CompiledName("ProjectValues")>]
+    let projectValues (projection : 'Key -> 'U) (array : 'Key[]) =
+        array |> Array.map (fun x -> x, projection x)
+
+    //
+    [<CompiledName("ProjectKeys")>]
+    let projectKeys (projection : 'T -> 'Key) (array : 'T[]) =
+        array |> Array.map (fun x -> projection x, x)
 
     /// Returns the first element in the array.
     let [<NoDynamicInvocation>] inline first (arr : 'T[]) =
@@ -855,7 +913,7 @@ module TaggedArray =
 
 /// Functional operators on ArraySegments.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal ArraySegment =
+module ArraySegment =
     (* OPTIMIZE :   Get rid of the recursive implementation functions below and
                     re-implement functions using imperative loops. This simplifies
                     the code and should also be slightly faster. *)
@@ -883,9 +941,7 @@ module internal ArraySegment =
     /// Gets an element of an ArraySegment<'T>.
     [<CompiledName("Get")>]
     let get (segment : ArraySegment<'T>) index =
-        if index < 0 then
-            raise <| System.IndexOutOfRangeException ()
-        elif index >= (count segment) then
+        if index < 0 || index >= (count segment) then
             raise <| System.IndexOutOfRangeException ()
         else
             segment.Array.[segment.Offset + index]
@@ -893,16 +949,14 @@ module internal ArraySegment =
     /// Sets an element of an ArraySegment<'T>.
     [<CompiledName("Set")>]
     let set (segment : ArraySegment<'T>) index value =
-        if index < 0 then
-            raise <| System.IndexOutOfRangeException ()
-        elif index >= (count segment) then
+        if index < 0 || index >= (count segment) then
             raise <| System.IndexOutOfRangeException ()
         else
             segment.Array.[segment.Offset + index] <- value
 
     /// Gets the first element in an ArraySegment<'T>.
     let [<NoDynamicInvocation>] inline first (segment : ArraySegment<'T>) =
-        if segment.Count = 0 then
+        if isEmpty segment then
             invalidOp "Cannot retrieve the first element of an empty ArraySegment<'T>."
         else segment.Array.[segment.Offset]
 
@@ -913,93 +967,15 @@ module internal ArraySegment =
 
     /// Gets the index of the last element in an ArraySegment<'T>, within the original array.
     let [<NoDynamicInvocation>] inline lastIndex (segment : ArraySegment<'T>) =
-        if segment.Count = 0 then
+        if isEmpty segment then
             invalidOp "The ArraySegment<'T> is empty."
         else lastIndexUnsafe segment
 
     /// Gets the last element in an ArraySegment<'T>.
     let [<NoDynamicInvocation>] inline last (segment : ArraySegment<'T>) =
-        if segment.Count = 0 then
+        if isEmpty segment then
             invalidOp "Cannot retrieve the last element of an empty ArraySegment<'T>."
         else segment.Array.[lastIndexUnsafe segment]
-
-    (* NOTE :   For the functions below, 'lastIdx' is *inclusive* -- which is
-                why the guard in the recursive functions is (>) instead of (=). *)
-    //
-    let rec private tryFindImpl f (arr : 'T[]) currIdx lastIdx =
-        if currIdx > lastIdx then None
-        else
-            let el = arr.[currIdx]
-            if f el then Some el
-            else tryFindImpl f arr (currIdx + 1) lastIdx
-
-    //
-    let rec private tryFindIndexImpl f (arr : 'T[]) currIdx lastIdx =
-        if currIdx > lastIdx then None
-        else
-            let el = arr.[currIdx]
-            if f el then Some currIdx
-            else tryFindIndexImpl f arr (currIdx + 1) lastIdx
-
-    //
-    [<CompiledName("Find")>]
-    let find f (arrSeg : ArraySegment<'T>) =
-        match tryFindImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg) with
-        | Some el -> el
-        | None ->
-            raise <| System.Collections.Generic.KeyNotFoundException ()
-
-    //
-    [<CompiledName("TryFind")>]
-    let tryFind f (arrSeg : ArraySegment<'T>) =
-        tryFindImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
-
-    //
-    [<CompiledName("FindIndex")>]
-    let findIndex f (arrSeg : ArraySegment<'T>) =
-        match tryFindIndexImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg) with
-        | Some idx -> idx
-        | None ->
-            raise <| System.Collections.Generic.KeyNotFoundException ()
-
-    //
-    [<CompiledName("TryFindIndex")>]
-    let tryFindIndex f (arrSeg : ArraySegment<'T>) =
-        tryFindIndexImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
-
-    //
-    let rec private iterImpl f (arr : 'T[]) currIdx lastIdx =
-        if currIdx <= lastIdx then
-            f arr.[currIdx]
-            iterImpl f arr (currIdx + 1) lastIdx
-
-    //
-    [<CompiledName("Iterate")>]
-    let iter f (arrSeg : ArraySegment<'T>) =
-        iterImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
-
-    //
-    let rec private foldImpl folder state (arr : 'T[]) currIdx lastIdx =
-        if currIdx > lastIdx then state
-        else
-            let state = folder state arr.[currIdx] in
-            foldImpl folder state arr (currIdx + 1) lastIdx
-
-    //
-    [<CompiledName("Fold")>]
-    let fold folder (state : 'State) (arrSeg : ArraySegment<'T>) =
-        foldImpl folder state arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
-
-    //
-    let rec private existsImpl f (arr : 'T[]) currIdx lastIdx =
-        if currIdx > lastIdx then false
-        elif f arr.[currIdx] then true
-        else existsImpl f arr (currIdx + 1) lastIdx
-
-    //
-    [<CompiledName("Exists")>]
-    let exists f (arrSeg : ArraySegment<'T>) =
-        existsImpl f arrSeg.Array arrSeg.Offset (lastIndexUnsafe arrSeg)
 
     /// Builds a new array from the elements within the ArraySegment<'T>.
     [<CompiledName("ToArray")>]
@@ -1029,29 +1005,264 @@ module internal ArraySegment =
             results
 
     //
+    [<CompiledName("TryPick")>]
+    let tryPick picker (segment : ArraySegment<'T>) : 'U option =
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        let mutable matchResult = None
+        let mutable index = segment.Offset
+
+        while Option.isNone matchResult && index <= endIndex do
+            match picker array.[index] with
+            | Some result ->
+                matchResult <- result
+            | None ->
+                index <- index + 1
+
+        // Return the result (if a match was found) or None.
+        matchResult
+
+    //
+    [<CompiledName("Pick")>]
+    let pick picker (segment : ArraySegment<'T>) : 'U =
+        // Call tryPick to find the value; if no match is found, raise an exception.
+        match tryPick picker segment with
+        | Some result ->
+            result
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("TryFind")>]
+    let tryFind predicate (segment : ArraySegment<'T>) =
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        let mutable matchedElement = None
+        let mutable index = segment.Offset
+
+        while Option.isNone matchedElement && index <= endIndex do
+            let el = array.[index]
+            if predicate el then
+                matchedElement <- Some el
+            else
+                index <- index + 1
+
+        // Return the result (if a match was found) or None.
+        matchedElement
+
+    //
+    [<CompiledName("Find")>]
+    let find predicate (segment : ArraySegment<'T>) =
+        // Call tryFind to find the value; if no match is found, raise an exception.
+        match tryFind predicate segment with
+        | Some element ->
+            element
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("TryFindIndex")>]
+    let tryFindIndex predicate (segment : ArraySegment<'T>) =
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        let mutable matchedIndex = None
+        let mutable index = segment.Offset
+
+        while Option.isNone matchedIndex && index <= endIndex do
+            if predicate array.[index] then
+                matchedIndex <- Some index
+            else
+                index <- index + 1
+
+        // Return the result (if a match was found) or None.
+        matchedIndex
+
+    //
+    [<CompiledName("FindIndex")>]
+    let findIndex predicate (segment : ArraySegment<'T>) =
+        // Call tryFindIndex to find the value; if no match is found, raise an exception.
+        match tryFindIndex predicate segment with
+        | Some index ->
+            index
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("Iterate")>]
+    let iter action (segment : ArraySegment<'T>) =
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        for i = segment.Offset to endIndex do
+            action array.[i]
+
+    //
+    [<CompiledName("Exists")>]
+    let exists predicate (segment : ArraySegment<'T>) =
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        let mutable foundMatchingElement = false
+        let mutable index = segment.Offset
+
+        while not foundMatchingElement && index <= endIndex do
+            if predicate array.[index] then
+                foundMatchingElement <- true
+            else
+                index <- index + 1
+
+        // Return the value indicating if any element matched the predicate.
+        foundMatchingElement
+
+    //
+    [<CompiledName("Forall")>]
+    let forall predicate (segment : ArraySegment<'T>) =
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        let mutable allElementsMatched = true
+        let mutable index = segment.Offset
+
+        while allElementsMatched && index <= endIndex do
+            if predicate array.[index] then
+                index <- index + 1
+            else
+                allElementsMatched <- false
+
+        // Return the value indicating if all elements matched the predicate.
+        allElementsMatched
+
+    //
+    [<CompiledName("Fold")>]
+    let fold folder (state : 'State) (segment : ArraySegment<'T>) =
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        let mutable state = state
+        for i = segment.Offset to endIndex do
+            state <- folder.Invoke (state, array.[i])
+
+        // Return the final state value.
+        state
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack folder (segment : ArraySegment<'T>) (state : 'State) =
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+
+        // OPTIMIZATION : Use imperative/mutable style for maximum performance.
+        let array = segment.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
+        let endIndex = lastIndexUnsafe segment
+
+        let mutable state = state
+        for i = endIndex downto segment.Offset do
+            state <- folder.Invoke (array.[i], state)
+
+        // Return the final state value.
+        state
+
+    //
     [<CompiledName("Reduce")>]
     let reduce (reduction : 'T -> 'T -> 'T) (segment : ArraySegment<'T>) =
         // Preconditions
         if isEmpty segment then
             invalidArg "segment" "Cannot reduce an empty ArraySegment<'T>."
 
-        let arr = array segment
-        let segmentOffset = offset segment
-        foldImpl reduction arr.[segmentOffset] arr (segmentOffset + 1) (lastIndexUnsafe segment)
+        // Create a new array segment which excludes the first element
+        // of the input segment, then call 'fold' with it.
+        let segment' = ArraySegment (segment.Array, segment.Offset + 1, segment.Count - 1)
+        fold reduction segment.[0] segment'
 
+    //
+    [<CompiledName("ReduceBack")>]
+    let reduceBack (reduction : 'T -> 'T -> 'T) (segment : ArraySegment<'T>) =
+        // Preconditions
+        if isEmpty segment then
+            invalidArg "segment" "Cannot reduce an empty ArraySegment<'T>."
 
-    // TODO : Need to implement foldBack for this
-    //let toList (segment : ArraySegment<'T>) = 
+        // Create a new array segment which excludes the last element
+        // of the input segment, then call 'foldBack' with it.
+        let segment' = ArraySegment (segment.Array, segment.Offset, segment.Count - 1)
+        foldBack reduction segment' segment.[segment.Count - 1]
 
-    // TODO : pick, tryPick, reduce, reduceBack, scan, scanBack, foldBack, min, minBy, max, maxBy, choose, sum, sumBy, toList, toSeq
+    //
+    [<CompiledName("ToList")>]
+    let toList (segment : ArraySegment<'T>) =
+        // OPTIMIZATION : If the segment is empty return immediately.
+        if isEmpty segment then []
+        else
+            // Fold backwards so we don't need to reverse the list
+            // we create -- it'll already be in the correct order.
+            (segment, [])
+            ||> foldBack (fun el list ->
+                el :: list)
+
+    //
+    [<CompiledName("Minimum")>]
+    let min<'T when 'T : comparison> (segment : ArraySegment<'T>) =
+        // Preconditions
+        if isEmpty segment then
+            invalidArg "segment" "Cannot compute the minimum element of an empty ArraySegment<'T>."
+
+        reduce min segment
+
+    //
+    [<CompiledName("Maximum")>]
+    let max<'T when 'T : comparison> (segment : ArraySegment<'T>) =
+        // Preconditions
+        if isEmpty segment then
+            invalidArg "segment" "Cannot compute the maximum element of an empty ArraySegment<'T>."
+
+        reduce max segment
+
+    //
+    [<CompiledName("Sum")>]
+    let inline sum (segment : ArraySegment<'T>) =
+        // Preconditions
+        if isEmpty segment then
+            invalidArg "segment" "Cannot compute the sum of an empty ArraySegment<'T>."
+
+        reduce (+) segment
+
+    // TODO
+    // minBy
+    // maxBy    
+    // sumBy   
 
 
 /// Additional functional operators on sets.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Set =
+module Set =
     /// Returns the number of elements in the set as an unsigned integer.
     let [<NoDynamicInvocation>] inline natCount s =
         uint32 <| Set.count s
+
+    //
+    [<CompiledName("OfArraySegment")>]
+    let ofArraySegment (segment : System.ArraySegment<'T>) : Set<'T> =
+        (Set.empty, segment)
+        ||> ArraySegment.fold (fun set el ->
+            Set.add el set)
 
     //
     [<CompiledName("FoldIndexed")>]
@@ -1118,12 +1329,84 @@ module internal Set =
         let set = Set.remove maxElement set
         Set.foldBack reduction set maxElement
 
-    // TODO : scan, scanBack, pick, tryPick, choose, find, tryFind
+    //
+    [<CompiledName("Choose")>]
+    let choose (chooser : 'T -> 'U option) (set : Set<'T>) : Set<'U> =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the input set is empty return immediately.
+        if Set.isEmpty set then
+            Set.empty
+        else
+            (Set.empty, set)
+            ||> Set.fold (fun chosen el ->
+                match chooser el with
+                | None ->
+                    chosen
+                | Some result ->
+                    Set.add result chosen)
+
+    //
+    [<CompiledName("TryPick")>]
+    let tryPick (picker : 'T -> 'U option) (set : Set<'T>) : 'U option =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the input set is empty return immediately.
+        if Set.isEmpty set then None
+        else
+            // Use an iterator over the set here since we don't
+            // have access to the internal structure of F# Sets.
+            Set.toSeq set
+            |> Seq.tryPick picker
+
+    //
+    [<CompiledName("Pick")>]
+    let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
+        // Preconditions
+        checkNonNull "set" set
+
+        // Use tryPick to find a matching element and
+        // raise an exception if it can't.
+        match tryPick picker set with
+        | Some result ->
+            result
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("TryFind")>]
+    let tryFind (predicate : 'T -> bool) (set : Set<'T>) : 'T option =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the input set is empty return immediately.
+        if Set.isEmpty set then None
+        else
+            // Use an iterator over the set here since we don't
+            // have access to the internal structure of F# Sets.
+            Set.toSeq set
+            |> Seq.tryFind predicate
+
+    //
+    [<CompiledName("Find")>]
+    let find (predicate : 'T -> bool) (set : Set<'T>) : 'T =
+        // Preconditions
+        checkNonNull "set" set
+
+        // Use tryFind to find a matching element and
+        // raise an exception if it can't.
+        match tryFind predicate set with
+        | Some result ->
+            result
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
 
 
 /// Additional functional operators on maps.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Map =
+module Map =
     /// Determines the number of items in the Map.
     let [<NoDynamicInvocation>] inline count (map : Map<'Key, 'Value>) =
         map.Count
