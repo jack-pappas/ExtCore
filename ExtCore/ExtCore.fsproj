@@ -41,6 +41,10 @@
   <ItemGroup>
     <Compile Include="Pervasive.fs" />
     <Compile Include="Collections.fs" />
+    <Compile Include="Collections.IntMap.fs" />
+    <Compile Include="Collections.LazyList.fs" />
+    <Compile Include="Collections.PriorityQueue.fs" />
+    <Compile Include="Control.fs" />
     <Compile Include="ControlCollections.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
