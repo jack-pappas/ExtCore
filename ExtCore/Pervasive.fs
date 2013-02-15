@@ -22,7 +22,7 @@ namespace ExtCore
 
 /// Additional operators for F# data types.
 [<AutoOpen>]
-module internal AdditionalOperators =
+module AdditionalOperators =
     /// Type abbreviation for System.NotImplementedException.
     type notImplExn = System.NotImplementedException
 
@@ -76,8 +76,8 @@ module internal AdditionalOperators =
     let [<NoDynamicInvocation>] inline isNull< ^T when ^T : not struct> (x : ^T) =
         System.Object.ReferenceEquals (null, x)
 
-    //
-    let [<NoDynamicInvocation>] inline checkNonNull argName (value : 'T) =
+    /// Determines if a reference is a null reference, and if it is, throws an ArgumentNullException.
+    let [<NoDynamicInvocation>] inline checkNonNull< ^T when ^T : not struct> argName (value : ^T) =
         if isNull value then
             nullArg argName
 
@@ -106,15 +106,35 @@ module internal AdditionalOperators =
 
 /// Functional operators on enumerations.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Enum =
+module Enum =
     //
     let values<'Enum, 'T when 'Enum : enum<'T>> () =
-        typeof<'Enum> |> System.Enum.GetValues :?> 'Enum[]
+        typeof<'Enum>
+        |> System.Enum.GetValues
+        :?> 'Enum[]
+
+
+/// Functional operators on lazily-initialized values.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Lazy =
+    //
+    let [<NoDynamicInvocation>] inline force (lazyValue : Lazy<'T>) =
+        lazyValue.Force ()
+
+    //
+    let [<NoDynamicInvocation>] inline value (lazyValue : Lazy<'T>) =
+        lazyValue.Value
+
+    //
+    let tryGetValue (lazyValue : Lazy<'T>) =
+        if lazyValue.IsValueCreated then
+            Some lazyValue.Value
+        else None
 
 
 /// Additional functional operators on strings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal String =
+module String =
     /// The empty string literal.
     let [<Literal>] empty = ""
 
@@ -138,6 +158,10 @@ module internal String =
     let [<NoDynamicInvocation>] inline ofLines (lines : string[]) =
         System.String.Join (System.Environment.NewLine, lines)
 
+    /// Splits a string into individual lines.
+    let [<NoDynamicInvocation>] inline toLines (str : string) =
+        str.Split ([| '\r'; '\n' |], System.StringSplitOptions.RemoveEmptyEntries)
+
     /// Creates a new string by removing all leading and trailing
     /// white-space characters from the specified string.
     let [<NoDynamicInvocation>] inline trim (str : string) =
@@ -151,29 +175,37 @@ module internal String =
 
 /// Additional functional operators on options.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Option =
-    /// Creates an F# option from an instance of a type which has the 'null' constraint.
-    let [<NoDynamicInvocation>] inline ofNull (value : 'T) =
-        if value = null then None else Some value
+module Option =
+    open System
 
-    /// Creates an instance of a type which has the 'null' constraint from an F# option value.
+    /// Creates an F# option from an instance of a reference type.
+    /// If the reference is null, returns None; otherwise, (Some value).
+    let [<NoDynamicInvocation>] inline ofNull (value : 'T) =
+        if isNull value then None else Some value
+
+    /// Creates an instance of a type with the 'null' constraint from an F# option value for that type.
+    /// If the option value is None, returns 'null'. Otherwise, returns the reference contained in the Some.
     let [<NoDynamicInvocation>] inline toNull (value : 'T option) =
         match value with Some x -> x | None -> null
 
     /// Creates an F# option from a nullable value.
-    let [<NoDynamicInvocation>] inline ofNullable (arg : System.Nullable<'T>) =
+    let [<NoDynamicInvocation>] inline ofNullable (arg : Nullable<'T>) =
         if arg.HasValue then Some arg.Value else None
 
     /// Creates a nullable value from an F# option.
     let [<NoDynamicInvocation>] inline toNullable (value : 'T option) =
-        match value with Some x -> System.Nullable<_> x | None -> System.Nullable<_> ()
+        match value with
+        | Some x -> Nullable<_> x
+        | None -> Nullable<_> ()
 
     /// Creates an F# option from a value 'x'.
     /// When the specified condition is true, returns Some x; otherwise, None.
     let [<NoDynamicInvocation>] inline ofCondition cond value =
         if cond then Some value else None
 
-    //
+    /// Chains two option values together.
+    /// If the first value is Some, it is returned; otherwise, the second value is returned.
+    /// Similar to the (??) operator in C#.
     let [<NoDynamicInvocation>] inline coalesce (x : 'T option) (y : 'T option) =
         match x with
         | (Some _) -> x
@@ -225,7 +257,7 @@ module internal Option =
 (*
 /// Additional functional operators on Choice<_,_> values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Choice =
+module Choice =
     //
     let map (mapping : 'T -> 'U) = function
         | Choice1Of2 result -> Choice1Of2 (mapping result)
