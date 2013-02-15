@@ -710,26 +710,6 @@ module internal State =
 
             results, state
 
-        /// A specialization of Array.mapi which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
-        [<CompiledName("MapIndexedByTag")>]
-        let mapti (mapping : int<'Tag> -> 'T -> 'State -> 'U * 'State) (array : 'T[]) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                let result, state' = mapping.Invoke (LanguagePrimitives.Int32WithMeasure<'Tag> i, array.[i], state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
         /// A specialization of Array.map which threads an accumulator through the computation;
         /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
         /// This function traverses the input array from right-to-left.
@@ -765,27 +745,6 @@ module internal State =
 
             for i = len - 1 downto 0 do
                 let result, state' = mapping.Invoke (i, array.[i], state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.mapi which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// This function traverses the input array from right-to-left.
-        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
-        [<CompiledName("MapIndexedByTagBack")>]
-        let maptiBack (mapping : int<'Tag> -> 'T -> 'State -> 'U * 'State) (array : 'T[]) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = len - 1 downto 0 do
-                let result, state' = mapping.Invoke (LanguagePrimitives.Int32WithMeasure<'Tag> i, array.[i], state)
                 results.[i] <- result
                 state <- state'
 
@@ -878,6 +837,51 @@ module internal State =
 
             innerState, outerState
 
+
+    /// The ExtCore.Collections.TaggedArray module, lifted into the State monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module TaggedArray =
+        /// A specialization of Array.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
+        [<CompiledName("MapIndexedByTag")>]
+        let mapti (mapping : int<'Tag> -> 'T -> 'State -> 'U * 'State) (array : 'T[]) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                let result, state' = mapping.Invoke (LanguagePrimitives.Int32WithMeasure<'Tag> i, array.[i], state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// This function traverses the input array from right-to-left.
+        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
+        [<CompiledName("MapIndexedByTagBack")>]
+        let maptiBack (mapping : int<'Tag> -> 'T -> 'State -> 'U * 'State) (array : 'T[]) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = len - 1 downto 0 do
+                let result, state' = mapping.Invoke (LanguagePrimitives.Int32WithMeasure<'Tag> i, array.[i], state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
         /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
         /// The integer index passed to the function indicates the array index of the element being transformed.
         /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
@@ -899,7 +903,7 @@ module internal State =
             innerState, outerState
 
 
-    /// The TidePowerd.Core.Collections.ArraySegment module, lifted into the State monad.
+    /// The ExtCore.Collections.ArraySegment module, lifted into the State monad.
     [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module ArraySegment =
         /// A specialization of ArraySegment.iter which threads an accumulator through the computation; this allows
@@ -1154,7 +1158,7 @@ module internal ProtectedState =
             mapRec ([], state, list)
 
 
-    /// The TidePowerd.Core.Collections.ArraySegment module, lifted into the ProtectedState monad.
+    /// The ExtCore.Collections.ArraySegment module, lifted into the ProtectedState monad.
     [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module ArraySegment =
         /// A specialization of ArraySegment.iter which threads an accumulator through the computation and which also
