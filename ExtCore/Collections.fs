@@ -25,280 +25,6 @@ open OptimizedClosures
 open ExtCore
 
 
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ResizeArray =
-    open System.Collections.Generic
-
-
-    //
-    let [<NoDynamicInvocation>] inline length (resizeArray : ResizeArray<'T>) =
-        resizeArray.Count
-
-    //
-    let [<NoDynamicInvocation>] inline add item (resizeArray : ResizeArray<'T>) =
-        resizeArray.Add item
-
-    //
-    let [<NoDynamicInvocation>] inline toArray (resizeArray : ResizeArray<'T>) =
-        resizeArray.ToArray ()
-
-    //
-    let [<NoDynamicInvocation>] inline ofArray (arr : 'T[]) : ResizeArray<'T> =
-        ResizeArray (arr)
-
-    //
-    let [<NoDynamicInvocation>] inline ofSeq (sequence : seq<'T>) : ResizeArray<'T> =
-        ResizeArray (sequence)
-
-    //
-    let [<NoDynamicInvocation>] inline get (resizeArray : ResizeArray<'T>) index =
-        resizeArray.[index]
-
-    //
-    let [<NoDynamicInvocation>] inline set (resizeArray : ResizeArray<'T>) index value =
-        resizeArray.[index] <- value
-
-    //
-    let [<NoDynamicInvocation>] inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
-        resizeArray.Sort ()
-
-    //
-    let [<NoDynamicInvocation>] inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
-            (projection : 'T -> 'Key) (resizeArray : ResizeArray<'T>) =
-        resizeArray.Sort (fun x y ->
-            compare (projection x) (projection y))
-
-    //
-    let [<NoDynamicInvocation>] inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
-        resizeArray.Sort (comparer)
-
-    // TODO:
-    // map, mapi
-    // iter, iteri
-    // fold, foldBack
-    // reduce, reduceBack
-    // exists, forall
-    // find, tryFind
-    // findIndex, tryFindIndex
-    // pick, tryPick
-    // choose
-    // singleton
-
-
-/// Functional programming operators related to the System.Collections.Generic.IDictionary type.
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Dict =
-    open System.Collections.Generic
-
-    /// Thread-safe functional programming operators for mutable instances of System.Collections.Generic.IDictionary.
-    module Safe =
-        /// Attempts to retrieve the value associated with the specified key.
-        let tryFind k (d : IDictionary<'Key, 'T>) =
-            match lock d <| fun () -> d.TryGetValue k with
-            | false, _ -> None
-            | true, v -> Some v
-        
-        /// Lookup an element in the Dictionary, raising KeyNotFoundException if
-        /// the Dictionary does not contain an element with the specified key.
-        let find k (d : IDictionary<'Key, 'T>) =
-            lock d <| fun () -> d.[k]
-
-        /// Adds a new entry to the Dictionary.
-        let add k v (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
-                invalidOp "Cannot add an entry to a read-only dictionary."
-            lock d <| fun () ->
-                d.Add (k, v)
-
-        /// Updates an existing entry in the dictionary with a new value,
-        /// raising KeyNotFoundException if the Dictionary does not
-        /// contain an element with the specified key.
-        let update k v (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
-                invalidOp "Cannot update an entry in a read-only dictionary."
-            lock d <| fun () ->
-                if d.ContainsKey k then
-                    d.[k] <- v
-                else
-                    raise <| System.Collections.Generic.KeyNotFoundException ()
-
-        /// Removes the entry with the specified key from the Dictionary,
-        /// returning a value indicating the success of the operation.
-        let remove (k : 'Key) (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
-                invalidOp "Cannot remove an entry from a read-only dictionary."
-            lock d <| fun () ->
-                d.Remove k
-
-        /// Updates the value of an entry (which has the specified key)
-        /// in the Dictionary, or creates a new entry if one doesn't exist.
-        /// If the Dictionary is read-only, an InvalidOperationException is raised.
-        let updateOrAdd k v (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
-                invalidOp "Cannot update or add an entry to a read-only dictionary."
-            lock d <| fun () ->
-                d.[k] <- v
-
-        /// Creates an immutable copy of a Dictionary.
-        /// The entries are shallow-copied to the created Dictionary; that is,
-        /// reference-typed keys and values will reference the same instances as
-        /// in the mutable Dictionary, so care should be taken when using mutable keys and values.
-        let toImmutable (d : IDictionary<'Key, 'T>) =
-            lock d <| fun () ->
-                d
-                |> Seq.map (fun kvp ->
-                    kvp.Key, kvp.Value)
-                |> dict
-
-
-    /// Views the keys of the Dictionary as a sequence.
-    let [<NoDynamicInvocation>] inline keys (dictionary : IDictionary<'Key, 'T>) =
-        dictionary.Keys :> IEnumerable<'Key>
-
-    /// Views the values of the Dictionary as a sequence.
-    let [<NoDynamicInvocation>] inline values (dictionary : IDictionary<'Key, 'T>) =
-        dictionary.Values :> IEnumerable<'T>
-
-    /// Determines whether the Dictionary is empty.
-    let [<NoDynamicInvocation>] inline isEmpty (dictionary : IDictionary<'Key,'T>) =
-        dictionary.Count = 0
-
-    /// Gets the number of entries in the Dictionary.
-    let [<NoDynamicInvocation>] inline count (dictionary : IDictionary<'Key, 'T>) =
-        dictionary.Count
-
-    /// Gets the number of entries in the Dictionary as an unsigned integer.
-    let [<NoDynamicInvocation>] inline natCount (dictionary : IDictionary<'Key, 'T>) =
-        Checked.uint32 dictionary.Count
-
-    /// Creates a mutable dictionary with the specified capacity.
-    let [<NoDynamicInvocation>] inline createMutable<'Key, 'T when 'Key : equality> (capacity : int) =
-        System.Collections.Generic.Dictionary<'Key, 'T> (capacity)
-
-    /// Determines whether the Dictionary contains an element with the specified key.
-    let [<NoDynamicInvocation>] inline containsKey k (dictionary : IDictionary<'Key, 'T>) =
-        dictionary.ContainsKey k
-
-    /// Adds a new entry to the dictionary.
-    let [<NoDynamicInvocation>] inline add k v (dictionary : IDictionary<'Key, 'T>) =
-        dictionary.Add (k, v)
-        dictionary
-
-    /// Removes the entry with the specified key from the Dictionary.
-    /// An exception is raised if the entry cannot be removed.
-    let [<NoDynamicInvocation>] inline remove (k : 'Key) (dictionary : IDictionary<'Key, 'T>) =
-        if dictionary.Remove k then dictionary
-        else failwithf "Unable to remove the entry with the key '%O' from the dictionary." k
-
-    /// Lookup an element in the Dictionary, raising KeyNotFoundException if
-    /// the dictionary does not contain an element with the specified key.
-    let [<NoDynamicInvocation>] inline find k (dictionary : IDictionary<'Key, 'T>) =
-        dictionary.[k]
-            
-    /// Attempts to retrieve the value associated with the specified key.
-    let [<NoDynamicInvocation>] inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
-        match dictionary.TryGetValue k with
-        | false, _ -> None
-        | true, v -> Some v
-
-    /// Updates the value of an entry (which has the specified key) in the Dictionary.
-    /// Raises a KeyNotFoundException if the Dictionary does not contain an entry with the specified key.
-    let update k v (dictionary : IDictionary<'Key, 'T>) =
-        if dictionary.ContainsKey k then
-            dictionary.[k] <- v
-            dictionary
-        else
-            // TODO : Add an error message which includes the key.
-            raise <| System.Collections.Generic.KeyNotFoundException ()
-
-    /// Updates the value of an entry (which has the specified key) in
-    /// the Dictionary, or creates a new entry if one doesn't exist.
-    let [<NoDynamicInvocation>] inline updateOrAdd k v (dictionary : IDictionary<'Key, 'T>) =
-        dictionary.[k] <- v
-        dictionary    
-
-    /// Applies the given function to successive entries, returning the
-    /// first result where the function returns "Some(x)".
-    let [<NoDynamicInvocation>] inline tryPick f (dictionary : IDictionary<'Key, 'T>) =
-        dictionary
-        |> Seq.tryPick (fun kvp ->
-            f kvp.Key kvp.Value)
-
-    /// Applies the given function to sucecssive entries, returning the
-    /// first x where the function returns "Some(x)".
-    let [<NoDynamicInvocation>] inline pick f (dictionary : IDictionary<'Key, 'T>) =
-        match tryPick f dictionary with
-        | Some res -> res
-        | None ->
-            // TODO : Add an error message which includes the key.
-            raise <| System.Collections.Generic.KeyNotFoundException ()
-
-    /// Views the Dictionary as a sequence of tuples.
-    let toSeq (dictionary : IDictionary<'Key, 'T>) =
-        dictionary
-        |> Seq.map (fun kvp ->
-            kvp.Key, kvp.Value)
-
-    /// Applies the given function to each entry in the Dictionary.
-    let iter (action : 'Key -> 'T -> unit) (dictionary : IDictionary<'Key, 'T>) =
-        dictionary
-        |> Seq.iter (fun kvp ->
-            action kvp.Key kvp.Value)
-
-    /// Returns a new Dictionary containing only the entries of the
-    /// Dictionary for which the predicate returns 'true'.
-    let filter (predicate : 'Key -> 'T -> bool) (dictionary : IDictionary<'Key, 'T>) =
-        dictionary
-        |> Seq.choose (fun kvp ->
-            if predicate kvp.Key kvp.Value then
-                Some (kvp.Key, kvp.Value)
-            else None)
-        |> dict
-
-    /// Builds a new Dictionary whose entries are the results of applying
-    /// the given function to each element of the Dictionary.
-    let map (f : 'Key -> 'T -> 'U) (dictionary : IDictionary<'Key, 'T>) =
-        dictionary
-        |> Seq.map (fun kvp ->
-            kvp.Key, f kvp.Key kvp.Value)
-        |> dict
-
-    /// Applies the given function to each element of the Dictionary.
-    /// Returns a Dictionary comprised of the results "x,y" for each
-    /// entry where the function returns Some(y).
-    let choose (f : 'Key -> 'T -> 'U option) (dictionary : IDictionary<'Key, 'T>) =
-        dictionary
-        |> Seq.choose (fun kvp ->
-            f kvp.Key kvp.Value
-            |> Option.map (fun x -> kvp.Key, x))
-        |> dict
-
-    /// Applies a function to each entry of the Dictionary,
-    /// threading an accumulator argument through the computation.
-    let fold f (state : 'State) (dictionary : IDictionary<'Key, 'T>) =
-        (state, dictionary)
-        ||> Seq.fold (fun state kvp ->
-            f state kvp.Key kvp.Value)
-
-    /// Splits the Dictionary into two Dictionaries, containing the entries
-    /// for which the given predicate evaluates to "true" and "false".
-    let partition p (dictionary : IDictionary<'Key, 'T>) =
-        let t, f =
-            ((Seq.empty, Seq.empty), dictionary)
-            ||> fold (fun (trueSeq, falseSeq) k v ->
-                if p k v then
-                    (Seq.append trueSeq (Seq.singleton (k, v)), falseSeq)
-                else
-                    (trueSeq, Seq.append falseSeq (Seq.singleton (k, v))))
-
-        dict t, dict f
-
-    //
-    let readonly (dictionary : IDictionary<'Key, 'T>) =
-        dict <| toSeq dictionary
-
-
 /// Additional functional operators on sequences.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
@@ -311,10 +37,25 @@ module Seq =
         Seq.append s (Seq.singleton el)
 
     //
+    [<CompiledName("Project")>]
     let project (mapping : 'T -> 'U) (source : seq<'T>) =
         source
         |> Seq.map (fun x ->
             x, mapping x)
+
+    (* TODO
+
+    Seq.tokenize
+        Groups elements of a sequence together "longitudinally" -- i.e., it works
+        in a streaming fashion, rather than Seq.groupBy which needs to see the
+        entire stream before returning. Alternatively, this can be thought of
+        as a generalized form of Seq.windowed.
+
+    Seq.sample
+        Takes a positive integer and a sequence.
+        Returns a sequence containing every n-th element of the input sequence.
+
+    *)
 
 
 /// Additional functional operators on immutable lists.
@@ -351,10 +92,27 @@ module List =
     let [<NoDynamicInvocation>] inline singleton (value : 'T) =
         [value]
 
+    //
+    let [<NoDynamicInvocation>] inline ofSet (set : Set<'T>) =
+        Set.toList set
+
+    //
+    let [<NoDynamicInvocation>] inline toSet (list : 'T list) =
+        Set.ofList list
+
+    //
+    [<CompiledName("Indexed")>]
+    let indexed (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        list |> List.mapi (fun i x -> i, x)
+
     /// Converts a list into an array (similar to List.toArray) but copies the elements into
     /// the array from right-to-left, so there's no need to call List.rev before List.toArray.
     [<CompiledName("ReverseIntoArray")>]
     let revIntoArray (list : 'T list) =
+        // Preconditions
         checkNonNull "list" list
 
         let len = List.length list
@@ -376,6 +134,7 @@ module List =
     /// <c>fun mapping -> (List.map mapping) >> List.rev >> List.toArray</c>.</para></remarks>
     [<CompiledName("MapAndReverseIntoArray")>]
     let mapAndRevIntoArray (mapping : 'T -> 'U) (list : 'T list) =
+        // Preconditions
         checkNonNull "list" list
 
         let len = List.length list
@@ -393,11 +152,17 @@ module List =
     //
     [<CompiledName("ProjectValues")>]
     let projectValues (projection : 'Key -> 'T) (list : 'Key list) =
+        // Preconditions
+        checkNonNull "list" list
+
         list |> List.map (fun x -> x, projection x)
 
     //
     [<CompiledName("ProjectKeys")>]
     let projectKeys (projection : 'T -> 'Key) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
         list |> List.map (fun x -> projection x, x)
 
     /// Takes a specified number of items from a list, returning them (as a new list) along with the remaining list.
@@ -676,6 +441,22 @@ module List =
             List.rev resultList2
 
 
+    (* TODO
+
+    List.unzip4
+    List.unzipMap
+        Similar to List.map2 (and List.zipMap, below). Given a list of tuples (a, b)
+        applies the elements of each tuple to a function 'f' (f a b).
+    List.zip4
+    List.zipMap
+        Similar to List.map2, but combines the elements into a tuple before
+        applying them to the mapping function; this optimizes for the case where
+        we have List.zip immediately followed by List.map, or to simplify code
+        which needs to create the tuple and "manually" apply it to a function.
+
+    *)
+
+
 /// Additional functional operators on arrays.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
@@ -683,7 +464,7 @@ module Array =
     let [<NoDynamicInvocation>] inline natLength (arr : 'T[]) =
         uint32 arr.Length
 
-    //
+    /// Given an element, creates an array containing just that element.
     let [<NoDynamicInvocation>] inline singleton (value : 'T) =
         [| value |]
 
@@ -691,6 +472,14 @@ module Array =
     /// read access while still providing O(n) lookup.
     let [<NoDynamicInvocation>] inline readonly (arr : 'T[]) =
         System.Array.AsReadOnly arr
+
+    //
+    let [<NoDynamicInvocation>] inline ofSet (set : Set<'T>) : 'T[] =
+        Set.toArray set
+
+    //
+    let [<NoDynamicInvocation>] inline toSet (array : 'T[]) : Set<'T> =
+        Set.ofArray array
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
     /// The integer index passed to the function indicates the array index of the element being transformed.
@@ -862,8 +651,70 @@ module Array =
         Array.blit arr 0 expandedArr count arr.Length
         expandedArr
 
-    // TODO : foldPairs, foldBackPairs
-    // TODO : derive    // takes a 'T -> 'T -> 'T like reduce, but only performs one step; used to perform 'divided differences'
+    //
+    [<CompiledName("MapPartition")>]
+    let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
+        // Preconditions
+        checkNonNull "array" array
+
+        // OPTIMIZATION : If the input array is empty, immediately return empty results.
+        if Array.isEmpty array then
+            Array.empty, Array.empty
+        else
+            // Use ResizeArrays to hold the mapped values.
+            let resultList1 = ResizeArray ()
+            let resultList2 = ResizeArray ()
+
+            // Partition the array, adding each element to the ResizeArray
+            // specific by the partition function.
+            array
+            |> Array.iter (fun el ->
+                match partitioner el with
+                | Choice1Of2 value ->
+                    resultList1.Add value
+                | Choice2Of2 value ->
+                    resultList2.Add value)
+
+            // Convert the ResizeArrays to arrays and return them.
+            resultList1.ToArray (),
+            resultList2.ToArray ()
+
+    //
+    [<CompiledName("MapPartition")>]
+    let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U2[] * 'U3[] =
+        // Preconditions
+        checkNonNull "array" array
+
+        // OPTIMIZATION : If the input array is empty, immediately return empty results.
+        if Array.isEmpty array then
+            Array.empty, Array.empty, Array.empty
+        else
+            // Use ResizeArrays to hold the mapped values.
+            let resultList1 = ResizeArray ()
+            let resultList2 = ResizeArray ()
+            let resultList3 = ResizeArray ()
+
+            // Partition the array, adding each element to the ResizeArray
+            // specific by the partition function.
+            array
+            |> Array.iter (fun el ->
+                match partitioner el with
+                | Choice1Of3 value ->
+                    resultList1.Add value
+                | Choice2Of3 value ->
+                    resultList2.Add value
+                | Choice3Of3 value ->
+                    resultList3.Add value)
+
+            // Convert the ResizeArrays to arrays and return them.
+            resultList1.ToArray (),
+            resultList2.ToArray (),
+            resultList3.ToArray ()
+
+    // TODO :
+    // foldBacki
+    // foldPairs, foldBackPairs
+    // derive    // takes a 'T -> 'T -> 'T like reduce, but only performs one step; used to perform 'divided differences'
 
 
 //
@@ -914,10 +765,6 @@ module TaggedArray =
 /// Functional operators on ArraySegments.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArraySegment =
-    (* OPTIMIZE :   Get rid of the recursive implementation functions below and
-                    re-implement functions using imperative loops. This simplifies
-                    the code and should also be slightly faster. *)
-
     //
     let [<NoDynamicInvocation>] inline array (segment : ArraySegment<'T>) =
         segment.Array
@@ -1303,6 +1150,30 @@ module Set =
                 result <- Set.add (initializer i) result
             result
 
+    //
+    [<CompiledName("ExtractMinimum")>]
+    let extractMin (set : Set<'T>) =
+        // Preconditions
+        checkNonNull "set" set
+        if Set.isEmpty set then
+            invalidArg "set" "The set is empty."
+
+        let minElement = Set.minElement set
+        let set = Set.remove minElement set
+        minElement, set
+
+    //
+    [<CompiledName("ExtractMaximum")>]
+    let extractMax (set : Set<'T>) =
+        // Preconditions
+        checkNonNull "set" set
+        if Set.isEmpty set then
+            invalidArg "set" "The set is empty."
+
+        let maxElement = Set.maxElement set
+        let set = Set.remove maxElement set
+        maxElement, set
+
     /// Reduces elements in a set in order from the least (minimum) element
     /// to the greatest (maximum) element.
     [<CompiledName("Reduce")>]
@@ -1312,8 +1183,7 @@ module Set =
         if Set.isEmpty set then
             invalidArg "set" "The set is empty."
 
-        let minElement = Set.minElement set
-        let set = Set.remove minElement set
+        let minElement, set = extractMin set
         Set.fold reduction minElement set
 
     /// Reduces elements in a set in order from the greatest (maximum) element
@@ -1325,8 +1195,7 @@ module Set =
         if Set.isEmpty set then
             invalidArg "set" "The set is empty."
 
-        let maxElement = Set.maxElement set
-        let set = Set.remove maxElement set
+        let maxElement, set = extractMax set
         Set.foldBack reduction set maxElement
 
     //
@@ -1403,16 +1272,353 @@ module Set =
         | None ->
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
+    //
+    [<CompiledName("MapPartition")>]
+    let mapPartition (partitioner : 'T -> Choice<'U, 'V>) set =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the set is empty return immediately.
+        if Set.isEmpty set then
+            Set.empty, Set.empty
+        else
+            let mutable resultSet1 = Set.empty
+            let mutable resultSet2 = Set.empty
+
+            for el in set do
+                match partitioner el with
+                | Choice1Of2 value ->
+                    resultSet1 <- Set.add value resultSet1
+                | Choice2Of2 value ->
+                    resultSet2 <- Set.add value resultSet2
+
+            resultSet1, resultSet2
+
+    /// <summary>Computes the exclusive disjunction ("exclusive-or") of two sets.</summary>
+    /// <remarks>
+    /// The exclusive disjunction ("exclusive-or") operation creates
+    /// a new set whose elements belong to exactly one (1) of the input sets.
+    /// </remarks>
+    [<CompiledName("ExclusiveOr")>]
+    let xor (set1 : Set<'T>) (set2 : Set<'T>) : Set<'T> =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        // OPTIMIZATION : If either set is empty return immediately.
+        if Set.isEmpty set1 then
+            set2
+        elif Set.isEmpty set2 then
+            set1
+        else
+            // OPTIMIZE : Check to see which set is larger and take
+            // an optimized code path depending on the result.
+            // For now, we assume 'set1' is the larger of the two sets.
+
+            // Remove the elements in set2 from set1.
+            let set1' = Set.difference set1 set2
+
+            // Remove the elements in set1 from set2.
+            // We use set1' instead of set1' because it is a subset of set1
+            // and having fewer elements makes this operation faster.
+            let set2' = Set.difference set2 set1'
+
+            // The XOR is the union of the two results.
+            Set.union set1' set2'
+
+    /// The Cartesian product of two sets.
+    [<CompiledName("Cartesian")>]
+    let cartesian (set1 : Set<'T>) (set2 : Set<'U>) =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        // OPTIMIZATION : If either set is empty return immediately.
+        if Set.isEmpty set1 || Set.isEmpty set2 then
+            Set.empty
+        else
+            (Set.empty, set1)
+            ||> Set.fold (fun product x ->
+                (product, set2)
+                ||> Set.fold (fun product y ->
+                    Set.add (x, y) product))
+
+    //
+    [<CompiledName("MapIntersect")>]
+    let mapIntersect (mapping : 'T -> Set<'U>) set =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the set is empty return immediately.
+        if Set.isEmpty set then
+            Set.empty
+        else
+            // To compute the intersection, we must start with the mapped set
+            // for the first element -- if we used a "standard" fold and started
+            // with Set.empty, the result would always be Set.empty.
+
+            let minElement, set = extractMin set
+            let mappedMinElement = mapping minElement
+
+            (mappedMinElement, set)
+            ||> Set.fold (fun intersection el ->
+                mapping el
+                |> Set.intersect intersection)
+
+    //
+    [<CompiledName("MapUnion")>]
+    let mapUnion (mapping : 'T -> Set<'U>) set =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the set is empty return immediately.
+        if Set.isEmpty set then
+            Set.empty
+        else
+            (Set.empty, set)
+            ||> Set.fold (fun union el ->
+                mapping el
+                |> Set.union union)
+
+
+    //
+    [<RequireQualifiedAccess>]
+    module Cartesian =
+        //
+        [<CompiledName("Fold")>]
+        let fold (folder : 'State -> 'T -> 'U -> 'State) state set1 set2 =
+            // Preconditions
+            checkNonNull "set1" set1
+            checkNonNull "set2" set2
+
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            
+            (state, set1)
+            ||> Set.fold (fun state x ->
+                (state, set2)
+                ||> Set.fold (fun state y ->
+                    folder.Invoke (state, x, y)))
+
+        //
+        [<CompiledName("FoldBack")>]
+        let foldBack (folder : 'T -> 'U -> 'State -> 'State) set1 set2 state =
+            // Preconditions
+            checkNonNull "set1" set1
+            checkNonNull "set2" set2
+
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+            (set1, state)
+            ||> Set.foldBack (fun x state ->
+                (set2, state)
+                ||> Set.foldBack (fun y state ->
+                    folder.Invoke (x, y, state)))
+
+        //
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> 'U -> unit) set1 set2 =
+            // Preconditions
+            checkNonNull "set1" set1
+            checkNonNull "set2" set2
+
+            let action = FSharpFunc<_,_,_>.Adapt action
+
+            set1
+            |> Set.iter (fun x ->
+                set2
+                |> Set.iter (fun y ->
+                    action.Invoke (x, y)))
+
+        //
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'U -> 'V) set1 set2 =
+            // Preconditions
+            checkNonNull "set1" set1
+            checkNonNull "set2" set2
+
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+            
+            (Set.empty, set1)
+            ||> Set.fold (fun mappedSet x ->
+                (mappedSet, set2)
+                ||> Set.fold (fun mappedSet y ->
+                    let mapped = mapping.Invoke (x, y)
+                    Set.add mapped mappedSet))
+
+        //
+        [<CompiledName("Choose")>]
+        let choose (chooser : 'T -> 'U -> 'V option) set1 set2 =
+            // Preconditions
+            checkNonNull "set1" set1
+            checkNonNull "set2" set2
+
+            let chooser = FSharpFunc<_,_,_>.Adapt chooser
+            
+            (Set.empty, set1)
+            ||> Set.fold (fun mappedSet x ->
+                (mappedSet, set2)
+                ||> Set.fold (fun mappedSet y ->
+                    match chooser.Invoke (x, y) with
+                    | None ->
+                        mappedSet
+                    | Some value ->
+                        Set.add value mappedSet))
+
 
 /// Additional functional operators on maps.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Map =
+    open System.Collections.Generic
+
     /// Determines the number of items in the Map.
     let [<NoDynamicInvocation>] inline count (map : Map<'Key, 'Value>) =
         map.Count
 
+    //
+    let [<NoDynamicInvocation>] inline findOrDefault defaultValue key (map : Map<'Key, 'T>) =
+        defaultArg (Map.tryFind key map) defaultValue
+
+    //
+    [<CompiledName("Keys")>]
+    let keys (map : Map<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        (Set.empty, map)
+        ||> Map.fold (fun keys key _ ->
+            Set.add key keys)
+
+    //
+    [<CompiledName("Values")>]
+    let values (map : Map<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        (Set.empty, map)
+        ||> Map.fold (fun values _ value ->
+            Set.add value values)
+
+    //
+    let [<NoDynamicInvocation>] addKvp (kvp : KeyValuePair<'Key, 'T>) map =
+        Map.add kvp.Key kvp.Value map
+
+    //
+    [<CompiledName("FromKvpSequence")>]
+    let ofKvpSeq (sequence : seq<KeyValuePair<'Key, 'T>>) =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        (Map.empty, sequence)
+        ||> Seq.fold (fun map kvp ->
+            addKvp kvp map)
+
+    //
+    [<CompiledName("FromKeys")>]
+    let ofKeys (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'Key, 'T> =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the set is empty return immediately.
+        if Set.isEmpty set then
+            Map.empty
+        else
+            (Map.empty, set)
+            ||> Set.fold (fun map key ->
+                Map.add key (mapping key) map)
+
+    //
+    [<CompiledName("FromValues")>]
+    let ofValues (mapping : 'T -> 'Key) (set : Set<'T>) : Map<'Key, 'T> =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the set is empty return immediately.
+        if Set.isEmpty set then
+            Map.empty
+        else
+            (Map.empty, set)
+            ||> Set.fold (fun map value ->
+                Map.add (mapping value) value map)
+
+    //
+    [<CompiledName("RemoveKeys")>]
+    let removeKeys keys (map : Map<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "keys" keys
+        checkNonNull "map" map
+
+        // OPTIMIZATION : If either the key set or input map is empty return immediately.
+        if Set.isEmpty keys then
+            map
+        elif Map.isEmpty map then
+            Map.empty
+        else
+            (map, keys)
+            ||> Set.fold (fun map key ->
+                Map.remove key map)
+
+    //
+    [<CompiledName("SelectKeys")>]
+    let selectKeys keys (map : Map<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "keys" keys
+        checkNonNull "map" map
+
+        // OPTIMIZATION : If either the key set or input map is empty return immediately.
+        if Set.isEmpty keys || Map.isEmpty map then
+            Map.empty
+        else
+            map
+            |> Map.filter (fun key _ ->
+                Set.contains key keys)
+
+    //
+    [<CompiledName("Choose")>]
+    let choose (chooser : 'Key -> 'T -> 'U option) map =
+        // Preconditions
+        checkNonNull "map" map
+
+        // OPTIMIZATION : If the input map is empty return immediately.
+        if Map.isEmpty map then
+            Map.empty
+        else
+            let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+            (Map.empty, map)
+            ||> Map.fold (fun chosenMap key value ->
+                match chooser.Invoke (key, value) with
+                | None ->
+                    chosenMap
+                | Some newValue ->
+                    Map.add key newValue chosenMap)
+
+    //
+    [<CompiledName("MapPartition")>]
+    let mapPartition (partitioner : 'Key -> 'T -> Choice<'U, 'V>) map =
+        // Preconditions
+        checkNonNull "map" map
+
+        // OPTIMIZATION : If the map is empty return immediately.
+        if Map.isEmpty map then
+            Map.empty, Map.empty
+        else
+            let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
+
+            let mutable resultMap1 = Map.empty
+            let mutable resultMap2 = Map.empty
+
+            for kvp in map do
+                match partitioner.Invoke (kvp.Key, kvp.Value) with
+                | Choice1Of2 value ->
+                    resultMap1 <- Map.add kvp.Key value resultMap1
+                | Choice2Of2 value ->
+                    resultMap2 <- Map.add kvp.Key value resultMap2
+
+            resultMap1, resultMap2
+
     /// Combines two maps into a single map.
     /// Whenever a key exists in both maps, the first map's entry will be added to the result map.
+    [<CompiledName("Union")>]
     let union (map1 : Map<'Key, 'T>) (map2 : Map<'Key, 'T>) : Map<'Key, 'T> =
         // Preconditions
         checkNonNull "map1" map1
@@ -1433,4 +1639,374 @@ module Map =
             (map2, map1)
             ||> Map.fold (fun combinedMap key value ->
                 Map.add key value combinedMap)
+
+    /// Combines two maps into a single map.
+    /// Whenever a key exists in both maps, the specified function is used to determine the
+    /// value to be used for that key in the combined map.
+    [<CompiledName("Join")>]
+    let join (joiner : 'Key -> 'T -> 'T -> 'T) (map1 : Map<'Key, 'T>) (map2 : Map<'Key, 'T>) : Map<'Key, 'T> =
+        // Preconditions
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+
+        match map1.Count, map2.Count with
+        // Optimize for empty inputs
+        | 0, 0 ->
+            Map.empty
+        | 0, _ ->
+            map2
+        | _, 0 ->
+            map1
+        | _, _ ->
+            let joiner = FSharpFunc<_,_,_,_>.Adapt joiner
+
+            // Partition the second map into two maps -- one containing the entries which conflict
+            // with the first map, and another whose entries don't exist in the first map.
+            let conflicting, unique =
+                map2
+                |> Map.partition (fun key _ ->
+                    Map.containsKey key map1)
+
+            // Add the unique entries from the second map to the first map.
+            let joined =
+                (map1, unique)
+                ||> Map.fold (fun joined key value ->
+                    Map.add key value joined)
+
+            // Now, add the conflicting entries into the joined map, using the joiner function
+            // to determine which value should be used for the conflicting key.
+            (joined, conflicting)
+            ||> Map.fold (fun joined key value2 ->
+                /// The first map's value for this conflicting key.
+                let value1 = Map.find key map1
+
+                /// The joined value for this key.
+                let joinedValue = joiner.Invoke (key, value1, value2)
+
+                // Add the joined value to the map.
+                Map.add key joinedValue joined)
+
+    //
+    [<CompiledName("Pivot")>]
+    let pivot (map : Map<'Key, 'T>) : Map<'T, Set<'Key>> =
+        // Preconditions
+        checkNonNull "map" map
+
+        // OPTIMIZATION : If the input map is empty return immediately.
+        if Map.isEmpty map then
+            Map.empty
+        else
+            (Map.empty, map)
+            ||> Map.fold (fun pivotMap key value ->
+                /// The key set for this value.
+                let keySet =
+                    match Map.tryFind value pivotMap with
+                    | Some keySet ->
+                        Set.add key keySet
+                    | None ->
+                        Set.singleton key
+
+                // Add/update the pivot map entry for this value.
+                Map.add value keySet pivotMap)
+
+    //
+    // Combines Map.ofKeys and Map.pivot to avoid creating intermediate data structures.
+    [<CompiledName("PivotKeySet")>]
+    let pivotKeySet (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'T, Set<'Key>> =
+        // Preconditions
+        checkNonNull "set" set
+
+        // OPTIMIZATION : If the set is empty return immediately.
+        if Set.isEmpty set then
+            Map.empty
+        else
+            (Map.empty, set)
+            ||> Set.fold (fun pivotMap key ->
+                /// The value for this key.
+                let value = mapping key
+
+                /// The key set for this value.
+                let keySet =
+                    match Map.tryFind value pivotMap with
+                    | Some keySet ->
+                        Set.add key keySet
+                    | None ->
+                        Set.singleton key
+
+                // Add/update the key-set for this value in the pivot map.
+                Map.add value keySet pivotMap)
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ResizeArray =
+    open System.Collections.Generic
+
+
+    //
+    let [<NoDynamicInvocation>] inline length (resizeArray : ResizeArray<'T>) =
+        resizeArray.Count
+
+    //
+    let [<NoDynamicInvocation>] inline add item (resizeArray : ResizeArray<'T>) =
+        resizeArray.Add item
+
+    //
+    let [<NoDynamicInvocation>] inline toArray (resizeArray : ResizeArray<'T>) =
+        resizeArray.ToArray ()
+
+    //
+    let [<NoDynamicInvocation>] inline ofArray (arr : 'T[]) : ResizeArray<'T> =
+        ResizeArray (arr)
+
+    //
+    let [<NoDynamicInvocation>] inline ofSeq (sequence : seq<'T>) : ResizeArray<'T> =
+        ResizeArray (sequence)
+
+    //
+    let [<NoDynamicInvocation>] inline get (resizeArray : ResizeArray<'T>) index =
+        resizeArray.[index]
+
+    //
+    let [<NoDynamicInvocation>] inline set (resizeArray : ResizeArray<'T>) index value =
+        resizeArray.[index] <- value
+
+    //
+    let [<NoDynamicInvocation>] inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
+        resizeArray.Sort ()
+
+    //
+    let [<NoDynamicInvocation>] inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
+            (projection : 'T -> 'Key) (resizeArray : ResizeArray<'T>) =
+        resizeArray.Sort (fun x y ->
+            compare (projection x) (projection y))
+
+    //
+    let [<NoDynamicInvocation>] inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
+        resizeArray.Sort (comparer)
+
+    // TODO:
+    // map, mapi
+    // iter, iteri
+    // fold, foldBack
+    // reduce, reduceBack
+    // exists, forall
+    // find, tryFind
+    // findIndex, tryFindIndex
+    // pick, tryPick
+    // choose
+    // singleton
+
+
+/// Functional programming operators related to the System.Collections.Generic.IDictionary type.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Dict =
+    open System.Collections.Generic
+
+    /// Thread-safe functional programming operators for mutable instances of System.Collections.Generic.IDictionary.
+    module Safe =
+        /// Attempts to retrieve the value associated with the specified key.
+        let tryFind k (d : IDictionary<'Key, 'T>) =
+            match lock d <| fun () -> d.TryGetValue k with
+            | false, _ -> None
+            | true, v -> Some v
+        
+        /// Lookup an element in the Dictionary, raising KeyNotFoundException if
+        /// the Dictionary does not contain an element with the specified key.
+        let find k (d : IDictionary<'Key, 'T>) =
+            lock d <| fun () -> d.[k]
+
+        /// Adds a new entry to the Dictionary.
+        let add k v (d : IDictionary<'Key, 'T>) =
+            if d.IsReadOnly then
+                invalidOp "Cannot add an entry to a read-only dictionary."
+            lock d <| fun () ->
+                d.Add (k, v)
+
+        /// Updates an existing entry in the dictionary with a new value,
+        /// raising KeyNotFoundException if the Dictionary does not
+        /// contain an element with the specified key.
+        let update k v (d : IDictionary<'Key, 'T>) =
+            if d.IsReadOnly then
+                invalidOp "Cannot update an entry in a read-only dictionary."
+            lock d <| fun () ->
+                if d.ContainsKey k then
+                    d.[k] <- v
+                else
+                    raise <| System.Collections.Generic.KeyNotFoundException ()
+
+        /// Removes the entry with the specified key from the Dictionary,
+        /// returning a value indicating the success of the operation.
+        let remove (k : 'Key) (d : IDictionary<'Key, 'T>) =
+            if d.IsReadOnly then
+                invalidOp "Cannot remove an entry from a read-only dictionary."
+            lock d <| fun () ->
+                d.Remove k
+
+        /// Updates the value of an entry (which has the specified key)
+        /// in the Dictionary, or creates a new entry if one doesn't exist.
+        /// If the Dictionary is read-only, an InvalidOperationException is raised.
+        let updateOrAdd k v (d : IDictionary<'Key, 'T>) =
+            if d.IsReadOnly then
+                invalidOp "Cannot update or add an entry to a read-only dictionary."
+            lock d <| fun () ->
+                d.[k] <- v
+
+        /// Creates an immutable copy of a Dictionary.
+        /// The entries are shallow-copied to the created Dictionary; that is,
+        /// reference-typed keys and values will reference the same instances as
+        /// in the mutable Dictionary, so care should be taken when using mutable keys and values.
+        let toImmutable (d : IDictionary<'Key, 'T>) =
+            lock d <| fun () ->
+                d
+                |> Seq.map (fun kvp ->
+                    kvp.Key, kvp.Value)
+                |> dict
+
+
+    /// Views the keys of the Dictionary as a sequence.
+    let [<NoDynamicInvocation>] inline keys (dictionary : IDictionary<'Key, 'T>) =
+        dictionary.Keys :> IEnumerable<'Key>
+
+    /// Views the values of the Dictionary as a sequence.
+    let [<NoDynamicInvocation>] inline values (dictionary : IDictionary<'Key, 'T>) =
+        dictionary.Values :> IEnumerable<'T>
+
+    /// Determines whether the Dictionary is empty.
+    let [<NoDynamicInvocation>] inline isEmpty (dictionary : IDictionary<'Key,'T>) =
+        dictionary.Count = 0
+
+    /// Gets the number of entries in the Dictionary.
+    let [<NoDynamicInvocation>] inline count (dictionary : IDictionary<'Key, 'T>) =
+        dictionary.Count
+
+    /// Gets the number of entries in the Dictionary as an unsigned integer.
+    let [<NoDynamicInvocation>] inline natCount (dictionary : IDictionary<'Key, 'T>) =
+        Checked.uint32 dictionary.Count
+
+    /// Creates a mutable dictionary with the specified capacity.
+    let [<NoDynamicInvocation>] inline createMutable<'Key, 'T when 'Key : equality> (capacity : int) =
+        System.Collections.Generic.Dictionary<'Key, 'T> (capacity)
+
+    /// Determines whether the Dictionary contains an element with the specified key.
+    let [<NoDynamicInvocation>] inline containsKey k (dictionary : IDictionary<'Key, 'T>) =
+        dictionary.ContainsKey k
+
+    /// Adds a new entry to the dictionary.
+    let [<NoDynamicInvocation>] inline add k v (dictionary : IDictionary<'Key, 'T>) =
+        dictionary.Add (k, v)
+        dictionary
+
+    /// Removes the entry with the specified key from the Dictionary.
+    /// An exception is raised if the entry cannot be removed.
+    let [<NoDynamicInvocation>] inline remove (k : 'Key) (dictionary : IDictionary<'Key, 'T>) =
+        if dictionary.Remove k then dictionary
+        else failwithf "Unable to remove the entry with the key '%O' from the dictionary." k
+
+    /// Lookup an element in the Dictionary, raising KeyNotFoundException if
+    /// the dictionary does not contain an element with the specified key.
+    let [<NoDynamicInvocation>] inline find k (dictionary : IDictionary<'Key, 'T>) =
+        dictionary.[k]
+            
+    /// Attempts to retrieve the value associated with the specified key.
+    let [<NoDynamicInvocation>] inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
+        match dictionary.TryGetValue k with
+        | false, _ -> None
+        | true, v -> Some v
+
+    /// Updates the value of an entry (which has the specified key) in the Dictionary.
+    /// Raises a KeyNotFoundException if the Dictionary does not contain an entry with the specified key.
+    let update k v (dictionary : IDictionary<'Key, 'T>) =
+        if dictionary.ContainsKey k then
+            dictionary.[k] <- v
+            dictionary
+        else
+            // TODO : Add an error message which includes the key.
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    /// Updates the value of an entry (which has the specified key) in
+    /// the Dictionary, or creates a new entry if one doesn't exist.
+    let [<NoDynamicInvocation>] inline updateOrAdd k v (dictionary : IDictionary<'Key, 'T>) =
+        dictionary.[k] <- v
+        dictionary    
+
+    /// Applies the given function to successive entries, returning the
+    /// first result where the function returns "Some(x)".
+    let [<NoDynamicInvocation>] inline tryPick f (dictionary : IDictionary<'Key, 'T>) =
+        dictionary
+        |> Seq.tryPick (fun kvp ->
+            f kvp.Key kvp.Value)
+
+    /// Applies the given function to sucecssive entries, returning the
+    /// first x where the function returns "Some(x)".
+    let [<NoDynamicInvocation>] inline pick f (dictionary : IDictionary<'Key, 'T>) =
+        match tryPick f dictionary with
+        | Some res -> res
+        | None ->
+            // TODO : Add an error message which includes the key.
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    /// Views the Dictionary as a sequence of tuples.
+    let toSeq (dictionary : IDictionary<'Key, 'T>) =
+        dictionary
+        |> Seq.map (fun kvp ->
+            kvp.Key, kvp.Value)
+
+    /// Applies the given function to each entry in the Dictionary.
+    let iter (action : 'Key -> 'T -> unit) (dictionary : IDictionary<'Key, 'T>) =
+        dictionary
+        |> Seq.iter (fun kvp ->
+            action kvp.Key kvp.Value)
+
+    /// Returns a new Dictionary containing only the entries of the
+    /// Dictionary for which the predicate returns 'true'.
+    let filter (predicate : 'Key -> 'T -> bool) (dictionary : IDictionary<'Key, 'T>) =
+        dictionary
+        |> Seq.choose (fun kvp ->
+            if predicate kvp.Key kvp.Value then
+                Some (kvp.Key, kvp.Value)
+            else None)
+        |> dict
+
+    /// Builds a new Dictionary whose entries are the results of applying
+    /// the given function to each element of the Dictionary.
+    let map (f : 'Key -> 'T -> 'U) (dictionary : IDictionary<'Key, 'T>) =
+        dictionary
+        |> Seq.map (fun kvp ->
+            kvp.Key, f kvp.Key kvp.Value)
+        |> dict
+
+    /// Applies the given function to each element of the Dictionary.
+    /// Returns a Dictionary comprised of the results "x,y" for each
+    /// entry where the function returns Some(y).
+    let choose (f : 'Key -> 'T -> 'U option) (dictionary : IDictionary<'Key, 'T>) =
+        dictionary
+        |> Seq.choose (fun kvp ->
+            f kvp.Key kvp.Value
+            |> Option.map (fun x -> kvp.Key, x))
+        |> dict
+
+    /// Applies a function to each entry of the Dictionary,
+    /// threading an accumulator argument through the computation.
+    let fold f (state : 'State) (dictionary : IDictionary<'Key, 'T>) =
+        (state, dictionary)
+        ||> Seq.fold (fun state kvp ->
+            f state kvp.Key kvp.Value)
+
+    /// Splits the Dictionary into two Dictionaries, containing the entries
+    /// for which the given predicate evaluates to "true" and "false".
+    let partition p (dictionary : IDictionary<'Key, 'T>) =
+        let t, f =
+            ((Seq.empty, Seq.empty), dictionary)
+            ||> fold (fun (trueSeq, falseSeq) k v ->
+                if p k v then
+                    (Seq.append trueSeq (Seq.singleton (k, v)), falseSeq)
+                else
+                    (trueSeq, Seq.append falseSeq (Seq.singleton (k, v))))
+
+        dict t, dict f
+
+    //
+    let readonly (dictionary : IDictionary<'Key, 'T>) =
+        dict <| toSeq dictionary
 
