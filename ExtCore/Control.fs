@@ -25,30 +25,53 @@ open ExtCore
 
 (*** Workflow Monoids ***)
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
 type StateFunc<'S1, 'S2, 'T> =
     'S1 -> 'T * 'S2
 
+/// <summary>
 /// Synonym for StateFunc where the initial and final state are "clamped" to the
 /// same type. In other words, the function does not change the type of the state value.
+/// </summary>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
 type StateFuncClamped<'State, 'T> =
     StateFunc<'State, 'State, 'T>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="T"></typeparam>
 type ReaderFunc<'Env, 'T> =
     'Env -> 'T
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
 type ReaderStateFunc<'Env, 'S1, 'S2, 'T> =
     'Env -> 'S1 -> 'T * 'S2
 
+/// <summary>
 /// Synonym for ReaderStateFunc where the initial and final state are "clamped" to the
 /// same type. In other words, the function does not change the type of the state value.
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
 type ReaderStateFuncClamped<'Env, 'State, 'T> =
     ReaderStateFunc<'Env, 'State, 'State, 'T>
 
-//
-[<Interface>]
+/// <summary>
+/// 
+/// </summary>
+/// <typeparam name="Output"></typeparam>
 type IWriter<'Output> =
     //
     abstract member Zero : 'Output
@@ -58,48 +81,99 @@ type IWriter<'Output> =
     abstract member Combine :
         'Output * 'Output -> 'Output
 
-//
-type ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, 'T> =
-    //'Env -> 'S1 -> ('T * 'S2) * 'Output
-    'Env -> 'S1 -> 'T * 'S2 * 'Output
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="Writer"></typeparam>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
+type ReaderWriterStateFunc<'Env, 'Writer, 'S1, 'S2, 'T> =
+    //'Env -> 'S1 -> ('T * 'S2) * 'Writer
+    'Env -> 'S1 -> 'T * 'S2 * 'Writer
 
+/// <summary>
 /// Synonym for ReaderWriterStateFunc where the initial and final state are "clamped" to the
 /// same type. In other words, the function does not change the type of the state value.
-type ReaderWriterStateFuncClamped<'Env, 'Output, 'State, 'T> =
-    ReaderWriterStateFunc<'Env, 'Output, 'State, 'State, 'T>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="Writer"></typeparam>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+type ReaderWriterStateFuncClamped<'Env, 'Writer, 'State, 'T> =
+    ReaderWriterStateFunc<'Env, 'Writer, 'State, 'State, 'T>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type ReaderChoiceFunc<'Env, 'T, 'Error> =
     'Env -> Choice<'T, 'Error>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type ProtectedStateFunc<'S1, 'S2, 'T, 'Error> =
     'S1 -> Choice<'T * 'S2, 'Error>
 
+/// <summary>
 /// Synonym for ProtectedStateFunc where the initial and final state are "clamped" to the
 /// same type. In other words, the function does not change the type of the state value.
+/// </summary>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type ProtectedStateFuncClamped<'State, 'T, 'Error> =
     ProtectedStateFunc<'State, 'State, 'T, 'Error>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type ReaderProtectedStateFunc<'Env, 'S1, 'S2, 'T, 'Error> =
     'Env -> 'S1 -> Choice<'T * 'S2, 'Error>
 
+/// <summary>
 /// Synonym for ReaderProtectedStateFunc where the initial and final state are "clamped" to the
 /// same type. In other words, the function does not change the type of the state value.
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type ReaderProtectedStateFuncClamped<'Env, 'State, 'T, 'Error> =
     ReaderProtectedStateFunc<'Env, 'State, 'State, 'T, 'Error>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type StatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
     'S1 -> Choice<'T, 'Error> * 'S2
 
+/// <summary>
 /// Synonym for StatefulChoiceFunc where the initial and final state are "clamped" to the
 /// same type. In other words, the function does not change the type of the state value.
+/// </summary>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type StatefulChoiceFuncClamped<'State, 'T, 'Error> =
     StatefulChoiceFunc<'State, 'State, 'T, 'Error>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
 type TransactionStatus<'T, 'Error> =
     //
     | Begin
@@ -112,35 +186,69 @@ type TransactionStatus<'T, 'Error> =
     /// Committed state, returned a result.
     | Commit of 'T
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="o"></typeparam>
+/// <typeparam name="s"></typeparam>
+/// <typeparam name="a"></typeparam>
 type TransactionFunc<'o, 's, 'a> =
     's -> ('s -> 'a -> 'o) -> 'o
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="K"></typeparam>
 type ContinuationFunc<'T, 'K> =
     ('T -> 'K) -> 'K
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="K"></typeparam>
 type StateContinuationFunc<'S1, 'S2, 'T, 'K> =
     'S1 -> ('T * 'S2 -> 'K) -> 'K
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="K"></typeparam>
 type StateContinuationFuncClamped<'State, 'T, 'K> =
     StateContinuationFunc<'State, 'State, 'T, 'K>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="K"></typeparam>
 type MaybeContinuationFunc<'T, 'K> =
     ContinuationFunc<'T option, 'K>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+/// <typeparam name="K"></typeparam>
 type ChoiceContinuationFunc<'T, 'Error, 'K> =
     ContinuationFunc<Choice<'T, 'Error>, 'K>
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="S1"></typeparam>
+/// <typeparam name="S2"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+/// <typeparam name="K"></typeparam>
 type ProtectedStateContinuationFunc<'S1, 'S2, 'T, 'Error, 'K> =
     'S1 -> (Choice<'T * 'S2, 'Error> -> 'K) -> 'K
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+/// <typeparam name="K"></typeparam>
 type ProtectedStateContinuationFuncClamped<'State, 'T, 'Error, 'K> =
     ProtectedStateContinuationFunc<'State, 'State, 'T, 'Error, 'K>
 
@@ -148,7 +256,8 @@ type ProtectedStateContinuationFuncClamped<'State, 'T, 'Error, 'K> =
 
 (*** Workflow Builders ***)
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type StateBuilder () =
     // 'T -> M<'T>
@@ -230,7 +339,8 @@ type StateBuilder () =
                         body enum.Current))))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ReaderBuilder () =
     // 'T -> M<'T>
@@ -318,7 +428,8 @@ type ReaderBuilder () =
         *)
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ReaderStateBuilder () =
     // 'T -> M<'T>
@@ -400,42 +511,44 @@ type ReaderStateBuilder () =
                         body enum.Current))))
 
 
-//
+/// <summary>
+/// </summary>
+/// <typeparam name="writer"></typeparam>
 [<Sealed>]
 type WriterBuilder<'Writer
     when 'Writer :> IWriter<'Writer>
     and 'Writer : (new : unit -> 'Writer)> (writer : 'Writer) =
     // 'T -> M<'T>
-    member __.Return value
+    member inline __.Return value
         : 'T * 'Writer =
         value, writer
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom writer
+    member inline __.ReturnFrom writer
         : 'T * 'Writer =
         writer
 
     // unit -> M<'T>
-    member __.Zero ()
+    member inline __.Zero ()
         : unit * 'Writer =
         (), writer
-
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : 'T * 'Writer, k : 'T -> 'U * 'Writer)
-        : 'U * 'Writer =
-        let value, writer1 = m
-        let result, writer2 = k value
-        result, writer.Combine (writer1, writer2)
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
         : 'T * 'Writer =
         f ()
 
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member inline __.Bind (m : 'T * 'Writer, k : 'T -> 'U * 'Writer)
+        : 'U * 'Writer =
+        let value, writer1 = m
+        let result, writer2 = k value
+        result, writer.Combine (writer1, writer2)
+
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member __.Combine (r1 : unit * _, r2)
+    member inline __.Combine (r1 : unit * _, r2)
         : 'T * 'Writer =
         let writer1 = snd r1
         let result, writer2 = r2
@@ -443,36 +556,44 @@ type WriterBuilder<'Writer
 
 //    // M<'T> -> M<'T> -> M<'T>
 //    member inline __.TryWith (body, handler)
-//        : 'T * ^W =
+//        : 'T * 'W =
 //        notImpl "TryWith"
 //
 //    // M<'T> -> M<'T> -> M<'T>
 //    member inline __.TryFinally (body, handler)
-//        : 'T * ^W =
+//        : 'T * 'W =
 //        notImpl "TryFinally"
-
+//
 //    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-//    member inline __.Using (resource : ('T :> System.IDisposable), body) =
-//        notImpl "Using"
+//    member this.Using (resource : ('T :> System.IDisposable), body) =
+//        try body resource
+//        finally
+//            if not <| isNull (box resource) then
+//                resource.Dispose ()
 //
 //    // (unit -> bool) * M<'T> -> M<'T>
-//    member inline __.While (guard, body)
-//        : unit * ^W =
-//        let mutable writer = empty
-//        while guard () do
-//            
-//
-//        notImpl "While"
+//    member this.While (guard, body)
+//        : unit * 'W =
+//        if guard () then
+//            this.Bind (body, (fun () ->
+//                this.While (guard, body)))
+//        else
+//            this.Zero ()
 //
 //    // seq<'T> * ('T -> M<'U>) -> M<'U>
 //    // or
 //    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-//    member inline __.For (sequence : seq<_>, body : 'T -> _)
-//        : unit * ^W =
-//        notImpl "For"
+//    member this.For (sequence : seq<_>, body : 'T -> _)
+//        : unit * 'W =
+//        this.Using (sequence.GetEnumerator (), fun enum ->
+//            this.While (
+//                enum.MoveNext,
+//                this.Delay (fun () ->
+//                    body enum.Current)))
 
 
-////
+///// <summary>
+///// </summary>
 //[<Sealed>]
 //type ReaderWriterStateBuilder () =
 //    // 'T -> M<'T>
@@ -531,7 +652,7 @@ type WriterBuilder<'Writer
 //        finally
 //            if not <| isNull (box resource) then
 //                resource.Dispose ()
-
+//
 //    // (unit -> bool) * M<'T> -> M<'T>
 //    member this.While (guard, body : ReaderWriterStateFunc<_,_,_,_,_>)
 //        : ReaderWriterStateFunc<_,_,_,_,_> =
@@ -553,108 +674,114 @@ type WriterBuilder<'Writer
 //                    body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type MaybeBuilder () =
     // 'T -> M<'T>
-    member __.Return value : 'T option =
+    member inline __.Return value : 'T option =
         Some value
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom value : 'T option =
+    member inline __.ReturnFrom value : 'T option =
         value
 
     // unit -> M<'T>
-    member __.Zero () : unit option =
+    member inline __.Zero () : unit option =
         Some ()     // TODO : Should this be None?
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay (f : unit -> 'T option) : 'T option =
         f ()
 
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (value, f : 'T -> 'U option) : 'U option =
-        Option.bind f value
-
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1, r2 : 'T option) : _ option =
-        this.Bind (r1, fun () -> r2)
+    member inline __.Combine (r1, r2 : 'T option) : 'T option =
+        match r1 with
+        | None ->
+            None
+        | Some () ->
+            r2
 
-    // M<'T> -> M<'T> -> M<'T>
-    member this.TryWith (body, handler) : _ option =
-        notImpl "TryWith"
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member inline __.Bind (value, f : 'T -> 'U option) : 'U option =
+        Option.bind f value
 
-    // M<'T> -> M<'T> -> M<'T>
-    member this.TryFinally (body, handler) : _ option =
-        notImpl "TryFinally"
-
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body) : _ option =
-        notImpl "Using"
-
-    // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body) : _ option =
-        notImpl "While"
-
-    // seq<'T> * ('T -> M<'U>) -> M<'U>
-    // or
-    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> unit option) : _ option =
-        notImpl "For"
-
-
+//    // M<'T> -> M<'T> -> M<'T>
+//    member this.TryWith (body, handler) : _ option =
+//        notImpl "TryWith"
 //
+//    // M<'T> -> M<'T> -> M<'T>
+//    member this.TryFinally (body, handler) : _ option =
+//        notImpl "TryFinally"
+//
+//    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+//    member this.Using (resource : ('T :> System.IDisposable), body) : _ option =
+//        notImpl "Using"
+//
+//    // (unit -> bool) * M<'T> -> M<'T>
+//    member this.While (guard, body) : _ option =
+//        notImpl "While"
+//
+//    // seq<'T> * ('T -> M<'U>) -> M<'U>
+//    // or
+//    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+//    member this.For (sequence : seq<_>, body : 'T -> unit option) : _ option =
+//        notImpl "For"
+
+
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ChoiceBuilder () =
     // 'T -> M<'T>
-    member __.Return value : Choice<'T, 'Error> =
+    member inline __.Return value : Choice<'T, 'Error> =
         Choice1Of2 value
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom (m : Choice<'T, 'Error>) =
+    member inline __.ReturnFrom (m : Choice<'T, 'Error>) =
         m
 
     // unit -> M<'T>
-    member __.Zero () : Choice<unit, 'Error> =
+    member inline __.Zero () : Choice<unit, 'Error> =
         Choice1Of2 ()
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay (f : unit -> Choice<'T, 'Error>) : Choice<'T, 'Error> =
         f ()
 
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (value, f : 'T -> Choice<'U, 'Error>) : Choice<'U, 'Error> =
-        match value with
-        | Choice2Of2 error ->
-            Choice2Of2 error
-        | Choice1Of2 x ->
-            f x
-        
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member __.Combine (r1, r2) : Choice<'T, 'Error> =
+    member inline __.Combine (r1, r2) : Choice<'T, 'Error> =
         match r1 with
         | Choice2Of2 error ->
             Choice2Of2 error
         | Choice1Of2 () ->
             r2
 
-    // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : 'T -> Choice<'U, 'Error>, handler) =
-        fun value ->
-        try body value
-        with ex ->
-            handler ex
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member inline __.Bind (value, f : 'T -> Choice<'U, 'Error>) : Choice<'U, 'Error> =
+        match value with
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 x ->
+            f x
 
-    // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : 'T -> Choice<'U, 'Error>, handler) =
-        fun value ->
-        try body value
-        finally
-            handler ()
+//    // M<'T> -> M<'T> -> M<'T>
+//    member inline __.TryWith (body : 'T -> Choice<'U, 'Error>, handler) =
+//        fun value ->
+//            try body value
+//            with ex ->
+//                handler ex
+//
+//    // M<'T> -> M<'T> -> M<'T>
+//    member inline __.TryFinally (body : 'T -> Choice<'U, 'Error>, handler) =
+//        fun value ->
+//            try body value
+//            finally
+//                handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : _ -> Choice<_,_>)
@@ -664,27 +791,28 @@ type ChoiceBuilder () =
             if not <| isNull (box resource) then
                 resource.Dispose ()
 
-    // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : Choice<unit, 'Error>) : Choice<_,_> =
-        if guard () then
-            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
+//    // (unit -> bool) * M<'T> -> M<'T>
+//    member this.While (guard, body : Choice<unit, 'Error>) : Choice<_,_> =
+//        if guard () then
+//            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
+//            this.Bind (body, (fun () -> this.While (guard, body)))
+//        else
+//            this.Zero ()
 
-    // seq<'T> * ('T -> M<'U>) -> M<'U>
-    // or
-    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> Choice<unit, 'Error>) =
-        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
-        this.Using (sequence.GetEnumerator (), fun enum ->
-            this.While (
-                enum.MoveNext,
-                this.Delay (fun () ->
-                    body enum.Current)))
+//    // seq<'T> * ('T -> M<'U>) -> M<'U>
+//    // or
+//    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+//    member this.For (sequence : seq<_>, body : 'T -> Choice<unit, 'Error>) =
+//        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
+//        this.Using (sequence.GetEnumerator (), fun enum ->
+//            this.While (
+//                enum.MoveNext,
+//                this.Delay (fun () ->
+//                    body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ReaderChoiceBuilder () =
     // 'T -> M<'T>
@@ -773,7 +901,8 @@ type ReaderChoiceBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ProtectedStateBuilder () =
     // 'T -> M<'T>
@@ -858,7 +987,8 @@ type ProtectedStateBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ReaderProtectedStateBuilder () =
     // 'T -> M<'T>
@@ -943,7 +1073,8 @@ type ReaderProtectedStateBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type StatefulChoiceBuilder () =
     // 'T -> M<'T>
@@ -1029,7 +1160,8 @@ type StatefulChoiceBuilder () =
                         body enum.Current))))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type TransactionBuilder () =
     // 'T -> M<'T>
@@ -1082,21 +1214,22 @@ type TransactionBuilder () =
         notImpl "For"
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ContinuationBuilder () =
     // 'T -> M<'T>
-    member __.Return value
+    member inline __.Return value
         : ContinuationFunc<'T, 'K> =
         fun k -> k value
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom func
+    member inline __.ReturnFrom func
         : ContinuationFunc<'T, 'K> =
         func
 
     // unit -> M<'T>
-    member __.Zero ()
+    member inline __.Zero ()
         : ContinuationFunc<unit, 'K> =
         fun k -> k ()
 
@@ -1106,34 +1239,36 @@ type ContinuationBuilder () =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ContinuationFunc<_,_>, f : 'T -> ContinuationFunc<_,_>)
+    member inline __.Bind (m : ContinuationFunc<_,_>, f : 'T -> ContinuationFunc<_,_>)
         : ContinuationFunc<'U, 'K> =
-        fun k ->
-            m <| fun a ->
-                f a k
+        fun cont ->
+            m <| fun result ->
+                f result cont
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ContinuationFunc<_,_>, r2 : ContinuationFunc<_,_>)
+    member inline __.Combine (r1 : ContinuationFunc<unit, 'K>, r2 : ContinuationFunc<'T, 'K>)
         : ContinuationFunc<'T, 'K> =
-        this.Bind (r1, (fun () -> r2))
+        fun cont ->
+            r1 <| fun () ->
+                r2 cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : ContinuationFunc<_,_>, handler : exn -> ContinuationFunc<_,_>)
+    member inline __.TryWith (body : ContinuationFunc<_,_>, handler : exn -> ContinuationFunc<_,_>)
         : ContinuationFunc<'T, 'K> =
         fun state ->
-        try body state
-        with ex ->
-            handler ex state
+            try body state
+            with ex ->
+                handler ex state
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : ContinuationFunc<_,_>, handler)
+    member inline __.TryFinally (body : ContinuationFunc<_,_>, handler)
         : ContinuationFunc<'T, 'K> =
         fun state ->
-        try body state
-        finally
-            handler ()
+            try body state
+            finally
+                handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ContinuationFunc<_,_>)
@@ -1162,49 +1297,50 @@ type ContinuationBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type StateContinuationBuilder () =
     // 'T -> M<'T>
-    member __.Return value
+    member inline __.Return value
         : StateContinuationFuncClamped<'State, 'T, 'K> =
         fun state cont ->
             cont (value, state)
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom func
+    member inline __.ReturnFrom func
         : StateContinuationFunc<'S1, 'S2, 'T, 'K> =
         func
 
     // unit -> M<'T>
-    member __.Zero ()
+    member inline __.Zero ()
         : StateContinuationFuncClamped<'State, unit, 'K> =
         fun state cont ->
             cont ((), state)
-
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : StateContinuationFunc<_,'S2,_,_>, k : 'T -> StateContinuationFunc<_,_,_,_>)
-        : StateContinuationFunc<'S1, 'S3, 'U, 'K> =
-        fun state cont ->
-            m state <| fun (result, state) ->
-                k result state cont
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
         : StateContinuationFunc<'S1, 'S2, 'T, 'K> =
         f ()
 
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member inline __.Bind (m : StateContinuationFunc<_,'S2,_,_>, k : 'T -> StateContinuationFunc<_,_,_,_>)
+        : StateContinuationFunc<'S1, 'S3, 'U, 'K> =
+        fun state cont ->
+            m state <| fun (result, state) ->
+                k result state cont
+
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member __.Combine (r1 : StateContinuationFunc<_,_,_,_>, r2 : StateContinuationFunc<_,_,_,_>)
+    member inline __.Combine (r1 : StateContinuationFunc<_,_,_,_>, r2 : StateContinuationFunc<_,_,_,_>)
         : StateContinuationFunc<_,_,_,_> =
         fun state cont ->
             r1 state <| fun ((), state) ->
                 r2 () state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : StateContinuationFunc<_,_,_,_>, handler : exn -> StateContinuationFunc<_,_,_,_>)
+    member inline __.TryWith (body : StateContinuationFunc<_,_,_,_>, handler : exn -> StateContinuationFunc<_,_,_,_>)
         : StateContinuationFunc<_,_,_,_> =
         fun state cont ->
             try body state cont
@@ -1212,7 +1348,7 @@ type StateContinuationBuilder () =
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : StateContinuationFunc<_,_,_,_>, handler)
+    member inline __.TryFinally (body : StateContinuationFunc<_,_,_,_>, handler)
         : StateContinuationFunc<_,_,_,_> =
         fun state cont ->
             try body state cont
@@ -1246,28 +1382,34 @@ type StateContinuationBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type MaybeContinuationBuilder () =
     // 'T -> M<'T>
-    member __.Return value
+    member inline __.Return value
         : MaybeContinuationFunc<'T, 'K> =
         fun cont ->
             cont (Some value)
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom func
+    member inline __.ReturnFrom func
         : MaybeContinuationFunc<'T, 'K> =
         func
 
     // unit -> M<'T>
-    member __.Zero ()
+    member inline __.Zero ()
         : MaybeContinuationFunc<unit, 'K> =
         fun cont ->
             cont (Some ())
 
+    // (unit -> M<'T>) -> M<'T>
+    member __.Delay f
+        : MaybeContinuationFunc<_,_> =
+        f ()
+
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : MaybeContinuationFunc<_,_>, k : 'T -> MaybeContinuationFunc<_,_>)
+    member inline __.Bind (m : MaybeContinuationFunc<_,_>, k : 'T -> MaybeContinuationFunc<_,_>)
         : MaybeContinuationFunc<'U, 'K> =
         fun cont ->
             m <| fun result ->
@@ -1277,15 +1419,10 @@ type MaybeContinuationBuilder () =
             | Some value ->
                 k value cont
 
-    // (unit -> M<'T>) -> M<'T>
-    member __.Delay f
-        : MaybeContinuationFunc<_,_> =
-        f ()
-
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member __.Combine (r1 : MaybeContinuationFunc<_,_>, r2 : MaybeContinuationFunc<_,_>)
+    member inline __.Combine (r1 : MaybeContinuationFunc<_,_>, r2 : MaybeContinuationFunc<_,_>)
         : MaybeContinuationFunc<_,_> =
         fun cont ->
             r1 <| fun result ->
@@ -1296,7 +1433,7 @@ type MaybeContinuationBuilder () =
                 r2 cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : MaybeContinuationFunc<_,_>, handler : exn -> MaybeContinuationFunc<_,_>)
+    member inline __.TryWith (body : MaybeContinuationFunc<_,_>, handler : exn -> MaybeContinuationFunc<_,_>)
         : MaybeContinuationFunc<_,_> =
         fun cont ->
             try body cont
@@ -1304,7 +1441,7 @@ type MaybeContinuationBuilder () =
                 handler ex cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : MaybeContinuationFunc<_,_>, handler)
+    member inline __.TryFinally (body : MaybeContinuationFunc<_,_>, handler)
         : MaybeContinuationFunc<'T, 'K> =
         fun cont ->
             try body cont
@@ -1338,28 +1475,34 @@ type MaybeContinuationBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ChoiceContinuationBuilder () =
     // 'T -> M<'T>
-    member __.Return value
+    member inline __.Return value
         : ChoiceContinuationFunc<'T, 'Error, 'K> =
         fun cont ->
             cont (Choice1Of2 value)
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom func
+    member inline __.ReturnFrom func
         : ChoiceContinuationFunc<'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
-    member __.Zero ()
+    member inline __.Zero ()
         : ChoiceContinuationFunc<unit, 'Error, 'K> =
         fun cont ->
             cont (Choice1Of2 ())
 
+    // (unit -> M<'T>) -> M<'T>
+    member __.Delay f
+        : ChoiceContinuationFunc<'T, 'Error, 'K> =
+        f ()
+
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ChoiceContinuationFunc<_,_,_>, k : 'T -> ChoiceContinuationFunc<_,_,_>)
+    member inline __.Bind (m : ChoiceContinuationFunc<_,_,_>, k : 'T -> ChoiceContinuationFunc<_,_,_>)
         : ChoiceContinuationFunc<'U, 'Error, 'K> =
         fun cont ->
             m <| fun result ->
@@ -1368,17 +1511,12 @@ type ChoiceContinuationBuilder () =
                 Choice2Of2 error
                 |> cont
             | Choice1Of2 value ->
-                k value cont
-
-    // (unit -> M<'T>) -> M<'T>
-    member __.Delay f
-        : ChoiceContinuationFunc<'T, 'Error, 'K> =
-        f ()
+                k value cont    
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ChoiceContinuationFunc<_,_,_>, r2 : ChoiceContinuationFunc<_,_,_>)
+    member inline __.Combine (r1 : ChoiceContinuationFunc<_,_,_>, r2 : ChoiceContinuationFunc<_,_,_>)
         : ChoiceContinuationFunc<'T, 'Error, 'K> =
         fun cont ->
             r1 <| fun result ->
@@ -1390,7 +1528,7 @@ type ChoiceContinuationBuilder () =
                 r2 cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : ChoiceContinuationFunc<_,_,_>, handler : exn -> ChoiceContinuationFunc<_,_,_>)
+    member inline __.TryWith (body : ChoiceContinuationFunc<_,_,_>, handler : exn -> ChoiceContinuationFunc<_,_,_>)
         : ChoiceContinuationFunc<'T, 'Error, 'K> =
         fun cont ->
             try body cont
@@ -1398,7 +1536,7 @@ type ChoiceContinuationBuilder () =
                 handler ex cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : ChoiceContinuationFunc<_,_,_>, handler)
+    member inline __.TryFinally (body : ChoiceContinuationFunc<_,_,_>, handler)
         : ChoiceContinuationFunc<'T, 'Error, 'K> =
         fun cont ->
             try body cont
@@ -1432,28 +1570,34 @@ type ChoiceContinuationBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<Sealed>]
 type ProtectedStateContinuationBuilder () =
     // 'T -> M<'T>
-    member __.Return value
+    member inline __.Return value
         : ProtectedStateContinuationFuncClamped<'State, 'T, 'Error, 'K> =
         fun state cont ->
             cont (Choice1Of2 (value, state))
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom func
+    member inline __.ReturnFrom func
         : ProtectedStateContinuationFunc<'S1, 'S2, 'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
-    member __.Zero ()
+    member inline __.Zero ()
         : ProtectedStateContinuationFuncClamped<'State, unit, 'Error, 'K> =
         fun state cont ->
             cont (Choice1Of2 ((), state))
 
+    // (unit -> M<'T>) -> M<'T>
+    member __.Delay f
+        : ProtectedStateContinuationFunc<'S1, 'S2, 'T, 'Error, 'K> =
+        f ()
+
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ProtectedStateContinuationFunc<_,_,_,_,_>, k : 'T -> ProtectedStateContinuationFunc<_,_,_,_,_>) =
+    member inline __.Bind (m : ProtectedStateContinuationFunc<_,_,_,_,_>, k : 'T -> ProtectedStateContinuationFunc<_,_,_,_,_>) =
         fun state cont ->
             m state <| fun result ->
                 match result with
@@ -1463,15 +1607,10 @@ type ProtectedStateContinuationBuilder () =
                 | Choice1Of2 (result, state) ->
                     k result state cont
 
-    // (unit -> M<'T>) -> M<'T>
-    member __.Delay f
-        : ProtectedStateContinuationFunc<'S1, 'S2, 'T, 'Error, 'K> =
-        f ()
-
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ProtectedStateContinuationFunc<_,'S2,_,_,_>, r2 : ProtectedStateContinuationFunc<_,_,_,_,_>)
+    member inline __.Combine (r1 : ProtectedStateContinuationFunc<_,'S2,_,_,_>, r2 : ProtectedStateContinuationFunc<_,_,_,_,_>)
         : ProtectedStateContinuationFunc<'S1, 'S3, 'T, 'Error, 'K>=
         fun state cont ->
             r1 state <| fun result ->
@@ -1483,7 +1622,7 @@ type ProtectedStateContinuationBuilder () =
                     r2 state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : ProtectedStateContinuationFunc<_,_,_,_,_>, handler : exn -> ProtectedStateContinuationFunc<_,_,_,_,_>)
+    member inline __.TryWith (body : ProtectedStateContinuationFunc<_,_,_,_,_>, handler : exn -> ProtectedStateContinuationFunc<_,_,_,_,_>)
         : ProtectedStateContinuationFunc<'S1, 'S2, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
@@ -1491,7 +1630,7 @@ type ProtectedStateContinuationBuilder () =
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : ProtectedStateContinuationFunc<_,_,_,_,_>, handler)
+    member inline __.TryFinally (body : ProtectedStateContinuationFunc<_,_,_,_,_>, handler)
         : ProtectedStateContinuationFunc<'S1, 'S2, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
@@ -1525,7 +1664,8 @@ type ProtectedStateContinuationBuilder () =
                     body enum.Current)))
 
 
-//
+/// <summary>
+/// </summary>
 [<AutoOpen>]
 module WorkflowBuilders =
     //
@@ -1534,7 +1674,9 @@ module WorkflowBuilders =
     let reader = ReaderBuilder ()
     //
     let readerState = ReaderStateBuilder ()
-    //
+    /// <summary>
+    /// </summary>
+    /// <typeparam name="Writer"></typeparam>
     [<GeneralizableValue>]
     let writer<'Writer
         when 'Writer :> IWriter<'Writer>
@@ -1557,7 +1699,8 @@ module WorkflowBuilders =
     //
     let transaction = TransactionBuilder ()
 
-    //
+    /// <summary>
+    /// </summary>
     [<RequireQualifiedAccess>]
     module Cps =
         //
@@ -1575,7 +1718,8 @@ module WorkflowBuilders =
 
 (*** Workflow helper modules ***)
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module State =
     //
@@ -1621,42 +1765,48 @@ module State =
             result, state
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Reader =
     //
     let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderState =
     //
     let dummy () = ()
 
 
-////
-//[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-//module Writer =
-//    //
-//    let dummy () = ()
-//
-//
-////
-//[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-//module ReaderWriterState =
-//    //
-//    let dummy () = ()
+/// <summary>
+/// </summary>
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Writer =
+    //
+    let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ReaderWriterState =
+    //
+    let dummy () = ()
+
+
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Maybe =
     //
     let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
     /// Transforms a Choice's first value by using a specified mapping function.
@@ -1692,14 +1842,16 @@ module Choice =
         Choice2Of2 errorMsg
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderChoice =
     //
     let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ProtectedState =
     //
@@ -1721,8 +1873,8 @@ module ProtectedState =
         bind (fun () -> r2) r1
 
     //
-    let inline liftState (stateM : 'State -> 'T * 'State) =
-        stateM >> Choice1Of2
+    let inline liftState (stateFunc : StateFunc<'S1, 'S2, 'T>) : ProtectedStateFunc<'S1, 'S2, 'T, 'Error> =
+        stateFunc >> Choice1Of2
 
     //
     let inline liftEither (valueOrError : Choice<'T, 'Error>) =
@@ -1779,14 +1931,16 @@ module ProtectedState =
                 Choice1Of2 result
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderProtectedState =
     //
     let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module StatefulChoice =
     //
@@ -1830,31 +1984,34 @@ module StatefulChoice =
         bind (mapping >> ``return``) m
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Transaction =
     //
     let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Continuation =
     //
     let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module StateContinuation =
     //
     let dummy () = ()
 
 
-//
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ProtectedStateContinuation =
     //
     let dummy () = ()
-
 
