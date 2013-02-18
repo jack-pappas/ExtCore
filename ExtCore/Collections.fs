@@ -45,7 +45,7 @@ module Seq =
 
     (* TODO
 
-    Seq.tokenize
+    Seq.segment
         Groups elements of a sequence together "longitudinally" -- i.e., it works
         in a streaming fashion, rather than Seq.groupBy which needs to see the
         entire stream before returning. Alternatively, this can be thought of
@@ -443,11 +443,9 @@ module List =
 
     (* TODO
 
-    List.unzip4
     List.unzipMap
         Similar to List.map2 (and List.zipMap, below). Given a list of tuples (a, b)
         applies the elements of each tuple to a function 'f' (f a b).
-    List.zip4
     List.zipMap
         Similar to List.map2, but combines the elements into a tuple before
         applying them to the mapping function; this optimizes for the case where
@@ -484,49 +482,58 @@ module Array =
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
     /// The integer index passed to the function indicates the array index of the element being transformed.
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (arr : 'T[]) =
-        checkNonNull "arr" arr
+    let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[]) =
+        // Preconditions
+        checkNonNull "array" array
+
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
         let mutable state = state
-        let len = arr.Length
+        let len = array.Length
         for i = 0 to len - 1 do
-            state <- folder.Invoke (i, state, arr.[i])
+            state <- folder.Invoke (i, state, array.[i])
         state
 
     /// Applies a function to each element of the array, returning a new array whose elements are
     /// tuples of the original element and the function result for that element.
     [<CompiledName("ProjectValues")>]
     let projectValues (projection : 'Key -> 'U) (array : 'Key[]) =
+        // Preconditions
+        checkNonNull "array" array
+
         array |> Array.map (fun x -> x, projection x)
 
     //
     [<CompiledName("ProjectKeys")>]
     let projectKeys (projection : 'T -> 'Key) (array : 'T[]) =
+        // Preconditions
+        checkNonNull "array" array
+
         array |> Array.map (fun x -> projection x, x)
 
     /// Returns the first element in the array.
-    let [<NoDynamicInvocation>] inline first (arr : 'T[]) =
-        if Array.isEmpty arr then
+    let [<NoDynamicInvocation>] inline first (array : 'T[]) =
+        if Array.isEmpty array then
             invalidOp "Cannot retrieve the first element of an empty array."
-        else arr.[0]
+        else array.[0]
 
     /// Returns the index of the last element in the array.
-    let [<NoDynamicInvocation>] inline lastIndex (arr : 'T[]) =
-        if Array.isEmpty arr then
+    let [<NoDynamicInvocation>] inline lastIndex (array : 'T[]) =
+        if Array.isEmpty array then
             invalidOp "The array is empty."
-        else arr.Length - 1
+        else array.Length - 1
 
     /// Returns the last element in the array.
-    let [<NoDynamicInvocation>] inline last (arr : 'T[]) =
-        if Array.isEmpty arr then
+    let [<NoDynamicInvocation>] inline last (array : 'T[]) =
+        if Array.isEmpty array then
             invalidOp "Cannot retrieve the last element of an empty array."
-        else arr.[arr.Length - 1]
+        else array.[array.Length - 1]
 
     /// Splits an array into one or more arrays; the specified predicate is applied
     /// to each element in the array, and whenever it returns true, that element will
     /// be the first element in one of the "subarrays".
     [<CompiledName("Split")>]
     let split (predicate : 'T -> bool) (array : 'T[]) =
+        // Preconditions
         checkNonNull "array" array
 
         let segments = ResizeArray<_> ()
@@ -551,6 +558,7 @@ module Array =
     /// the predicate returns true.
     [<CompiledName("Segment")>]
     let segment (predicate : 'T -> bool) (array : 'T[]) =
+        // Preconditions
         checkNonNull "array" array
         
         let segments = ResizeArray<_> ()
@@ -585,8 +593,10 @@ module Array =
     /// predicate returns true.
     [<CompiledName("Segment2")>]
     let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[]) =
+        // Preconditions
         checkNonNull "array1" array1
         checkNonNull "array2" array2
+
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
         let len1 = array1.Length 
         if len1 <> array2.Length then
@@ -626,29 +636,31 @@ module Array =
     /// Expands an array by creating a copy of it which has
     /// the specified number of empty elements appended to it.
     [<CompiledName("ExpandRight")>]
-    let expandRight count (arr : 'T[]) =
+    let expandRight count (array : 'T[]) =
         // Preconditions
         if count < 0 then
             invalidArg "count" "The number of elements to expand the array by is negative."
+        checkNonNull "array" array
 
         // Create the new "expanded" array. Copy the elements from the original array
         // into the "left" side of the new array, then return the expanded array.
-        let expandedArr = Array.zeroCreate (arr.Length + count)        
-        Array.blit arr 0 expandedArr 0 arr.Length
+        let expandedArr = Array.zeroCreate (array.Length + count)        
+        Array.blit array 0 expandedArr 0 array.Length
         expandedArr
 
     /// Expands an array by creating a copy of it which has
     /// the specified number of empty elements prepended to it.
     [<CompiledName("ExpandLeft")>]
-    let expandLeft count (arr : 'T[]) =
+    let expandLeft count (array : 'T[]) =
         // Preconditions
         if count < 0 then
             invalidArg "count" "The number of elements to expand the array by is negative."
+        checkNonNull "array" array
 
         // Create the new "expanded" array. Copy the elements from the original array
         // into the "right" side of the new array, then return the expanded array.
-        let expandedArr = Array.zeroCreate (arr.Length + count)
-        Array.blit arr 0 expandedArr count arr.Length
+        let expandedArr = Array.zeroCreate (array.Length + count)
+        Array.blit array 0 expandedArr count array.Length
         expandedArr
 
     //
@@ -722,9 +734,11 @@ module Array =
 module TaggedArray =
     /// Similar to Array.mapi, but 'tags' the index values with a unit-of-measure
     /// type before applying them to the mapping function.
-    [<CompiledName("MapIndexedByTag")>]
-    let mapti (mapping : int<'Tag> -> 'T -> 'U) (array : 'T[]) =
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int<'Tag> -> 'T -> 'U) (array : 'T[]) =
+        // Preconditions
         checkNonNull "array" array
+        
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
         let len = array.Length
         let results = Array.zeroCreate len
@@ -734,10 +748,12 @@ module TaggedArray =
 
     /// Similar to Array.mapi, but 'tags' the index values with a unit-of-measure
     /// type before applying them to the mapping function.
-    [<CompiledName("MapIndexedByTag")>]
-    let mapti2 (mapping : int<'Tag> -> 'T1 -> 'T2 -> 'U) (array1 : 'T1[]) (array2 : 'T2[]) =
+    [<CompiledName("MapIndexed")>]
+    let mapi2 (mapping : int<'Tag> -> 'T1 -> 'T2 -> 'U) (array1 : 'T1[]) (array2 : 'T2[]) =
+        // Preconditions
         checkNonNull "array1" array1
         checkNonNull "array2" array2
+        
         let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
         let len1 = array1.Length 
         if len1 <> array2.Length then
@@ -751,9 +767,11 @@ module TaggedArray =
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
     /// The integer index passed to the function indicates the array index of the element being transformed.
     /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
-    [<CompiledName("FoldIndexedByTag")>]
-    let foldti (folder : int<'Tag> -> 'State -> 'T -> 'State) (state : 'State) (arr : 'T[]) =
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : int<'Tag> -> 'State -> 'T -> 'State) (state : 'State) (arr : 'T[]) =
+        // Preconditions
         checkNonNull "arr" arr
+        
         let folder = OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt folder
         let mutable state = state
         let len = arr.Length
@@ -1114,7 +1132,9 @@ module Set =
     //
     [<CompiledName("FoldIndexed")>]
     let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (set : Set<'T>) =
+        // Preconditions
         checkNonNull "set" set
+
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
         let mutable state = state
         let mutable idx = 0
@@ -1126,7 +1146,9 @@ module Set =
     //
     [<CompiledName("MapToArray")>]
     let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) =
+        // Preconditions
         checkNonNull "set" set
+
         let results = Array.zeroCreate <| Set.count set
         let mutable idx = 0
         for el in set do
@@ -1499,7 +1521,11 @@ module Map =
             Set.add value values)
 
     //
-    let [<NoDynamicInvocation>] addKvp (kvp : KeyValuePair<'Key, 'T>) map =
+    [<CompiledName("AddKvp")>]
+    let inline addKvp (kvp : KeyValuePair<'Key, 'T>) map =
+        // Preconditions
+        checkNonNull "map" map
+
         Map.add kvp.Key kvp.Value map
 
     //
@@ -1742,10 +1768,13 @@ module Map =
 module ResizeArray =
     open System.Collections.Generic
 
-
     //
     let [<NoDynamicInvocation>] inline length (resizeArray : ResizeArray<'T>) =
         resizeArray.Count
+
+    //
+    let inline isEmpty (resizeArray : ResizeArray<'T>) =
+        resizeArray.Count = 0
 
     //
     let [<NoDynamicInvocation>] inline add item (resizeArray : ResizeArray<'T>) =
@@ -1785,17 +1814,270 @@ module ResizeArray =
     let [<NoDynamicInvocation>] inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
         resizeArray.Sort (comparer)
 
-    // TODO:
-    // map, mapi
-    // iter, iteri
-    // fold, foldBack
-    // reduce, reduceBack
-    // exists, forall
-    // find, tryFind
-    // findIndex, tryFindIndex
-    // pick, tryPick
-    // choose
-    // singleton
+    //
+    [<CompiledName("Contains")>]
+    let inline contains (value : 'T) (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        resizeArray.Contains value
+
+    //
+    [<CompiledName("Filter")>]
+    let inline filter (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        resizeArray.FindAll (System.Predicate predicate)
+
+    //
+    [<CompiledName("Exists")>]
+    let inline exists (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : bool =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        resizeArray.Exists (System.Predicate predicate)
+
+    //
+    [<CompiledName("Forall")>]
+    let inline forall (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : bool =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        resizeArray.TrueForAll (System.Predicate predicate)
+
+    //
+    [<CompiledName("TryFindIndex")>]
+    let tryFindIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int option =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        match resizeArray.FindIndex (System.Predicate predicate) with
+        | -1 ->
+            None
+        | index ->
+            Some index
+
+    //
+    [<CompiledName("TryFind")>]
+    let tryFind (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T option =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        match resizeArray.FindIndex (System.Predicate predicate) with
+        | -1 ->
+            None
+        | index ->
+            Some resizeArray.[index]
+        
+    //
+    [<CompiledName("FindIndex")>]
+    let findIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        match resizeArray.FindIndex (System.Predicate predicate) with
+        | -1 ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+        | index ->
+            index
+
+    //
+    [<CompiledName("Find")>]
+    let find (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        match resizeArray.FindIndex (System.Predicate predicate) with
+        | -1 ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+        | index ->
+            resizeArray.[index]
+
+    //
+    [<CompiledName("Map")>]
+    let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        resizeArray.ConvertAll (System.Converter mapping)
+
+    //
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+        let count = resizeArray.Count
+        let result = ResizeArray (count)
+
+        for i = 0 to count - 1 do
+            result.Add <| mapping.Invoke (i, resizeArray.[i])
+        result
+
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let count = resizeArray.Count
+        for i = 0 to count - 1 do
+            action resizeArray.[i]
+
+    //
+    [<CompiledName("IterateIndexed")>]
+    let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let count = resizeArray.Count
+        for i = 0 to count - 1 do
+            action.Invoke (i, resizeArray.[i])
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+
+        let mutable state = state
+        let count = resizeArray.Count
+        for i = 0 to count - 1 do
+            state <- folder.Invoke (state, resizeArray.[i])
+        state
+
+    //
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : int -> 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        let mutable state = state
+        let count = resizeArray.Count
+        for i = 0 to count - 1 do
+            state <- folder.Invoke (i, state, resizeArray.[i])
+        state
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+
+        let mutable state = state
+        for i = resizeArray.Count - 1 downto 0 do
+            state <- folder.Invoke (resizeArray.[i], state)
+        state
+
+    //
+    [<CompiledName("FoldBackIndexed")>]
+    let foldiBack (folder : int -> 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        let mutable state = state
+        for i = resizeArray.Count - 1 downto 0 do
+            state <- folder.Invoke (i, resizeArray.[i], state)
+        state
+
+    //
+    [<CompiledName("Reduce")>]
+    let reduce (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+        if isEmpty resizeArray then
+            invalidArg "resizeArray" "The ResizeArray is empty."
+
+        let reduction = FSharpFunc<_,_,_>.Adapt reduction
+
+        let mutable state = resizeArray.[0]
+        let count = resizeArray.Count
+        for i = 1 to count - 1 do
+            state <- reduction.Invoke (state, resizeArray.[i])
+        state
+
+    //
+    [<CompiledName("ReduceBack")>]
+    let reduceBack (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) : 'T =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+        if isEmpty resizeArray then
+            invalidArg "resizeArray" "The ResizeArray is empty."
+
+        let reduction = FSharpFunc<_,_,_>.Adapt reduction
+
+        let count = resizeArray.Count
+        let mutable state = resizeArray.[count - 1]
+
+        for i = count - 2 downto 0 do
+            state <- reduction.Invoke (resizeArray.[i], state)
+        state
+
+    //
+    [<CompiledName("Choose")>]
+    let choose (chooser : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : ResizeArray<'U> =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        // OPTIMIZATION : If the input list is empty return immediately.
+        if isEmpty resizeArray then
+            ResizeArray ()
+        else
+            let result = ResizeArray ()
+            let count = resizeArray.Count
+
+            for i = 0 to count - 1 do
+                match chooser resizeArray.[i] with
+                | None -> ()
+                | Some value ->
+                    result.Add value
+
+            result
+
+    //
+    [<CompiledName("TryPick")>]
+    let tryPick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U option =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let count = resizeArray.Count
+        let mutable result = None
+        let mutable index = 0
+
+        while index < count && Option.isNone result do
+            result <- picker resizeArray.[index]
+        result
+
+    //
+    [<CompiledName("Pick")>]
+    let pick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U =
+        // Preconditions
+        checkNonNull "resizeArray" resizeArray
+
+        let count = resizeArray.Count
+        let mutable result = None
+        let mutable index = 0
+
+        while index < count && Option.isNone result do
+            result <- picker resizeArray.[index]
+
+        match result with
+        | Some result ->
+            result
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
 
 
 /// Functional programming operators related to the System.Collections.Generic.IDictionary type.
