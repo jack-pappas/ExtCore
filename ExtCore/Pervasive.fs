@@ -108,6 +108,7 @@ module AdditionalOperators =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Enum =
     //
+    [<CompiledName("GetValues")>]
     let values<'Enum, 'T when 'Enum : enum<'T>> () =
         typeof<'Enum>
         |> System.Enum.GetValues
@@ -126,6 +127,7 @@ module Lazy =
         lazyValue.Value
 
     //
+    [<CompiledName("TryGetValue")>]
     let tryGetValue (lazyValue : Lazy<'T>) =
         if lazyValue.IsValueCreated then
             Some lazyValue.Value
@@ -177,6 +179,7 @@ module String =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Option =
     open System
+    open System.Runtime.InteropServices
 
     /// Creates an F# option from an instance of a reference type.
     /// If the reference is null, returns None; otherwise, (Some value).
@@ -225,8 +228,7 @@ module Option =
         | None -> generator ()
 
     //
-    let [<NoDynamicInvocation>] inline toOutAndBool value
-        ([<System.Runtime.InteropServices.Out>] outValue : byref<'T>) =
+    let [<NoDynamicInvocation>] inline toOutAndBool value ([<Out>] outValue : byref<'T>) =
         match value with
         | Some x ->
             outValue <- x
@@ -268,3 +270,18 @@ module Choice =
         | Choice1Of2 result -> binding result
         | Choice2Of2 error -> Choice2Of2 error
 *)
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module KeyValuePair =
+    open System.Collections.Generic
+
+    //
+    let [<NoDynamicInvocation>] inline key (kvp : KeyValuePair<'Key, 'T>) =
+        kvp.Key
+
+    //
+    let [<NoDynamicInvocation>] inline value (kvp : KeyValuePair<'Key, 'T>) =
+        kvp.Value
+
