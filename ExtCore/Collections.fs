@@ -25,6 +25,90 @@ open OptimizedClosures
 open ExtCore
 
 
+//
+type IMapReduction<'Key, 'T> =
+    //
+    abstract Map : 'Key -> 'T
+    //
+    abstract Reduce : 'T -> 'T -> 'T    // or 'T * 'T -> 'T
+
+// TODO : Implement a MapReduction module:
+// MapReduction.fromFunctions
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Range =
+    open LanguagePrimitives
+
+    //
+    // start and finish are _inclusive_ (like F# for loop)
+    [<CompiledName("Iterate")>]
+    let inline iter start finish (action : ^T -> unit) : unit =
+        let mutable index = start
+        while index <= finish do
+            action index
+            index <- index + GenericOne
+
+    //
+    [<CompiledName("Fold")>]
+    let inline fold start finish state (folder : ^State -> ^T -> ^State) : ^State =
+        let mutable state = state
+        let mutable index = start
+        while index <= finish do
+            state <- folder state index
+            index <- index + GenericOne
+        state
+
+    //
+    [<CompiledName("FoldBack")>]
+    let inline foldBack start finish state (folder : ^T -> ^State -> ^State) : ^State =
+        let mutable state = state
+        let mutable index = finish
+        while index >= start do
+            state <- folder index state
+            index <- index - GenericOne
+        state
+
+    //
+    [<CompiledName("Exists")>]
+    let inline exists start finish state (predicate : ^T -> bool) : bool =
+        let mutable foundMatch = false
+        let mutable index = start
+        while index <= finish && not foundMatch do
+            foundMatch <- predicate index
+            index <- index + GenericOne
+        state
+
+    //
+    [<CompiledName("Forall")>]
+    let inline forall start finish state (predicate : ^T -> bool) : bool =
+        let mutable allMatch = true
+        let mutable index = start
+        while index <= finish && allMatch do
+            allMatch <- predicate index
+            index <- index + GenericOne
+        state
+
+
+    // TODO
+    // mapReduce
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module KeyValuePair =
+    open System.Collections.Generic
+
+    //
+    let [<NoDynamicInvocation>] inline key (kvp : KeyValuePair<'Key, 'T>) =
+        kvp.Key
+
+    //
+    let [<NoDynamicInvocation>] inline value (kvp : KeyValuePair<'Key, 'T>) =
+        kvp.Value
+
+
 /// Additional functional operators on sequences.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
@@ -722,6 +806,28 @@ module Array =
             resultList1.ToArray (),
             resultList2.ToArray (),
             resultList3.ToArray ()
+
+    //
+    [<CompiledName("MapReduce")>]
+    let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
+        // Preconditions
+        checkNonNull "array" array
+        if Array.isEmpty array then
+            invalidArg "array" "The array is empty."
+
+        // Map the first element of the array so it can be
+        // used as the seed for the fold.
+        let mutable state = mapReduction.Map array.[0]
+
+        // Implement an imperative-style fold, mapping each element
+        // then reducing it with the current state to get the new state.
+        let len = Array.length array
+        for i = 1 to len - 1 do
+            state <-
+                mapReduction.Reduce state (mapReduction.Map array.[i])
+
+        // Return the final state.
+        state
 
     // TODO :
     // foldBacki
