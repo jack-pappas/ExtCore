@@ -519,17 +519,17 @@ type WriterBuilder<'Writer
     when 'Writer :> IWriter<'Writer>
     and 'Writer : (new : unit -> 'Writer)> (writer : 'Writer) =
     // 'T -> M<'T>
-    member inline __.Return value
+    member __.Return value
         : 'T * 'Writer =
         value, writer
 
     // M<'T> -> M<'T>
-    member inline __.ReturnFrom writer
+    member __.ReturnFrom writer
         : 'T * 'Writer =
         writer
 
     // unit -> M<'T>
-    member inline __.Zero ()
+    member __.Zero ()
         : unit * 'Writer =
         (), writer
 
@@ -539,7 +539,7 @@ type WriterBuilder<'Writer
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : 'T * 'Writer, k : 'T -> 'U * 'Writer)
+    member __.Bind (m : 'T * 'Writer, k : 'T -> 'U * 'Writer)
         : 'U * 'Writer =
         let value, writer1 = m
         let result, writer2 = k value
@@ -548,7 +548,7 @@ type WriterBuilder<'Writer
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : unit * _, r2)
+    member __.Combine (r1 : unit * _, r2)
         : 'T * 'Writer =
         let writer1 = snd r1
         let result, writer2 = r2
