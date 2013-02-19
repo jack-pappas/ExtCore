@@ -2739,7 +2739,8 @@ module Cps =
         module Array =
             //
             [<CompiledName("Map")>]
-            let dummy () = ()
+            let map () =
+                notImpl "Cps.Cont.Array.map"
 
 
     //
@@ -2750,6 +2751,67 @@ module Cps =
         module Array =
             //
             [<CompiledName("Map")>]
-            let dummy () = ()
+            let map (mapping : 'T -> 'State -> ('U * 'State -> 'K) -> 'K) (array : 'T[]) (state : 'State)
+                : ('U[] -> 'State -> 'K) -> 'K =
+                // Preconditions
+                checkNonNull "array" array
 
+                // OPTIMIZATION : If the array is empty return immediately.
+                if Array.isEmpty array then
+                    fun cont ->
+                        cont Array.empty state
+                else
+                    /// The number of array elements.
+                    let len = Array.length array
+
+                    /// The mapped elements.
+                    let results = Array.zeroCreate len
+
+                    //let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+//
+//                    let qq cont =
+//                        (array, (len - 1, cont))
+//                        // TODO : Simplify using Array.foldiBack
+//                        ||> Array.foldBack (fun el (idx, cont) ->
+//                            idx - 1,
+//                            fun (result, state) ->
+//                                // Store the result from mapping the _previous_
+//                                // (left-to-right) element into the array.
+//                                results.[argIdx
+
+                    
+//                    /// Iterates backwards over the array elements, creating a chain of continuations
+//                    /// which'll process them in order (from left-to-right) when executed.
+//                    let rec buildFirstArgCont argIdx cont =
+//                        // If this is the first (index = 0) argument, return the continuation.
+//                        if argIdx = 0 then cont
+//                        else
+//                            /// The continuation which'll be called once the previous argument
+//                            /// (at index = (argIdx - 1)) is finished being processed.
+//                            let cont = fun (prevArgAcc, state) ->
+//                                // Save the _previous_ argument's accumulator into the array
+//                                results.[argIdx - 1] <- prevArgAcc
+//                            
+//                                //
+//                                foldImpl (exprFldr, array.[argIdx], state, cont)
+//
+//                            //
+//                            buildFirstArgCont (argIdx - 1) cont
+//
+//                    // The continuation called after processing the last argument.
+//                    let lastArgCont = fun (argAcc : 'ExpressionValue, state) ->
+//                        // Save the last argument's accumulator value.
+//                        results.[len - 1] <- argAcc
+//
+//                        // Call the 'Call' handler method with the processed argument values,
+//                        // then pass the resulting value (and modified state) to the original continuation.
+//                        cont (exprFldr.Call (info, call, argAccs) state)
+//
+//                    // Create the argument-processing continuation, then pass it to foldImpl
+//                    // along with the current state and first argument Expression.
+//                    let argCont = buildFirstArgCont (len - 1) lastArgCont
+//                    foldImpl (exprFldr, args.[0], state, argCont)
+
+
+                    notImpl "map"
 
