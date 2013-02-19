@@ -271,17 +271,3 @@ module Choice =
         | Choice2Of2 error -> Choice2Of2 error
 *)
 
-
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module KeyValuePair =
-    open System.Collections.Generic
-
-    //
-    let [<NoDynamicInvocation>] inline key (kvp : KeyValuePair<'Key, 'T>) =
-        kvp.Key
-
-    //
-    let [<NoDynamicInvocation>] inline value (kvp : KeyValuePair<'Key, 'T>) =
-        kvp.Value
-
