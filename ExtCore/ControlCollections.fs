@@ -629,6 +629,423 @@ module State =
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Reader =
+    /// The standard F# Array module, lifted into the Reader monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Array =
+        //
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'Env -> 'U) (array : 'T[]) (env : 'Env) : 'U[] =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+            let len = Array.length array
+            /// Holds the mapped results.
+            let results = Array.zeroCreate len
+
+            for i = 0 to len - 1 do
+                results.[i] <- mapping.Invoke (array.[i], env)
+            results
+
+        //
+        [<CompiledName("MapIndexed")>]
+        let mapi (mapping : int -> 'T -> 'Env -> 'U) (array : 'T[]) (env : 'Env) : 'U[] =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+            let len = Array.length array
+            /// Holds the mapped results.
+            let results = Array.zeroCreate len
+
+            for i = 0 to len - 1 do
+                results.[i] <- mapping.Invoke (i, array.[i], env)
+            results
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ReaderState =
+    /// The standard F# Array module, lifted into the ReaderState monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Array =
+        /// A specialization of Array.iter which threads an accumulator through the computation;
+        /// this allows the use of actions requiring a (possibly mutable) state variable.
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> 'Env -> 'State -> unit * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : unit * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let action = FSharpFunc<_,_,_,_>.Adapt action
+            let len = array.Length
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                state <- snd <| action.Invoke (array.[i], env, state)
+
+            (), state
+
+        /// A specialization of Array.iteri which threads an accumulator through the computation;
+        /// this allows the use of actions requiring a (possibly mutable) state variable.
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> 'T -> 'Env -> 'State -> unit * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : unit * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let action = FSharpFunc<_,_,_,_,_>.Adapt action
+            let len = array.Length
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                state <- snd <| action.Invoke (i, array.[i], env, state)
+
+            (), state
+
+        /// A specialization of Array.map which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'Env -> 'State -> 'U * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                let result, state' = mapping.Invoke (array.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        [<CompiledName("MapIndexed")>]
+        let mapi (mapping : int -> 'T -> 'Env -> 'State -> 'U * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                let result, state' = mapping.Invoke (i, array.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.map which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// This function traverses the input array from right-to-left.
+        [<CompiledName("MapBack")>]
+        let mapBack (mapping : 'T -> 'Env -> 'State -> 'U * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = len - 1 downto 0 do
+                let result, state' = mapping.Invoke (array.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// This function traverses the input array from right-to-left.
+        [<CompiledName("MapIndexedBack")>]
+        let mapiBack (mapping : int -> 'T -> 'Env -> 'State -> 'U * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = len - 1 downto 0 do
+                let result, state' = mapping.Invoke (i, array.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.map2 which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// This function traverses the input arrays from left-to-right.
+        [<CompiledName("Map2")>]
+        let map2 (mapping : 'T1 -> 'T2 -> 'Env -> 'State -> 'U * 'State)
+                (array1 : 'T1[]) (array2 : 'T2[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array1" array1
+            checkNonNull "array2" array2
+
+            let len = array1.Length
+
+            if array2.Length <> len then
+                invalidArg "array2" "The arrays have differing lengths."
+
+            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                let result, state' = mapping.Invoke (array1.[i], array2.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.mapi2 which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// This function traverses the input arrays from left-to-right.
+        [<CompiledName("MapIndexed2")>]
+        let mapi2 (mapping : int -> 'T1 -> 'T2 -> 'Env -> 'State -> 'U * 'State)
+                (array1 : 'T1[]) (array2 : 'T2[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array1" array1
+            checkNonNull "array2" array2
+
+            let len = array1.Length
+
+            if array2.Length <> len then
+                invalidArg "array2" "The arrays have differing lengths."
+
+            let mapping = FSharpFunc<_,_,_,_,_,_>.Adapt mapping
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                let result, state' = mapping.Invoke (i, array1.[i], array2.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+        [<CompiledName("Fold")>]
+        let fold (folder : 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
+                (innerState : 'InnerState) (array : 'T[]) (env : 'Env) (outerState : 'OuterState)
+                : 'InnerState * 'OuterState =
+            // Preconditions
+            checkNonNull "array" array
+
+            let folder = FSharpFunc<_,_,_,_,_>.Adapt folder
+            let len = array.Length
+            let mutable outerState = outerState
+            let mutable innerState = innerState
+
+            for i = 0 to len - 1 do
+                let innerState', outerState' = folder.Invoke (innerState, array.[i], env, outerState)
+                innerState <- innerState'
+                outerState <- outerState'
+
+            innerState, outerState
+
+        /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+        /// The integer index passed to the function indicates the array index of the element being transformed.
+        [<CompiledName("FoldIndexed")>]
+        let foldi (folder : int -> 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
+                (innerState : 'InnerState) (array : 'T[]) (env : 'Env) (outerState : 'OuterState)
+                : 'InnerState * 'OuterState =
+            // Preconditions
+            checkNonNull "array" array
+
+            let folder = FSharpFunc<_,_,_,_,_,_>.Adapt folder
+            let len = array.Length
+            let mutable outerState = outerState
+            let mutable innerState = innerState
+
+            for i = 0 to len - 1 do
+                let innerState', outerState' = folder.Invoke (i, innerState, array.[i], env, outerState)
+                innerState <- innerState'
+                outerState <- outerState'
+
+            innerState, outerState
+
+
+    /// The ExtCore.Collections.TaggedArray module, lifted into the ReaderState monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module TaggedArray =
+        open LanguagePrimitives
+
+        /// A specialization of Array.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
+        [<CompiledName("MapIndexedByTag")>]
+        let mapti (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                let result, state' = mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        /// This function traverses the input array from right-to-left.
+        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
+        [<CompiledName("MapIndexedByTagBack")>]
+        let maptiBack (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
+                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+            let mutable state = state
+
+            for i = len - 1 downto 0 do
+                let result, state' = mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+        /// The integer index passed to the function indicates the array index of the element being transformed.
+        /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
+        [<CompiledName("FoldIndexedByTag")>]
+        let foldti (folder : int<'Tag> -> 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
+                (innerState : 'InnerState) (array : 'T[]) (env : 'Env) (outerState : 'OuterState)
+                : 'InnerState * 'OuterState =
+            // Preconditions
+            checkNonNull "array" array
+
+            let folder = FSharpFunc<_,_,_,_,_,_>.Adapt folder
+            let len = array.Length
+            let mutable outerState = outerState
+            let mutable innerState = innerState
+
+            for i = 0 to len - 1 do
+                let innerState', outerState' =
+                    folder.Invoke (Int32WithMeasure<'Tag> i, innerState, array.[i], env, outerState)
+                innerState <- innerState'
+                outerState <- outerState'
+
+            innerState, outerState
+
+
+    /// The ExtCore.Collections.ArraySegment module, lifted into the ReaderState monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module ArraySegment =
+        /// A specialization of ArraySegment.iter which threads an accumulator through the computation;
+        /// this allows the use of actions requiring a (possibly mutable) state variable.
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> 'Env -> 'State -> unit * 'State)
+                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : unit * 'State =
+            let action = FSharpFunc<_,_,_,_>.Adapt action
+
+            let array = segment.Array
+            let endExclusive = segment.Offset + segment.Count
+            let mutable state = state
+
+            for i = segment.Offset to endExclusive - 1 do
+                state <- snd <| action.Invoke (array.[i], env, state)
+
+            (), state
+
+        /// A specialization of ArraySegment.iteri which threads an accumulator through the computation;
+        /// this allows the use of actions requiring a (possibly mutable) state variable.
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> 'T -> 'Env -> 'State -> unit * 'State)
+                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : unit * 'State =
+            let action = FSharpFunc<_,_,_,_,_>.Adapt action
+
+            let array = segment.Array
+            let endExclusive = segment.Offset + segment.Count
+            let mutable state = state
+            let mutable idx = 0
+
+            for i = segment.Offset to endExclusive - 1 do
+                state <- snd <| action.Invoke (idx, array.[i], env, state)
+                idx <- idx + 1
+
+            (), state
+
+        /// A specialization of Array.map which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'Env -> 'State -> 'U * 'State)
+                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+
+            let array = segment.Array
+            let offset = segment.Offset
+            let count = segment.Count
+            
+            let results = Array.zeroCreate count
+            let mutable state = state
+
+            for i = 0 to count - 1 do
+                let result, state' = mapping.Invoke (array.[offset + i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+        /// A specialization of Array.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        [<CompiledName("MapIndexed")>]
+        let mapi (mapping : int -> 'T -> 'Env -> 'State -> 'U * 'State)
+                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : 'U[] * 'State =
+            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
+
+            let array = segment.Array
+            let offset = segment.Offset
+            let count = segment.Count
+            
+            let results = Array.zeroCreate count
+            let mutable state = state
+
+            for i = 0 to count - 1 do
+                let result, state' = mapping.Invoke (i, array.[offset + i], env, state)
+                results.[i] <- result
+                state <- state'
+
+            results, state
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Maybe =
+    /// The standard F# Array module, lifted into the Maybe monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Array =
+        //
+        [<CompiledName("Map")>]
+        let dummy () = ()
+
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
     /// The standard F# Array module, lifted into the Choice monad.
     [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -1130,772 +1547,6 @@ module Choice =
                 Choice2Of2 error
             | None ->
                 Choice1Of2 state
-
-
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ProtectedState =
-    /// The standard F# Array module, lifted into the ProtectedState monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Array =
-        /// A specialization of Array.iter which threads an accumulator through the computation
-        /// and which also short-circuits the computation if the mapping function returns an
-        /// error when any element is applied to it.
-        [<CompiledName("Iterate")>]
-        let iter (action : 'T -> 'State -> Choice<unit * 'State, 'Error>)
-                (array : 'T[]) (state : 'State) : Choice<unit * 'State, 'Error> =
-            // Preconditions
-            checkNonNull "array" array
-
-            let action = FSharpFunc<_,_,_>.Adapt action
-            let len = array.Length
-
-            let mutable index = 0
-            let mutable state = state
-            let mutable error = None
-
-            while index < len && Option.isNone error do
-                match action.Invoke (array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 ((), state') ->
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            // Otherwise return the result and updated state.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 ((), state)
-
-        /// A specialization of Array.iteri which threads an accumulator through the computation
-        /// and which also short-circuits the computation if the mapping function returns an
-        /// error when any element is applied to it.
-        [<CompiledName("IterateIndexed")>]
-        let iteri (action : int -> 'T -> 'State -> Choice<unit * 'State, 'Error>)
-                (array : 'T[]) (state : 'State) : Choice<unit * 'State, 'Error> =
-            // Preconditions
-            checkNonNull "array" array
-
-            let action = FSharpFunc<_,_,_,_>.Adapt action
-            let len = array.Length
-
-            let mutable index = 0
-            let mutable state = state
-            let mutable error = None
-
-            while index < len && Option.isNone error do
-                match action.Invoke (index, array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 ((), state') ->
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            // Otherwise return the result and updated state.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 ((), state)
-
-        /// A specialization of Array.map which threads an accumulator through the computation
-        /// and which also short-circuits the computation if the mapping function returns an
-        /// error when any element is applied to it.
-        [<CompiledName("Map")>]
-        let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
-                (array : 'T[]) (state : 'State) : Choice<'U[] * 'State, 'Error> =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-
-            let mutable index = 0
-            let mutable state = state
-            let mutable error = None
-
-            while index < len && Option.isNone error do
-                match mapping.Invoke (array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 (result, state') ->
-                    results.[index] <- result
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            // Otherwise return the result and updated state.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 (results, state)
-
-        /// A specialization of Array.mapi which threads an accumulator through the computation
-        /// and which also short-circuits the computation if the mapping function returns an
-        /// error when any element is applied to it.
-        [<CompiledName("MapIndexed")>]
-        let mapi (mapping : int -> 'T -> 'State -> Choice<'U * 'State, 'Error>)
-                (array : 'T[]) (state : 'State) : Choice<'U[] * 'State, 'Error> =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-
-            let mutable index = 0
-            let mutable state = state
-            let mutable error = None
-
-            while index < len && Option.isNone error do
-                match mapping.Invoke (index, array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 (result, state') ->
-                    results.[index] <- result
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            // Otherwise return the result and updated state.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 (results, state)
-
-
-    /// The standard F# List module, lifted into the ProtectedState monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module List =
-        /// A specialization of List.map which threads an accumulator through the computation
-        /// and which also short-circuits the computation if the mapping function returns an
-        /// error when any element is applied to it.
-        [<CompiledName("Map")>]
-        let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
-                (list : 'T list) (state : 'State) : Choice<'U list * 'State, 'Error> =
-            // Preconditions
-            checkNonNull "list" list
-
-            let mapping = FSharpFunc<_,_,_>.Adapt mapping
-            
-            let rec mapRec (results, state, lst) =
-                match lst with
-                | [] ->
-                    let results = List.rev results
-                    Choice1Of2 (results, state)
-                | hd :: tl ->
-                    // Apply the function to the head of the list.
-                    // If the result is an error, return it;
-                    // otherwise, continue processing recursively.
-                    match mapping.Invoke (hd, state) with
-                    | Choice2Of2 error ->
-                        Choice2Of2 error
-                    | Choice1Of2 (result, state) ->
-                        mapRec (result :: results, state, tl)
-
-            // Call the recursive implementation function.
-            mapRec ([], state, list)
-
-
-    /// The ExtCore.Collections.ArraySegment module, lifted into the ProtectedState monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module ArraySegment =
-        /// A specialization of ArraySegment.iter which threads an accumulator through the
-        /// computation and which also short-circuits the computation if the mapping function
-        /// returns an error when any element is applied to it.
-        [<CompiledName("Iterate")>]
-        let iter (action : 'T -> 'State -> Choice<unit * 'State, 'Error>)
-                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<unit * 'State, 'Error> =
-            let action = FSharpFunc<_,_,_>.Adapt action
-
-            let array = segment.Array
-            let endExclusive = segment.Offset + segment.Count
-
-            let mutable index = segment.Offset
-            let mutable state = state
-            let mutable error = None
-
-            while index < endExclusive && Option.isNone error do
-                match action.Invoke (array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 ((), state') ->
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 ((), state)
-
-        /// A specialization of ArraySegment.iteri which threads an accumulator through the
-        /// computation and which also short-circuits the computation if the mapping function
-        /// returns an error when any element is applied to it.
-        [<CompiledName("IterateIndexed")>]
-        let iteri (action : int -> 'T -> 'State -> Choice<unit * 'State, 'Error>)
-                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<unit * 'State, 'Error> =
-            let action = FSharpFunc<_,_,_,_>.Adapt action
-
-            let array = segment.Array
-            let endExclusive = segment.Offset + segment.Count
-
-            let mutable index = segment.Offset
-            let mutable state = state
-            let mutable error = None
-
-            while index < endExclusive && Option.isNone error do
-                match action.Invoke (index, array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 ((), state') ->
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 ((), state)
-
-        /// A specialization of ArraySegment.map which threads an accumulator through the
-        /// computation and which also short-circuits the computation if the mapping function
-        /// returns an error when any element is applied to it.
-        [<CompiledName("Map")>]
-        let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
-                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<'U[] * 'State, 'Error> =
-            let mapping = FSharpFunc<_,_,_>.Adapt mapping
-
-            let array = segment.Array
-            let endExclusive = segment.Offset + segment.Count
-            /// Holds the mapped results.
-            let results = Array.zeroCreate segment.Count
-
-            let mutable index = segment.Offset
-            let mutable state = state
-            let mutable error = None
-
-            while index < endExclusive && Option.isNone error do
-                match mapping.Invoke (array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 (result, state') ->
-                    results.[index] <- result
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            // Otherwise return the result and updated state.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 (results, state)
-
-        /// A specialization of ArraySegment.mapi which threads an accumulator through the
-        /// computation and which also short-circuits the computation if the mapping function
-        /// returns an error when any element is applied to it.
-        [<CompiledName("MapIndexed")>]
-        let mapi (mapping : int -> 'T -> 'State -> Choice<'U * 'State, 'Error>)
-                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<'U[] * 'State, 'Error> =
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-
-            let array = segment.Array
-            let endExclusive = segment.Offset + segment.Count
-            /// Holds the mapped results.
-            let results = Array.zeroCreate segment.Count
-
-            let mutable index = segment.Offset
-            let mutable state = state
-            let mutable error = None
-
-            while index < endExclusive && Option.isNone error do
-                match mapping.Invoke (index, array.[index], state) with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 (result, state') ->
-                    results.[index] <- result
-                    state <- state'
-                    index <- index + 1
-            
-            // If the error was set, return it.
-            // Otherwise return the result and updated state.
-            match error with
-            | Some error ->
-                Choice2Of2 error
-            | None ->
-                Choice1Of2 (results, state)
-
-
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module StatefulChoice =
-    /// The standard F# Array module, lifted into the StatefulChoice monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Array =
-        /// A specialization of Array.map which threads an accumulator through the computation and which also
-        /// short-circuits the computation if the mapping function returns an error when any element is applied to it.
-        [<CompiledName("Map")>]
-        let map (mapping : 'T -> 'State -> Choice<'U, 'Error> * 'State)
-                (array : 'T[]) (state : 'State) : Choice<'U[], 'Error> * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_>.Adapt mapping
-            let len = Array.length array
-            /// Holds the mapped results.
-            let results = Array.zeroCreate len
-
-            let mutable state = state
-            let mutable error = None
-            let mutable index = 0
-
-            while index < len && Option.isNone error do
-                let result, state' = mapping.Invoke (array.[index], state)
-                
-                // Update the state, even if the result was an error.
-                state <- state'
-                
-                // Check the result; short-circuit if it's an error.
-                match result with
-                | Choice2Of2 err ->
-                    error <- Some err
-                | Choice1Of2 result ->
-                    results.[index] <- result
-                    index <- index + 1
-            
-            // Return the updated state along with the
-            // result (or error, if set).
-            match error with
-            | Some error ->
-                (Choice2Of2 error), state
-            | None ->
-                (Choice1Of2 results), state
-
-
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Reader =
-    /// The standard F# Array module, lifted into the Reader monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Array =
-        //
-        [<CompiledName("Map")>]
-        let map (mapping : 'T -> 'Env -> 'U) (array : 'T[]) (env : 'Env) : 'U[] =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_>.Adapt mapping
-            let len = Array.length array
-            /// Holds the mapped results.
-            let results = Array.zeroCreate len
-
-            for i = 0 to len - 1 do
-                results.[i] <- mapping.Invoke (array.[i], env)
-            results
-
-        //
-        [<CompiledName("MapIndexed")>]
-        let mapi (mapping : int -> 'T -> 'Env -> 'U) (array : 'T[]) (env : 'Env) : 'U[] =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-            let len = Array.length array
-            /// Holds the mapped results.
-            let results = Array.zeroCreate len
-
-            for i = 0 to len - 1 do
-                results.[i] <- mapping.Invoke (i, array.[i], env)
-            results
-
-
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ReaderState =
-    /// The standard F# Array module, lifted into the ReaderState monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Array =
-        /// A specialization of Array.iter which threads an accumulator through the computation;
-        /// this allows the use of actions requiring a (possibly mutable) state variable.
-        [<CompiledName("Iterate")>]
-        let iter (action : 'T -> 'Env -> 'State -> unit * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : unit * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let action = FSharpFunc<_,_,_,_>.Adapt action
-            let len = array.Length
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                state <- snd <| action.Invoke (array.[i], env, state)
-
-            (), state
-
-        /// A specialization of Array.iteri which threads an accumulator through the computation;
-        /// this allows the use of actions requiring a (possibly mutable) state variable.
-        [<CompiledName("IterateIndexed")>]
-        let iteri (action : int -> 'T -> 'Env -> 'State -> unit * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : unit * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let action = FSharpFunc<_,_,_,_,_>.Adapt action
-            let len = array.Length
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                state <- snd <| action.Invoke (i, array.[i], env, state)
-
-            (), state
-
-        /// A specialization of Array.map which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        [<CompiledName("Map")>]
-        let map (mapping : 'T -> 'Env -> 'State -> 'U * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                let result, state' = mapping.Invoke (array.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.mapi which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        [<CompiledName("MapIndexed")>]
-        let mapi (mapping : int -> 'T -> 'Env -> 'State -> 'U * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                let result, state' = mapping.Invoke (i, array.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.map which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// This function traverses the input array from right-to-left.
-        [<CompiledName("MapBack")>]
-        let mapBack (mapping : 'T -> 'Env -> 'State -> 'U * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = len - 1 downto 0 do
-                let result, state' = mapping.Invoke (array.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.mapi which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// This function traverses the input array from right-to-left.
-        [<CompiledName("MapIndexedBack")>]
-        let mapiBack (mapping : int -> 'T -> 'Env -> 'State -> 'U * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = len - 1 downto 0 do
-                let result, state' = mapping.Invoke (i, array.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.map2 which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// This function traverses the input arrays from left-to-right.
-        [<CompiledName("Map2")>]
-        let map2 (mapping : 'T1 -> 'T2 -> 'Env -> 'State -> 'U * 'State)
-                (array1 : 'T1[]) (array2 : 'T2[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array1" array1
-            checkNonNull "array2" array2
-
-            let len = array1.Length
-
-            if array2.Length <> len then
-                invalidArg "array2" "The arrays have differing lengths."
-
-            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                let result, state' = mapping.Invoke (array1.[i], array2.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.mapi2 which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// This function traverses the input arrays from left-to-right.
-        [<CompiledName("MapIndexed2")>]
-        let mapi2 (mapping : int -> 'T1 -> 'T2 -> 'Env -> 'State -> 'U * 'State)
-                (array1 : 'T1[]) (array2 : 'T2[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array1" array1
-            checkNonNull "array2" array2
-
-            let len = array1.Length
-
-            if array2.Length <> len then
-                invalidArg "array2" "The arrays have differing lengths."
-
-            let mapping = FSharpFunc<_,_,_,_,_,_>.Adapt mapping
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                let result, state' = mapping.Invoke (i, array1.[i], array2.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
-        [<CompiledName("Fold")>]
-        let fold (folder : 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
-                (innerState : 'InnerState) (array : 'T[]) (env : 'Env) (outerState : 'OuterState)
-                : 'InnerState * 'OuterState =
-            // Preconditions
-            checkNonNull "array" array
-
-            let folder = FSharpFunc<_,_,_,_,_>.Adapt folder
-            let len = array.Length
-            let mutable outerState = outerState
-            let mutable innerState = innerState
-
-            for i = 0 to len - 1 do
-                let innerState', outerState' = folder.Invoke (innerState, array.[i], env, outerState)
-                innerState <- innerState'
-                outerState <- outerState'
-
-            innerState, outerState
-
-        /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
-        /// The integer index passed to the function indicates the array index of the element being transformed.
-        [<CompiledName("FoldIndexed")>]
-        let foldi (folder : int -> 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
-                (innerState : 'InnerState) (array : 'T[]) (env : 'Env) (outerState : 'OuterState)
-                : 'InnerState * 'OuterState =
-            // Preconditions
-            checkNonNull "array" array
-
-            let folder = FSharpFunc<_,_,_,_,_,_>.Adapt folder
-            let len = array.Length
-            let mutable outerState = outerState
-            let mutable innerState = innerState
-
-            for i = 0 to len - 1 do
-                let innerState', outerState' = folder.Invoke (i, innerState, array.[i], env, outerState)
-                innerState <- innerState'
-                outerState <- outerState'
-
-            innerState, outerState
-
-
-    /// The ExtCore.Collections.TaggedArray module, lifted into the ReaderState monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module TaggedArray =
-        open LanguagePrimitives
-
-        /// A specialization of Array.mapi which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
-        [<CompiledName("MapIndexedByTag")>]
-        let mapti (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = 0 to len - 1 do
-                let result, state' = mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.mapi which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        /// This function traverses the input array from right-to-left.
-        /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
-        [<CompiledName("MapIndexedByTagBack")>]
-        let maptiBack (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
-                (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            // Preconditions
-            checkNonNull "array" array
-
-            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
-            let len = array.Length
-            let results = Array.zeroCreate len
-            let mutable state = state
-
-            for i = len - 1 downto 0 do
-                let result, state' = mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
-        /// The integer index passed to the function indicates the array index of the element being transformed.
-        /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
-        [<CompiledName("FoldIndexedByTag")>]
-        let foldti (folder : int<'Tag> -> 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
-                (innerState : 'InnerState) (array : 'T[]) (env : 'Env) (outerState : 'OuterState)
-                : 'InnerState * 'OuterState =
-            // Preconditions
-            checkNonNull "array" array
-
-            let folder = FSharpFunc<_,_,_,_,_,_>.Adapt folder
-            let len = array.Length
-            let mutable outerState = outerState
-            let mutable innerState = innerState
-
-            for i = 0 to len - 1 do
-                let innerState', outerState' =
-                    folder.Invoke (Int32WithMeasure<'Tag> i, innerState, array.[i], env, outerState)
-                innerState <- innerState'
-                outerState <- outerState'
-
-            innerState, outerState
-
-
-    /// The ExtCore.Collections.ArraySegment module, lifted into the ReaderState monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module ArraySegment =
-        /// A specialization of ArraySegment.iter which threads an accumulator through the computation;
-        /// this allows the use of actions requiring a (possibly mutable) state variable.
-        [<CompiledName("Iterate")>]
-        let iter (action : 'T -> 'Env -> 'State -> unit * 'State)
-                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : unit * 'State =
-            let action = FSharpFunc<_,_,_,_>.Adapt action
-
-            let array = segment.Array
-            let endExclusive = segment.Offset + segment.Count
-            let mutable state = state
-
-            for i = segment.Offset to endExclusive - 1 do
-                state <- snd <| action.Invoke (array.[i], env, state)
-
-            (), state
-
-        /// A specialization of ArraySegment.iteri which threads an accumulator through the computation;
-        /// this allows the use of actions requiring a (possibly mutable) state variable.
-        [<CompiledName("IterateIndexed")>]
-        let iteri (action : int -> 'T -> 'Env -> 'State -> unit * 'State)
-                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : unit * 'State =
-            let action = FSharpFunc<_,_,_,_,_>.Adapt action
-
-            let array = segment.Array
-            let endExclusive = segment.Offset + segment.Count
-            let mutable state = state
-            let mutable idx = 0
-
-            for i = segment.Offset to endExclusive - 1 do
-                state <- snd <| action.Invoke (idx, array.[i], env, state)
-                idx <- idx + 1
-
-            (), state
-
-        /// A specialization of Array.map which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        [<CompiledName("Map")>]
-        let map (mapping : 'T -> 'Env -> 'State -> 'U * 'State)
-                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-
-            let array = segment.Array
-            let offset = segment.Offset
-            let count = segment.Count
-            
-            let results = Array.zeroCreate count
-            let mutable state = state
-
-            for i = 0 to count - 1 do
-                let result, state' = mapping.Invoke (array.[offset + i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-        /// A specialization of Array.mapi which threads an accumulator through the computation;
-        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
-        [<CompiledName("MapIndexed")>]
-        let mapi (mapping : int -> 'T -> 'Env -> 'State -> 'U * 'State)
-                (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State) : 'U[] * 'State =
-            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
-
-            let array = segment.Array
-            let offset = segment.Offset
-            let count = segment.Count
-            
-            let results = Array.zeroCreate count
-            let mutable state = state
-
-            for i = 0 to count - 1 do
-                let result, state' = mapping.Invoke (i, array.[offset + i], env, state)
-                results.[i] <- result
-                state <- state'
-
-            results, state
-
-
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Maybe =
-    /// The standard F# Array module, lifted into the Maybe monad.
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Array =
-        //
-        [<CompiledName("Map")>]
-        let dummy () = ()
 
 
 //
@@ -2422,6 +2073,310 @@ module ReaderChoice =
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ProtectedState =
+    /// The standard F# Array module, lifted into the ProtectedState monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Array =
+        /// A specialization of Array.iter which threads an accumulator through the computation
+        /// and which also short-circuits the computation if the mapping function returns an
+        /// error when any element is applied to it.
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> 'State -> Choice<unit * 'State, 'Error>)
+                (array : 'T[]) (state : 'State) : Choice<unit * 'State, 'Error> =
+            // Preconditions
+            checkNonNull "array" array
+
+            let action = FSharpFunc<_,_,_>.Adapt action
+            let len = array.Length
+
+            let mutable index = 0
+            let mutable state = state
+            let mutable error = None
+
+            while index < len && Option.isNone error do
+                match action.Invoke (array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 ((), state') ->
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            // Otherwise return the result and updated state.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 ((), state)
+
+        /// A specialization of Array.iteri which threads an accumulator through the computation
+        /// and which also short-circuits the computation if the mapping function returns an
+        /// error when any element is applied to it.
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> 'T -> 'State -> Choice<unit * 'State, 'Error>)
+                (array : 'T[]) (state : 'State) : Choice<unit * 'State, 'Error> =
+            // Preconditions
+            checkNonNull "array" array
+
+            let action = FSharpFunc<_,_,_,_>.Adapt action
+            let len = array.Length
+
+            let mutable index = 0
+            let mutable state = state
+            let mutable error = None
+
+            while index < len && Option.isNone error do
+                match action.Invoke (index, array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 ((), state') ->
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            // Otherwise return the result and updated state.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 ((), state)
+
+        /// A specialization of Array.map which threads an accumulator through the computation
+        /// and which also short-circuits the computation if the mapping function returns an
+        /// error when any element is applied to it.
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
+                (array : 'T[]) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+
+            let mutable index = 0
+            let mutable state = state
+            let mutable error = None
+
+            while index < len && Option.isNone error do
+                match mapping.Invoke (array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 (result, state') ->
+                    results.[index] <- result
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            // Otherwise return the result and updated state.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 (results, state)
+
+        /// A specialization of Array.mapi which threads an accumulator through the computation
+        /// and which also short-circuits the computation if the mapping function returns an
+        /// error when any element is applied to it.
+        [<CompiledName("MapIndexed")>]
+        let mapi (mapping : int -> 'T -> 'State -> Choice<'U * 'State, 'Error>)
+                (array : 'T[]) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+            let len = array.Length
+            let results = Array.zeroCreate len
+
+            let mutable index = 0
+            let mutable state = state
+            let mutable error = None
+
+            while index < len && Option.isNone error do
+                match mapping.Invoke (index, array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 (result, state') ->
+                    results.[index] <- result
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            // Otherwise return the result and updated state.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 (results, state)
+
+
+    /// The standard F# List module, lifted into the ProtectedState monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module List =
+        /// A specialization of List.map which threads an accumulator through the computation
+        /// and which also short-circuits the computation if the mapping function returns an
+        /// error when any element is applied to it.
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
+                (list : 'T list) (state : 'State) : Choice<'U list * 'State, 'Error> =
+            // Preconditions
+            checkNonNull "list" list
+
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+            
+            let rec mapRec (results, state, lst) =
+                match lst with
+                | [] ->
+                    let results = List.rev results
+                    Choice1Of2 (results, state)
+                | hd :: tl ->
+                    // Apply the function to the head of the list.
+                    // If the result is an error, return it;
+                    // otherwise, continue processing recursively.
+                    match mapping.Invoke (hd, state) with
+                    | Choice2Of2 error ->
+                        Choice2Of2 error
+                    | Choice1Of2 (result, state) ->
+                        mapRec (result :: results, state, tl)
+
+            // Call the recursive implementation function.
+            mapRec ([], state, list)
+
+
+    /// The ExtCore.Collections.ArraySegment module, lifted into the ProtectedState monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module ArraySegment =
+        /// A specialization of ArraySegment.iter which threads an accumulator through the
+        /// computation and which also short-circuits the computation if the mapping function
+        /// returns an error when any element is applied to it.
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> 'State -> Choice<unit * 'State, 'Error>)
+                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<unit * 'State, 'Error> =
+            let action = FSharpFunc<_,_,_>.Adapt action
+
+            let array = segment.Array
+            let endExclusive = segment.Offset + segment.Count
+
+            let mutable index = segment.Offset
+            let mutable state = state
+            let mutable error = None
+
+            while index < endExclusive && Option.isNone error do
+                match action.Invoke (array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 ((), state') ->
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 ((), state)
+
+        /// A specialization of ArraySegment.iteri which threads an accumulator through the
+        /// computation and which also short-circuits the computation if the mapping function
+        /// returns an error when any element is applied to it.
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> 'T -> 'State -> Choice<unit * 'State, 'Error>)
+                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<unit * 'State, 'Error> =
+            let action = FSharpFunc<_,_,_,_>.Adapt action
+
+            let array = segment.Array
+            let endExclusive = segment.Offset + segment.Count
+
+            let mutable index = segment.Offset
+            let mutable state = state
+            let mutable error = None
+
+            while index < endExclusive && Option.isNone error do
+                match action.Invoke (index, array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 ((), state') ->
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 ((), state)
+
+        /// A specialization of ArraySegment.map which threads an accumulator through the
+        /// computation and which also short-circuits the computation if the mapping function
+        /// returns an error when any element is applied to it.
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
+                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+            let array = segment.Array
+            let endExclusive = segment.Offset + segment.Count
+            /// Holds the mapped results.
+            let results = Array.zeroCreate segment.Count
+
+            let mutable index = segment.Offset
+            let mutable state = state
+            let mutable error = None
+
+            while index < endExclusive && Option.isNone error do
+                match mapping.Invoke (array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 (result, state') ->
+                    results.[index] <- result
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            // Otherwise return the result and updated state.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 (results, state)
+
+        /// A specialization of ArraySegment.mapi which threads an accumulator through the
+        /// computation and which also short-circuits the computation if the mapping function
+        /// returns an error when any element is applied to it.
+        [<CompiledName("MapIndexed")>]
+        let mapi (mapping : int -> 'T -> 'State -> Choice<'U * 'State, 'Error>)
+                (segment : System.ArraySegment<'T>) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+
+            let array = segment.Array
+            let endExclusive = segment.Offset + segment.Count
+            /// Holds the mapped results.
+            let results = Array.zeroCreate segment.Count
+
+            let mutable index = segment.Offset
+            let mutable state = state
+            let mutable error = None
+
+            while index < endExclusive && Option.isNone error do
+                match mapping.Invoke (index, array.[index], state) with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 (result, state') ->
+                    results.[index] <- result
+                    state <- state'
+                    index <- index + 1
+            
+            // If the error was set, return it.
+            // Otherwise return the result and updated state.
+            match error with
+            | Some error ->
+                Choice2Of2 error
+            | None ->
+                Choice1Of2 (results, state)
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderProtectedState =
     /// The standard F# Array module, lifted into the ReaderProtectedState monad.
     [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -2729,6 +2684,52 @@ module ReaderProtectedState =
 
 
 //
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module StatefulChoice =
+    /// The standard F# Array module, lifted into the StatefulChoice monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Array =
+        /// A specialization of Array.map which threads an accumulator through the computation and which also
+        /// short-circuits the computation if the mapping function returns an error when any element is applied to it.
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'State -> Choice<'U, 'Error> * 'State)
+                (array : 'T[]) (state : 'State) : Choice<'U[], 'Error> * 'State =
+            // Preconditions
+            checkNonNull "array" array
+
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+            let len = Array.length array
+            /// Holds the mapped results.
+            let results = Array.zeroCreate len
+
+            let mutable state = state
+            let mutable error = None
+            let mutable index = 0
+
+            while index < len && Option.isNone error do
+                let result, state' = mapping.Invoke (array.[index], state)
+                
+                // Update the state, even if the result was an error.
+                state <- state'
+                
+                // Check the result; short-circuit if it's an error.
+                match result with
+                | Choice2Of2 err ->
+                    error <- Some err
+                | Choice1Of2 result ->
+                    results.[index] <- result
+                    index <- index + 1
+            
+            // Return the updated state along with the
+            // result (or error, if set).
+            match error with
+            | Some error ->
+                (Choice2Of2 error), state
+            | None ->
+                (Choice1Of2 results), state
+
+
+//
 [<RequireQualifiedAccess>]
 module Cps =
     //
@@ -2738,9 +2739,39 @@ module Cps =
         [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         module Array =
             //
-            [<CompiledName("Map")>]
-            let map () =
-                notImpl "Cps.Cont.Array.map"
+            [<CompiledName("Fold")>]
+            let fold (folder : 'State -> 'T -> ('State -> 'K) -> 'K)
+                    (state : 'State) (array : 'T[]) (cont : 'State -> 'K) : 'K =
+                // Preconditions
+                checkNonNull "array" array
+
+                // OPTIMIZATION : If the array is empty return immediately.
+                if Array.isEmpty array then
+                    cont state
+                else
+                    /// The number of array elements.
+                    let len = Array.length array
+
+                    let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+                    /// Iterates backwards over the array elements, creating a chain of continuations
+                    /// which'll process them in order (from left-to-right) when executed.
+                    let rec buildCont idx cont =
+                        // The first element needs to be handled specially.
+                        if idx = 0 then
+                            // Pass the initial state to the mapping function when processing the first element.
+                            folder.Invoke (state, array.[0], cont)
+
+                        else
+                            // Pass a continuation which'll be called once the previous element
+                            // (at index = (argIdx - 1)) is mapped and stored in the results array.
+                            buildCont (idx - 1) <| fun (state : 'State) ->
+                                // Call the continuation to process the next element.
+                                folder.Invoke (state, array.[idx], cont)
+
+                    // Create and return a continuation which performs a CPS-style
+                    // fold over the array elements when called.
+                    buildCont (len - 1) cont
 
 
     //
@@ -2770,7 +2801,7 @@ module Cps =
 
                     /// Iterates backwards over the array elements, creating a chain of continuations
                     /// which'll process them in order (from left-to-right) when executed.
-                    let rec buildFirstArgCont idx cont =
+                    let rec buildCont idx cont =
                         // The first element needs to be handled specially.
                         if idx = 0 then
                             // Pass the initial state to the mapping function when processing the first element.
@@ -2779,7 +2810,7 @@ module Cps =
                         else
                             // Pass a continuation which'll be called once the previous element
                             // (at index = (argIdx - 1)) is mapped and stored in the results array.
-                            buildFirstArgCont (idx - 1) <| fun (prevElementResult, state : 'State) ->
+                            buildCont (idx - 1) <| fun (prevElementResult, state : 'State) ->
                                 // Save the _previous_ element's accumulator into the array
                                 results.[idx - 1] <- prevElementResult
 
@@ -2787,9 +2818,9 @@ module Cps =
                                 mapping.Invoke (array.[idx], state, cont)
 
                     // Create and return a continuation will map the array elements when called.
-                    // The function passed to 'buildFirstArgCont' here is used to store the mapped
+                    // The function passed to 'buildCont' here is used to store the mapped
                     // last element of the array, then call the original continuation with the results.
-                    buildFirstArgCont (len - 1) <| fun (prevElementResult : 'U, state : 'State) ->
+                    buildCont (len - 1) <| fun (prevElementResult : 'U, state : 'State) ->
                         // Save the last argument's accumulator value.
                         results.[len - 1] <- prevElementResult
 
@@ -2817,7 +2848,7 @@ module Cps =
 
                     /// Iterates backwards over the array elements, creating a chain of continuations
                     /// which'll process them in order (from left-to-right) when executed.
-                    let rec buildFirstArgCont idx cont =
+                    let rec buildCont idx cont =
                         // The first element needs to be handled specially.
                         if idx = 0 then
                             // Pass the initial state to the mapping function when processing the first element.
@@ -2826,7 +2857,7 @@ module Cps =
                         else
                             // Pass a continuation which'll be called once the previous element
                             // (at index = (argIdx - 1)) is mapped and stored in the results array.
-                            buildFirstArgCont (idx - 1) <| fun (prevElementResult, state : 'State) ->
+                            buildCont (idx - 1) <| fun (prevElementResult, state : 'State) ->
                                 // Save the _previous_ element's accumulator into the array
                                 results.[idx - 1] <- prevElementResult
 
@@ -2834,9 +2865,9 @@ module Cps =
                                 mapping.Invoke (idx, array.[idx], state, cont)
 
                     // Create and return a continuation will map the array elements when called.
-                    // The function passed to 'buildFirstArgCont' here is used to store the mapped
+                    // The function passed to 'buildCont' here is used to store the mapped
                     // last element of the array, then call the original continuation with the results.
-                    buildFirstArgCont (len - 1) <| fun (prevElementResult : 'U, state : 'State) ->
+                    buildCont (len - 1) <| fun (prevElementResult : 'U, state : 'State) ->
                         // Save the last argument's accumulator value.
                         results.[len - 1] <- prevElementResult
 
