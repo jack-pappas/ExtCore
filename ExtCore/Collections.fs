@@ -563,20 +563,6 @@ module Array =
     let [<NoDynamicInvocation>] inline toSet (array : 'T[]) : Set<'T> =
         Set.ofArray array
 
-    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
-    /// The integer index passed to the function indicates the array index of the element being transformed.
-    [<CompiledName("FoldIndexed")>]
-    let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[]) =
-        // Preconditions
-        checkNonNull "array" array
-
-        let folder = FSharpFunc<_,_,_,_>.Adapt folder
-        let mutable state = state
-        let len = array.Length
-        for i = 0 to len - 1 do
-            state <- folder.Invoke (i, state, array.[i])
-        state
-
     /// Applies a function to each element of the array, returning a new array whose elements are
     /// tuples of the original element and the function result for that element.
     [<CompiledName("ProjectValues")>]
@@ -611,6 +597,33 @@ module Array =
         if Array.isEmpty array then
             invalidOp "Cannot retrieve the last element of an empty array."
         else array.[array.Length - 1]
+
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    /// The integer index passed to the function indicates the array index of the element being transformed.
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[]) =
+        // Preconditions
+        checkNonNull "array" array
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        let mutable state = state
+        let len = array.Length
+        for i = 0 to len - 1 do
+            state <- folder.Invoke (i, state, array.[i])
+        state
+
+    //
+    [<CompiledName("FoldBackIndexed")>]
+    let foldiBack (folder : int -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
+        // Preconditions
+        checkNonNull "array" array
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        
+        let mutable state = state
+        for i = Array.length array - 1 downto 0 do
+            state <- folder.Invoke (i, array.[i], state)
+        state
 
     /// Splits an array into one or more arrays; the specified predicate is applied
     /// to each element in the array, and whenever it returns true, that element will
@@ -830,9 +843,9 @@ module Array =
         state
 
     // TODO :
-    // foldBacki
     // foldPairs, foldBackPairs
     // derive    // takes a 'T -> 'T -> 'T like reduce, but only performs one step; used to perform 'divided differences'
+        // Other possible names: reduceOnce, reduceStep
 
 
 //
@@ -874,15 +887,30 @@ module TaggedArray =
     /// The integer index passed to the function indicates the array index of the element being transformed.
     /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : int<'Tag> -> 'State -> 'T -> 'State) (state : 'State) (arr : 'T[]) =
+    let foldi (folder : int<'Tag> -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[]) =
         // Preconditions
-        checkNonNull "arr" arr
+        checkNonNull "array" array
         
         let folder = OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt folder
         let mutable state = state
-        let len = arr.Length
+        let len = Array.length array
         for i = 0 to len - 1 do
-            state <- folder.Invoke (Int32WithMeasure<'Tag> i, state, arr.[i])
+            state <- folder.Invoke (Int32WithMeasure<'Tag> i, state, array.[i])
+        state
+
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    /// The integer index passed to the function indicates the array index of the element being transformed.
+    /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
+    [<CompiledName("FoldBackIndexed")>]
+    let foldiBack (folder : int<'Tag> -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
+        // Preconditions
+        checkNonNull "array" array
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        
+        let mutable state = state
+        for i = Array.length array - 1 downto 0 do
+            state <- folder.Invoke (Int32WithMeasure<'Tag> i, array.[i], state)
         state
 
 
