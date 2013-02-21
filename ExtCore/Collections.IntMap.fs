@@ -114,7 +114,7 @@ type internal PatriciaMap<'T> =
                 (key, (if zeroBit (key, m) then t0 else t1))
 
     //
-    static member Count (map : PatriciaMap<'T>) : int =
+    static member CountOriginal (map : PatriciaMap<'T>) : int =
         // OPTIMIZE : We can 'strictify' this by adding an accumulator argument, so we'll
         // only need to use continuations for one side of the tree (left or right child).
         // We may also be able to eliminate continuations altogether by using an explicit
@@ -136,10 +136,10 @@ type internal PatriciaMap<'T> =
     // TODO : This is an experimental version of count which is optimized for performance.
     // It should work, but we need to do some tests to be sure. Once we're confident it's correct
     // we'll remove the original 'Count' function and use this once instead.
-    static member FastCount (map : PatriciaMap<'T>) =
+    static member Count (map : PatriciaMap<'T>) : int =
         match map with
-        | Empty -> 0u
-        | Lf (_,_) -> 1u
+        | Empty -> 0
+        | Lf (_,_) -> 1
         | Br (_,_,_,_) as t ->
             // TODO : Run some experiments to determine if this is a good initial capacity,
             // or if there is a more suitable value.
@@ -148,35 +148,33 @@ type internal PatriciaMap<'T> =
             // Add the initial tree to the stack.
             stack.Push t
 
-            /// Recursively processes the tree using the mutable stack.
-            // OPTIMIZE : We don't really need to use a recursive function here -- we could just
-            // use a mutable variable for 'acc' and change this to a while loop.
-            let rec fastCount acc =
-                if stack.Count = 0 then acc
-                else
-                    match stack.Pop () with
-                    | Empty ->
-                        fastCount acc
-                    | Lf (_,_) ->
-                        fastCount (acc + 1u)
-                    
-                    (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
-                                        them directly since it's a little faster. *)
-                    | Br (_, _, Lf (_,_), Lf (_,_)) ->
-                        fastCount (acc + 2u)
-                    
-                    | Br (_, _, Lf (_,_), child)
-                    | Br (_, _, child, Lf (_,_)) ->
-                        stack.Push child
-                        fastCount (acc + 1u)
+            // Traverse the tree, counting the elements by using the mutable stack.
+            let mutable count = 0u
 
-                    | Br (_, _, left, right) ->
-                        // Push both children onto the stack and recurse to process them.
-                        stack.Push left
-                        stack.Push right
-                        fastCount acc
+            while stack.Count <> 0 do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf (_,_) ->
+                    count <- count + 1u
+                    
+                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
+                                    them directly since it's a little faster. *)
+                | Br (_, _, Lf (_,_), Lf (_,_)) ->
+                    count <- count + 2u
+                    
+                | Br (_, _, Lf (_,_), child)
+                | Br (_, _, child, Lf (_,_)) ->
+                    count <- count + 1u
+                    stack.Push child
 
-            fastCount 0u
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push right
+                    stack.Push left
+
+            // Return the computed element count.
+            int count
 
     //
     static member Remove (key, map : PatriciaMap<'T>) =
@@ -225,9 +223,11 @@ type internal PatriciaMap<'T> =
             | Br (p, m, t0, t1) as t ->
                 if matchPrefix (key, p, m) then
                     if zeroBit (key, m) then
-                        Br (p, m, ins t0, t1)
+                        let left = ins t0
+                        Br (p, m, left, t1)
                     else
-                        Br (p, m, t0, ins t1)
+                        let right = ins t1
+                        Br (p, m, t0, right)
                 else
                     PatriciaMap.Join (key, Lf (key, value), p, t)
 
@@ -330,64 +330,163 @@ type internal PatriciaMap<'T> =
             // Add the initial tree to the stack.
             stack.Push t
 
-            /// Recursively processes the tree using the mutable stack.
-            let rec traverse () =
-                if stack.Count <> 0 then
-                    match stack.Pop () with
-                    | Empty ->
-                        traverse ()
-                    | Lf (k, x) ->
-                        action.Invoke (int k, x)
-                        traverse ()
+            // Loop until we've processed the entire tree.
+            while stack.Count <> 0 do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf (k, x) ->
+                    action.Invoke (int k, x)
                     
-                    (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
-                                        them directly since it's a little faster. *)
-                    | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                        action.Invoke (int k, x)
-                        action.Invoke (int j, y)
-                        traverse ()
+                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
+                                    them directly since it's a little faster. *)
+                | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                    action.Invoke (int k, x)
+                    action.Invoke (int j, y)
                     
-                    | Br (_, _, Lf (k, x), child) ->
-                        // Only handle the case where the left child is a leaf -- otherwise
-                        // the traversal order would be altered.
-                        action.Invoke (int k, x)
-                        stack.Push child
-                        traverse ()
+                | Br (_, _, Lf (k, x), right) ->
+                    // Only handle the case where the left child is a leaf -- otherwise
+                    // the traversal order would be altered.
+                    action.Invoke (int k, x)
+                    stack.Push right
 
-                    | Br (_, _, left, right) ->
-                        // Push both children onto the stack and recurse to process them.
-                        stack.Push left
-                        stack.Push right
-                        traverse ()
-
-            // Traverse the tree, applying the action to the leaves.
-            traverse ()
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push right
+                    stack.Push left
 
     //
-    member this.ToArray () =
-        let elements = ResizeArray ()
+    member this.IterateBack (action : int -> 'T -> unit) : unit =
+        match this with
+        | Empty -> ()
+        | Lf (k, x) ->
+            action (int k) x
+        | Br (_,_,_,_) as t ->
+            let action = FSharpFunc<_,_,_>.Adapt action
 
-        this.Iterate <| fun key value ->
-            elements.Add (key, value)
+            // TODO : Run some experiments to determine if this is a good initial capacity,
+            // or if there is a more suitable value.
+            let stack = System.Collections.Generic.Stack (64)
 
-        elements.ToArray ()
+            // Add the initial tree to the stack.
+            stack.Push t
 
-    // TODO
-    // choose
-    // exists
-    // filter
-    // findKey
-    // fold, foldBack
-    // iterBack
-    // map
-    // partition
-    // pick
-    // toList
-    // toMap
-    // toSeq
-    // tryFindKey
-    // tryPick
-    // union
+            // Loop until we've processed the entire tree.
+            while stack.Count <> 0 do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf (k, x) ->
+                    action.Invoke (int k, x)
+                    
+                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
+                                    them directly since it's a little faster. *)
+                | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                    action.Invoke (int j, y)
+                    action.Invoke (int k, x)
+                    
+                | Br (_, _, left, Lf (k, x)) ->
+                    // Only handle the case where the right child is a leaf -- otherwise
+                    // the traversal order would be altered.
+                    action.Invoke (int k, x)
+                    stack.Push left
+
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push left
+                    stack.Push right
+
+    //
+    member this.Fold (folder : 'State -> int -> 'T -> 'State, state : 'State) : 'State =
+        match this with
+        | Empty ->
+            state
+        | Lf (k, x) ->
+            folder state (int k) x
+        | Br (_,_,_,_) as t ->
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+            // TODO : Run some experiments to determine if this is a good initial capacity,
+            // or if there is a more suitable value.
+            let stack = System.Collections.Generic.Stack (64)
+
+            // Add the initial tree to the stack.
+            stack.Push t
+
+            /// Loop until we've processed the entire tree.
+            let mutable state = state
+            while stack.Count <> 0 do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf (k, x) ->
+                    state <- folder.Invoke (state, int k, x)
+                    
+                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
+                                    them directly since it's a little faster. *)
+                | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                    state <- folder.Invoke (state, int k, x)
+                    state <- folder.Invoke (state, int j, y)
+                    
+                | Br (_, _, Lf (k, x), right) ->
+                    // Only handle the case where the left child is a leaf -- otherwise
+                    // the traversal order would be altered.
+                    state <- folder.Invoke (state, int k, x)
+                    stack.Push right
+
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push right
+                    stack.Push left
+
+            // Return the final state value.
+            state
+
+    //
+    member this.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
+        match this with
+        | Empty ->
+            state
+        | Lf (k, x) ->
+            folder (int k) x state
+        | Br (_,_,_,_) as t ->
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+            // TODO : Run some experiments to determine if this is a good initial capacity,
+            // or if there is a more suitable value.
+            let stack = System.Collections.Generic.Stack (64)
+
+            // Add the initial tree to the stack.
+            stack.Push t
+
+            /// Loop until we've processed the entire tree.
+            let mutable state = state
+            while stack.Count <> 0 do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf (k, x) ->
+                    state <- folder.Invoke (int k, x, state)
+                    
+                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
+                                    them directly since it's a little faster. *)
+                | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                    state <- folder.Invoke (int j, y, state)
+                    state <- folder.Invoke (int k, x, state)
+                    
+                | Br (_, _, left, Lf (k, x)) ->
+                    // Only handle the case where the right child is a leaf -- otherwise
+                    // the traversal order would be altered.
+                    state <- folder.Invoke (int k, x, state)
+                    stack.Push left
+
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push left
+                    stack.Push right
+
+            // Return the final state value.
+            state
 
 
 //
@@ -488,7 +587,17 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
 
     //
     member __.ToArray () : (int * 'T)[] =
-        trie.ToArray ()
+        let elements = ResizeArray ()
+        trie.Iterate (FuncConvert.FuncFromTupled<_,_,_> elements.Add)
+        elements.ToArray ()
+
+    //
+    member __.ToList () : (int * 'T) list =
+        trie.FoldBack ((fun k v list -> (k, v) :: list), [])
+
+    //
+    member __.ToMap () : Map<int, 'T> =
+        trie.FoldBack (Map.add, Map.empty)
 
     //
     member internal __.ToKvpArray () : KeyValuePair<int, 'T>[] =
@@ -503,6 +612,18 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
     //
     member __.Iterate (action : int -> 'T -> unit) : unit =
         trie.Iterate action
+
+    //
+    member __.IterateBack (action : int -> 'T -> unit) : unit =
+        trie.IterateBack action
+
+    //
+    member __.Fold (folder : 'State -> int -> 'T -> 'State, state : 'State) : 'State =
+        trie.Fold (folder, state)
+
+    //
+    member __.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
+        trie.FoldBack (folder, state)
 
 //
 and [<Sealed>]
@@ -605,11 +726,46 @@ module IntMap =
         map.ToArray ()
 
     //
+    let inline toList (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToList ()
+
+    //
+    let inline toMap (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToMap ()
+
+    //
     let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) =
         // Preconditions
         checkNonNull "map" map
 
         map.Iterate action
+
+    //
+    let inline iterBack (action : int -> 'T -> unit) (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.IterateBack action
+
+    //
+    let inline fold (folder : 'State -> int -> 'T -> 'State) (state : 'State) (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Fold (folder, state)
+
+    //
+    let inline foldBack (folder : int -> 'T -> 'State -> 'State) (map : IntMap<'T>) (state : 'State) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.FoldBack (folder, state)
 
 
     // TODO
@@ -617,13 +773,9 @@ module IntMap =
     // exists
     // filter
     // findKey
-    // fold, foldBack
-    // iterBack
     // map
     // partition
     // pick
-    // toList
-    // toMap
     // toSeq
     // tryFindKey
     // tryPick
