@@ -49,11 +49,11 @@ module AdditionalOperators =
         match x with Some a -> a :: lst | None -> lst
 
     /// Swaps the values of a tuple so their order is reversed.
-    let [<NoDynamicInvocation>] inline swap (x : 'T1, y : 'T2) =
+    let [<NoDynamicInvocation>] inline swap (x : 'T, y : 'U) =
         y, x
 
     /// Swaps the order of the arguments to a function.
-    let [<NoDynamicInvocation>] inline flip f (x : 'T) (y : 'U) =
+    let [<NoDynamicInvocation>] inline flip f (x : 'T) (y : 'U) : 'V =
         f y x
 
     /// Raises a System.NotImplementedException.
@@ -152,7 +152,7 @@ module String =
     /// <remarks>For a smaller number (&lt;10) of fairly short strings,
     /// this method is the empirically fastest-known way to concatenate
     /// strings without the overhead of a System.Text.StringBuilder.</remarks>
-    let [<NoDynamicInvocation>] inline concatFast (arr : string[]) =
+    let [<NoDynamicInvocation>] inline concatArray (arr : string[]) =
         System.String.Join (empty, arr)
 
     /// Creates a new string by joining the specified strings using
@@ -164,15 +164,164 @@ module String =
     let [<NoDynamicInvocation>] inline toLines (str : string) =
         str.Split ([| '\r'; '\n' |], System.StringSplitOptions.RemoveEmptyEntries)
 
-    /// Creates a new string by removing all leading and trailing
-    /// white-space characters from the specified string.
-    let [<NoDynamicInvocation>] inline trim (str : string) =
-        str.Trim ()
-
     /// Creates an F# option value from the specified string.
     /// If the string 's' is null or empty, returns None; otherwise, returns Some s.
     let [<NoDynamicInvocation>] inline toOption str =
         if System.String.IsNullOrEmpty str then None else Some str
+
+    /// Creates a new string by removing all leading and
+    /// trailing white-space characters from a string.
+    let [<NoDynamicInvocation>] inline trim (str : string) =
+        str.Trim ()
+
+    /// Removes all leading and trailing occurrences of
+    /// the specified characters from a string.
+    let [<NoDynamicInvocation>] inline trimChars (chars : char[]) (str : string) =
+        str.Trim chars
+
+    //
+    let [<NoDynamicInvocation>] inline toArray (str : string) =
+        str.ToCharArray ()
+
+    //
+    let [<NoDynamicInvocation>] inline ofArray (chars : char[]) =
+        System.String (chars)
+
+    //
+    [<CompiledName("TrimStartWith")>]
+    let trimStartWith (predicate : char -> bool) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        /// The length of the string.
+        let len = String.length str
+
+        // OPTIMIZATION : If the string is empty, return immediately.
+        if len = 0 then empty
+        else
+            let mutable index = 0
+            let mutable foundMatch = false
+
+            // Loop until we find a character which _does_ match the predicate.
+            while index < len && not foundMatch do
+                foundMatch <- predicate str.[index]
+                index <- index + 1
+
+            // If none of the characters matched the predicate, don't bother
+            // calling .Substring(), just return an empty string.
+            if foundMatch then
+                // If the predicate was immediately matched, there's nothing
+                // to trim so return the initial string.
+                if index = 1 then str
+                else
+                    str.Substring (index - 1)
+            else
+                empty
+
+    //
+    [<CompiledName("TrimEndWith")>]
+    let trimEndWith (predicate : char -> bool) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        /// The length of the string.
+        let len = String.length str
+
+        // OPTIMIZATION : If the string is empty, return immediately.
+        if len = 0 then empty
+        else
+            let mutable index = len - 1
+            let mutable foundMatch = false
+
+            // Loop until we find a character which _does_ match the predicate.
+            while index >= 0 && not foundMatch do
+                foundMatch <- predicate str.[index]
+                index <- index - 1
+
+            // If none of the characters matched the predicate, don't bother
+            // calling .Substring(), just return an empty string.
+            if foundMatch then
+                // If the predicate was immediately matched, there's nothing
+                // to trim so return the initial string.
+                if index = len - 2 then str
+                else
+                    str.Substring (0, index + 2)
+            else
+                empty
+
+    //
+    [<CompiledName("TrimWith")>]
+    let trimWith (predicate : char -> bool) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        /// The length of the string.
+        let len = String.length str
+
+        // OPTIMIZATION : If the string is empty, return immediately.
+        match len with
+        | 0 -> empty
+        | 1 ->
+            if predicate str.[0] then str else empty
+        | len ->
+            let mutable index = 0
+            let mutable foundLeftMatch = false
+
+            // Loop until we find a character which _does_ match the predicate.
+            while index < len && not foundLeftMatch do
+                foundLeftMatch <- predicate str.[index]
+                index <- index + 1
+
+            // If none of the characters matched the predicate, don't bother
+            // calling .Substring(), just return an empty string.
+            if foundLeftMatch then
+                /// The starting index of the trimmed string.
+                let trimmedStartIndex = index - 1
+
+                // Loop backwards to trim the right side of the string.
+                let mutable index = len - 1
+                let mutable foundRightMatch = false
+
+                while index > trimmedStartIndex && not foundRightMatch do
+                    foundRightMatch <- predicate str.[index]
+                    index <- index - 1
+
+                // Return the trimmed string.
+                if foundRightMatch then
+                    /// The index of the last character in the trimmed string.
+                    let trimmedEndIndex = index + 1
+
+                    /// The length of the trimmed string.
+                    let trimmedLength =
+                        trimmedEndIndex - trimmedStartIndex + 1
+
+                    // If nothing was trimmed, just return the original string.
+                    if trimmedLength = len then str
+                    else
+                        str.Substring (trimmedStartIndex, trimmedLength)
+                else
+                    str.[trimmedStartIndex].ToString ()
+            else
+                empty
+
+    (*
+
+    - String.Split.iter
+    - String.Split.iteri
+    - String.Split.fold
+    - String.Split.filter
+      - These functions should work like .Split(...) |> Array.iter (or Array.fold, etc.),
+        except that they won't actually need to traverse the entire string first and split
+        it into an array of substrings. Instead, they'll improve performance by allowing us
+        to execute a function on each of the substrings in a single forward pass.
+      - We might be able to further improve performance by not actually applying the given
+        function to the substrings themselves, but instead to some struct representing the
+        initial position and length of the substring; this may be enough information for some
+        functions (e.g., to filter out strings less than 10 characters), but then we'd easily
+        be able to create the substring from that information if necessary.
+      - This could be implemented by using the regular vector type / functions from fsharplex.
+
+    *)
 
 
 /// Additional functional operators on options.
