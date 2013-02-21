@@ -280,7 +280,7 @@ type internal PatriciaMap<'T> =
 
 //
 [<Sealed>]
-type IntMap<'T> internal (trie : PatriciaMap<'T>) =
+type IntMap<'T> private (trie : PatriciaMap<'T>) =
     /// The empty IntMap.
     static member Empty
         with get () : IntMap<'T> =
@@ -405,4 +405,3 @@ module IntMap =
     // ofSeq, toSeq
     // ofList, toList
     
-
