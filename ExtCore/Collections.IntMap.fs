@@ -136,8 +136,8 @@ type internal PatriciaMap<'T> =
     // TODO : This is an experimental version of count which is optimized for performance.
     // It should work, but we need to do some tests to be sure. Once we're confident it's correct
     // we'll remove the original 'Count' function and use this once instead.
-    static member FastCount t =
-        match t with
+    static member FastCount (map : PatriciaMap<'T>) =
+        match map with
         | Empty -> 0u
         | Lf (_,_) -> 1u
         | Br (_,_,_,_) as t ->
@@ -149,6 +149,8 @@ type internal PatriciaMap<'T> =
             stack.Push t
 
             /// Recursively processes the tree using the mutable stack.
+            // OPTIMIZE : We don't really need to use a recursive function here -- we could just
+            // use a mutable variable for 'acc' and change this to a while loop.
             let rec fastCount acc =
                 if stack.Count = 0 then acc
                 else
@@ -369,6 +371,23 @@ type internal PatriciaMap<'T> =
             elements.Add (key, value)
 
         elements.ToArray ()
+
+    // TODO
+    // choose
+    // exists
+    // filter
+    // findKey
+    // fold, foldBack
+    // iterBack
+    // map
+    // partition
+    // pick
+    // toList
+    // toMap
+    // toSeq
+    // tryFindKey
+    // tryPick
+    // union
 
 
 //
@@ -609,3 +628,12 @@ module IntMap =
     // tryFindKey
     // tryPick
     // union
+
+
+(* TODO : Can we just implement TagMap as a measure-annotated IntMap? *)
+(*
+[<MeasureAnnotatedAbbreviation>]
+type TagMap<[<Measure>] 'Tag, 'T> =
+    IntMap<'T>
+*)
+
