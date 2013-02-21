@@ -123,6 +123,9 @@ module Seq =
     //
     [<CompiledName("Project")>]
     let project (mapping : 'T -> 'U) (source : seq<'T>) =
+        // Preconditions
+        checkNonNull "source" source
+
         source
         |> Seq.map (fun x ->
             x, mapping x)
