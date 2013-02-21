@@ -634,6 +634,34 @@ module Reader =
     [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Array =
         //
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> 'Env -> unit) (array : 'T[]) (env : 'Env) : unit =
+            // Preconditions
+            checkNonNull "array" array
+
+            let action = FSharpFunc<_,_,_>.Adapt action
+            let len = Array.length array
+            /// Holds the mapped results.
+            let results = Array.zeroCreate len
+
+            for i = 0 to len - 1 do
+                results.[i] <- action.Invoke (array.[i], env)
+
+        //
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> 'T -> 'Env -> unit) (array : 'T[]) (env : 'Env) : unit =
+            // Preconditions
+            checkNonNull "array" array
+
+            let action = FSharpFunc<_,_,_,_>.Adapt action
+            let len = Array.length array
+            /// Holds the mapped results.
+            let results = Array.zeroCreate len
+
+            for i = 0 to len - 1 do
+                results.[i] <- action.Invoke (i, array.[i], env)
+
+        //
         [<CompiledName("Map")>]
         let map (mapping : 'T -> 'Env -> 'U) (array : 'T[]) (env : 'Env) : 'U[] =
             // Preconditions
