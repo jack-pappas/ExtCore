@@ -277,6 +277,39 @@ type internal PatriciaMap<'T> =
                 // The prefixes disagree.
                 PatriciaMap.Join (p, s, q, t)
 
+    //
+    static member OfSeq (source : seq<int * 'T>) : PatriciaMap<'T> =
+        (Empty, source)
+        ||> Seq.fold (fun trie (key, value) ->
+            PatriciaMap.Insert (uint32 key, value, trie))
+
+    //
+    static member OfList (source : (int * 'T) list) : PatriciaMap<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        (Empty, source)
+        ||> List.fold (fun trie (key, value) ->
+            PatriciaMap.Insert (uint32 key, value, trie))
+
+    //
+    static member OfArray (source : (int * 'T)[]) : PatriciaMap<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        (Empty, source)
+        ||> Array.fold (fun trie (key, value) ->
+            PatriciaMap.Insert (uint32 key, value, trie))
+
+    //
+    static member OfMap (source : Map<int, 'T>) : PatriciaMap<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        (Empty, source)
+        ||> Map.fold (fun trie key value ->
+            PatriciaMap.Insert (uint32 key, value, trie))
+
 
 //
 [<Sealed>]
@@ -331,6 +364,46 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
     static member Singleton (key : int, value : 'T) : IntMap<'T> =
         IntMap (
             Lf (uint32 key, value))
+
+    /// Returns a new IntMap made from the given bindings.
+    static member OfSeq (source : seq<int * 'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        IntMap (PatriciaMap.OfSeq source)
+
+    /// Returns a new IntMap made from the given bindings.
+    static member OfList (source : (int * 'T) list) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        // OPTIMIZATION : If the source is empty return immediately.
+        if List.isEmpty source then
+            IntMap.Empty
+        else
+            IntMap (PatriciaMap.OfList source)
+
+    /// Returns a new IntMap made from the given bindings.
+    static member OfArray (source : (int * 'T)[]) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        // OPTIMIZATION : If the source is empty return immediately.
+        if Array.isEmpty source then
+            IntMap.Empty
+        else
+            IntMap (PatriciaMap.OfArray source)
+
+    /// Returns a new IntMap made from the given bindings.
+    static member OfMap (source : Map<int, 'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        // OPTIMIZATION : If the source is empty return immediately.
+        if Map.isEmpty source then
+            IntMap.Empty
+        else
+            IntMap (PatriciaMap.OfMap source)
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -395,13 +468,40 @@ module IntMap =
 
         map.ContainsKey key
 
+    //
+    let inline ofSeq source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfSeq source
+
+    //
+    let inline ofList source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfList source
+
+    //
+    let inline ofArray source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfArray source
+
+    //
+    let inline ofMap source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfMap source
+
 
     // TODO
+    // exists
     // filter
-    // partition
+    // findKey
     // fold, foldBack
     // iter, iterBack
-    // ofArray, toArray
-    // ofSeq, toSeq
-    // ofList, toList
-    
+    // map
+    // partition
+    // pick
+    // toArray
+    // toList
+    // toMap
+    // toSeq
+    // tryFindKey
+    // tryPick
+
