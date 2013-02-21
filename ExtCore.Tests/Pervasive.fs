@@ -17,12 +17,12 @@ limitations under the License.
 *)
 
 //
-namespace ExtCore.Collections.Tests
+namespace ExtCore.Tests
 
-open ExtCore.Collections
+open ExtCore
 open NUnit.Framework
 open FsCheck
 
 
-(* TODO : Implement tests for some methods like Array.segment *)
+(* TODO : Implement tests for the various modules in ExtCore *)
 

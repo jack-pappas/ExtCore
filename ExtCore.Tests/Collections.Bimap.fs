@@ -24,5 +24,5 @@ open NUnit.Framework
 open FsCheck
 
 
-(* TODO : Implement tests for some methods like Array.segment *)
+(* TODO : Implement tests for Bimap. *)
 
