@@ -1896,6 +1896,11 @@ module Map =
                 // Add/update the key-set for this value in the pivot map.
                 Map.add value keySet pivotMap)
 
+    // TODO
+    // mapi, mapiBack
+    // foldi, foldiBack
+    // reduce, reduceBack
+
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
