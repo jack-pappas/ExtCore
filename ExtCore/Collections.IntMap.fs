@@ -20,6 +20,8 @@ limitations under the License.
 //
 namespace ExtCore.Collections
 
+open System.Collections.Generic
+open System.Diagnostics
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
@@ -310,9 +312,69 @@ type internal PatriciaMap<'T> =
         ||> Map.fold (fun trie key value ->
             PatriciaMap.Insert (uint32 key, value, trie))
 
+    //
+    member this.Iterate (action : int -> 'T -> unit) : unit =
+        match this with
+        | Empty -> ()
+        | Lf (k, x) ->
+            action (int k) x
+        | Br (_,_,_,_) as t ->
+            let action = FSharpFunc<_,_,_>.Adapt action
+
+            // TODO : Run some experiments to determine if this is a good initial capacity,
+            // or if there is a more suitable value.
+            let stack = System.Collections.Generic.Stack (64)
+
+            // Add the initial tree to the stack.
+            stack.Push t
+
+            /// Recursively processes the tree using the mutable stack.
+            let rec traverse () =
+                if stack.Count <> 0 then
+                    match stack.Pop () with
+                    | Empty ->
+                        traverse ()
+                    | Lf (k, x) ->
+                        action.Invoke (int k, x)
+                        traverse ()
+                    
+                    (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
+                                        them directly since it's a little faster. *)
+                    | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                        action.Invoke (int k, x)
+                        action.Invoke (int j, y)
+                        traverse ()
+                    
+                    | Br (_, _, Lf (k, x), child) ->
+                        // Only handle the case where the left child is a leaf -- otherwise
+                        // the traversal order would be altered.
+                        action.Invoke (int k, x)
+                        stack.Push child
+                        traverse ()
+
+                    | Br (_, _, left, right) ->
+                        // Push both children onto the stack and recurse to process them.
+                        stack.Push left
+                        stack.Push right
+                        traverse ()
+
+            // Traverse the tree, applying the action to the leaves.
+            traverse ()
+
+    //
+    member this.ToArray () =
+        let elements = ResizeArray ()
+
+        this.Iterate <| fun key value ->
+            elements.Add (key, value)
+
+        elements.ToArray ()
+
 
 //
 [<Sealed>]
+[<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
+[<DebuggerDisplay("Count = {Count}")>]
 type IntMap<'T> private (trie : PatriciaMap<'T>) =
     /// The empty IntMap.
     static member Empty
@@ -405,6 +467,34 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
         else
             IntMap (PatriciaMap.OfMap source)
 
+    //
+    member __.ToArray () : (int * 'T)[] =
+        trie.ToArray ()
+
+    //
+    member internal __.ToKvpArray () : KeyValuePair<int, 'T>[] =
+        let elements = ResizeArray (1024)
+
+        trie.Iterate <| fun key value ->
+            elements.Add (
+                KeyValuePair (key, value))
+
+        elements.ToArray ()
+
+    //
+    member __.Iterate (action : int -> 'T -> unit) : unit =
+        trie.Iterate action
+
+//
+and [<Sealed>]
+    internal IntMapDebuggerProxy<'T> (map : IntMap<'T>) =
+
+    [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
+    member __.Items
+        with get () : KeyValuePair<int, 'T>[] =
+            map.ToKvpArray ()
+
+
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module IntMap =
@@ -488,20 +578,34 @@ module IntMap =
         // Preconditions are checked by the member.
         IntMap.OfMap source
 
+    //
+    let inline toArray (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToArray ()
+
+    //
+    let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Iterate action
+
 
     // TODO
+    // choose
     // exists
     // filter
     // findKey
     // fold, foldBack
-    // iter, iterBack
+    // iterBack
     // map
     // partition
     // pick
-    // toArray
     // toList
     // toMap
     // toSeq
     // tryFindKey
     // tryPick
-
+    // union
