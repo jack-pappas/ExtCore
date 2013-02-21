@@ -114,28 +114,6 @@ type internal PatriciaMap<'T> =
                 (key, (if zeroBit (key, m) then t0 else t1))
 
     //
-    static member CountOriginal (map : PatriciaMap<'T>) : int =
-        // OPTIMIZE : We can 'strictify' this by adding an accumulator argument, so we'll
-        // only need to use continuations for one side of the tree (left or right child).
-        // We may also be able to eliminate continuations altogether by using an explicit
-        // stack (either an F# list or System.Collections.Generic.Stack<'T>).
-        let rec count (t : PatriciaMap<'T>) cont =
-            match t with
-            | Empty ->
-                cont 0
-            | Lf (_,_) ->
-                cont 1
-            | Br (_, _, left, right) ->
-                count left <| fun leftCount ->
-                count right <| fun rightCount ->
-                    leftCount + rightCount
-                    |> cont
-
-        count map id
-
-    // TODO : This is an experimental version of count which is optimized for performance.
-    // It should work, but we need to do some tests to be sure. Once we're confident it's correct
-    // we'll remove the original 'Count' function and use this once instead.
     static member Count (map : PatriciaMap<'T>) : int =
         match map with
         | Empty -> 0
@@ -157,8 +135,8 @@ type internal PatriciaMap<'T> =
                 | Lf (_,_) ->
                     count <- count + 1u
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
-                                    them directly since it's a little faster. *)
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_,_), Lf (_,_)) ->
                     count <- count + 2u
                     
@@ -337,15 +315,15 @@ type internal PatriciaMap<'T> =
                 | Lf (k, x) ->
                     action.Invoke (int k, x)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
-                                    them directly since it's a little faster. *)
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (k, x), Lf (j, y)) ->
                     action.Invoke (int k, x)
                     action.Invoke (int j, y)
                     
                 | Br (_, _, Lf (k, x), right) ->
-                    // Only handle the case where the left child is a leaf -- otherwise
-                    // the traversal order would be altered.
+                    // Only handle the case where the left child is a leaf
+                    // -- otherwise the traversal order would be altered.
                     action.Invoke (int k, x)
                     stack.Push right
 
@@ -378,15 +356,15 @@ type internal PatriciaMap<'T> =
                 | Lf (k, x) ->
                     action.Invoke (int k, x)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
-                                    them directly since it's a little faster. *)
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (k, x), Lf (j, y)) ->
                     action.Invoke (int j, y)
                     action.Invoke (int k, x)
                     
                 | Br (_, _, left, Lf (k, x)) ->
-                    // Only handle the case where the right child is a leaf -- otherwise
-                    // the traversal order would be altered.
+                    // Only handle the case where the right child is a leaf
+                    // -- otherwise the traversal order would be altered.
                     action.Invoke (int k, x)
                     stack.Push left
 
@@ -421,15 +399,15 @@ type internal PatriciaMap<'T> =
                 | Lf (k, x) ->
                     state <- folder.Invoke (state, int k, x)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
-                                    them directly since it's a little faster. *)
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (k, x), Lf (j, y)) ->
                     state <- folder.Invoke (state, int k, x)
                     state <- folder.Invoke (state, int j, y)
                     
                 | Br (_, _, Lf (k, x), right) ->
-                    // Only handle the case where the left child is a leaf -- otherwise
-                    // the traversal order would be altered.
+                    // Only handle the case where the left child is a leaf
+                    // -- otherwise the traversal order would be altered.
                     state <- folder.Invoke (state, int k, x)
                     stack.Push right
 
@@ -467,15 +445,15 @@ type internal PatriciaMap<'T> =
                 | Lf (k, x) ->
                     state <- folder.Invoke (int k, x, state)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves, we handle
-                                    them directly since it's a little faster. *)
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (k, x), Lf (j, y)) ->
                     state <- folder.Invoke (int j, y, state)
                     state <- folder.Invoke (int k, x, state)
                     
                 | Br (_, _, left, Lf (k, x)) ->
-                    // Only handle the case where the right child is a leaf -- otherwise
-                    // the traversal order would be altered.
+                    // Only handle the case where the right child is a leaf
+                    // -- otherwise the traversal order would be altered.
                     state <- folder.Invoke (int k, x, state)
                     stack.Push left
 
@@ -624,6 +602,9 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
     //
     member __.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
         trie.FoldBack (folder, state)
+
+
+
 
 //
 and [<Sealed>]
