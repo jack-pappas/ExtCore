@@ -16,13 +16,56 @@ limitations under the License.
 
 *)
 
-//
-namespace ExtCore.Collections.Tests
+/// Tests for the IntMap data structure.
+module ExtCore.Collections.Tests.IntMap
 
 open ExtCore.Collections
 open NUnit.Framework
 open FsCheck
 
 
-(* TODO : Implement tests for IntMap *)
+let genIntMap<'T> =
+    let genIntMap count =
+        // Preconditions
+        if count < 0 then
+            invalidArg "count" "The number of elements in the generated map cannot be negative."
+
+        let keySet = ref Set.empty
+        let map = ref IntMap.Empty
+
+        gen {
+        while Set.count !keySet < count do
+            let! key = Arb.generate<int>
+        
+            // Only generate a new value and add the binding
+            // to the map if this is a key we haven't seen yet.
+            if not <| Set.contains key !keySet then
+                // Generate a random value to go with the key.
+                let! value = Arb.generate<'T>
+
+                // Add the key to the key set.
+                keySet := Set.add key !keySet
+
+                // Add the binding to the map.
+                map := IntMap.add key value !map
+
+        // Return the generated IntMap.
+        return !map
+        }
+
+    Gen.sized genIntMap
+
+// Register the Arbitrary instance for IntMap.
+let intMapArb<'T> : Arbitrary<IntMap<'T>> =
+    Arb.fromGen genIntMap
+
+
+let private elementCount<'T> (map : IntMap<'T>) =
+    IntMap.count map = (Array.length <| IntMap.toArray map)
+
+
+[<Test>]
+let ``element count`` () =
+    Check.QuickThrowOnFailure elementCount<int>
+
 
