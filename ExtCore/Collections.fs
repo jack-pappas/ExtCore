@@ -132,6 +132,8 @@ module Seq =
 
     (* TODO
 
+    Seq.choosei
+
     Seq.segment
         Groups elements of a sequence together "longitudinally" -- i.e., it works
         in a streaming fashion, rather than Seq.groupBy which needs to see the
@@ -143,6 +145,8 @@ module Seq =
         Returns a sequence containing every n-th element of the input sequence.
 
     *)
+    
+    
 
 
 /// Additional functional operators on immutable lists.
@@ -530,6 +534,8 @@ module List =
 
     (* TODO
 
+    List.choosei
+
     List.unzipMap
         Similar to List.map2 (and List.zipMap, below). Given a list of tuples (a, b)
         applies the elements of each tuple to a function 'f' (f a b).
@@ -846,6 +852,7 @@ module Array =
         state
 
     // TODO :
+    // choosei
     // foldPairs, foldBackPairs
     // derive    // takes a 'T -> 'T -> 'T like reduce, but only performs one step; used to perform 'divided differences'
         // Other possible names: reduceOnce, reduceStep
