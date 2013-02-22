@@ -39,25 +39,24 @@ open ExtCore
 
 //
 module internal BitOps =
-    (* TODO :   Re-implement the 'highestBit' function using the Count Leading Zeros (clz) operation.
-                This should be significantly faster than our current implementation (or even Okasaki's
-                original implementation, since 'clz' can be implemented by just a few operations
-                (or a CPU intrinsic) using the algorithm based on de Bruijn sequences.
-
-                It may be possible to further optimize this code by replacing the table with
-                a 'match' (which would be compiled into a 'switch' IL OpCode). This change
-                won't be made until we can profile and confirm it's actually faster. *)
-
     //
     let inline zeroBit (k, m) : bool =
         k &&& m = GenericZero
+
+    //
+    let inline mask (k, m) =
+        (k ||| (m - GenericOne)) &&& ~~~m
+
+    //
+    let inline matchPrefix (k, p, m) =
+        mask (k, m) = p
 
     //
     let inline lowestBit (x : int) : uint32 =
         uint32 (x &&& -x)
 
     // Returns the greatest power-of-two value contained within 'x'.
-    let highestBit (x, m) =
+    let inline private highestBit (x, m) =
         // Zero all bits below m
         let x' = x &&& ~~~(m - 1u)
 
@@ -69,25 +68,69 @@ module internal BitOps =
         highb x'
 
     /// Finds the first bit at which p0 and p1 disagree.
-    let (*inline*) branchingBit (p0, p1) =
+    /// Returns a power-of-two value containing this (and only this) bit.
+    let inline branchingBit (p0, p1) : uint32 =
         highestBit (p0 ^^^ p1, 1u)
 
-    //
-    let inline mask (k, m) =
-        (k ||| (m - GenericOne)) &&& ~~~m
+
+    (* TODO :   Re-implement the 'highestBit' function using the Count Leading Zeros (clz) operation.
+                This should be significantly faster than our current implementation (or even Okasaki's
+                original implementation, since 'clz' can be implemented by just a few operations
+                (or a CPU intrinsic) using the algorithm based on de Bruijn sequences.
+
+                It may be possible to further optimize this code by replacing the table with
+                a 'match' (which would be compiled into a 'switch' IL OpCode). This change
+                won't be made until we can profile and confirm it's actually faster. *)
+    (*
 
     //
-    let inline matchPrefix (k, p, m) =
-        mask (k, m) = p
+    let internal deBruijnBitPosition = [|
+        0u; 9u; 1u; 10u; 13u; 21u; 2u; 29u; 11u; 14u; 16u; 18u; 22u; 25u; 3u; 30u;
+        8u; 12u; 20u; 28u; 15u; 17u; 24u; 7u; 19u; 27u; 23u; 6u; 26u; 5u; 4u; 31u; |]
+
+    /// Rounds a 32-bit integer down to one less
+    /// than the next-lowest power-of-two.
+    let inline private roundDown32 (v : uint32) =
+        assert (v >= GenericZero)
+        let v = v ||| (v >>> 1)
+        let v = v ||| (v >>> 2)
+        let v = v ||| (v >>> 4)
+        let v = v ||| (v >>> 8)
+        let v = v ||| (v >>> 16)
+        v
+
+    /// Computes the index of the de Bruijn sequence.
+    let inline private deBruijnArrayIndex (v : uint32) : uint32 =
+        ((roundDown32 v) * 0x07C4ACDDu) >>> 27
+
+    /// Computes the base-2 logarithm (log_2) of a 32-bit integer.
+    let inline private int32Log2 (v : uint32) : uint32 =
+        deBruijnBitPosition.[int <| deBruijnArrayIndex v]
+
+    /// Count Leading Zeros (clz).
+    let inline private countLeadingZeros (x : uint32) : uint32 =
+        if x = 0u then 32u
+        else
+            32u - (int32Log2 x)
+
+    /// Finds the first bit at which p0 and p1 disagree.
+    let branchingBit' (p0, p1) : uint32 =
+        match p0 ^^^ p1 with
+        | 0u -> 0u
+        | x ->
+            1u <<< (int <| int32Log2 x)
+    *)
+
 
 open BitOps
-
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntMap (and TagMap).
 type internal PatriciaMap<'T> =
     | Empty
+    // Key * Value
     | Lf of uint32 * 'T
+    // Prefix * Mask * Left-Child * Right-Child
     | Br of uint32 * uint32 * PatriciaMap<'T> * PatriciaMap<'T>
 
     //
@@ -178,12 +221,13 @@ type internal PatriciaMap<'T> =
             else t
 
     //
-    static member private Join (p0, t0 : PatriciaMap<'T>, p1, t1) =
-        let m = branchingBit (p0, p1)
+    static member (*inline*) private Join (p0, t0 : PatriciaMap<'T>, p1, t1) =
+        let m = branchingBit' (p0, p1)
+        let p = mask (p0, m)
         if zeroBit (p0, m) then
-            Br (mask (p0, m), m, t0, t1)
+            Br (p, m, t0, t1)
         else
-            Br (mask (p0, m), m, t1, t0)
+            Br (p, m, t1, t0)
 
     //
     static member Insert (key, value : 'T, map) =
@@ -504,7 +548,7 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     /// Returns a new IntMap with the binding added to this IntMap.
-    member __.Add (key : int) (value : 'T) : IntMap<'T> =
+    member __.Add (key : int, value : 'T) : IntMap<'T> =
         IntMap (
             PatriciaMap.Insert (uint32 key, value, trie))
 
@@ -604,8 +648,6 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
         trie.FoldBack (folder, state)
 
 
-
-
 //
 and [<Sealed>]
     internal IntMapDebuggerProxy<'T> (map : IntMap<'T>) =
@@ -663,7 +705,7 @@ module IntMap =
         // Preconditions
         checkNonNull "map" map
 
-        map.Add key value
+        map.Add (key, value)
 
     //
     let inline remove (key : int) (map : IntMap<'T>) : IntMap<'T> =
@@ -749,13 +791,88 @@ module IntMap =
         map.FoldBack (folder, state)
 
 
+    (* TEMP :   The implementations of the functions below should be moved into IntMap members,
+                and replaced with optimized implementations where possible. *)
+
+    //
+    let choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
+        // Preconditions
+        checkNonNull "map" map
+
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        (IntMap.Empty, map)
+        ||> fold (fun chosenMap key value ->
+            match chooser.Invoke (key, value) with
+            | None ->
+                chosenMap
+            | Some newValue ->
+                chosenMap.Add (key, newValue))
+
+    //
+    let filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        (map, map)
+        ||> fold (fun filteredMap key value ->
+            if predicate.Invoke (key, value) then
+                filteredMap
+            else
+                filteredMap.Remove key)
+
+    //
+    let map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
+        // Preconditions
+        checkNonNull "map" map
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        (IntMap.Empty, map)
+        ||> fold (fun map key value ->
+            map.Add (key, mapping.Invoke (key, value)))
+
+    //
+    let partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        ((IntMap.Empty, IntMap.Empty), map)
+        ||> fold (fun (trueMap, falseMap) key value ->
+            if predicate.Invoke (key, value) then
+                trueMap.Add (key, value),
+                falseMap
+            else
+                trueMap,
+                falseMap.Add (key, value))
+
+    //
+    let mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
+        // Preconditions
+        checkNonNull "map" map
+
+        let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
+
+        ((IntMap.Empty, IntMap.Empty), map)
+        ||> fold (fun (map1, map2) key value ->
+            match partitioner.Invoke (key, value) with
+            | Choice1Of2 value ->
+                map1.Add (key, value),
+                map2
+            | Choice2Of2 value ->
+                map1,
+                map2.Add (key, value))
+
+
+
     // TODO
-    // choose
     // exists
-    // filter
     // findKey
-    // map
-    // partition
+    // forall
     // pick
     // toSeq
     // tryFindKey
