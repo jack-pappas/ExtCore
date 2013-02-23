@@ -16,6 +16,8 @@ limitations under the License.
 
 *)
 
+open System
+open System.Diagnostics
 open ExtCore
 open ExtCore.Collections
 
@@ -47,6 +49,40 @@ let testMap3 =
     |> IntMap.add 34 "fokwoe"
 
 
-let sosoksfd = "wfokwoef".Length + 123
-()
+(* Test IntSet *)
+
+let [<Literal>] elementCount = 1000000
+
+printf "Creating %i random integers..." elementCount
+let randValues =
+    let rand = Random ()
+    Array.init elementCount <| fun _ ->
+        rand.Next ()
+printfn "done."
+printfn ""
+
+let stopwatch = Stopwatch ()
+printfn "Creating sets from the random values to measure performance..."
+printfn "--------------------------------------------------------------"
+
+stopwatch.Restart ()
+let fsharpSet = Set.ofArray randValues
+stopwatch.Stop ()
+printfn "Created F# Set<int> in: %4f ms" stopwatch.Elapsed.TotalMilliseconds
+
+GC.Collect ()
+
+stopwatch.Restart ()
+let intSet = IntSet.ofArray randValues
+stopwatch.Stop ()
+printfn "Created IntSet in: %4f ms" stopwatch.Elapsed.TotalMilliseconds
+
+GC.Collect ()
+
+
+
+
+printfn ""
+printfn "Press any key to exit..."
+Console.ReadKey () |> ignore
 
