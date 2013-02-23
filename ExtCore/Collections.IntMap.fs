@@ -28,36 +28,34 @@ open OptimizedClosures
 open ExtCore
 
 
-(* TODO :   Implement Okasaki and Gill's data structure from:
-            "Fast Mergeable Integer Maps".
+(* TODO :   Implement TagMap -- a "tagged" version of IntMap.
+            Implementing this correctly may require using the F# 'proto' compiler. *)
+(* OPTIMIZE :   Some of the functional-style operations on IntMap use direct non-tail-recursion;
+                performance may be improved if we modify these to use CPS instead. *)
 
-            Also implement a "tagged" version which uses ints with measure types.
-            (Call this a TagMap.)
-            Maybe also implement an EnumMap?
-            
-            This data structure should implement IDictionary<_,_> like the standard F# Map. *)
-(* TODO :   Modify some of the operations below to use CPS to avoid overhead of stack frames. *)
-
-//
+/// Bitwise operations necessary for implementing IntMap.
 module internal BitOps =
-    //
-    let inline zeroBit (k, m) : bool =
-        k &&& m = GenericZero
+    /// <summary>Determines if all specified bits are cleared (not set) in a value.</summary>
+    /// <param name="value">The value to test.</param>
+    /// <param name="bitValue">The bits to test in 'value'.</param>
+    /// <returns>true if all bits which are set in 'bitValue' are *not* set in 'value'.</returns>
+    let inline zeroBit (value : ^T, bitValue) : bool =
+        value &&& bitValue = GenericZero
 
     //
-    let inline mask (k, m) =
-        (k ||| (m - GenericOne)) &&& ~~~m
+    let inline mask (value : ^T, bitValue) =
+        (value ||| (bitValue - GenericOne)) &&& ~~~bitValue
 
     //
-    let inline matchPrefix (k, p, m) =
+    let inline matchPrefix (k : ^T, p, m) =
         mask (k, m) = p
 
     //
-    let inline lowestBit (x : int) : uint32 =
-        uint32 (x &&& -x)
+    let inline lowestBit (x : uint32) : uint32 =
+        x &&& (uint32 -(int x))
 
     // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
-    let inline private branchingBitFast (x : uint32) =
+    let inline private branchingBitImpl (x : uint32) =
         let x = x ||| (x >>> 1)
         let x = x ||| (x >>> 2)
         let x = x ||| (x >>> 4)
@@ -68,7 +66,7 @@ module internal BitOps =
     /// Finds the first bit at which p0 and p1 disagree.
     /// Returns a power-of-two value containing this (and only this) bit.
     let inline branchingBit (p0, p1) : uint32 =
-        branchingBitFast (p0 ^^^ p1)
+        branchingBitImpl (p0 ^^^ p1)
 
 
 open BitOps
