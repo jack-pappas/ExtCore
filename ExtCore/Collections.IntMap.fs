@@ -20,7 +20,6 @@ limitations under the License.
 //
 namespace ExtCore.Collections
 
-open System.Collections
 open System.Collections.Generic
 open System.Diagnostics
 open LanguagePrimitives
@@ -50,12 +49,15 @@ module internal BitOps =
     let inline matchPrefix (k : ^T, p, m) =
         mask (k, m) = p
 
-    //
-    let inline lowestBit (x : uint32) : uint32 =
-        x &&& (uint32 -(int x))
+//    //
+//    let inline leastSignificantSetBit (x : uint32) : uint32 =
+//        x &&& (uint32 -(int x))
 
     // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
-    let inline private branchingBitImpl (x : uint32) =
+    // OPTIMIZE : This could be even faster if we could take advantage of a built-in
+    // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
+    // Could we expose these instructions through Mono?
+    let inline private mostSignificantSetBit (x : uint32) =
         let x = x ||| (x >>> 1)
         let x = x ||| (x >>> 2)
         let x = x ||| (x >>> 4)
@@ -66,10 +68,20 @@ module internal BitOps =
     /// Finds the first bit at which p0 and p1 disagree.
     /// Returns a power-of-two value containing this (and only this) bit.
     let inline branchingBit (p0, p1) : uint32 =
-        branchingBitImpl (p0 ^^^ p1)
+        mostSignificantSetBit (p0 ^^^ p1)
+
+
+/// Constants used to tune certain operations on Patricia tries.
+module internal PatriciaTrieConstants =
+    /// The default capacity used to when creating mutable stacks
+    /// within the optimized traversal methods for Patricia tries.
+    // TODO : Run some experiments to determine if this is a good initial capacity,
+    // or if some other value would provide better average-case performance.
+    let [<Literal>] defaultTraversalStackSize = 64
 
 
 open BitOps
+open PatriciaTrieConstants
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntMap (and TagMap).
@@ -109,9 +121,8 @@ type internal PatriciaMap<'T> =
         | Empty -> 0
         | Lf (_,_) -> 1
         | Br (_,_,_,_) as t ->
-            // TODO : Run some experiments to determine if this is a good initial capacity,
-            // or if there is a more suitable value.
-            let stack = System.Collections.Generic.Stack (64)
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
             stack.Push t
@@ -292,9 +303,8 @@ type internal PatriciaMap<'T> =
         | Br (_,_,_,_) as t ->
             let action = FSharpFunc<_,_,_>.Adapt action
 
-            // TODO : Run some experiments to determine if this is a good initial capacity,
-            // or if there is a more suitable value.
-            let stack = System.Collections.Generic.Stack (64)
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
             stack.Push t
@@ -333,9 +343,8 @@ type internal PatriciaMap<'T> =
         | Br (_,_,_,_) as t ->
             let action = FSharpFunc<_,_,_>.Adapt action
 
-            // TODO : Run some experiments to determine if this is a good initial capacity,
-            // or if there is a more suitable value.
-            let stack = System.Collections.Generic.Stack (64)
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
             stack.Push t
@@ -375,9 +384,8 @@ type internal PatriciaMap<'T> =
         | Br (_,_,_,_) as t ->
             let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
-            // TODO : Run some experiments to determine if this is a good initial capacity,
-            // or if there is a more suitable value.
-            let stack = System.Collections.Generic.Stack (64)
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
             stack.Push t
@@ -421,9 +429,8 @@ type internal PatriciaMap<'T> =
         | Br (_,_,_,_) as t ->
             let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
-            // TODO : Run some experiments to determine if this is a good initial capacity,
-            // or if there is a more suitable value.
-            let stack = System.Collections.Generic.Stack (64)
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
             stack.Push t
@@ -470,9 +477,8 @@ type internal PatriciaMap<'T> =
         | Br (_,_,_,_) as t ->
             let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
-            // TODO : Run some experiments to determine if this is a good initial capacity,
-            // or if there is a more suitable value.
-            let stack = System.Collections.Generic.Stack (64)
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
             stack.Push t
@@ -522,9 +528,8 @@ type internal PatriciaMap<'T> =
         | Br (_,_,_,_) as t ->
             let picker = FSharpFunc<_,_,_>.Adapt picker
 
-            // TODO : Run some experiments to determine if this is a good initial capacity,
-            // or if there is a more suitable value.
-            let stack = System.Collections.Generic.Stack (64)
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
             stack.Push t
@@ -823,16 +828,18 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
                 map1,
                 map2.Add (key, value)), (IntMap.Empty, IntMap.Empty))
 
-    interface IEnumerable with
+    interface System.Collections.IEnumerable with
         /// <inherit />
         member __.GetEnumerator () =
-            (trie.ToSeq () |> Seq.map (fun (k, v) -> DictionaryEntry (k, v))).GetEnumerator ()
-            :> IEnumerator
+            (trie.ToSeq () |> Seq.map (fun (k, v) ->
+                System.Collections.DictionaryEntry (k, v))).GetEnumerator ()
+            :> System.Collections.IEnumerator
 
     interface IEnumerable<KeyValuePair<int, 'T>> with
         /// <inherit />
         member __.GetEnumerator () =
-            (trie.ToSeq () |> Seq.map (fun (k, v) -> KeyValuePair (k, v))).GetEnumerator ()
+            (trie.ToSeq () |> Seq.map (fun (k, v) ->
+                KeyValuePair (k, v))).GetEnumerator ()
 
     interface ICollection<KeyValuePair<int, 'T>> with
         /// <inherit />
