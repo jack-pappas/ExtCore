@@ -20,6 +20,7 @@ limitations under the License.
 //
 namespace ExtCore.Collections
 
+open System.Collections
 open System.Collections.Generic
 open System.Diagnostics
 open LanguagePrimitives
@@ -594,7 +595,7 @@ type internal PatriciaMap<'T> =
 [<Sealed>]
 [<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
-type IntMap<'T> private (trie : PatriciaMap<'T>) =
+type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
     /// The empty IntMap.
     static member Empty
         with get () : IntMap<'T> =
@@ -765,8 +766,6 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
     member __.ToSeq () =
         trie.ToSeq ()
 
-    (* OPTIMIZE : The methods below should be replaced with optimized implementations where possible. *)
-
     //
     member this.Choose (chooser : int -> 'T -> 'U option) : IntMap<'U> =
         let chooser = FSharpFunc<_,_,_>.Adapt chooser
@@ -787,6 +786,8 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
                 filteredMap
             else
                 filteredMap.Remove key), this)
+
+    (* OPTIMIZE : The methods below should be replaced with optimized implementations where possible. *)    
 
     //
     // OPTIMIZE : We should be able to implement an optimized version
@@ -824,8 +825,102 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
                 map1,
                 map2.Add (key, value)), (IntMap.Empty, IntMap.Empty))
 
-    // TODO
-    // union
+    interface IEnumerable with
+        /// <inherit />
+        member __.GetEnumerator () =
+            (trie.ToSeq () |> Seq.map (fun (k, v) -> DictionaryEntry (k, v))).GetEnumerator ()
+            :> IEnumerator
+
+    interface IEnumerable<KeyValuePair<int, 'T>> with
+        /// <inherit />
+        member __.GetEnumerator () =
+            (trie.ToSeq () |> Seq.map (fun (k, v) -> KeyValuePair (k, v))).GetEnumerator ()
+
+    interface ICollection<KeyValuePair<int, 'T>> with
+        /// <inherit />
+        member __.Count
+            with get () =
+                PatriciaMap.Count trie
+
+        /// <inherit />
+        member __.IsReadOnly
+            with get () = true
+
+        /// <inherit />
+        member __.Add x =
+            notSupported "IntMaps cannot be mutated."
+
+        /// <inherit />
+        member __.Clear () =
+            notSupported "IntMaps cannot be mutated."
+
+        /// <inherit />
+        member __.Contains (item : KeyValuePair<int, 'T>) =
+            notImpl "Contains"
+//            match PatriciaMap.TryFind (uint32 item.Key, trie) with
+//            | None ->
+//                false
+//            | Some value ->
+//                LanguagePrimitives.HashCompare.GenericEqualityIntrinsic<'T>(value, item.Value)
+
+        /// <inherit />
+        member __.CopyTo (array, arrayIndex) =
+            // Preconditions
+            checkNonNull "array" array
+            if arrayIndex < 0 then
+                raise <| System.ArgumentOutOfRangeException "arrayIndex"
+
+            // Raise an ArgumentException if there's not enough room in the array (starting at 'arrayIndex')
+            // to hold _all_ of the elements in this IntMap.
+
+            notImpl "CopyTo"
+
+        /// <inherit />
+        member __.Remove item : bool =
+            notSupported "IntMaps cannot be mutated."
+
+    interface IDictionary<int, 'T> with
+        /// <inherit />
+        member __.Item
+            with get key =
+                match PatriciaMap.TryFind (uint32 key, trie) with
+                | Some value ->
+                    value
+                | None ->
+                    raise <| System.Collections.Generic.KeyNotFoundException ()
+            and set key value =
+                notSupported "IntMaps cannot be mutated."
+
+        /// <inherit />
+        member __.Keys
+            with get () =
+                notImpl "Keys"
+
+        /// <inherit />
+        member __.Values
+            with get () =
+                notImpl "Values"
+
+        /// <inherit />
+        member __.Add (key, value) =
+            notSupported "IntMaps cannot be mutated."
+
+        /// <inherit />
+        member __.ContainsKey key =
+            PatriciaMap.ContainsKey (uint32 key, trie)
+
+        /// <inherit />
+        member __.Remove key =
+            notSupported "IntMaps cannot be mutated."
+
+        /// <inherit />
+        member __.TryGetValue (key, value) =
+            match PatriciaMap.TryFind (uint32 key, trie) with
+            | None ->
+                false
+            | Some v ->
+                value <- v
+                true
 
 //
 and [<Sealed>]
