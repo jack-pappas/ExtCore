@@ -55,71 +55,19 @@ module internal BitOps =
     let inline lowestBit (x : int) : uint32 =
         uint32 (x &&& -x)
 
-    // Returns the greatest power-of-two value contained within 'x'.
-    let inline private highestBit (x, m) =
-        // Zero all bits below m
-        let x' = x &&& ~~~(m - 1u)
-
-        let rec highb x =
-            let m = lowestBit (int x)
-            if x = m then m
-            else highb (x - m)
-
-        highb x'
+    // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
+    let inline private branchingBitFast (x : uint32) =
+        let x = x ||| (x >>> 1)
+        let x = x ||| (x >>> 2)
+        let x = x ||| (x >>> 4)
+        let x = x ||| (x >>> 8)
+        let x = x ||| (x >>> 16)
+        x &&& ~~~(x >>> 1)
 
     /// Finds the first bit at which p0 and p1 disagree.
     /// Returns a power-of-two value containing this (and only this) bit.
     let inline branchingBit (p0, p1) : uint32 =
-        highestBit (p0 ^^^ p1, 1u)
-
-
-    (* TODO :   Re-implement the 'highestBit' function using the Count Leading Zeros (clz) operation.
-                This should be significantly faster than our current implementation (or even Okasaki's
-                original implementation, since 'clz' can be implemented by just a few operations
-                (or a CPU intrinsic) using the algorithm based on de Bruijn sequences.
-
-                It may be possible to further optimize this code by replacing the table with
-                a 'match' (which would be compiled into a 'switch' IL OpCode). This change
-                won't be made until we can profile and confirm it's actually faster. *)
-    (*
-
-    //
-    let internal deBruijnBitPosition = [|
-        0u; 9u; 1u; 10u; 13u; 21u; 2u; 29u; 11u; 14u; 16u; 18u; 22u; 25u; 3u; 30u;
-        8u; 12u; 20u; 28u; 15u; 17u; 24u; 7u; 19u; 27u; 23u; 6u; 26u; 5u; 4u; 31u; |]
-
-    /// Rounds a 32-bit integer down to one less
-    /// than the next-lowest power-of-two.
-    let inline private roundDown32 (v : uint32) =
-        assert (v >= GenericZero)
-        let v = v ||| (v >>> 1)
-        let v = v ||| (v >>> 2)
-        let v = v ||| (v >>> 4)
-        let v = v ||| (v >>> 8)
-        let v = v ||| (v >>> 16)
-        v
-
-    /// Computes the index of the de Bruijn sequence.
-    let inline private deBruijnArrayIndex (v : uint32) : uint32 =
-        ((roundDown32 v) * 0x07C4ACDDu) >>> 27
-
-    /// Computes the base-2 logarithm (log_2) of a 32-bit integer.
-    let inline private int32Log2 (v : uint32) : uint32 =
-        deBruijnBitPosition.[int <| deBruijnArrayIndex v]
-
-    /// Count Leading Zeros (clz).
-    let inline private countLeadingZeros (x : uint32) : uint32 =
-        if x = 0u then 32u
-        else
-            32u - (int32Log2 x)
-
-    /// Finds the first bit at which p0 and p1 disagree.
-    let branchingBit' (p0, p1) : uint32 =
-        match p0 ^^^ p1 with
-        | 0u -> 0u
-        | x ->
-            1u <<< (int <| int32Log2 x)
-    *)
+        branchingBitFast (p0 ^^^ p1)
 
 
 open BitOps
@@ -222,7 +170,7 @@ type internal PatriciaMap<'T> =
 
     //
     static member (*inline*) private Join (p0, t0 : PatriciaMap<'T>, p1, t1) =
-        let m = branchingBit' (p0, p1)
+        let m = branchingBit (p0, p1)
         let p = mask (p0, m)
         if zeroBit (p0, m) then
             Br (p, m, t0, t1)
@@ -510,6 +458,137 @@ type internal PatriciaMap<'T> =
             // Return the final state value.
             state
 
+    //
+    member this.TryFindKey (predicate : int -> 'T -> bool) : int option =
+        match this with
+        | Empty ->
+            None
+        | Lf (k, x) ->
+            if predicate (int k) x then
+                Some (int k)
+            else
+                None
+        | Br (_,_,_,_) as t ->
+            let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+            // TODO : Run some experiments to determine if this is a good initial capacity,
+            // or if there is a more suitable value.
+            let stack = System.Collections.Generic.Stack (64)
+
+            // Add the initial tree to the stack.
+            stack.Push t
+
+            /// Loop until we find a key/value that matches the predicate,
+            /// or until we've processed the entire tree.
+            let mutable matchingKey = None
+            while stack.Count <> 0 && Option.isNone matchingKey do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf (k, x) ->
+                    if predicate.Invoke (int k, x) then
+                        matchingKey <- Some (int k)
+                    
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
+                | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                    if predicate.Invoke (int k, x) then
+                        matchingKey <- Some (int k)
+                    elif predicate.Invoke (int j, y) then
+                        matchingKey <- Some (int j)
+                    
+                | Br (_, _, Lf (k, x), right) ->
+                    // Only handle the case where the left child is a leaf
+                    // -- otherwise the traversal order would be altered.
+                    if predicate.Invoke (int k, x) then
+                        matchingKey <- Some (int k)
+
+                    stack.Push right
+
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push right
+                    stack.Push left
+
+            // Return the matching key, if one was found.
+            matchingKey
+
+    //
+    member this.TryPick (picker : int -> 'T -> 'U option) : 'U option =
+        match this with
+        | Empty ->
+            None
+        | Lf (k, x) ->
+            picker (int k) x
+        | Br (_,_,_,_) as t ->
+            let picker = FSharpFunc<_,_,_>.Adapt picker
+
+            // TODO : Run some experiments to determine if this is a good initial capacity,
+            // or if there is a more suitable value.
+            let stack = System.Collections.Generic.Stack (64)
+
+            // Add the initial tree to the stack.
+            stack.Push t
+
+            /// Loop until we find a key/value that matches the picker,
+            /// or until we've processed the entire tree.
+            let mutable pickedValue = None
+            while stack.Count <> 0 && Option.isNone pickedValue do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf (k, x) ->
+                    pickedValue <- picker.Invoke (int k, x)
+                    
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
+                | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                    pickedValue <-
+                        match picker.Invoke (int k, x) with
+                        | (Some _) as value ->
+                            value
+                        | None ->
+                            picker.Invoke (int j, y)
+                    
+                | Br (_, _, Lf (k, x), right) ->
+                    // Only handle the case where the left child is a leaf
+                    // -- otherwise the traversal order would be altered.
+                    pickedValue <- picker.Invoke (int k, x)
+                    stack.Push right
+
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push right
+                    stack.Push left
+
+            // Return the picked value.
+            pickedValue
+
+    //
+    member this.ToSeq () =
+        seq {
+        match this with
+        | Empty -> ()
+        | Lf (k, x) ->
+            yield (int k, x)
+        
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf (k, x), Lf (j, y)) ->
+            yield (int k, x)
+            yield (int j, y)
+                    
+        | Br (_, _, Lf (k, x), right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            yield (int k, x)
+            yield! right.ToSeq ()
+
+        | Br (_, _, left, right) ->
+            // Recursively visit the children.
+            yield! left.ToSeq ()
+            yield! right.ToSeq ()
+        }
 
 //
 [<Sealed>]
@@ -647,6 +726,106 @@ type IntMap<'T> private (trie : PatriciaMap<'T>) =
     member __.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
         trie.FoldBack (folder, state)
 
+    //
+    member __.TryFindKey (predicate : int -> 'T -> bool) : int option =
+        trie.TryFindKey predicate
+
+    //
+    member this.FindKey (predicate : int -> 'T -> bool) : int =
+        match this.TryFindKey predicate with
+        | Some key ->
+            key
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    member this.Exists (predicate : int -> 'T -> bool) : bool =
+        this.TryFindKey predicate
+        |> Option.isSome
+
+    //
+    member this.Forall (predicate : int -> 'T -> bool) : bool =
+        this.TryFindKey (fun k v ->
+            not <| predicate k v)
+        |> Option.isNone
+
+    //
+    member __.TryPick (picker : int -> 'T -> 'U option) : 'U option =
+        trie.TryPick picker
+
+    //
+    member this.Pick (picker : int -> 'T -> 'U option) : 'U =
+        match this.TryPick picker with
+        | Some value ->
+            value
+        | None ->
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    member __.ToSeq () =
+        trie.ToSeq ()
+
+    (* OPTIMIZE : The methods below should be replaced with optimized implementations where possible. *)
+
+    //
+    member this.Choose (chooser : int -> 'T -> 'U option) : IntMap<'U> =
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        this.Fold ((fun chosenMap key value ->
+            match chooser.Invoke (key, value) with
+            | None ->
+                chosenMap
+            | Some newValue ->
+                chosenMap.Add (key, newValue)), IntMap.Empty)
+
+    //
+    member this.Filter (predicate : int -> 'T -> bool) : IntMap<'T> =
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        this.Fold ((fun filteredMap key value ->
+            if predicate.Invoke (key, value) then
+                filteredMap
+            else
+                filteredMap.Remove key), this)
+
+    //
+    // OPTIMIZE : We should be able to implement an optimized version
+    // of Map which builds the mapped trie from the bottom-up; this works
+    // because the mapped trie will have the same structure as the original,
+    // just with different values in the leaves.
+    member this.Map (mapping : int -> 'T -> 'U) : IntMap<'U> =
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        this.Fold ((fun map key value ->
+            map.Add (key, mapping.Invoke (key, value))), IntMap.Empty)
+
+    //
+    member this.Partition (predicate : int -> 'T -> bool) : IntMap<'T> * IntMap<'T> =
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        this.Fold ((fun (trueMap, falseMap) key value ->
+            if predicate.Invoke (key, value) then
+                trueMap.Add (key, value),
+                falseMap
+            else
+                trueMap,
+                falseMap.Add (key, value)), (IntMap.Empty, IntMap.Empty))
+
+    //
+    member this.MapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) : IntMap<'U> * IntMap<'V> =
+        let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
+
+        this.Fold ((fun (map1, map2) key value ->
+            match partitioner.Invoke (key, value) with
+            | Choice1Of2 value ->
+                map1.Add (key, value),
+                map2
+            | Choice2Of2 value ->
+                map1,
+                map2.Add (key, value)), (IntMap.Empty, IntMap.Empty))
+
+    // TODO
+    // union
 
 //
 and [<Sealed>]
@@ -790,94 +969,83 @@ module IntMap =
 
         map.FoldBack (folder, state)
 
-
-    (* TEMP :   The implementations of the functions below should be moved into IntMap members,
-                and replaced with optimized implementations where possible. *)
-
     //
-    let choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
+    let inline choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
         // Preconditions
         checkNonNull "map" map
 
-        let chooser = FSharpFunc<_,_,_>.Adapt chooser
-
-        (IntMap.Empty, map)
-        ||> fold (fun chosenMap key value ->
-            match chooser.Invoke (key, value) with
-            | None ->
-                chosenMap
-            | Some newValue ->
-                chosenMap.Add (key, newValue))
+        map.Choose chooser
 
     //
-    let filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
+    let inline filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
         // Preconditions
         checkNonNull "map" map
 
-        let predicate = FSharpFunc<_,_,_>.Adapt predicate
-
-        (map, map)
-        ||> fold (fun filteredMap key value ->
-            if predicate.Invoke (key, value) then
-                filteredMap
-            else
-                filteredMap.Remove key)
+        map.Filter predicate
 
     //
-    let map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
+    let inline map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
         // Preconditions
         checkNonNull "map" map
 
-        let mapping = FSharpFunc<_,_,_>.Adapt mapping
-
-        (IntMap.Empty, map)
-        ||> fold (fun map key value ->
-            map.Add (key, mapping.Invoke (key, value)))
+        map.Map mapping
 
     //
-    let partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
+    let inline partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
         // Preconditions
         checkNonNull "map" map
 
-        let predicate = FSharpFunc<_,_,_>.Adapt predicate
-
-        ((IntMap.Empty, IntMap.Empty), map)
-        ||> fold (fun (trueMap, falseMap) key value ->
-            if predicate.Invoke (key, value) then
-                trueMap.Add (key, value),
-                falseMap
-            else
-                trueMap,
-                falseMap.Add (key, value))
+        map.Partition predicate
 
     //
-    let mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
+    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
         // Preconditions
         checkNonNull "map" map
 
-        let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
+        map.MapPartition partitioner
 
-        ((IntMap.Empty, IntMap.Empty), map)
-        ||> fold (fun (map1, map2) key value ->
-            match partitioner.Invoke (key, value) with
-            | Choice1Of2 value ->
-                map1.Add (key, value),
-                map2
-            | Choice2Of2 value ->
-                map1,
-                map2.Add (key, value))
+    //
+    let inline tryFindKey (predicate : int -> 'T -> bool) (map : IntMap<'T>) : int option =
+        // Preconditions
+        checkNonNull "map" map
 
+        map.TryFindKey predicate
 
+    //
+    let inline exists (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
+        // Preconditions
+        checkNonNull "map" map
 
-    // TODO
-    // exists
-    // findKey
-    // forall
-    // pick
-    // toSeq
-    // tryFindKey
-    // tryPick
-    // union
+        map.Exists predicate
+
+    //
+    let inline forall (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Forall predicate
+
+    //
+    let inline tryPick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U option =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryPick picker
+
+    //
+    let inline pick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Pick picker
+
+    //
+    let inline toSeq (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToSeq ()
+
 
 
 (* TODO : Can we just implement TagMap as a measure-annotated IntMap? *)
