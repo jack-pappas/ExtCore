@@ -81,6 +81,16 @@ module AdditionalOperators =
         if isNull value then
             nullArg argName
 
+    /// Not-AND (NAND) of two boolean values.
+    /// Returns false when both values are 'true'; otherwise, returns true.
+    let [<NoDynamicInvocation>] inline nand (p : bool) (q : bool) =
+        not (p && q)
+
+    /// Not-OR (NOR) of two boolean values.
+    /// Returns true when both values are 'false'; otherwise, returns false.
+    let [<NoDynamicInvocation>] inline nor (p : bool) (q : bool) =
+        not (p && q)
+
     /// Exclusive-or (XOR) of two boolean values.
     let [<NoDynamicInvocation>] inline xor (p : bool) (q : bool) =
         // OPTIMIZE : Use inline IL to emit a 'xor' instead of 'ceq, ldc.i4.0, ceq'
@@ -88,9 +98,9 @@ module AdditionalOperators =
 
     /// If-and-only-if (XNOR) of two boolean values.
     /// Also known as the logical biconditional.
-    let [<NoDynamicInvocation>] inline iff (p : bool) (q : bool) =
+    let [<NoDynamicInvocation>] inline xnor (p : bool) (q : bool) =
         // OPTIMIZE : Use inline IL to emit 'xor, not' instead of 'ceq, ldc.i4.0, ceq, not'
-        not (p <> q)
+        not (p <> q)    
 
     /// Attempt to execute the function as a mutual-exclusion region using
     /// the input value as a lock. If the lock cannot be entered within a specified
