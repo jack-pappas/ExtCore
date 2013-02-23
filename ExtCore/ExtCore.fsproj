@@ -53,6 +53,8 @@
     <Compile Include="Collections.PriorityQueue.fs" />
     <Compile Include="ControlCollections.fs" />
     <Compile Include="NativeInterop.fs" />
+    <Compile Include="Args.fs" />
+    <Compile Include="Reflection.fs" />
     <Compile Include="AssemblyInfo.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
