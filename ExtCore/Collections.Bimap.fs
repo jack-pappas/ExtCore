@@ -25,6 +25,27 @@ open OptimizedClosures
 open ExtCore
 
 
-// TODO : Implement a Bimap, which should be a simple container holding two Maps.
+/// A bi-directional map.
+type Bimap<'T1, 'T2
+    when 'T1 : comparison
+    and 'T2 : comparison> = {
+    //
+    Left : Map<'T1, 'T2>;
+    //
+    Right : Map<'T2, 'T1>;
+}
+
+/// <summary>A bi-directional TagMap.</summary>
+/// <typeparam name="Tag1">The tag (measure) type for the first set of values.</typeparam>
+/// <typeparam name="Tag2">The tag (measure) type for the second set of values.</typeparam>
+type TagBimap< [<Measure>] 'Tag1, [<Measure>] 'Tag2 > = {
+    //
+    Left : Map<int<'Tag1>, int<'Tag2>>;
+    //
+    Right : Map<int<'Tag2>, int<'Tag1>>;
+}
+
+
+
 
 
