@@ -680,16 +680,22 @@ type IntSet private (trie : PatriciaSet) =
 //                LanguagePrimitives.HashCompare.GenericEqualityIntrinsic<'T>(value, item.Value)
 
         /// <inherit />
-        member __.CopyTo (array, arrayIndex) =
+        member this.CopyTo (array, arrayIndex) =
             // Preconditions
             checkNonNull "array" array
             if arrayIndex < 0 then
                 raise <| System.ArgumentOutOfRangeException "arrayIndex"
 
-            // Raise an ArgumentException if there's not enough room in the array (starting at 'arrayIndex')
-            // to hold _all_ of the elements in this IntSet.
+            let count = PatriciaSet.Count trie
+            if arrayIndex + count > Array.length array then
+                invalidArg "arrayIndex"
+                    "There is not enough room in the array to copy the \
+                     elements when starting at the specified index."
 
-            notImpl "CopyTo"
+            this.Fold ((fun index el ->
+                array.[index] <- el
+                index + 1), arrayIndex)
+            |> ignore
 
         /// <inherit />
         member __.Remove item : bool =
