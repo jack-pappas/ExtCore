@@ -23,41 +23,29 @@ open ExtCore.Collections
 open NUnit.Framework
 open FsCheck
 
+open System.Collections.Generic
 
-let genIntMap<'T> =
-    let genIntMap count =
-        // Preconditions
-        if count < 0 then
-            invalidArg "count" "The number of elements in the generated map cannot be negative."
+type internal Generators =
+    /// Generates a random IntMap.
+    static member IntMap () =
+        let genIntMap =
+            gen {
+            let! keys =
+                Gen.arrayOf Arb.generate
+                |> Gen.map (Seq.distinct >> Seq.toArray)
+            let! values = Gen.arrayOfLength (Array.length keys) Arb.generate
+            return
+                (IntMap.empty, keys, values)
+                |||> Array.fold2 (fun map key value ->
+                    IntMap.add key value map)
+            }
 
-        let keySet = ref Set.empty
-        let map = ref IntMap.Empty
+        Arb.fromGen genIntMap
 
-        gen {
-        while Set.count !keySet < count do
-            let! key = Arb.generate<int>
-        
-            // Only generate a new value and add the binding
-            // to the map if this is a key we haven't seen yet.
-            if not <| Set.contains key !keySet then
-                // Generate a random value to go with the key.
-                let! value = Arb.generate<'T>
 
-                // Add the key to the key set.
-                keySet := Set.add key !keySet
+let qq = Arb.register<Generators> ()
 
-                // Add the binding to the map.
-                map := IntMap.add key value !map
 
-        // Return the generated IntMap.
-        return !map
-        }
-
-    Gen.sized genIntMap
-
-// Register the Arbitrary instance for IntMap.
-let intMapArb<'T> : Arbitrary<IntMap<'T>> =
-    Arb.fromGen genIntMap
 
 
 let private elementCount<'T> (map : IntMap<'T>) =
