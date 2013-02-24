@@ -220,6 +220,15 @@ module Bimap =
         Map.fold folder state bimap.Left
 
     //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T1 -> 'T2 -> 'State -> 'State)
+            (bimap : Bimap<'T1, 'T2>) (state : 'State) : 'State =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        Map.foldBack folder bimap.Left state
+
+    //
     [<CompiledName("Filter")>]
     let filter (predicate : 'T1 -> 'T2 -> bool) (bimap : Bimap<'T1, 'T2>) : Bimap<'T1, 'T2> =
         // Preconditions
@@ -234,9 +243,71 @@ module Bimap =
             else
                 remove x bimap)
 
+    //
+    [<CompiledName("Partition")>]
+    let partition (predicate : 'T1 -> 'T2 -> bool) (bimap : Bimap<'T1, 'T2>)
+            : Bimap<'T1, 'T2> * Bimap<'T1, 'T2> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        // Partition efficiently by removing elements from the original map
+        // and adding them to a new map when the predicate returns false
+        // (instead of creating two new maps).
+        ((bimap, empty), bimap)
+        ||> fold (fun (trueBimap, falseBimap) x y ->
+            if predicate.Invoke (x, y) then
+                trueBimap, falseBimap
+            else
+                remove x trueBimap,
+                add x y falseBimap)
+
+    //
+    [<CompiledName("OfList")>]
+    let ofList list : Bimap<'T1, 'T2> =
+        // Preconditions
+        checkNonNull "list" list
+
+        (empty, list)
+        ||> List.fold (fun bimap (x, y) ->
+            add x y bimap)
+
+    //
+    [<CompiledName("ToList")>]
+    let toList (bimap : Bimap<'T1, 'T2>) : _ list =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        (bimap, [])
+        ||> foldBack (fun x y list ->
+            (x, y) :: list)
+
+    //
+    [<CompiledName("OfArray")>]
+    let ofArray array : Bimap<'T1, 'T2> =
+        // Preconditions
+        checkNonNull "array" array
+
+        (empty, array)
+        ||> Array.fold (fun bimap (x, y) ->
+            add x y bimap)
+
+    //
+    [<CompiledName("ToArray")>]
+    let toArray (bimap : Bimap<'T1, 'T2>) =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        let elements = ResizeArray ()
+
+        bimap
+        |> iter (fun x y ->
+            elements.Add (x, y))
+
+        ResizeArray.toArray elements
+
     // TODO
-    // ofList, toList
-    // ofArray, toArray
     // ofMap, toMap, tryOfMap
 
 
@@ -249,3 +320,4 @@ type TagBimap< [<Measure>] 'Tag1, [<Measure>] 'Tag2 > = {
     //
     Right : Map<int<'Tag2>, int<'Tag1>>;
 }
+
