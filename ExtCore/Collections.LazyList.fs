@@ -100,3 +100,81 @@ module Stream =
     let size stream =
         sizeImpl stream id
 
+(*
+
+/// An implementation of a lazy-list.
+[<NoEquality; NoComparison>]
+type (*internal*) Stream<'T> =
+    /// Empty stream.
+    | Nil
+    /// Strict 'cons'.
+    | Cons of 'T * Stream<'T>
+    /// Lazy 'cons'.
+    | LCons of 'T * Lazy<Stream<'T>>
+
+    //
+    static member Empty
+        with get () = Nil
+
+    //
+    static member LazyCons (x, xs) =
+        LCons (x, Lazy.create xs)
+
+    //
+    member this.IsEmpty
+        with get () =
+            match this with
+            | Nil -> true
+            | _ -> false
+
+    //
+    member this.Head
+        with get () =
+            match this with
+            | Nil ->
+                raise <| System.ArgumentException "The list is empty."
+            | Cons (hd, _)
+            | LCons (hd, _) ->
+                hd
+
+    //
+    member this.Tail
+        with get () =
+            match this with
+            | Nil ->
+                Nil
+            | Cons (_, tl) ->
+                tl
+            | LCons (_, tl) ->
+                Lazy.force tl
+
+    //
+    member private this.LengthRec cont =
+        match this with
+        | Nil ->
+            cont 0
+        | Cons (_, xs) ->
+            xs.LengthRec <| fun size ->
+                1 + size
+        | LCons (_, xs) ->
+            (Lazy.force xs).LengthRec <| fun size ->
+                1 + size
+
+    //
+    member this.Length
+        with get () =
+            this.LengthRec id
+
+
+//
+//type LazyList<'T>
+
+//
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module LazyList =
+    //
+    let dummy () = ()
+
+
+
+*)
