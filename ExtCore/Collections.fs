@@ -1645,6 +1645,12 @@ module Map =
         defaultArg (Map.tryFind key map) defaultValue
 
     //
+    [<CompiledName("Singleton")>]
+    let inline singleton key value : Map<'Key, 'T> =
+        Map.empty
+        |> Map.add key value
+
+    //
     [<CompiledName("Keys")>]
     let keys (map : Map<'Key, 'T>) =
         // Preconditions
@@ -1906,10 +1912,38 @@ module Map =
                 // Add/update the key-set for this value in the pivot map.
                 Map.add value keySet pivotMap)
 
+    // Like Map.add, but doesn't overwrite an existing entry.
+    [<CompiledName("TryAdd")>]
+    let tryAdd key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        if Map.containsKey key map then
+            // Return the original map.
+            map
+        else
+            // Add the new entry.
+            Map.add key value map
+
+    // Like Map.add, but only overwrites the value of an existing entry
+    // (i.e., it won't create a new entry in the map).
+    [<CompiledName("TryUpdate")>]
+    let tryUpdate key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        if Map.containsKey key map then
+            // Overwrite the value of the existing entry.
+            Map.add key value map
+        else
+            // Return the original map.
+            map
+
     // TODO
     // mapi, mapiBack
     // foldi, foldiBack
     // reduce, reduceBack
+    // update       // Similar to 'tryUpdate' but raises an exception if there's no existing entry.
 
 
 //
