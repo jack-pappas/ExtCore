@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>ExtCore</id>
+        <version>0.1.0</version>
+        <dependencies>
+        </dependencies>
+        <title>Core library extensions for F#.</title>
+        <authors>Jack Pappas</authors>
+        <owners />
+        <licenseUrl>http://opensource.org/licenses/Apache-2.0</licenseUrl>
+        <projectUrl>https://github.com/jack-pappas/ExtCore</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>ExtCore extends the F# core library (FSharp.Core) by adding new functions to existing modules (e.g., Array, List) and providing new workflows and data structures useful for building real-world F# applications.</description>
+        <tags>fsharp,workflow,collections,immutable,workflow,monad,computation</tags>
+    </metadata>
+    <files>
+        <file src="ExtCore\bin\Release\ExtCore.XML" target="lib\net40\ExtCore.XML" />
+        <file src="ExtCore\bin\Release\ExtCore.dll" target="lib\net40\ExtCore.dll" />
+    </files>
+</package>
