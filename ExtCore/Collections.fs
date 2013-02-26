@@ -851,8 +851,38 @@ module Array =
         // Return the final state.
         state
 
+    //
+    [<CompiledName("FindIndices")>]
+    let findIndices (predicate : 'T -> bool) array =
+        // Preconditions
+        checkNonNull "array" array
+
+        let indices = ResizeArray ()
+        array |> Array.iteri (fun idx el ->
+            if predicate el then indices.Add idx)
+        indices.ToArray ()
+
+    //
+    [<CompiledName("ChooseIndexed")>]
+    let choosei (chooser : int -> 'T -> 'U option) array =
+        // Preconditions
+        checkNonNull "array" array
+
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        let chosen = ResizeArray ()
+        let len = Array.length array
+
+        for i = 0 to len - 1 do
+            match chooser.Invoke (i, array.[i]) with
+            | None -> ()
+            | Some value ->
+                chosen.Add value
+
+        chosen.ToArray ()
+
+
     // TODO :
-    // choosei
     // foldPairs, foldBackPairs
     // derive    // takes a 'T -> 'T -> 'T like reduce, but only performs one step; used to perform 'divided differences'
         // Other possible names: reduceOnce, reduceStep
