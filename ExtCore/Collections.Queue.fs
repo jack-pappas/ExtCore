@@ -36,6 +36,7 @@ type QueueData<'T> = {
 type Queue<'T> = Queue of QueueData<'T>
 
 //
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Queue =
     open Stream
 
@@ -68,9 +69,6 @@ module Queue =
         else
             Queue { Front = front; Rear = rear; Pending = tail pending; }
 
-    
-    exception Empty
-
     /// Returns an empty queue of the given type.
     let empty : Queue<'T> =
         Queue { Front = Stream.empty; Rear = []; Pending = Stream.empty; }
@@ -80,6 +78,7 @@ module Queue =
         (* by Invariant 1, front = empty implies rear = [] *)
         Stream.isEmpty front
 
+    /// The number of elements in the queue.
     let size (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
         (* = Stream.size front + length rear -- by Invariant 2 *)
         Stream.size pending + 2 * List.length rear
@@ -94,14 +93,18 @@ module Queue =
 
     /// take from front of queue
     let dequeue (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
+        // Preconditions
         if Stream.isEmpty front then
-            raise Empty
-        else
-            head front,
-            queue { Front = tail front; Rear = rear; Pending = pending; }
+            invalidArg "front" "The queue is empty."
+
+        head front,
+        queue { Front = tail front; Rear = rear; Pending = pending; }
 
     //
     let toArray (queue : Queue<'T>) : 'T[] =
+        // Preconditions
+        checkNonNull "queue" queue
+        
         // OPTIMIZATION : If the queue is empty, return an empty array.
         if isEmpty queue then
             Array.empty
