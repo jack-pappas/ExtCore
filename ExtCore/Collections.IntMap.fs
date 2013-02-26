@@ -63,7 +63,9 @@ module internal BitOps =
         let x = x ||| (x >>> 4)
         let x = x ||| (x >>> 8)
         let x = x ||| (x >>> 16)
-        x &&& ~~~(x >>> 1)
+        //x &&& ~~~(x >>> 1)
+        // OPTIMIZATION : p AND (NOT q) <-> p XOR q
+        x ^^^ (x >>> 1)
 
     /// Finds the first bit at which p0 and p1 disagree.
     /// Returns a power-of-two value containing this (and only this) bit.
