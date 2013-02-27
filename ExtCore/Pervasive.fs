@@ -497,11 +497,55 @@ module String =
             ofArray mappedChars
 
 
+    //
+    [<RequireQualifiedAccess>]
+    module Split =
+        // OPTIMIZE : The functions below could be modified to include an optimized case
+        // for when the separator array contains just a single character.
+
+        //
+        let iter (separator : char[]) (action : string -> unit) (str : string) : unit =
+            // Preconditions
+            checkNonNull "separator" separator
+            checkNonNull "str" str
+            // TODO : What if separator is empty?
+
+            notImpl "String.Split.iter"
+
+        //
+        let iteri (separator : char[]) (action : int -> string -> unit) (str : string) : unit =
+            // Preconditions
+            checkNonNull "separator" separator
+            checkNonNull "str" str
+            // TODO : What if separator is empty?
+
+            // NOTE : The int passed to the action is not the overall index of the character in the string,
+            // but the index into the "virtual" array of separated strings.
+            // E.g., if the separator was [| '\n' |] the index value would be the line number.
+
+            notImpl "String.Split.iteri"
+
+        //
+        let fold (separator : char[]) (folder : 'State -> string -> 'State) (state : 'State) (str : string) : 'State =
+            // Preconditions
+            checkNonNull "separator" separator
+            checkNonNull "str" str
+            // TODO : What if separator is empty?
+
+            notImpl "String.Split.fold"
+
+        //
+        let foldi (separator : char[]) (folder : int -> 'State -> string -> 'State) (state : 'State) (str : string) : 'State =
+            // Preconditions
+            checkNonNull "separator" separator
+            checkNonNull "str" str
+            // TODO : What if separator is empty?
+
+            notImpl "String.Split.foldi"
+
     (*
-    - String.Split.iter
-    - String.Split.iteri
-    - String.Split.fold
     - String.Split.filter
+    - String.Split.choose
       - These functions should work like .Split(...) |> Array.iter (or Array.fold, etc.),
         except that they won't actually need to traverse the entire string first and split
         it into an array of substrings. Instead, they'll improve performance by allowing us
@@ -511,6 +555,8 @@ module String =
         initial position and length of the substring; this may be enough information for some
         functions (e.g., to filter out strings less than 10 characters), but then we'd easily
         be able to create the substring from that information if necessary.
+            - Perhaps create some type that has a field containing a Lazy<string> which could
+              create the string value if the user wants it.
       - This could be implemented by using the regular vector type / functions from fsharplex.
     *)
 
