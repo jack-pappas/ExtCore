@@ -24,6 +24,7 @@ open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
 
+(*
 
 //
 type QueueData<'T> = {
@@ -122,4 +123,6 @@ module Queue =
                 queue <- queue'
 
             result.ToArray ()
+
+*)
 
