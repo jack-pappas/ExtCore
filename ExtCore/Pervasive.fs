@@ -117,6 +117,15 @@ module AdditionalOperators =
                 System.Threading.Monitor.Exit lockObject
         else None
 
+(*
+#if PROTO_COMPILER
+    /// Returns the RuntimeTypeHandle of the specified type.
+    [<NoDynamicInvocation>]
+    let inline typehandleof<'T> =
+        let tok = (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
+        tok
+#endif
+*)
 
 /// Functional operators on enumerations.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

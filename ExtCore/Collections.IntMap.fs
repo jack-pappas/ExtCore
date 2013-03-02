@@ -1161,26 +1161,23 @@ type TagMap<[<Measure>] 'Tag, 'T> =
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TagMap =
-    //
-    let [<NoDynamicInvocation>] inline private ofIntMap (map : IntMap<'T>) : TagMap<'Tag, 'T> =
-        // TODO : Use inline IL syntax here -- we don't need to emit any instructions,
-        // but we need to retype the value so it works correctly with the F# type checker.
-        notImpl "TagSet.ofIntSet"
-
-    //
-    let [<NoDynamicInvocation>] inline private toIntSet (map : TagMap<'Tag, 'T>) : IntMap<'T> =
-        // TODO : Use inline IL syntax here -- we don't need to emit any instructions,
-        // but we need to retype the value so it works correctly with the F# type checker.
-        notImpl "TagSet.ofIntSet"
+    /// Retypes a value without emitting any IL instructions.
+    /// WARNING: This should be used with EXTREME CAUTION.
+    [<NoDynamicInvocation>]
+    [<CompiledName("RetypeInlined")>]
+    let inline private retype<'T,'U> (x:'T) : 'U = (# "" x : 'U #)
 
     /// The empty TagMap.
     [<GeneralizableValue>]
     [<CompiledName("Empty")>]
     let empty<[<Measure>] 'Tag, 'T> =
-        IntMap<'T>.Empty
+        retype IntMap<'T>.Empty
 
     /// Is the map empty?
-    let inline isEmpty (map : IntMap<'T>) : bool =
+    let inline isEmpty (map : TagMap<'Tag, 'T>) : bool =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
@@ -1188,196 +1185,286 @@ module TagMap =
 
     /// Returns the number of bindings in the IntMap.
     let inline count (map : IntMap<'T>) : int =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
         
         map.Count
 
     /// The IntMap containing the given binding.
-    let inline singleton (key : int) (value : 'T) : IntMap<'T> =
-        IntMap.Singleton (key, value)
+    let inline singleton (key : int<'Tag>) (value : 'T) : TagMap<'Tag, 'T> =
+        IntMap.Singleton (int key, value)
+        |> retype
 
     /// Look up an element in the IntMap returning a Some value if the
     /// element is in the domain of the IntMap and None if not.
-    let inline tryFind (key : int) (map : IntMap<'T>) : 'T option =
+    let inline tryFind (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : 'T option =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
         
-        map.TryFind key
+        map.TryFind (int key)
         
     //
-    let inline find (key : int) (map : IntMap<'T>) : 'T =
+    let inline find (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : 'T =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Find key
+        map.Find (int key)
 
     //
-    let inline add (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
+    let inline add (key : int<'Tag>) (value : 'T) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Add (key, value)
+        map.Add (int key, value)
+        |> retype
 
     //
-    let inline remove (key : int) (map : IntMap<'T>) : IntMap<'T> =
+    let inline remove (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Remove key
+        map.Remove (int key)
+        |> retype
 
     //
-    let inline containsKey (key : int) (map : IntMap<'T>) : bool =
+    let inline containsKey (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : bool =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.ContainsKey key
+        map.ContainsKey (int key)
+        |> retype
 
     //
-    let inline ofSeq source : IntMap<'T> =
+    let inline ofSeq (source : seq<int<'Tag> * 'T>) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
-        IntMap.OfSeq source
+        IntMap.OfSeq (retype source)
+        |> retype
 
     //
-    let inline ofList source : IntMap<'T> =
+    let inline ofList (source : (int<'Tag> * 'T) list) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
-        IntMap.OfList source
+        IntMap.OfList (retype source)
+        |> retype
 
     //
-    let inline ofArray source : IntMap<'T> =
+    let inline ofArray (source : (int<'Tag> * 'T)[]) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
-        IntMap.OfArray source
+        IntMap.OfArray (retype source)
+        |> retype
 
     //
-    let inline ofMap source : IntMap<'T> =
+    let inline ofMap (source : Map<int<'Tag>, 'T>) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
-        IntMap.OfMap source
+        IntMap.OfMap (retype source)
+        |> retype
 
     //
-    let inline toArray (map : IntMap<'T>) =
+    let inline toArray (map : TagMap<'Tag, 'T>) : (int<'Tag> * 'T)[] =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
         map.ToArray ()
+        |> retype
 
     //
-    let inline toList (map : IntMap<'T>) =
+    let inline toList (map : TagMap<'Tag, 'T>) : (int<'Tag> * 'T) list =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
         map.ToList ()
+        |> retype
 
     //
-    let inline toMap (map : IntMap<'T>) =
+    let inline toMap (map : TagMap<'Tag, 'T>) : Map<int<'Tag>, 'T> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
         map.ToMap ()
+        |> retype
 
     //
-    let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) =
+    let inline iter (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Iterate action
+        map.Iterate (retype action)
 
     //
-    let inline iterBack (action : int -> 'T -> unit) (map : IntMap<'T>) =
+    let inline iterBack (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.IterateBack action
+        map.IterateBack (retype action)
 
     //
-    let inline fold (folder : 'State -> int -> 'T -> 'State) (state : 'State) (map : IntMap<'T>) =
+    let inline fold (folder : 'State -> int<'Tag> -> 'T -> 'State) (state : 'State) (map : TagMap<'Tag, 'T>) : 'State =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Fold (folder, state)
+        map.Fold (retype folder, state)
 
     //
-    let inline foldBack (folder : int -> 'T -> 'State -> 'State) (map : IntMap<'T>) (state : 'State) =
+    let inline foldBack (folder : int<'Tag> -> 'T -> 'State -> 'State) (map : TagMap<'Tag, 'T>) (state : 'State) : 'State =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.FoldBack (folder, state)
+        map.FoldBack (retype folder, state)
 
     //
-    let inline choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
+    let inline choose (chooser : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Choose chooser
+        map.Choose (retype chooser)
+        |> retype
 
     //
-    let inline filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
+    let inline filter (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Filter predicate
+        map.Filter (retype predicate)
+        |> retype
 
     //
-    let inline map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
+    let inline map (mapping : int<'Tag> -> 'T -> 'U) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Map mapping
+        map.Map (retype mapping)
+        |> retype
 
     //
-    let inline partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
+    let inline partition (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> * TagMap<'Tag, 'T> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Partition predicate
+        let map1, map2 = map.Partition (retype predicate)
+        (retype map1), (retype map2)
 
     //
-    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
+    let inline mapPartition (partitioner : int<'Tag> -> 'T -> Choice<'U, 'V>) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> * TagMap<'Tag, 'V> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.MapPartition partitioner
+        let map1, map2 = map.MapPartition (retype partitioner)
+        (retype map1), (retype map2)
 
     //
-    let inline tryFindKey (predicate : int -> 'T -> bool) (map : IntMap<'T>) : int option =
+    let inline tryFindKey (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : int<'Tag> option =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.TryFindKey predicate
+        map.TryFindKey (retype predicate)
+        |> retype
 
     //
-    let inline exists (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
+    let inline exists (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : bool =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Exists predicate
+        map.Exists (retype predicate)
 
     //
-    let inline forall (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
+    let inline forall (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : bool =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Forall predicate
+        map.Forall (retype predicate)
 
     //
-    let inline tryPick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U option =
+    let inline tryPick (picker : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : 'U option =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.TryPick picker
+        map.TryPick (retype picker)
 
     //
-    let inline pick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U =
+    let inline pick (picker : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : 'U =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
-        map.Pick picker
+        map.Pick (retype picker)
 
     //
-    let inline toSeq (map : IntMap<'T>) =
+    let inline toSeq (map : TagMap<'Tag, 'T>) : seq<int<'Tag> * 'T> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
         // Preconditions
         checkNonNull "map" map
 
         map.ToSeq ()
+        |> retype
 
 
 #endif
