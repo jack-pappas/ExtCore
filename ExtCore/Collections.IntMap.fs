@@ -25,8 +25,6 @@ open OptimizedClosures
 open ExtCore
 
 
-(* TODO :   Implement TagMap -- a "tagged" version of IntMap.
-            Implementing this correctly may require using the F# 'proto' compiler. *)
 (* OPTIMIZE :   Some of the functional-style operations on IntMap use direct non-tail-recursion;
                 performance may be improved if we modify these to use CPS instead. *)
 
@@ -1153,11 +1151,234 @@ module IntMap =
         map.ToSeq ()
 
 
+#if PROTO_COMPILER
 
-(* TODO : Can we just implement TagMap as a measure-annotated IntMap? *)
-(*
+//
 [<MeasureAnnotatedAbbreviation>]
 type TagMap<[<Measure>] 'Tag, 'T> =
     IntMap<'T>
-*)
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module TagMap =
+    //
+    let [<NoDynamicInvocation>] inline private ofIntMap (map : IntMap<'T>) : TagMap<'Tag, 'T> =
+        // TODO : Use inline IL syntax here -- we don't need to emit any instructions,
+        // but we need to retype the value so it works correctly with the F# type checker.
+        notImpl "TagSet.ofIntSet"
+
+    //
+    let [<NoDynamicInvocation>] inline private toIntSet (map : TagMap<'Tag, 'T>) : IntMap<'T> =
+        // TODO : Use inline IL syntax here -- we don't need to emit any instructions,
+        // but we need to retype the value so it works correctly with the F# type checker.
+        notImpl "TagSet.ofIntSet"
+
+    /// The empty TagMap.
+    [<GeneralizableValue>]
+    [<CompiledName("Empty")>]
+    let empty<[<Measure>] 'Tag, 'T> =
+        IntMap<'T>.Empty
+
+    /// Is the map empty?
+    let inline isEmpty (map : IntMap<'T>) : bool =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.IsEmpty
+
+    /// Returns the number of bindings in the IntMap.
+    let inline count (map : IntMap<'T>) : int =
+        // Preconditions
+        checkNonNull "map" map
+        
+        map.Count
+
+    /// The IntMap containing the given binding.
+    let inline singleton (key : int) (value : 'T) : IntMap<'T> =
+        IntMap.Singleton (key, value)
+
+    /// Look up an element in the IntMap returning a Some value if the
+    /// element is in the domain of the IntMap and None if not.
+    let inline tryFind (key : int) (map : IntMap<'T>) : 'T option =
+        // Preconditions
+        checkNonNull "map" map
+        
+        map.TryFind key
+        
+    //
+    let inline find (key : int) (map : IntMap<'T>) : 'T =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Find key
+
+    //
+    let inline add (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Add (key, value)
+
+    //
+    let inline remove (key : int) (map : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Remove key
+
+    //
+    let inline containsKey (key : int) (map : IntMap<'T>) : bool =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ContainsKey key
+
+    //
+    let inline ofSeq source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfSeq source
+
+    //
+    let inline ofList source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfList source
+
+    //
+    let inline ofArray source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfArray source
+
+    //
+    let inline ofMap source : IntMap<'T> =
+        // Preconditions are checked by the member.
+        IntMap.OfMap source
+
+    //
+    let inline toArray (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToArray ()
+
+    //
+    let inline toList (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToList ()
+
+    //
+    let inline toMap (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToMap ()
+
+    //
+    let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Iterate action
+
+    //
+    let inline iterBack (action : int -> 'T -> unit) (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.IterateBack action
+
+    //
+    let inline fold (folder : 'State -> int -> 'T -> 'State) (state : 'State) (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Fold (folder, state)
+
+    //
+    let inline foldBack (folder : int -> 'T -> 'State -> 'State) (map : IntMap<'T>) (state : 'State) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.FoldBack (folder, state)
+
+    //
+    let inline choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Choose chooser
+
+    //
+    let inline filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Filter predicate
+
+    //
+    let inline map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Map mapping
+
+    //
+    let inline partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Partition predicate
+
+    //
+    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.MapPartition partitioner
+
+    //
+    let inline tryFindKey (predicate : int -> 'T -> bool) (map : IntMap<'T>) : int option =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryFindKey predicate
+
+    //
+    let inline exists (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Exists predicate
+
+    //
+    let inline forall (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Forall predicate
+
+    //
+    let inline tryPick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U option =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryPick picker
+
+    //
+    let inline pick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Pick picker
+
+    //
+    let inline toSeq (map : IntMap<'T>) =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ToSeq ()
+
+
+#endif
 

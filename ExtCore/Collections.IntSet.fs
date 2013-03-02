@@ -714,10 +714,8 @@ and [<Sealed>]
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module IntSet =
     /// The empty IntSet.
-    [<GeneralizableValue>]
     [<CompiledName("Empty")>]
-    let empty<'T> =
-        IntSet.Empty
+    let empty = IntSet.Empty
 
     /// Is the map empty?
     let inline isEmpty (set : IntSet) : bool =
@@ -891,11 +889,274 @@ module IntSet =
         set.ToSeq ()
 
 
-(* TODO : Can we just implement TagSet as a measure-annotated IntSet? *)
-(*
+#if PROTO_COMPILER
+
+//
 [<MeasureAnnotatedAbbreviation>]
 type TagSet<[<Measure>] 'Tag> = IntSet
-*)
 
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module TagSet =
+    //
+    let [<NoDynamicInvocation>] inline private ofIntSet (set : IntSet) : TagSet<'Tag> =
+        // TODO : Use inline IL syntax here -- we don't need to emit any instructions,
+        // but we need to retype the value so it works correctly with the F# type checker.
+        notImpl "TagSet.ofIntSet"
 
+    //
+    let [<NoDynamicInvocation>] inline private toIntSet (set : TagSet<'Tag>) : IntSet =
+        // TODO : Use inline IL syntax here -- we don't need to emit any instructions,
+        // but we need to retype the value so it works correctly with the F# type checker.
+        notImpl "TagSet.ofIntSet"
+
+    /// The empty TagSet.
+    [<CompiledName("Empty")>]
+    let empty< [<Measure>] 'Tag> : TagSet<'Tag> =
+        IntSet.Empty
+        |> ofIntSet
+
+    /// Is the map empty?
+    let inline isEmpty (set : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.IsEmpty
+
+    /// Returns the number of elements in the TagSet.
+    let inline count (set : TagSet<'Tag>) : int =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+        
+        set.Count
+
+    /// The TagSet containing the given element.
+    let inline singleton (element : int<'Tag>) : TagSet<'Tag> =
+        IntSet.Singleton (int element)
+        |> ofIntSet
+
+    //
+    let inline add (key : int<'Tag>) (set : TagSet<'Tag>) : TagSet<'Tag> =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Add (int key)
+        |> ofIntSet
+
+    //
+    let inline remove (key : int<'Tag>) (set : TagSet<'Tag>) : TagSet<'Tag> =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Remove (int key)
+        |> ofIntSet
+
+    //
+    let inline contains (key : int<'Tag>) (set : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Contains (int key)
+
+    //
+    let inline ofSeq source : TagSet<'Tag> =
+        // Preconditions are checked by the member.
+        IntSet.OfSeq source
+        |> ofIntSet
+
+    //
+    let inline ofList source : TagSet<'Tag> =
+        // Preconditions are checked by the member.
+        IntSet.OfList source
+        |> ofIntSet
+
+    //
+    let inline ofArray source : TagSet<'Tag> =
+        // Preconditions are checked by the member.
+        IntSet.OfArray source
+        |> ofIntSet
+
+    //
+    let inline ofSet source : TagSet<'Tag> =
+        // Preconditions are checked by the member.
+        IntSet.OfSet source
+        |> ofIntSet
+
+    //
+    let inline toArray (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.ToArray ()
+
+    //
+    let inline toList (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.ToList ()
+
+    //
+    let inline toSet (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.ToSet ()
+
+    //
+    let inline iter (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        // TODO : Retype 'action' here to remove the tag?
+        set.Iterate action
+
+    //
+    let inline iterBack (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.IterateBack action
+
+    //
+    let inline fold (folder : 'State -> int<'Tag> -> 'State) (state : 'State) (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Fold (folder, state)
+
+    //
+    let inline foldBack (folder : int<'Tag> -> 'State -> 'State) (set : TagSet<'Tag>) (state : 'State) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.FoldBack (folder, state)
+
+    //
+    let inline choose (chooser : int<'Tag1> -> int<'Tag2> option) (set : TagSet<'Tag1>) : TagSet<'Tag2> =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Choose chooser
+
+    //
+    let inline filter (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : TagSet<'Tag> =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Filter predicate
+
+    //
+    let inline map (mapping : int<'Tag1> -> int<'Tag2>) (set : TagSet<'Tag1>) : TagSet<'Tag2> =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Map mapping
+
+    //
+    let inline partition (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : TagSet<'Tag> * TagSet<'Tag> =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Partition predicate
+
+    //
+    let inline exists (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Exists predicate
+
+    //
+    let inline forall (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Forall predicate
+
+    //
+    let inline tryPick (picker : int<'Tag> -> 'T option) (set : TagSet<'Tag>) : 'T option =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.TryPick picker
+
+    //
+    let inline pick (picker : int<'Tag> -> 'T option) (set : TagSet<'Tag>) : 'T =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Pick picker
+
+    //
+    let inline toSeq (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set = toIntSet set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.ToSeq ()
+
+#endif
 
