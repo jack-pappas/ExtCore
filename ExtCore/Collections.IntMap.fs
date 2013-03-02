@@ -1170,7 +1170,7 @@ module TagMap =
     /// The empty TagMap.
     [<GeneralizableValue>]
     [<CompiledName("Empty")>]
-    let empty<[<Measure>] 'Tag, 'T> =
+    let empty<[<Measure>] 'Tag, 'T> : TagMap<'Tag, 'T> =
         retype IntMap<'T>.Empty
 
     /// Is the map empty?
