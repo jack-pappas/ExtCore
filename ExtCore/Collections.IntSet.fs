@@ -718,6 +718,7 @@ module IntSet =
     let empty = IntSet.Empty
 
     /// Is the map empty?
+    [<CompiledName("IsEmpty")>]
     let inline isEmpty (set : IntSet) : bool =
         // Preconditions
         checkNonNull "set" set
@@ -725,6 +726,7 @@ module IntSet =
         set.IsEmpty
 
     /// Returns the number of elements in the IntSet.
+    [<CompiledName("Count")>]
     let inline count (set : IntSet) : int =
         // Preconditions
         checkNonNull "set" set
@@ -732,10 +734,12 @@ module IntSet =
         set.Count
 
     /// The IntSet containing the given element.
+    [<CompiledName("Singleton")>]
     let inline singleton (key : int) : IntSet =
         IntSet.Singleton key
 
     //
+    [<CompiledName("Add")>]
     let inline add (key : int) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
@@ -743,6 +747,7 @@ module IntSet =
         set.Add key
 
     //
+    [<CompiledName("Remove")>]
     let inline remove (key : int) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
@@ -750,6 +755,7 @@ module IntSet =
         set.Remove key
 
     //
+    [<CompiledName("Contains")>]
     let inline contains (key : int) (set : IntSet) : bool =
         // Preconditions
         checkNonNull "set" set
@@ -757,33 +763,39 @@ module IntSet =
         set.Contains key
 
     //
+    [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfSeq source
 
     //
+    [<CompiledName("OfList")>]
     let inline ofList source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfList source
 
     //
+    [<CompiledName("OfArray")>]
     let inline ofArray source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfArray source
 
     //
+    [<CompiledName("OfSet")>]
     let inline ofSet source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfSet source
 
     //
-    let inline toArray (set : IntSet) =
+    [<CompiledName("ToSeq")>]
+    let inline toSeq (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
 
-        set.ToArray ()
+        set.ToSeq ()
 
     //
+    [<CompiledName("ToList")>]
     let inline toList (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -791,6 +803,15 @@ module IntSet =
         set.ToList ()
 
     //
+    [<CompiledName("ToArray")>]
+    let inline toArray (set : IntSet) =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.ToArray ()
+
+    //
+    [<CompiledName("ToSet")>]
     let inline toSet (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -798,6 +819,7 @@ module IntSet =
         set.ToSet ()
 
     //
+    [<CompiledName("Iterate")>]
     let inline iter (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -805,6 +827,7 @@ module IntSet =
         set.Iterate action
 
     //
+    [<CompiledName("IterateBack")>]
     let inline iterBack (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -812,6 +835,7 @@ module IntSet =
         set.IterateBack action
 
     //
+    [<CompiledName("Fold")>]
     let inline fold (folder : 'State -> int -> 'State) (state : 'State) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -819,6 +843,7 @@ module IntSet =
         set.Fold (folder, state)
 
     //
+    [<CompiledName("FoldBack")>]
     let inline foldBack (folder : int -> 'State -> 'State) (set : IntSet) (state : 'State) =
         // Preconditions
         checkNonNull "set" set
@@ -826,6 +851,7 @@ module IntSet =
         set.FoldBack (folder, state)
 
     //
+    [<CompiledName("Choose")>]
     let inline choose (chooser : int -> int option) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
@@ -833,6 +859,7 @@ module IntSet =
         set.Choose chooser
 
     //
+    [<CompiledName("Filter")>]
     let inline filter (predicate : int -> bool) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
@@ -840,6 +867,7 @@ module IntSet =
         set.Filter predicate
 
     //
+    [<CompiledName("Map")>]
     let inline map (mapping : int -> int) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
@@ -847,6 +875,7 @@ module IntSet =
         set.Map mapping
 
     //
+    [<CompiledName("Partition")>]
     let inline partition (predicate : int -> bool) (set : IntSet) : IntSet * IntSet =
         // Preconditions
         checkNonNull "set" set
@@ -854,6 +883,7 @@ module IntSet =
         set.Partition predicate
 
     //
+    [<CompiledName("Exists")>]
     let inline exists (predicate : int -> bool) (set : IntSet) : bool =
         // Preconditions
         checkNonNull "set" set
@@ -861,6 +891,7 @@ module IntSet =
         set.Exists predicate
 
     //
+    [<CompiledName("Forall")>]
     let inline forall (predicate : int -> bool) (set : IntSet) : bool =
         // Preconditions
         checkNonNull "set" set
@@ -868,6 +899,7 @@ module IntSet =
         set.Forall predicate
 
     //
+    [<CompiledName("TryPick")>]
     let inline tryPick (picker : int -> 'T option) (set : IntSet) : 'T option =
         // Preconditions
         checkNonNull "set" set
@@ -875,18 +907,12 @@ module IntSet =
         set.TryPick picker
 
     //
+    [<CompiledName("Pick")>]
     let inline pick (picker : int -> 'T option) (set : IntSet) : 'T =
         // Preconditions
         checkNonNull "set" set
 
         set.Pick picker
-
-    //
-    let inline toSeq (set : IntSet) =
-        // Preconditions
-        checkNonNull "set" set
-
-        set.ToSeq ()
 
 
 #if PROTO_COMPILER
@@ -910,6 +936,7 @@ module TagSet =
         retype IntSet.Empty
 
     /// Is the map empty?
+    [<CompiledName("IsEmpty")>]
     let inline isEmpty (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -920,6 +947,7 @@ module TagSet =
         set.IsEmpty
 
     /// Returns the number of elements in the TagSet.
+    [<CompiledName("Count")>]
     let inline count (set : TagSet<'Tag>) : int =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -930,11 +958,13 @@ module TagSet =
         set.Count
 
     /// The TagSet containing the given element.
+    [<CompiledName("Singleton")>]
     let inline singleton (element : int<'Tag>) : TagSet<'Tag> =
         IntSet.Singleton (int element)
         |> retype
 
     //
+    [<CompiledName("Add")>]
     let inline add (key : int<'Tag>) (set : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -946,6 +976,7 @@ module TagSet =
         |> retype
 
     //
+    [<CompiledName("Remove")>]
     let inline remove (key : int<'Tag>) (set : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -957,6 +988,7 @@ module TagSet =
         |> retype
 
     //
+    [<CompiledName("Contains")>]
     let inline contains (key : int<'Tag>) (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -967,40 +999,47 @@ module TagSet =
         set.Contains (int key)
 
     //
+    [<CompiledName("OfSeq")>]
     let inline ofSeq source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfSeq source
         |> retype
 
     //
+    [<CompiledName("OfList")>]
     let inline ofList source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfList source
         |> retype
 
     //
+    [<CompiledName("OfArray")>]
     let inline ofArray source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfArray source
         |> retype
 
     //
+    [<CompiledName("OfSet")>]
     let inline ofSet source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfSet source
         |> retype
 
     //
-    let inline toArray (set : TagSet<'Tag>) =
+    [<CompiledName("ToSeq")>]
+    let inline toSeq (set : TagSet<'Tag>) : seq<int<'Tag>> =
         // Retype as IntSet
         let set : IntSet = retype set
 
         // Preconditions
         checkNonNull "set" set
 
-        set.ToArray ()
+        set.ToSeq ()
+        |> retype
 
     //
+    [<CompiledName("ToList")>]
     let inline toList (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1011,6 +1050,18 @@ module TagSet =
         set.ToList ()
 
     //
+    [<CompiledName("ToArray")>]
+    let inline toArray (set : TagSet<'Tag>) =
+        // Retype as IntSet
+        let set : IntSet = retype set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.ToArray ()
+
+    //
+    [<CompiledName("ToSet")>]
     let inline toSet (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1021,6 +1072,7 @@ module TagSet =
         set.ToSet ()
 
     //
+    [<CompiledName("Iterate")>]
     let inline iter (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1031,6 +1083,7 @@ module TagSet =
         set.Iterate (retype action)
 
     //
+    [<CompiledName("IterateBack")>]
     let inline iterBack (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1041,6 +1094,7 @@ module TagSet =
         set.IterateBack (retype action)
 
     //
+    [<CompiledName("Fold")>]
     let inline fold (folder : 'State -> int<'Tag> -> 'State) (state : 'State) (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1051,6 +1105,7 @@ module TagSet =
         set.Fold (retype folder, state)
 
     //
+    [<CompiledName("FoldBack")>]
     let inline foldBack (folder : int<'Tag> -> 'State -> 'State) (set : TagSet<'Tag>) (state : 'State) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1061,6 +1116,7 @@ module TagSet =
         set.FoldBack (retype folder, state)
 
     //
+    [<CompiledName("Choose")>]
     let inline choose (chooser : int<'Tag1> -> int<'Tag2> option) (set : TagSet<'Tag1>) : TagSet<'Tag2> =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1072,6 +1128,7 @@ module TagSet =
         |> retype
 
     //
+    [<CompiledName("Filter")>]
     let inline filter (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1083,6 +1140,7 @@ module TagSet =
         |> retype
 
     //
+    [<CompiledName("Map")>]
     let inline map (mapping : int<'Tag1> -> int<'Tag2>) (set : TagSet<'Tag1>) : TagSet<'Tag2> =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1094,6 +1152,7 @@ module TagSet =
         |> retype
 
     //
+    [<CompiledName("Partition")>]
     let inline partition (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : TagSet<'Tag> * TagSet<'Tag> =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1105,6 +1164,7 @@ module TagSet =
         (retype set1), (retype set2)
 
     //
+    [<CompiledName("Exists")>]
     let inline exists (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1115,6 +1175,7 @@ module TagSet =
         set.Exists (retype predicate)
 
     //
+    [<CompiledName("Forall")>]
     let inline forall (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1125,6 +1186,7 @@ module TagSet =
         set.Forall (retype predicate)
 
     //
+    [<CompiledName("TryPick")>]
     let inline tryPick (picker : int<'Tag> -> 'T option) (set : TagSet<'Tag>) : 'T option =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1135,6 +1197,7 @@ module TagSet =
         set.TryPick (retype picker)
 
     //
+    [<CompiledName("Pick")>]
     let inline pick (picker : int<'Tag> -> 'T option) (set : TagSet<'Tag>) : 'T =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1143,17 +1206,6 @@ module TagSet =
         checkNonNull "set" set
 
         set.Pick (retype picker)
-
-    //
-    let inline toSeq (set : TagSet<'Tag>) : seq<int<'Tag>> =
-        // Retype as IntSet
-        let set : IntSet = retype set
-
-        // Preconditions
-        checkNonNull "set" set
-
-        set.ToSeq ()
-        |> retype
 
 #endif
 
