@@ -81,6 +81,10 @@ module AdditionalOperators =
         if isNull value then
             nullArg argName
 
+    /// Raises a System.Collections.Generic.KeyNotFoundException.
+    let [<NoDynamicInvocation>] inline keyNotFound (msg : string) =
+        raise <| System.Collections.Generic.KeyNotFoundException msg
+
     /// Not-AND (NAND) of two boolean values.
     /// Returns false when both values are 'true'; otherwise, returns true.
     let [<NoDynamicInvocation>] inline nand (p : bool) (q : bool) =
@@ -156,6 +160,10 @@ module String =
     /// The empty string literal.
     let [<Literal>] empty = ""
 
+    //
+    let [<NoDynamicInvocation>] inline get (str : string) (index : int) =
+        str.[index]
+
     /// Indicates whether the specified string is null or empty.
     let [<NoDynamicInvocation>] inline isNullOrEmpty str =
         System.String.IsNullOrEmpty str
@@ -202,6 +210,64 @@ module String =
     //
     let [<NoDynamicInvocation>] inline ofArray (chars : char[]) =
         System.String (chars)
+
+    //
+    [<CompiledName("TryFindIndex")>]
+    let tryFindIndex (predicate : char -> bool) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        let len = String.length str
+
+        let mutable index = 0
+        let mutable foundMatch = false
+
+        while index < len && not foundMatch do
+            foundMatch <- predicate str.[index]
+            index <- index + 1
+
+        // Return the index of the matching character, if any.
+        if foundMatch then
+            Some index
+        else None
+
+    //
+    [<CompiledName("FindIndex")>]
+    let findIndex (predicate : char -> bool) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        // Use tryFindIndex to find the match; raise an exception if one is not found.
+        match tryFindIndex predicate str with
+        | Some index ->
+            index
+        | None ->
+            // TODO : Return a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("TryFindIndexOf")>]
+    let inline tryFindIndexOf (c : char) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        match str.IndexOf c with
+        | -1 -> None
+        | idx -> Some idx
+
+    //
+    [<CompiledName("FindIndexOf")>]
+    let inline findIndexOf (c : char) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        match str.IndexOf c with
+        | -1 ->
+            // TODO : Return a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+        | idx -> idx
 
     //
     [<CompiledName("TrimStartWith")>]
