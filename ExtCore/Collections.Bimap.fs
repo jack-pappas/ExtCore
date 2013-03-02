@@ -25,6 +25,7 @@ open ExtCore
 
 
 /// A bi-directional map.
+[<NoEquality; NoComparison>]
 type Bimap<'T1, 'T2
     when 'T1 : comparison
     and 'T2 : comparison> = {
@@ -313,6 +314,7 @@ module Bimap =
 /// <summary>A bi-directional TagMap.</summary>
 /// <typeparam name="Tag1">The tag (measure) type for the first set of values.</typeparam>
 /// <typeparam name="Tag2">The tag (measure) type for the second set of values.</typeparam>
+[<NoEquality; NoComparison>]
 type TagBimap< [<Measure>] 'Tag1, [<Measure>] 'Tag2 > = {
     //
     Left : Map<int<'Tag1>, int<'Tag2>>;
