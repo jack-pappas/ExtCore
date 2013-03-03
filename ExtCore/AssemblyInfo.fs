@@ -19,6 +19,7 @@ limitations under the License.
 
 module internal AssemblyInfo
 
+open System
 open System.Reflection
 open System.Resources
 open System.Runtime.CompilerServices
@@ -46,6 +47,12 @@ let [<Literal>] private assemblyConfig =
     #endif
     #endif
 
+// Version information
+[<assembly: AssemblyVersion("0.1.0")>]
+[<assembly: AssemblyFileVersion("0.1.0")>]
+[<assembly: AssemblyInformationalVersion("0.1.0")>]
+
+// Assembly information
 [<assembly: AssemblyTitle("ExtCore")>]
 [<assembly: AssemblyDescription("An extended core library for F#.")>]
 [<assembly: NeutralResourcesLanguage("en-US")>]
@@ -59,11 +66,6 @@ let [<Literal>] private assemblyConfig =
 //[<assembly: AssemblyTrademark("")>]
 //[<assembly: AssemblyCulture("")>]
 
-// Version information
-[<assembly: AssemblyVersion("0.1.0")>]
-[<assembly: AssemblyFileVersion("0.1.0")>]
-[<assembly: AssemblyInformationalVersion("0.1.0")>]
-
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
 // COM, set the ComVisible attribute to true on that type.
@@ -73,6 +75,13 @@ let [<Literal>] private assemblyConfig =
 // any other types should be automatically wrapped.
 [<assembly: RuntimeCompatibility(WrapNonExceptionThrows = true)>]
 
+// Security-related stuff.
+//[<assembly: AllowPartiallyTrustedCallers>]
+//[<assembly: SecurityTransparent>]
+
+// This assembly is CLS-compliant.
+// TODO : Enable this once we can verify that the assembly is actually CLS-compliant.
+//[<assembly: CLSCompliant(true)>]
 
 (*  Makes internal modules, types, and functions visible
     to the test project so they can be unit-tested. *)
@@ -84,6 +93,7 @@ let [<Literal>] private assemblyConfig =
 [<assembly: DependencyAttribute("FSharp.Core", LoadHint.Always)>]
 [<assembly: DependencyAttribute("System", LoadHint.Always)>]
 [<assembly: DependencyAttribute("System.Core", LoadHint.Always)>]
+[<assembly: DefaultDependency(LoadHint.Always)>]
 
 
 (*  F# considers modules which only contain attributes to be empty;
