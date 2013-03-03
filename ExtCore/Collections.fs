@@ -2328,6 +2328,8 @@ module Dict =
                 if d.ContainsKey k then
                     d.[k] <- v
                 else
+                    // TODO : Return a better error message
+                    //keyNotFound ""
                     raise <| System.Collections.Generic.KeyNotFoundException ()
 
         /// Removes the entry with the specified key from the Dictionary,
@@ -2395,8 +2397,11 @@ module Dict =
     /// Removes the entry with the specified key from the Dictionary.
     /// An exception is raised if the entry cannot be removed.
     let [<NoDynamicInvocation>] inline remove (k : 'Key) (dictionary : IDictionary<'Key, 'T>) =
-        if dictionary.Remove k then dictionary
-        else failwithf "Unable to remove the entry with the key '%O' from the dictionary." k
+        if dictionary.Remove k then
+            dictionary
+        else
+            let msg = sprintf "Unable to remove the entry with the key '%O' from the dictionary." k
+            raise <| exn msg
 
     /// Lookup an element in the Dictionary, raising KeyNotFoundException if
     /// the dictionary does not contain an element with the specified key.
@@ -2417,6 +2422,7 @@ module Dict =
             dictionary
         else
             // TODO : Add an error message which includes the key.
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     /// Updates the value of an entry (which has the specified key) in
