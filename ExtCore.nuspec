@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>ExtCore</id>
-        <version>0.1.0</version>
+        <version>0.8.0</version>
         <dependencies>
         </dependencies>
         <title>Core library extensions for F#.</title>
@@ -15,7 +15,7 @@
         <tags>fsharp,workflow,collections,immutable,workflow,monad,computation</tags>
     </metadata>
     <files>
-        <file src="ExtCore\bin\Release\ExtCore.XML" target="lib\net40\ExtCore.XML" />
-        <file src="ExtCore\bin\Release\ExtCore.dll" target="lib\net40\ExtCore.dll" />
+        <file src="_NuGetBuild\net40\ExtCore.XML" target="lib\net40\ExtCore.XML" />
+        <file src="_NuGetBuild\net40\ExtCore.dll" target="lib\net40\ExtCore.dll" />
     </files>
 </package>
