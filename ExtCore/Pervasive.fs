@@ -117,6 +117,14 @@ module AdditionalOperators =
                 System.Threading.Monitor.Exit lockObject
         else None
 
+    /// Intercepts a value within a pipeline. The value is applied to a given
+    /// function, then returned so it can continue through the pipeline.
+    /// This function is primarily useful for debugging pipelines.
+    [<CompiledName("Tap")>]
+    let tap (action : 'T -> unit) (value : 'T) =
+        action value
+        value
+
 (*
 #if PROTO_COMPILER
     /// Returns the RuntimeTypeHandle of the specified type.
@@ -171,6 +179,7 @@ module String =
     open OptimizedClosures
 
     /// The empty string literal.
+    [<CompiledName("Empty")>]
     let [<Literal>] empty = ""
 
     //
@@ -739,6 +748,7 @@ module Choice =
 //
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Printf =
+    open System.Diagnostics
     open Printf
 
     /// Print to a System.Text.StringBuilder, adding a newline.
@@ -746,7 +756,23 @@ module Printf =
     let inline bprintfn (buf : System.Text.StringBuilder) fmt : 'T =
         kbprintf (fun _ -> buf.AppendLine () |> ignore) buf fmt
 
-    // TODO
-    // dprintf / dprintfn       // Print formatted string to DebugListeners
-    // tprintf / tprintfn       // Print formatted string to TraceListeners
+    /// Print formatted string to Debug listeners.
+    [<CompiledName("PrintFormatToDebugListeners")>]
+    let inline dprintf fmt : 'T =
+        ksprintf Debug.Write fmt
+
+    /// Print formatted string to Debug listeners, adding a newline.
+    [<CompiledName("PrintFormatLineToDebugListeners")>]
+    let inline dprintfn fmt : 'T =
+        ksprintf Debug.WriteLine fmt
+
+    /// Print formatted string to Trace listeners.
+    [<CompiledName("PrintFormatToTraceListeners")>]
+    let inline tprintf fmt : 'T =
+        ksprintf Trace.Write fmt
+
+    /// Print formatted string to Trace listeners, adding a newline.
+    [<CompiledName("PrintFormatLineToTraceListeners")>]
+    let inline tprintfn fmt : 'T =
+        ksprintf Trace.WriteLine fmt
 
