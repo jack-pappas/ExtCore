@@ -41,51 +41,75 @@ namespace ExtCore
 (*  The code below is from the F# PowerPack and is only temporary --
     eventually it will be replaced with a new, functional-style API. *)
 
-type ArgType = 
-| ClearArg of bool ref
-| FloatArg of (float -> unit)
-| IntArg of (int -> unit)
-| RestArg of (string -> unit)
-| SetArg of bool ref
-| StringArg of (string -> unit)
-| UnitArg of (unit -> unit)
-  static member Clear  r = ClearArg r
-  static member Float  r = FloatArg r
-  static member Int    r = IntArg r
-  static member Rest   r = RestArg r
-  static member Set    r = SetArg r
-  static member String r = StringArg r
-  static member Unit   r = UnitArg r
+/// The spec value describes the action of the argument,
+/// and whether it expects a following parameter.
+type ArgType =
+    | ClearArg of bool ref
+    | FloatArg of (float -> unit)
+    | IntArg of (int -> unit)
+    | RestArg of (string -> unit)
+    | SetArg of bool ref
+    | StringArg of (string -> unit)
+    | UnitArg of (unit -> unit)
+
+    static member Clear r = ClearArg r
+    static member Float r = FloatArg r
+    static member Int r = IntArg r
+    static member Rest r = RestArg r
+    static member Set r = SetArg r
+    static member String r = StringArg r
+    static member Unit r = UnitArg r
 
 
-type ArgInfo (name,action,help) = 
-  member x.Name = name
-  member x.ArgType = action
-  member x.HelpText = help
+type ArgInfo (name,action,help) =
+    /// Return the name of the argument
+    member x.Name = name
+    /// Return the argument type and action of the argument
+    member x.ArgType = action
+    /// Return the usage help associated with the argument
+    member x.HelpText = help
   
 exception Bad of string
 exception HelpText of string
 
 [<Sealed>]
-type ArgParser() = 
-    static let getUsage specs u =  
-      let sbuf = new System.Text.StringBuilder 100  
-      let pstring (s:string) = sbuf.Append s |> ignore 
-      let pendline s = pstring s; pstring "\n" 
-      pendline u;
-      List.iter (fun (arg:ArgInfo) -> 
-        match arg.Name, arg.ArgType, arg.HelpText with
-        | (s, (UnitArg _ | SetArg _ | ClearArg _), helpText) -> pstring "\t"; pstring s; pstring ": "; pendline helpText
-        | (s, StringArg _, helpText) -> pstring "\t"; pstring s; pstring " <string>: "; pendline helpText
-        | (s, IntArg _, helpText) -> pstring "\t"; pstring s; pstring " <int>: "; pendline helpText
-        | (s, FloatArg _, helpText) ->  pstring "\t"; pstring s; pstring " <float>: "; pendline helpText
-        | (s, RestArg _, helpText) -> pstring "\t"; pstring s; pstring " ...: "; pendline helpText)
-        specs;
-      pstring "\t"; pstring "--help"; pstring ": "; pendline "display this list of options";
-      pstring "\t"; pstring "-help"; pstring ": "; pendline "display this list of options";
-      sbuf.ToString()
+type ArgParser () =
+    static let getUsage specs u =
+        let sbuf = System.Text.StringBuilder 100  
+        let pstring (s : string) =
+            sbuf.Append s |> ignore
+        let pendline s =
+            pstring s
+            pstring "\n"
+        pendline u
+        specs
+        |> List.iter (fun (arg : ArgInfo) ->
+            match arg.Name, arg.ArgType, arg.HelpText with
+            | (s, (UnitArg _ | SetArg _ | ClearArg _), helpText) ->
+                pstring "\t"; pstring s; pstring ": "; pendline helpText
+            | (s, StringArg _, helpText) ->
+                pstring "\t"; pstring s; pstring " <string>: "; pendline helpText
+            | (s, IntArg _, helpText) ->
+                pstring "\t"; pstring s; pstring " <int>: "; pendline helpText
+            | (s, FloatArg _, helpText) ->
+                pstring "\t"; pstring s; pstring " <float>: "; pendline helpText
+            | (s, RestArg _, helpText) ->
+                pstring "\t"; pstring s; pstring " ...: "; pendline helpText)
 
+        pstring "\t"
+        pstring "--help"
+        pstring ": "
+        pendline "display this list of options"
 
+        pstring "\t"
+        pstring "-help"
+        pstring ": "
+        pendline "display this list of options"
+
+        sbuf.ToString ()
+
+    /// Parse some of the arguments given by 'argv', starting at the given position
+    [<System.Obsolete("This method should not be used directly as it will be removed in a future revision of this library")>]
     static member ParsePartial(cursor,argv,argSpecs:seq<ArgInfo>,?other,?usageText) =
         let other = defaultArg other (fun _ -> ())
         let usageText = defaultArg usageText ""
@@ -128,30 +152,36 @@ type ArgParser() =
                  f arg2; 
                  cursor := !cursor + 2;
                | RestArg f -> 
-                 incr cursor;
+                 incr cursor
                  while !cursor < nargs do
-                     f (argv.[!cursor]);
-                     incr cursor;
+                     f argv.[!cursor]
+                     incr cursor
 
-            | (_ :: more)  -> findMatchingArg more 
-            | [] -> 
+            | (_ :: more)  ->
+                findMatchingArg more 
+            | [] ->
                 if arg = "-help" || arg = "--help" || arg = "/help" || arg = "/help" || arg = "/?" then
                     raise (HelpText (getUsage argSpecs usageText))
                 // Note: for '/abc/def' does not count as an argument
                 // Note: '/abc' does
-                elif arg.Length>0 && (arg.[0] = '-' || (arg.[0] = '/' && not (arg.Length > 1 && arg.[1..].Contains ("/")))) then
-                    raise (Bad ("unrecognized argument: "+ arg + "\n" + getUsage argSpecs usageText))
+                elif arg.Length > 0 && (arg.[0] = '-' || (arg.[0] = '/' && not (arg.Length > 1 && arg.[1..].Contains "/"))) then
+                    raise <| Bad ("unrecognized argument: "+ arg + "\n" + getUsage argSpecs usageText)
                 else 
                    other arg;
                    incr cursor
           findMatchingArg specs 
 
-    static member Usage (specs,?usage) = 
+    /// Prints the help for each argument.
+    static member Usage (specs,?usage) =
         let usage = defaultArg usage ""
         System.Console.Error.WriteLine (getUsage (Seq.toList specs) usage)
 
     #if FX_NO_COMMAND_LINE_ARGS
     #else
+    /// Parse the arguments given by System.Environment.GetEnvironmentVariables()
+    /// according to the argument processing specifications "specs".
+    /// Args begin with "-". Non-arguments are passed to "f" in
+    /// order.  "use" is printed as part of the usage line if an error occurs.
     static member Parse (specs,?other,?usageText) = 
         let current = ref 0
         let argv = System.Environment.GetCommandLineArgs() 
