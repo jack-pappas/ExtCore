@@ -54,3 +54,11 @@ _ReSharper*/
 
 # Office Temp Files
 ~$*
+
+
+###############################################################################
+# Project-specific patterns
+###############################################################################
+
+# Ignore the NuGet build folder, it's only needed when building the package
+_NuGetBuild/*
