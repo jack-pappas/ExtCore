@@ -77,12 +77,13 @@ exception HelpText of string
 [<Sealed>]
 type ArgParser () =
     static let getUsage specs u =
-        let sbuf = System.Text.StringBuilder 100  
+        let sb = System.Text.StringBuilder 100
+
         let inline pstring (str : string) =
-            sbuf.Append str |> ignore
+            sb.Append str |> ignore
         let inline pendline str =
-            pstring str
-            pstring "\n"
+            sb.AppendLine str |> ignore
+
         pendline u
         specs
         |> List.iter (fun (arg : ArgInfo) ->
@@ -90,6 +91,7 @@ type ArgParser () =
             | UnitArg _
             | SetArg _
             | ClearArg _ ->
+                //Printf.bprintfn sb "\t%s: %s" arg.Name arg.HelpText
                 pstring "\t"; pstring arg.Name; pstring ": "; pendline arg.HelpText
             | StringArg _ ->
                 pstring "\t"; pstring arg.Name; pstring " <string>: "; pendline arg.HelpText
@@ -111,7 +113,7 @@ type ArgParser () =
         pstring ": "
         pendline "display this list of options"
 
-        sbuf.ToString ()
+        sb.ToString ()
 
     /// Parse some of the arguments given by 'argv', starting at the given position
     [<System.Obsolete("This method should not be used directly as it will be removed in a future revision of this library")>]
@@ -216,7 +218,3 @@ type ArgParser () =
             | e ->
                 reraise ()
     #endif
-
-
-
-

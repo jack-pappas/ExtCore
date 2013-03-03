@@ -736,3 +736,17 @@ module Choice =
         | Choice2Of2 error -> Choice2Of2 error
 *)
 
+//
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Printf =
+    open Printf
+
+    /// Print to a System.Text.StringBuilder, adding a newline.
+    [<CompiledName("PrintFormatLineToStringBuilder")>]
+    let inline bprintfn (buf : System.Text.StringBuilder) fmt : 'T =
+        kbprintf (fun _ -> buf.AppendLine () |> ignore) buf fmt
+
+    // TODO
+    // dprintf / dprintfn       // Print formatted string to DebugListeners
+    // tprintf / tprintfn       // Print formatted string to TraceListeners
+
