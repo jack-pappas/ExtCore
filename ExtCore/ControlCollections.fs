@@ -476,6 +476,88 @@ module State =
             innerState, outerState
 
 
+    /// The standard F# List module, lifted into the State monad.
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module List =
+        /// A specialization of List.iter which threads an accumulator through the computation;
+        /// this allows the use of actions requiring a (possibly mutable) state variable.
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> 'State -> unit * 'State) (list : 'T list) (state : 'State) : unit * 'State =
+            // Preconditions
+            checkNonNull "list" list
+
+            let action = FSharpFunc<_,_,_>.Adapt action
+            let mutable list = list
+            let mutable state = state
+
+            while not <| List.isEmpty list do
+                state <- snd <| action.Invoke (List.head list, state)
+                list <- List.tail list
+
+            (), state
+
+        /// A specialization of List.iteri which threads an accumulator through the computation;
+        /// this allows the use of actions requiring a (possibly mutable) state variable.
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> 'T -> 'State -> unit * 'State) (list : 'T list) (state : 'State) : unit * 'State =
+            // Preconditions
+            checkNonNull "list" list
+
+            let action = FSharpFunc<_,_,_,_>.Adapt action
+            let mutable list = list
+            let mutable state = state
+            let mutable index = 0
+
+            while not <| List.isEmpty list do
+                state <- snd <| action.Invoke (index, List.head list, state)
+                list <- List.tail list
+                index <- index + 1
+
+            (), state
+
+        /// A specialization of List.map which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'State -> 'U * 'State) (list : 'T list) (state : 'State) : 'U list * 'State =
+            // Preconditions
+            checkNonNull "list" list
+
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+            let mutable list = list
+            let mutable results = []
+            let mutable state = state
+
+            while not <| List.isEmpty list do
+                let result, state' = mapping.Invoke (List.head list, state)
+                results <- result :: results
+                state <- state'
+                list <- List.tail list
+
+            List.rev results, state
+
+        /// A specialization of List.mapi which threads an accumulator through the computation;
+        /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
+        [<CompiledName("MapIndexed")>]
+        let mapi (mapping : int -> 'T -> 'State -> 'U * 'State) (list : 'T list) (state : 'State) : 'U list * 'State =
+            // Preconditions
+            checkNonNull "list" list
+
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+            let mutable list = list
+            let mutable results = []
+            let mutable state = state
+            let mutable index = 0
+
+            while not <| List.isEmpty list do
+                let result, state' = mapping.Invoke (index, List.head list, state)
+                results <- result :: results
+                state <- state'
+                list <- List.tail list
+                index <- index + 1
+
+            List.rev results, state
+
+
     /// The ExtCore.Collections.TaggedArray module, lifted into the State monad.
     [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module TaggedArray =
