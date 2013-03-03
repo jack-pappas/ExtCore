@@ -65,7 +65,7 @@ module AdditionalOperators =
         raise <| System.NotSupportedException msg
 
     /// Raises a System.ArgumentOutOfRangeException.
-    let [<NoDynamicInvocation>] inline outOfRangeArg (paramName : string) (message : string) =
+    let [<NoDynamicInvocation>] inline argOutOfRange (paramName : string) (message : string) =
         raise <| System.ArgumentOutOfRangeException (paramName, message)
 
     /// Compares two objects for reference equality.
@@ -136,6 +136,10 @@ module Enum =
         typeof<'Enum>
         |> System.Enum.GetValues
         :?> 'Enum[]
+
+    //
+    let [<NoDynamicInvocation>] inline isDefined<'Enum, 'T when 'Enum : enum<'T>> (value : 'Enum) =
+        System.Enum.IsDefined (typeof<'Enum>, value)
 
 
 /// Functional operators on lazily-initialized values.
