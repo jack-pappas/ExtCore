@@ -31,7 +31,6 @@ module AdditionalOperators =
 
     (* Type extensions for System.ArraySegment<'T> *)
     type System.ArraySegment<'T> with
-        //
         member this.Item
             with get index =
                 assert (index >= 0)
@@ -138,34 +137,45 @@ module AdditionalOperators =
 /// Functional operators on enumerations.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Enum =
-    //
+    /// Returns an array of the values defined by an enumeration type.
     [<CompiledName("GetValues")>]
     let values<'Enum, 'T when 'Enum : enum<'T>> () =
         typeof<'Enum>
         |> System.Enum.GetValues
         :?> 'Enum[]
 
-    //
-    let [<NoDynamicInvocation>] inline isDefined<'Enum, 'T when 'Enum : enum<'T>> (value : 'Enum) =
+//    //
+//    let inline values2 () =
+//        values< ^Enum, _> ()
+
+    /// Alias for System.Enum.IsDefined.
+    let [<NoDynamicInvocation>] inline private isDefinedImpl<'Enum, 'T when 'Enum : enum<'T>> (value : 'Enum) =
         System.Enum.IsDefined (typeof<'Enum>, value)
+
+    /// Indicates whether a constant with the specified value exists in the given enumeration type.
+    let [<NoDynamicInvocation>] inline isDefined value =
+        isDefinedImpl< ^Enum, _> value
 
 
 /// Functional operators on lazily-initialized values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Lazy =
-    //
+    /// Forces initialization of a lazily-initialized value (if it has not already
+    /// been initialized) then returns the value.
     let [<NoDynamicInvocation>] inline force (lazyValue : Lazy<'T>) =
         lazyValue.Force ()
 
-    //
+    /// Retrieves the value from a lazily-initialized value.
     let [<NoDynamicInvocation>] inline value (lazyValue : Lazy<'T>) =
         lazyValue.Value
 
-    //
+    /// Creates a lazily-initialized value. When the lazy initialization occurs,
+    /// the specified function is used to create the value.
     let [<NoDynamicInvocation>] inline create creator : Lazy<'T> =
         System.Lazy.Create creator
 
-    //
+    /// Returns the value of a lazily-initialized value as <c>Some value</c> if it has already
+    /// been initialized; otherwise, returns <c>None</c>.
     [<CompiledName("TryGetValue")>]
     let tryGetValue (lazyValue : Lazy<'T>) =
         if lazyValue.IsValueCreated then
@@ -182,7 +192,7 @@ module String =
     [<CompiledName("Empty")>]
     let [<Literal>] empty = ""
 
-    //
+    /// Gets a character from a string.
     let [<NoDynamicInvocation>] inline get (str : string) (index : int) =
         str.[index]
 
@@ -225,22 +235,22 @@ module String =
     let [<NoDynamicInvocation>] inline trimChars (chars : char[]) (str : string) =
         str.Trim chars
 
-    //
+    /// Builds a character array from the given string.
     let [<NoDynamicInvocation>] inline toArray (str : string) =
         str.ToCharArray ()
 
-    //
+    /// Builds a string from the given character array.
     let [<NoDynamicInvocation>] inline ofArray (chars : char[]) =
         System.String (chars)
 
-    //
+    /// Returns the index of the first character in the string which satisfies the given predicate.
     [<CompiledName("TryFindIndex")>]
     let tryFindIndex (predicate : char -> bool) (str : string) =
         // Preconditions
         checkNonNull "str" str
 
         let len = String.length str
-
+        
         let mutable index = 0
         let mutable foundMatch = false
 
@@ -253,7 +263,7 @@ module String =
             Some index
         else None
 
-    //
+    /// Returns the index of the first character in the string which satisfies the given predicate.
     [<CompiledName("FindIndex")>]
     let findIndex (predicate : char -> bool) (str : string) =
         // Preconditions
@@ -268,7 +278,7 @@ module String =
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    //
+    /// Returns the index of the first occurrence of a specified character within a string.
     [<CompiledName("TryFindIndexOf")>]
     let inline tryFindIndexOf (c : char) (str : string) =
         // Preconditions
@@ -278,7 +288,7 @@ module String =
         | -1 -> None
         | idx -> Some idx
 
-    //
+    /// Returns the index of the first occurrence of a specified character within a string.
     [<CompiledName("FindIndexOf")>]
     let inline findIndexOf (c : char) (str : string) =
         // Preconditions
@@ -291,12 +301,20 @@ module String =
             raise <| System.Collections.Generic.KeyNotFoundException ()
         | idx -> idx
 
-    //
+    /// Removes all leading occurrences of the specified set of characters from a string.
+    let [<NoDynamicInvocation>] inline trimStart trimChars (str : string) =
+        str.TrimStart trimChars
+
+    /// Removes all trailing occurrences of the specified set of characters from a string.
+    let [<NoDynamicInvocation>] inline trimEnd trimChars (str : string) =
+        str.TrimEnd trimChars
+
+    /// Removes all leading occurrences of characters satisfying the given predicate from a string.
     [<CompiledName("TrimStartWith")>]
     let trimStartWith (predicate : char -> bool) (str : string) =
         // Preconditions
         checkNonNull "str" str
-
+        
         /// The length of the string.
         let len = String.length str
 
@@ -322,7 +340,7 @@ module String =
             else
                 empty
 
-    //
+    /// Removes all trailing occurrences of characters satisfying the given predicate from a string.
     [<CompiledName("TrimEndWith")>]
     let trimEndWith (predicate : char -> bool) (str : string) =
         // Preconditions
@@ -353,7 +371,7 @@ module String =
             else
                 empty
 
-    //
+    /// Removes all leading and trailing occurrences of characters satisfying the given predicate from a string.
     [<CompiledName("TrimWith")>]
     let trimWith (predicate : char -> bool) (str : string) =
         // Preconditions
@@ -408,12 +426,13 @@ module String =
             else
                 empty
 
-    //
+    /// Applies the given function to each character in the string.
+    /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
     [<CompiledName("Choose")>]
     let choose (chooser : char -> char option) (str : string) : string =
         // Preconditions
         checkNonNull "str" str
-
+        
         /// The length of the input string.
         let len = String.length str
 
@@ -439,12 +458,14 @@ module String =
             // Create a new string from the chosen characters.
             ofArray chosenChars.[..chosenCount]
 
-    //
+    /// Applies the given function to each character in the string.
+    /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
+    /// The integer index passed to the function indicates the index of the character being transformed.
     [<CompiledName("ChooseIndexed")>]
     let choosei (chooser : int -> char -> char option) (str : string) : string =
         // Preconditions
         checkNonNull "str" str
-
+        
         /// The length of the input string.
         let len = String.length str
 
@@ -472,7 +493,9 @@ module String =
             // Create a new string from the chosen characters.
             ofArray chosenChars.[..chosenCount]
 
-    //
+    /// Applies a function to each character of the string, threading an accumulator
+    /// argument through the computation.
+    /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> char -> 'State) (state : 'State) (str : string) : 'State =
         // Preconditions
@@ -489,7 +512,9 @@ module String =
             state <- folder.Invoke (state, str.[i])
         state
 
-    //
+    /// Applies a function to each character of the string, threading an accumulator
+    /// argument through the computation.
+    /// If the input function is f and the characters are c0...cN then computes f c0 (...(f cN s)).
     [<CompiledName("FoldBack")>]
     let foldBack (folder : char -> 'State -> 'State) (str : string) (state : 'State) : 'State =
         // Preconditions
@@ -506,12 +531,12 @@ module String =
             state <- folder.Invoke (str.[i], state)
         state
 
-    //
+    /// Applies the given function to each character of the string.
     [<CompiledName("Iterate")>]
     let iter (action : char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str
-
+        
         /// The length of the input string.
         let len = String.length str
 
@@ -519,12 +544,13 @@ module String =
         for i = 0 to len - 1 do
             action str.[i]
 
-    //
+    /// Applies the given function to each character of the string.
+    /// The integer passed to the function indicates the index of the character.
     [<CompiledName("IterateIndexed")>]
     let iteri (action : int -> char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str
-
+        
         let action = FSharpFunc<_,_,_>.Adapt action
 
         /// The length of the input string.
@@ -534,12 +560,13 @@ module String =
         for i = 0 to len - 1 do
             action.Invoke (i, str.[i])
 
-    //
+    /// Builds a new string whose characters are the results of applying the given
+    /// function to each character of the string.
     [<CompiledName("Map")>]
     let map (mapping : char -> char) (str : string) : string =
         // Preconditions
         checkNonNull "str" str
-
+        
         /// The length of the input string.
         let len = String.length str
 
@@ -558,7 +585,9 @@ module String =
             // Create a new string from the mapped characters.
             ofArray mappedChars
 
-    //
+    /// Builds a new string whose characters are the results of applying the given
+    /// function to each character of the string.
+    /// The integer index passed to the function indicates the index of the character being transformed.
     [<CompiledName("MapIndexed")>]
     let mapi (mapping : int -> char -> char) (str : string) : string =
         // Preconditions
@@ -585,7 +614,8 @@ module String =
             ofArray mappedChars
 
 
-    //
+    /// String-splitting functions.
+    /// These work like String.Split but without creating the intermediate array.
     [<RequireQualifiedAccess>]
     module Split =
         // OPTIMIZE : The functions below could be modified to include an optimized case
@@ -745,7 +775,7 @@ module Choice =
         | Choice2Of2 error -> Choice2Of2 error
 *)
 
-//
+/// Extensible printf-style formatting for numbers and other datatypes.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Printf =
     open System.Diagnostics
