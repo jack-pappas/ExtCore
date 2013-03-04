@@ -1,6 +1,6 @@
 ﻿(*
 
-Copyright ____ Chris Okasaki
+Copyright 1994 Chris Okasaki
 Copyright 2013 Jack Pappas
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +24,12 @@ open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
 
-(*
 
 //
 type QueueData<'T> = {
-    Front : Stream<'T>;
+    Front : LazyList<'T>;
     Rear : 'T list;
-    Pending : Stream<'T>;
+    Pending : LazyList<'T>;
 }
 
 //
@@ -39,8 +38,6 @@ type Queue<'T> = Queue of QueueData<'T>
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Queue =
-    open Stream
-
     (* INVARIANTS                                        *)
     (*   1. length front >= length rear                  *)
     (*   2. length pending = length front - length rear  *)
@@ -54,52 +51,71 @@ module Queue =
             // This should never happen -- it's only here to satisfy
             // the F# pattern-match exhaustivity checker.
             failwith "Invariant failed."
-        | y::ys ->
-            if Stream.isEmpty xs then
-                cons (y,rys)
-            else lcons (head xs,
-                          fun () -> rotate (tail xs, ys, cons (y, rys)))
+        | y :: ys ->
+            if LazyList.isEmpty xs then
+                LazyList.cons y rys
+            else
+                LazyList.consDelayed (LazyList.head xs) <| fun () ->
+                    rotate (LazyList.tail xs, ys, LazyList.cons y rys)
 
     (* Psuedo-constructor that enforces invariant *)
     (*   always called with length pending = length front - length rear + 1 *)
     let private queue { Front = front; Rear = rear; Pending = pending; } =
-        if Stream.isEmpty pending then
+        if LazyList.isEmpty pending then
             (* length rear = length front + 1 *)
-            let front = rotate (front, rear, Stream.empty)
-            Queue { Front = front; Rear = []; Pending = front; }
+            let front = rotate (front, rear, LazyList.empty)
+            Queue {
+                Front = front;
+                Rear = [];
+                Pending = front; }
         else
-            Queue { Front = front; Rear = rear; Pending = tail pending; }
+            Queue {
+                Front = front;
+                Rear = rear;
+                Pending = LazyList.tail pending; }
 
     /// Returns an empty queue of the given type.
     let empty : Queue<'T> =
-        Queue { Front = Stream.empty; Rear = []; Pending = Stream.empty; }
+        Queue {
+            Front = LazyList.empty;
+            Rear = [];
+            Pending = LazyList.empty; }
 
     /// Returns true if the given queue is empty; otherwise, false.
     let isEmpty (Queue { Front = front } : Queue<'T>) =
         (* by Invariant 1, front = empty implies rear = [] *)
-        Stream.isEmpty front
+        LazyList.isEmpty front
 
     /// The number of elements in the queue.
     let size (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
-        (* = Stream.size front + length rear -- by Invariant 2 *)
-        Stream.size pending + 2 * List.length rear
+        (* = LazyList.length front + length rear -- by Invariant 2 *)
+        LazyList.length pending + 2 * List.length rear
 
     /// add to rear of queue
     let enqueue x (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
-        queue { Front = front; Rear = x :: rear; Pending = pending; }
+        queue {
+            Front = front;
+            Rear = x :: rear;
+            Pending = pending; }
 
     /// add to front of queue
     let enqueuef x (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
-        Queue { Front = cons (x, front); Rear = rear; Pending = cons (x, pending); }
+        Queue {
+            Front = LazyList.cons x front;
+            Rear = rear;
+            Pending = LazyList.cons x pending; }
 
     /// take from front of queue
     let dequeue (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
         // Preconditions
-        if Stream.isEmpty front then
+        if LazyList.isEmpty front then
             invalidArg "front" "The queue is empty."
 
-        head front,
-        queue { Front = tail front; Rear = rear; Pending = pending; }
+        LazyList.head front,
+        queue {
+            Front = LazyList.tail front;
+            Rear = rear;
+            Pending = pending; }
 
     //
     let toArray (queue : Queue<'T>) : 'T[] =
@@ -123,6 +139,4 @@ module Queue =
                 queue <- queue'
 
             result.ToArray ()
-
-*)
 
