@@ -602,6 +602,10 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         with get () : IntMap<'T> =
             IntMap Empty
 
+    /// The internal representation of the IntMap.
+    member private __.Trie
+        with get () = trie
+
     /// The number of bindings in the IntMap.
     member __.Count
         with get () : int =
@@ -642,6 +646,11 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
     /// Tests if an element is in the domain of the IntMap.
     member __.ContainsKey (key : int) : bool =
         PatriciaMap.ContainsKey (uint32 key, trie)
+
+    /// Returns a new IntMap created by merging the two specified IntMaps.
+    member __.Union (otherMap : IntMap<'T>) : IntMap<'T> =
+        IntMap (
+            PatriciaMap.Merge (trie, otherMap.Trie))
 
     /// The IntMap containing the given binding.
     static member Singleton (key : int, value : 'T) : IntMap<'T> =
@@ -1013,6 +1022,15 @@ module IntMap =
         map.ContainsKey key
 
     //
+    [<CompiledName("Union")>]
+    let inline union (map1 : IntMap<'T>) (map2 : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+
+        map1.Union map2
+
+    //
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntMap<'T> =
         // Preconditions are checked by the member.
@@ -1288,6 +1306,20 @@ module TagMap =
         checkNonNull "map" map
 
         map.ContainsKey (int key)
+        |> retype
+
+    //
+    [<CompiledName("Union")>]
+    let inline union (map1 : TagMap<'Tag, 'T>) (map2 : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
+        // Retype as IntMap.
+        let map1 : IntMap<'T> = retype map1
+        let map2 : IntMap<'T> = retype map2
+
+        // Preconditions
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+
+        map1.Union map2
         |> retype
 
     //
