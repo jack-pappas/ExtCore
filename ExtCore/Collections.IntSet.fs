@@ -477,6 +477,10 @@ type IntSet private (trie : PatriciaSet) =
         with get () : IntSet =
             IntSet Empty
 
+    //
+    member private __.Trie
+        with get () = trie
+
     /// The number of elements in the IntSet.
     member __.Count
         with get () : int =
@@ -503,6 +507,11 @@ type IntSet private (trie : PatriciaSet) =
     member __.Remove (key : int) : IntSet =
         IntSet (
             PatriciaSet.Remove (uint32 key, trie))
+
+    /// Computes the union of two IntSets.
+    member __.Union (otherSet : IntSet) : IntSet =
+        IntSet (
+            PatriciaSet.Merge (trie, otherSet.Trie))
 
     /// The IntSet containing the given element.
     static member Singleton (element : int) : IntSet =
@@ -763,6 +772,15 @@ module IntSet =
         set.Contains key
 
     //
+    [<CompiledName("Union")>]
+    let inline union (set1 : IntSet) (set2 : IntSet) : IntSet =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.Union set2
+
+    //
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntSet =
         // Preconditions are checked by the member.
@@ -997,6 +1015,20 @@ module TagSet =
         checkNonNull "set" set
 
         set.Contains (int key)
+
+    //
+    [<CompiledName("Union")>]
+    let inline union (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : TagSet<'Tag> =
+        // Retype as IntSet
+        let set1 : IntSet = retype set1
+        let set2 : IntSet = retype set2
+
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.Union set2
+        |> retype
 
     //
     [<CompiledName("OfSeq")>]
