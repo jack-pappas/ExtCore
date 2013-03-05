@@ -68,43 +68,42 @@ and [<NoEquality; NoComparison>]
     
     member internal this.Value =
         match status with
-        | LazyCellStatus.Value value ->
+        | Value value ->
             value
         | _ ->
             lock this <| fun () ->
                 match status with
-                | LazyCellStatus.Delayed f ->
+                | Delayed f ->
                     status <- Exception UndefinedException
                     try
                         let res = f ()
-                        status <- LazyCellStatus.Value res
+                        status <- Value res
                         res
                     with ex ->
-                        status <- LazyCellStatus.Exception ex
+                        status <- Exception ex
                         reraise ()
-                | LazyCellStatus.Value value ->
+                | Value value ->
                     value
-                | LazyCellStatus.Exception ex ->
+                | Exception ex ->
                     raise ex
-    
-    member private this.GetEnumeratorImpl () =
-        let inline getCell (x : LazyList<'T>) = x.Value
-        let toSeq s =
-            s |> Seq.unfold (fun list ->
-                match getCell list with
-                | Empty ->
-                    None
-                | Cons (hd, tl) ->
-                    Some (hd, tl))
-        (toSeq this).GetEnumerator ()
+
+    /// Creates a sequence which enumerates the values in the LazyList.
+    member this.ToSeq () =
+        this
+        |> Seq.unfold (fun list ->
+            match list.Value with
+            | Empty ->
+                None
+            | Cons (hd, tl) ->
+                Some (hd, tl))
             
     interface IEnumerable<'T> with
         member this.GetEnumerator () =
-            this.GetEnumeratorImpl ()
+            this.ToSeq().GetEnumerator ()
 
     interface System.Collections.IEnumerable with
         override this.GetEnumerator () =
-            this.GetEnumeratorImpl ()
+            this.ToSeq().GetEnumerator ()
             :> System.Collections.IEnumerator
 
 //
