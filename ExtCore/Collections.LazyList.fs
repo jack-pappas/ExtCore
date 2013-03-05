@@ -28,6 +28,28 @@ open ExtCore
 #nowarn "21" // recursive initialization
 #nowarn "40" // recursive initialization
 
+(* TODO :   Get rid of UndefinedException and use one of the "standard" .NET exceptions instead. *)
+(* OPTIMIZE :   The code below could likely be simplified and optimized by using System.Lazy<'T>
+                ("lazy" in F#) and Choice<_,_> instead of LazyCellStatus<'T>.
+                Basically, the Delayed and Value cases are replaced by Lazy<'T> and Choice1Of2,
+                and the Exception case is replaced by Choice2Of2.
+                We'll still need LazyListCell<'T> though, since that's the actual list representation. *)
+(* TODO :   Implement some additional useful functions in the LazyList module (or class):
+    - force : LazyList<'T> -> unit
+        Traverses the LazyList and forces evaluation of all cells. May not terminate.
+    - forcePartial : int -> LazyList<'T> -> unit
+        Traverses the given number of cells in the LazyList (or to the end), forcing evaluation
+        of the traversed cells. May not terminate.
+    - lazyLength : LazyList<'T> -> int
+        Computes the "lazy" length of the LazyList<'T> -- that is, the number of cells which have
+        already been evaluated. Unlike LazyList.length, this does not force evaluation of any cells
+        and always terminates.
+    - ofSeqEager : seq<'T> -> LazyList<'T>
+        Similar to 'ofSeq', but eagerly enumerates the sequence to build a LazyList.
+        This allows us to detect certain sequence types (like 'T[] and 'T list) and use optimized
+        implementations, avoids the possibility of memory leaks, and avoids lazily-evaluating
+        list elements when they don't really need it.
+*)
 
 //
 exception UndefinedException
@@ -49,7 +71,7 @@ and [<NoEquality; NoComparison>]
     //
     | Empty
     //
-    | Cons of 'T * LazyList<'T>
+    | Cons of 'T * LazyList<'T>    
 
 /// LazyLists are possibly-infinite, cached sequences.  See also IEnumerable/Seq for
 /// uncached sequences. LazyLists normally involve delayed computations without 
@@ -98,24 +120,6 @@ and [<NoEquality; NoComparison; Sealed>]
                 | Exception ex ->
                     raise ex
 
-    /// Return the first element of the list.
-    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
-    member this.Head
-        with get () =
-            match this.Value with
-            | Cons (hd, _) -> hd
-            | Empty ->
-                invalidOp "The list is empty."
-
-    /// Return the list corresponding to the remaining items in the sequence.
-    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
-    member this.Tail
-        with get () =
-            match this.Value with
-            | Cons (_, tl) -> tl
-            | Empty ->
-                invalidOp "The list is empty."
-
     /// Test if a list is empty.
     /// Forces the evaluation of the first element of the stream if it is not already evaluated.
     member this.IsEmpty
@@ -123,6 +127,30 @@ and [<NoEquality; NoComparison; Sealed>]
             match this.Value with
             | Empty -> true
             | Cons _ -> false
+
+    /// Return the first element of the list.
+    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
+    member this.Head () =
+        match this.Value with
+        | Cons (hd, _) -> hd
+        | Empty ->
+            invalidOp "The list is empty."
+
+    /// Return the list corresponding to the remaining items in the sequence.
+    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
+    member this.Tail () =
+        match this.Value with
+        | Cons (_, tl) -> tl
+        | Empty ->
+            invalidOp "The list is empty."
+
+    /// Get the first cell of the list.
+    member this.TryHeadTail () =
+        match this.Value with
+        | Empty ->
+            None
+        | Cons (hd, tl) ->
+            Some (hd, tl)
 
     /// Creates a sequence which enumerates the values in the LazyList.
     member this.ToSeq () =
@@ -133,6 +161,31 @@ and [<NoEquality; NoComparison; Sealed>]
                 None
             | Cons (hd, tl) ->
                 Some (hd, tl))
+
+    //
+    static member internal CreateLazy cellCreator : LazyList<'T> =
+        LazyList (Delayed cellCreator)
+
+    /// Return a new list which contains the given item followed by the given list.
+    static member Cons (value, list) : LazyList<'T> =
+        // Preconditions
+        checkNonNull "list" list
+
+        LazyList<_>.CreateLazy <| fun () ->
+            Cons (value, list)
+
+    /// Return a new list which on consumption contains the given item 
+    /// followed by the list returned by the given computation.
+    static member ConsDelayed (value, creator : unit -> LazyList<'T>) : LazyList<'T> =
+        LazyList<_>.CreateLazy <| fun () ->
+            Cons (value, LazyList<_>.CreateLazy <| fun () ->
+                (creator ()).Value)
+
+    /// Return a list that is -- in effect -- the list returned by the given computation.
+    /// The given computation is not executed until the first element on the list is consumed.
+    static member Delayed (creator : unit -> LazyList<'T>) : LazyList<'T> =
+        LazyList (Delayed <| fun () ->
+            (creator ()).Value)
             
     interface IEnumerable<'T> with
         member this.GetEnumerator () =
@@ -143,22 +196,9 @@ and [<NoEquality; NoComparison; Sealed>]
             this.ToSeq().GetEnumerator ()
             :> System.Collections.IEnumerator
 
-//
+/// Functional operators on LazyLists.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LazyList =
-    /// Curried form of the Cons constructor.
-    let inline private consc value (list : LazyList<'T>) =
-        assert (not <| isNull list)
-        Cons (value, list)
-
-    //
-    let inline private lzy cellCreator : LazyList<'T> =
-        LazyList (Delayed cellCreator)
-
-    //
-    let inline private getCell (list : LazyList<'T>) =
-        list.Value
-
     /// The empty LazyList.
     [<GeneralizableValue>]
     [<CompiledName("Empty")>]
@@ -167,59 +207,99 @@ module LazyList =
     
     /// Get the first cell of the list.
     [<CompiledName("TryGet")>]
-    let tryGet (list : LazyList<'T>) =
+    let inline tryGet (list : LazyList<'T>) =
         // Preconditions
         checkNonNull "list" list
 
-        match getCell list with
-        | Empty ->
-            None
-        | Cons (hd, tl) ->
-            Some (hd, tl)
+        list.TryHeadTail ()
 
     /// Return the first element of the list.
     /// Forces the evaluation of the first cell of the list if it is not already evaluated.
     [<CompiledName("Head")>]
-    let inline head (list : LazyList<'T>) =
+    let inline head (list : LazyList<'T>) : 'T =
         // Preconditions
         checkNonNull "list" list
         
-        list.Head
+        list.Head ()
 
     /// Return the list corresponding to the remaining items in the sequence.
     /// Forces the evaluation of the first cell of the list if it is not already evaluated.
     [<CompiledName("Tail")>]
-    let inline tail (list : LazyList<'T>) =
+    let inline tail (list : LazyList<'T>) : LazyList<'T> =
         // Preconditions
         checkNonNull "list" list
         
-        list.Tail
+        list.Tail ()
 
     /// Test if a list is empty.
     /// Forces the evaluation of the first element of the stream if it is not already evaluated.
     [<CompiledName("IsEmpty")>]
-    let inline isEmpty (list : LazyList<'T>) =
+    let inline isEmpty (list : LazyList<'T>) : bool =
         // Preconditions
         checkNonNull "list" list
 
         list.IsEmpty
-    
+
     /// Return a new list which contains the given item followed by the given list.
     [<CompiledName("Cons")>]
-    let cons value (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        lzy <| fun () ->
-            consc value list
+    let inline cons value (list : LazyList<'T>) =
+        // Preconditions checked by the implementation.
+        LazyList<_>.Cons (value, list)
     
     /// Return a new list which on consumption contains the given item 
     /// followed by the list returned by the given computation.
     [<CompiledName("ConsDelayed")>]
-    let consDelayed (value : 'T) creator =
-        lzy <| fun () ->
-            consc value (lzy <| fun () ->
-                getCell <| creator ())
+    let inline consDelayed (value : 'T) creator =
+        LazyList<_>.ConsDelayed (value, creator)
+
+    /// Return a list that is -- in effect -- the list returned by the given computation.
+    /// The given computation is not executed until the first element on the list is consumed.
+    [<CompiledName("Delayed")>]
+    let inline delayed creator : LazyList<'T> =
+        LazyList<_>.Delayed creator
+
+    /// Returns a new LazyListCell created by adding a value to the end of the given LazyList.
+    /// This is simply a curried form of the Cons constructor.
+    let inline private consc value (list : LazyList<'T>) =
+        assert (not <| isNull list)
+        Cons (value, list)
+
+    /// Gets the internal LazyListCell representation of a LazyList.
+    let inline private getCell (list : LazyList<'T>) =
+        assert (not <| isNull list)
+        list.Value
+
+    /// Alias for LazyList.CreateLazy.
+    let inline private lzy cellCreator : LazyList<'T> =
+        LazyList<_>.CreateLazy cellCreator    
+
+    /// Apply the given function to successive elements of the list, returning the first
+    /// result where function returns <c>Some(x)</c> for some x.
+    /// If the function never returns true, 'None' is returned.
+    [<CompiledName("TryFind")>]
+    let rec tryFind predicate (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+
+        match list.Value with
+        | Empty ->
+            None
+        | Cons (hd, tl) ->
+            if predicate hd then Some hd
+            else tryFind predicate tl
+
+    /// Return the first element for which the given function returns <c>true</c>.
+    /// Raise <c>KeyNotFoundException</c> if no such element exists.
+    [<CompiledName("Find")>]
+    let find predicate (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+
+        match tryFind predicate list with
+        | Some value ->
+            value
+        | None ->
+            raise <| KeyNotFoundException "An element satisfying the predicate was not found in the collection."
 
     /// Return a list that contains the elements returned by the given computation.
     /// The given computation is not executed until the first element on the list is
@@ -238,27 +318,32 @@ module LazyList =
     /// first list followed by the elements of the second list.
     [<CompiledName("Append")>]
     let rec append (list1 : LazyList<'T>) (list2 : LazyList<'T>) =
-//        // Preconditions
-//        checkNonNull "list1" list1
-//        checkNonNull "list2" list2
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
 
         lzy <| fun () ->
-            appendc list1 list2
+            appendCell list1 list2
 
-    and private appendc l1 l2 =
-        match getCell l1 with
+    and private appendCell list1 list2 =
+        match list1.Value with
         | Empty ->
-            getCell l2
+            list2.Value
         | Cons (hd, tl) ->
-            consc hd (append tl l2)
+            consc hd (append tl list2)
 
-    /// Return a list that is -- in effect -- the list returned by the given computation.
-    /// The given computation is not executed until the first element on the list is consumed.
-    [<CompiledName("Delayed")>]
-    let delayed creator : LazyList<'T> =
+    /// Return the list which contains on demand the list of elements of the list of lazy lists.
+    [<CompiledName("Concat")>]
+    let rec concat (lists : LazyList<LazyList<'T>>) =
+        // Preconditions
+        checkNonNull "lists" lists
+
         lzy <| fun () ->
-            creator ()
-            |> getCell
+            match lists.Value with
+            | Empty ->
+                Empty
+            | Cons (hd, tl) ->
+                appendCell hd (concat tl)
 
     /// Return the list which on consumption will consist of an
     /// infinite sequence of the given item.
@@ -275,7 +360,7 @@ module LazyList =
         checkNonNull "list" list
 
         lzy <| fun () ->
-            match getCell list with
+            match list.Value with
             | Empty ->
                 Empty
             | Cons (hd, tl) ->
@@ -290,12 +375,13 @@ module LazyList =
         checkNonNull "list2" list2
 
         lzy <| fun () ->
-            match getCell list1, getCell list2 with
+            match list1.Value, list2.Value with
             | Cons (hd1, tl1), Cons (hd2, tl2) ->
                 consc (mapping hd1 hd2) (map2 mapping tl1 tl2)
             | _ -> Empty
 
     /// Return the list which contains on demand the pair of elements of the first and second list.
+    // OPTIMIZE : Why not just re-implement this based on the 'map2' function?
     [<CompiledName("Zip")>]
     let rec zip (list1 : LazyList<'T>) (list2 : LazyList<'T>) =
         // Preconditions
@@ -303,71 +389,30 @@ module LazyList =
         checkNonNull "list2" list2
 
         lzy <| fun () ->
-            match getCell list1, getCell list2 with
+            match list1.Value, list2.Value with
             | Cons (hd1, tl1), Cons (hd2, tl2) ->
                 consc (hd1, hd2) (zip tl1 tl2)
             | _ -> Empty
 
-    /// Return the list which contains on demand the list of elements of the list of lazy lists.
-    [<CompiledName("Concat")>]
-    let rec concat (lists : LazyList<LazyList<'T>>) =
-        // Preconditions
-        checkNonNull "lists" lists
-
-        lzy <| fun () ->
-            match getCell lists with
-            | Empty ->
-                Empty
-            | Cons (hd, tl) ->
-                appendc hd (concat tl)
-
-    /// Return a new collection which on consumption will consist of only the elements of the collection
-    /// for which the given predicate returns "true".
+    /// Return a new collection which on consumption will consist of only the
+    /// elements of the collection for which the given predicate returns "true".
     [<CompiledName("Filter")>]
     let rec filter predicate (list : LazyList<'T>) =
         // Preconditions
         checkNonNull "list" list
 
         lzy <| fun () ->
-            filterc predicate list
+            filterCell predicate list
 
-    and private filterc predicate list =
-        match getCell list with
+    and private filterCell predicate list =
+        match list.Value with
         | Empty ->
             Empty
         | Cons (hd, tl) ->
             if predicate hd then
                 consc hd (filter predicate tl)
             else
-                filterc predicate tl
-
-    /// Apply the given function to successive elements of the list, returning the first
-    /// result where function returns <c>Some(x)</c> for some x.
-    /// If the function never returns true, 'None' is returned.
-    [<CompiledName("TryFind")>]
-    let rec tryFind predicate (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        match getCell list with
-        | Empty ->
-            None
-        | Cons (hd, tl) ->
-            if predicate hd then Some hd
-            else tryFind predicate tl
-
-    /// Return the first element for which the given function returns <c>true</c>.
-    /// Raise <c>KeyNotFoundException</c> if no such element exists.
-    [<CompiledName("Find")>]
-    let find predicate (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        match tryFind predicate list with
-        | Some value ->
-            value
-        | None ->
-            raise <| KeyNotFoundException "An index satisfying the predicate was not found in the collection"
+                filterCell predicate tl
 
     /// Return a new list consisting of the results of applying the
     /// given accumulating function to successive elements of the list.
@@ -377,7 +422,7 @@ module LazyList =
         checkNonNull "list" list
 
         lzy <| fun () ->
-            match getCell list with
+            match list.Value with
             | Empty ->
                 consc state empty
             | Cons (hd, tl) ->
@@ -397,32 +442,46 @@ module LazyList =
             if count = 0 then
                 Empty
             else
-                match getCell list with
+                match list.Value with
                 | Cons (hd, tl) ->
                     consc hd (take (count - 1) tl)
                 | Empty ->
-                    invalidArg "count" "not enough items in the list"
+                    let msg = sprintf "There are not enough items in the list. (Count = %i)" count
+                    invalidArg "count" msg
 
-    let rec private skipc n (list : LazyList<'T>) =
-        if n = 0 then
+    let rec private skipCell count (list : LazyList<'T>) =
+        if count = 0 then
             getCell list
         else
-            match getCell list with
+            match list.Value with
             | Cons (_, tl) ->
-                skipc (n - 1) tl
+                skipCell (count - 1) tl
             | Empty ->
-                invalidArg "n" "not enough items in the list"
+                let msg = sprintf "There are not enough items in the list. (Count = %i)" count
+                invalidArg "count" msg
 
     /// Return the list which on consumption will skip the first 'count' elements of the input list.
     [<CompiledName("Skip")>]
-    let rec skip count (list : LazyList<'T>) =
+    let skip count (list : LazyList<'T>) =
         // Preconditions
         checkNonNull "list" list
         if count < 0 then
             argOutOfRange "count" "Cannot skip a negative number of elements."
 
         lzy <| fun () ->
-            skipc count list
+            skipCell count list
+
+    /// Apply the given function to each element of the collection.
+    [<CompiledName("Iterate")>]
+    let rec iter (action : 'T -> unit) (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+
+        match list.Value with
+        | Empty -> ()
+        | Cons (hd, tl) ->
+            action hd
+            iter action tl
 
     /// Build a collection from the given list. This function will eagerly
     /// evaluate the entire list (and thus may not terminate).
@@ -446,24 +505,12 @@ module LazyList =
         checkNonNull "list" list
 
         let rec loop acc (list : LazyList<'T>) =
-            match getCell list with
+            match list.Value with
             | Empty ->
                 List.rev acc
             | Cons (hd, tl) ->
                 loop (hd :: acc) tl
         loop [] list
-
-    /// Apply the given function to each element of the collection.
-    [<CompiledName("Iterate")>]
-    let rec iter (action : 'T -> unit) (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        match getCell list with
-        | Empty -> ()
-        | Cons (hd, tl) ->
-            action hd
-            iter action tl
 
     let rec private copyFrom index (array : 'T[]) =
         lzy <| fun () ->
@@ -481,13 +528,6 @@ module LazyList =
         checkNonNull "array" array
 
         copyFrom 0 array
-
-//    let rec private copyTo (array : 'T[]) (list : LazyList<'T>) index =
-//        match getCell list with
-//        | Empty -> ()
-//        | Cons (hd, tl) ->
-//            array.[index] <- hd
-//            copyTo array tl (index + 1)
 
     /// Build an array from the given collection.
     [<CompiledName("ToArray")>]
@@ -508,11 +548,12 @@ module LazyList =
 
         let rec lengthAux acc (list : LazyList<'T>) =
             match getCell list with
-            | Empty -> acc
+            | Empty ->
+                int acc
             | Cons (_, tl) ->
-                lengthAux (acc + 1) tl
+                lengthAux (acc + 1u) tl
 
-        lengthAux 0 list
+        lengthAux 0u list
 
     /// Return a view of the collection as an enumerable object.
     [<CompiledName("ToSeq")>]
@@ -522,7 +563,9 @@ module LazyList =
 
         list.ToSeq ()
 
-    // Note: this doesn't dispose of the IEnumerator if the iteration is not run to the end
+    // NOTE : This function doesn't dispose the IEnumerator until it reaches
+    // the end of the enumeration; this function can therefore cause memory leaks
+    // if not used carefully.
     let rec private ofFreshIEnumerator (e : IEnumerator<'T>) =
         lzy <| fun () ->
             if e.MoveNext () then
@@ -541,14 +584,14 @@ module LazyList =
         |> ofFreshIEnumerator
 
 
-//
+/// Active patterns for deconstructing lazy lists.
 [<AutoOpen>]
 module LazyListPatterns =
     // Active pattern for deconstructing lazy lists.
-    let (|Cons|Nil|) (list : LazyList<'T>) =
-        match list.Value with
-        | Cons (hd, tl) ->
-            Cons (hd, tl)
-        | Empty ->
+    let inline (|Nil|Cons|) (list : LazyList<'T>) =
+        match list.TryHeadTail () with
+        | None ->
             Nil
+        | Some hd_tl ->
+            Cons hd_tl
 
