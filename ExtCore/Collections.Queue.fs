@@ -25,27 +25,88 @@ open OptimizedClosures
 open ExtCore
 
 
+(* INVARIANTS                                        *)
+(*   1. length front >= length rear                  *)
+(*   2. length pending = length front - length rear  *)
+(*   3. (in the absence of insertf's)                *)
+(*      pending = nthtail (front, length rear)       *)
 //
-type QueueData<'T> = {
+type internal QueueData<'T> = {
     Front : LazyList<'T>;
     Rear : 'T list;
     Pending : LazyList<'T>;
 }
 
 //
-type Queue<'T> = Queue of QueueData<'T>
-
-//
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Queue =
-    (* INVARIANTS                                        *)
-    (*   1. length front >= length rear                  *)
-    (*   2. length pending = length front - length rear  *)
-    (*   3. (in the absence of insertf's)                *)
-    (*      pending = nthtail (front, length rear)       *)
+type Queue<'T> private (data : QueueData<'T>) =
+    //
+    static let emptyQueue : Queue<'T> =
+        Queue {
+            Front = LazyList.empty;
+            Rear = [];
+            Pending = LazyList.empty; }
 
     //
-    let rec private rotate (xs, ys, rys) =
+    static member Empty
+        with get () = emptyQueue
+
+    /// Returns true if the given queue is empty; otherwise, false.
+    member __.IsEmpty
+        with get () =
+            (* by Invariant 1, front = empty implies rear = [] *)
+            LazyList.isEmpty data.Front
+
+    /// The number of elements in the queue.
+    member __.GetLength () =
+        (* = LazyList.length front + length rear -- by Invariant 2 *)
+        LazyList.length data.Pending + 2 * List.length data.Rear
+
+    /// take from front of queue
+    member __.Dequeue () =
+        // Preconditions
+        if LazyList.isEmpty data.Front then
+            invalidArg "front" "The queue is empty."
+
+        LazyList.head data.Front,
+        Queue<_>.CreateQueue
+            { data with
+                Front = LazyList.tail data.Front; }
+
+    /// add to rear of queue
+    member __.Enqueue value =
+        Queue<_>.CreateQueue
+            { data with
+                Rear = value :: data.Rear; }
+
+    /// add to front of queue
+    member __.EnqueueFront value =
+        Queue {
+            Front = LazyList.cons value data.Front;
+            Rear = data.Rear;
+            Pending = LazyList.cons value data.Pending; }
+
+    //
+    member this.ToArray () : 'T[] =
+        // OPTIMIZATION : If the queue is empty, return an empty array.
+        if this.IsEmpty then
+            Array.empty
+        else
+            // Instead of creating a fixed-size array with
+                // Array.zeroCreate <| size queue
+            // use a ResizeArray<_> so we only need to traverse the queue once.
+            // TODO : Tune this for best average-case performance.
+            let result = ResizeArray<_> ()
+
+            let mutable queue = this
+            while not <| queue.IsEmpty do
+                let item, queue' = queue.Dequeue ()
+                result.Add item
+                queue <- queue'
+
+            result.ToArray ()
+
+    //
+    static member private Rotate (xs : LazyList<'T>, ys : 'T list, rys : LazyList<'T>) =
         match ys with
         | [] ->
             // This should never happen -- it's only here to satisfy
@@ -56,14 +117,13 @@ module Queue =
                 LazyList.cons y rys
             else
                 LazyList.consDelayed (LazyList.head xs) <| fun () ->
-                    rotate (LazyList.tail xs, ys, LazyList.cons y rys)
+                    Queue<_>.Rotate (LazyList.tail xs, ys, LazyList.cons y rys)
 
-    (* Psuedo-constructor that enforces invariant *)
-    (*   always called with length pending = length front - length rear + 1 *)
-    let private queue { Front = front; Rear = rear; Pending = pending; } =
+    //
+    static member private CreateQueue { Front = front; Rear = rear; Pending = pending; } =
         if LazyList.isEmpty pending then
             (* length rear = length front + 1 *)
-            let front = rotate (front, rear, LazyList.empty)
+            let front = Queue<_>.Rotate (front, rear, LazyList.empty)
             Queue {
                 Front = front;
                 Rear = [];
@@ -74,69 +134,54 @@ module Queue =
                 Rear = rear;
                 Pending = LazyList.tail pending; }
 
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Queue =
     /// Returns an empty queue of the given type.
-    let empty : Queue<'T> =
-        Queue {
-            Front = LazyList.empty;
-            Rear = [];
-            Pending = LazyList.empty; }
+    [<CompiledName("Empty")>]
+    [<GeneralizableValue>]
+    let empty<'T> : Queue<'T> =
+        Queue<'T>.Empty
 
     /// Returns true if the given queue is empty; otherwise, false.
-    let isEmpty (Queue { Front = front } : Queue<'T>) =
-        (* by Invariant 1, front = empty implies rear = [] *)
-        LazyList.isEmpty front
+    let inline isEmpty (queue : Queue<'T>) =
+        // Preconditions
+        checkNonNull "queue" queue
+
+        queue.IsEmpty
 
     /// The number of elements in the queue.
-    let size (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
-        (* = LazyList.length front + length rear -- by Invariant 2 *)
-        LazyList.length pending + 2 * List.length rear
+    let inline size (queue : Queue<'T>) =
+        // Preconditions
+        checkNonNull "queue" queue
+
+        queue.GetLength ()
 
     /// add to rear of queue
-    let enqueue x (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
-        queue {
-            Front = front;
-            Rear = x :: rear;
-            Pending = pending; }
+    let inline enqueue value (queue : Queue<'T>) =
+        // Preconditions
+        checkNonNull "queue" queue
+
+        queue.Enqueue value
 
     /// add to front of queue
-    let enqueuef x (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
-        Queue {
-            Front = LazyList.cons x front;
-            Rear = rear;
-            Pending = LazyList.cons x pending; }
+    let inline enqueuef value (queue : Queue<'T>) =
+        // Preconditions
+        checkNonNull "queue" queue
+
+        queue.EnqueueFront value
 
     /// take from front of queue
-    let dequeue (Queue { Front = front; Rear = rear; Pending = pending; } : Queue<'T>) =
+    let inline dequeue (queue : Queue<'T>) =
         // Preconditions
-        if LazyList.isEmpty front then
-            invalidArg "front" "The queue is empty."
+        checkNonNull "queue" queue
 
-        LazyList.head front,
-        queue {
-            Front = LazyList.tail front;
-            Rear = rear;
-            Pending = pending; }
+        queue.Dequeue ()
 
     //
-    let toArray (queue : Queue<'T>) : 'T[] =
+    let inline toArray (queue : Queue<'T>) : 'T[] =
         // Preconditions
         checkNonNull "queue" queue
         
-        // OPTIMIZATION : If the queue is empty, return an empty array.
-        if isEmpty queue then
-            Array.empty
-        else
-            // Instead of creating a fixed-size array with
-                // Array.zeroCreate <| size queue
-            // use a ResizeArray<_> so we only need to traverse the queue once.
-            // TODO : Tune this for best average-case performance.
-            let result = ResizeArray<_> ()
-
-            let mutable queue = queue
-            while not <| isEmpty queue do
-                let item, queue' = dequeue queue
-                result.Add item
-                queue <- queue'
-
-            result.ToArray ()
+        queue.ToArray ()
 
