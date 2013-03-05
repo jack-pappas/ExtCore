@@ -32,6 +32,21 @@ open ExtCore
 //
 exception UndefinedException
 
+//
+type
+    [<NoEquality; NoComparison>]
+    internal LazyCellStatus<'T> =
+        | Delayed of (unit -> LazyListCell<'T>)
+        | Value of LazyListCell<'T>
+        | Exception of exn
+
+// OPTIMIZE : Would there be any benefit to applying [<UseNullAsTrueValue>] here
+// so CellEmpty would be represented as null?
+and [<NoEquality; NoComparison>]
+    internal LazyListCell<'T> =
+        | CellEmpty
+        | CellCons of 'T * LazyList<'T>
+
 /// LazyLists are possibly-infinite, cached sequences.  See also IEnumerable/Seq for
 /// uncached sequences. LazyLists normally involve delayed computations without 
 /// side-effects.  The results of these computations are cached and evaluations will be 
@@ -46,35 +61,34 @@ exception UndefinedException
 ///
 /// Lazy lists may be matched using the LazyList.Cons and LazyList.Nil active patterns. 
 /// These may force the computation of elements of the list.
-[<NoEquality; NoComparison>]
-type LazyList<'T> = {
+and [<NoEquality; NoComparison>]
+    LazyList<'T> internal (initialStatus) =
     //
-    mutable status : LazyCellStatus<'T>;
-} with
+    let mutable status : LazyCellStatus<'T> = initialStatus
     
-    member x.Value =
-        match x.status with
+    member internal this.Value =
+        match status with
         | LazyCellStatus.Value value ->
             value
         | _ ->
-            lock x <| fun () ->
-                match x.status with
+            lock this <| fun () ->
+                match status with
                 | LazyCellStatus.Delayed f ->
-                    x.status <- Exception UndefinedException
+                    status <- Exception UndefinedException
                     try
                         let res = f ()
-                        x.status <- LazyCellStatus.Value res
+                        status <- LazyCellStatus.Value res
                         res
                     with ex ->
-                        x.status <- LazyCellStatus.Exception ex
+                        status <- LazyCellStatus.Exception ex
                         reraise ()
                 | LazyCellStatus.Value value ->
                     value
                 | LazyCellStatus.Exception ex ->
                     raise ex
     
-    member s.GetEnumeratorImpl() =
-        let getCell (x : LazyList<'T>) = x.Value
+    member private this.GetEnumeratorImpl () =
+        let inline getCell (x : LazyList<'T>) = x.Value
         let toSeq s =
             s |> Seq.unfold (fun list ->
                 match getCell list with
@@ -82,32 +96,18 @@ type LazyList<'T> = {
                     None
                 | CellCons (hd, tl) ->
                     Some (hd, tl))
-        (toSeq s).GetEnumerator ()
+        (toSeq this).GetEnumerator ()
             
     interface IEnumerable<'T> with
-        member s.GetEnumerator () =
-            s.GetEnumeratorImpl ()
+        member this.GetEnumerator () =
+            this.GetEnumeratorImpl ()
 
     interface System.Collections.IEnumerable with
-        override s.GetEnumerator () =
-            s.GetEnumeratorImpl () :> System.Collections.IEnumerator
+        override this.GetEnumerator () =
+            this.GetEnumeratorImpl ()
+            :> System.Collections.IEnumerator
 
-
-and
-    [<NoEquality; NoComparison>]
-    LazyCellStatus<'T> =
-        | Delayed of (unit -> LazyListCell<'T>)
-        | Value of LazyListCell<'T> 
-        | Exception of System.Exception
-
-    // OPTIMIZE : Would there be any benefit to applying [<UseNullAsTrueValue>] here
-    // so CellEmpty would be represented as null?
-and
-    [<NoEquality; NoComparison>]
-    LazyListCell<'T> =
-        | CellEmpty
-        | CellCons of 'T * LazyList<'T> 
-
+//
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LazyList =
     /// Curried form of the CellCons constructor.
@@ -116,7 +116,7 @@ module LazyList =
 
     //
     let inline private lzy cellCreator : LazyList<'T> =
-        { status = Delayed cellCreator; }
+        LazyList (Delayed cellCreator)
 
     //
     let inline private getCell (list : LazyList<'T>) =
@@ -126,7 +126,7 @@ module LazyList =
     [<GeneralizableValue>]
     [<CompiledName("Empty")>]
     let empty<'T> : LazyList<'T> =
-        { status = Value CellEmpty; }
+        LazyList (Value CellEmpty)
     
     /// Get the first cell of the list.
     [<CompiledName("TryGet")>]
