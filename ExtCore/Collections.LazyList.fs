@@ -484,9 +484,10 @@ module LazyList =
         // Preconditions
         checkNonNull "list" list
 
-        // OPTIMIZE : Re-implement this so it doesn't create an additional list
-        // here -- copy the elements from the LazyList into a ResizeArray instead.
-        Array.ofList (toList list)
+        // Iterate over the LazyList and copy its elements into a ResizeArray.
+        let elements = ResizeArray ()
+        iter elements.Add list
+        ResizeArray.toArray elements
 
     /// Return the length of the list.
     [<CompiledName("Length")>]
