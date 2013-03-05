@@ -33,19 +33,23 @@ open ExtCore
 exception UndefinedException
 
 //
-type
-    [<NoEquality; NoComparison>]
-    internal LazyCellStatus<'T> =
-        | Delayed of (unit -> LazyListCell<'T>)
-        | Value of LazyListCell<'T>
-        | Exception of exn
+[<NoEquality; NoComparison>]
+type internal LazyCellStatus<'T> =
+    //
+    | Delayed of (unit -> LazyListCell<'T>)
+    //
+    | Value of LazyListCell<'T>
+    //
+    | Exception of exn
 
-// OPTIMIZE : Would there be any benefit to applying [<UseNullAsTrueValue>] here
-// so CellEmpty would be represented as null?
+//
 and [<NoEquality; NoComparison>]
+    [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
     internal LazyListCell<'T> =
-        | Empty
-        | Cons of 'T * LazyList<'T>
+    //
+    | Empty
+    //
+    | Cons of 'T * LazyList<'T>
 
 /// LazyLists are possibly-infinite, cached sequences.  See also IEnumerable/Seq for
 /// uncached sequences. LazyLists normally involve delayed computations without 
@@ -61,10 +65,17 @@ and [<NoEquality; NoComparison>]
 ///
 /// Lazy lists may be matched using the LazyList.Cons and LazyList.Nil active patterns. 
 /// These may force the computation of elements of the list.
-and [<NoEquality; NoComparison>]
+and [<NoEquality; NoComparison; Sealed>]
     LazyList<'T> internal (initialStatus) =
     //
+    static let emptyList = LazyList (Value Empty)
+
+    //
     let mutable status : LazyCellStatus<'T> = initialStatus
+
+    /// The empty LazyList.
+    static member Empty
+        with get () = emptyList
     
     member internal this.Value =
         match status with
@@ -148,11 +159,11 @@ module LazyList =
     let inline private getCell (list : LazyList<'T>) =
         list.Value
 
-    /// Evaluates to the list that contains no items.
+    /// The empty LazyList.
     [<GeneralizableValue>]
     [<CompiledName("Empty")>]
     let empty<'T> : LazyList<'T> =
-        LazyList (Value Empty)
+        LazyList<'T>.Empty
     
     /// Get the first cell of the list.
     [<CompiledName("TryGet")>]
