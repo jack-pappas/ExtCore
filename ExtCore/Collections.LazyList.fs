@@ -268,6 +268,59 @@ module LazyList =
     let inline private lzy cellCreator : LazyList<'T> =
         LazyList<_>.CreateLazy cellCreator
 
+    /// Return the length of the list.
+    [<CompiledName("Length")>]
+    let length (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec lengthAux acc (list : LazyList<'T>) =
+            match list.Value with
+            | Empty ->
+                int acc
+            | Cons (_, tl) ->
+                lengthAux (acc + 1u) tl
+
+        lengthAux 0u list
+
+    /// Return the list which on consumption will consist of an
+    /// infinite sequence of the given item.
+    [<CompiledName("Repeat")>]
+    let repeat value : LazyList<'T> =
+        let rec s = cons value (delayed (fun () -> s))
+        s
+
+    /// Return the list which contains on demand the elements of the
+    /// first list followed by the elements of the second list.
+    [<CompiledName("Append")>]
+    let rec append (list1 : LazyList<'T>) (list2 : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        lzy <| fun () ->
+            appendCell list1 list2
+
+    and private appendCell list1 list2 =
+        match list1.Value with
+        | Empty ->
+            list2.Value
+        | Cons (hd, tl) ->
+            consc hd (append tl list2)
+
+    /// Return the list which contains on demand the list of elements of the list of lazy lists.
+    [<CompiledName("Concat")>]
+    let rec concat (lists : LazyList<LazyList<'T>>) =
+        // Preconditions
+        checkNonNull "lists" lists
+
+        lzy <| fun () ->
+            match lists.Value with
+            | Empty ->
+                Empty
+            | Cons (hd, tl) ->
+                appendCell hd (concat tl)
+
     /// Apply the given function to successive elements of the list, returning the first
     /// result where function returns <c>Some(x)</c> for some x.
     /// If the function never returns true, 'None' is returned.
@@ -308,44 +361,6 @@ module LazyList =
                 Empty
             | Some (value, state) ->
                 Cons (value, unfold generator state)
-
-    /// Return the list which contains on demand the elements of the
-    /// first list followed by the elements of the second list.
-    [<CompiledName("Append")>]
-    let rec append (list1 : LazyList<'T>) (list2 : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list1" list1
-        checkNonNull "list2" list2
-
-        lzy <| fun () ->
-            appendCell list1 list2
-
-    and private appendCell list1 list2 =
-        match list1.Value with
-        | Empty ->
-            list2.Value
-        | Cons (hd, tl) ->
-            consc hd (append tl list2)
-
-    /// Return the list which contains on demand the list of elements of the list of lazy lists.
-    [<CompiledName("Concat")>]
-    let rec concat (lists : LazyList<LazyList<'T>>) =
-        // Preconditions
-        checkNonNull "lists" lists
-
-        lzy <| fun () ->
-            match lists.Value with
-            | Empty ->
-                Empty
-            | Cons (hd, tl) ->
-                appendCell hd (concat tl)
-
-    /// Return the list which on consumption will consist of an
-    /// infinite sequence of the given item.
-    [<CompiledName("Repeat")>]
-    let repeat value : LazyList<'T> =
-        let rec s = cons value (delayed (fun () -> s))
-        s
 
     /// Build a new collection whose elements are the results of applying
     /// the given function to each of the elements of the collection.
@@ -478,86 +493,6 @@ module LazyList =
             action hd
             iter action tl
 
-    /// Build a collection from the given list. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
-    [<CompiledName("OfList")>]
-    let rec ofList (list : 'T list) =
-        // Preconditions
-        checkNonNull "list" list
-
-        lzy <| fun () ->
-            match list with
-            | [] ->
-                Empty
-            | hd :: tl ->
-                consc hd (ofList tl)
-
-    /// Build a non-lazy list from the given collection. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
-    [<CompiledName("ToList")>]
-    let toList (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        let rec loop acc (list : LazyList<'T>) =
-            match list.Value with
-            | Empty ->
-                List.rev acc
-            | Cons (hd, tl) ->
-                loop (hd :: acc) tl
-        loop [] list
-
-    let rec private copyFrom index (array : 'T[]) =
-        lzy <| fun () ->
-            if index >= Array.length array then
-                Empty
-            else
-                copyFrom (index + 1) array
-                |> consc array.[index]
-
-    /// Build a collection from the given array. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
-    [<CompiledName("OfArray")>]
-    let ofArray (array : 'T[]) =
-        // Preconditions
-        checkNonNull "array" array
-
-        copyFrom 0 array
-
-    /// Build an array from the given collection.
-    [<CompiledName("ToArray")>]
-    let toArray (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        // Iterate over the LazyList and copy its elements into a ResizeArray.
-        let elements = ResizeArray ()
-        iter elements.Add list
-        ResizeArray.toArray elements
-
-    /// Return the length of the list.
-    [<CompiledName("Length")>]
-    let length (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        let rec lengthAux acc (list : LazyList<'T>) =
-            match list.Value with
-            | Empty ->
-                int acc
-            | Cons (_, tl) ->
-                lengthAux (acc + 1u) tl
-
-        lengthAux 0u list
-
-    /// Return a view of the collection as an enumerable object.
-    [<CompiledName("ToSeq")>]
-    let inline toSeq (list : LazyList<'T>) =
-        // Preconditions
-        checkNonNull "list" list
-
-        list.ToSeq ()
-
     // NOTE : This function doesn't dispose the IEnumerator until it reaches
     // the end of the enumeration; this function can therefore cause memory leaks
     // if not used carefully.
@@ -577,6 +512,71 @@ module LazyList =
 
         sequence.GetEnumerator ()
         |> ofFreshIEnumerator
+
+    /// Build a collection from the given list. This function will eagerly
+    /// evaluate the entire list (and thus may not terminate).
+    [<CompiledName("OfList")>]
+    let rec ofList (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        lzy <| fun () ->
+            match list with
+            | [] ->
+                Empty
+            | hd :: tl ->
+                consc hd (ofList tl)
+
+    let rec private copyFrom index (array : 'T[]) =
+        lzy <| fun () ->
+            if index >= Array.length array then
+                Empty
+            else
+                copyFrom (index + 1) array
+                |> consc array.[index]
+
+    /// Build a collection from the given array. This function will eagerly
+    /// evaluate the entire list (and thus may not terminate).
+    [<CompiledName("OfArray")>]
+    let ofArray (array : 'T[]) =
+        // Preconditions
+        checkNonNull "array" array
+
+        copyFrom 0 array
+
+    /// Return a view of the collection as an enumerable object.
+    [<CompiledName("ToSeq")>]
+    let inline toSeq (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+
+        list.ToSeq ()
+
+    /// Build a non-lazy list from the given collection. This function will eagerly
+    /// evaluate the entire list (and thus may not terminate).
+    [<CompiledName("ToList")>]
+    let toList (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec loop acc (list : LazyList<'T>) =
+            match list.Value with
+            | Empty ->
+                List.rev acc
+            | Cons (hd, tl) ->
+                loop (hd :: acc) tl
+        loop [] list
+
+    /// Build an array from the given collection.
+    [<CompiledName("ToArray")>]
+    let toArray (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Iterate over the LazyList and copy its elements into a ResizeArray.
+        let elements = ResizeArray ()
+        iter elements.Add list
+        ResizeArray.toArray elements
 
 
 /// Active patterns for deconstructing lazy lists.
