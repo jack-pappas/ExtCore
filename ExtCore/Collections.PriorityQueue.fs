@@ -23,7 +23,124 @@ open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
 
+#nowarn "25"
+
+(* TODO :   Implement modifications for global root, data bootstrapping, and other optimizations. *)
 (* TODO :   Extract code for Brodal-Okasaki meldable heaps from the Coq theories here:
             https://code.google.com/p/priority-queues/ *)
 
 
+type Rank = int
+type Tree<'T when 'T : comparison> =
+    Node of 'T * Rank * Tree<'T> list
+type T<'T when 'T : comparison> = Tree<'T> list
+
+(* auxiliary functions *)
+(*
+//
+module BrodalOkasaki =
+    let root (Node (x,r,c)) = x
+    let rank (Node (x,r,c)) = r
+
+    let link = function
+        | (Node (x1, r1, c1) as t1), (Node (x2, r2, c2) as t2)
+            when r1 = r2 ->
+            if x1 <= x2 then
+                Node (x1, r1 + 1, t2 :: c1)
+            else
+                Node (x2, r2 + 1, t1 :: c2)
+        | _ ->
+            raise <| System.ArgumentException "The rank of both nodes must be the same."
+
+    let skewLink ((Node (x0, r0, c0) as t0), (Node (x1, r1, c1) as t1), (Node (x2, r2, c2) as t2)) =
+        if x1 <= x0 && x1 <= x2 then
+            Node (x1, r1 + 1, t0 :: t2 :: c1)
+        elif x2 <= x0 && x2 <= x1 then
+            Node (x2, r2 + 1, t0 :: t1 :: c2)
+        else
+            Node (x0, r1 + 1, [t1; t2])
+
+    let rec ins = function
+        | t, [] -> [t]
+        | t, t' :: ts ->
+            // rank t <= rank t'
+            if rank t < rank t' then
+                t :: t' :: ts
+            else
+                ins (link (t, t'), ts)
+
+    let uniqify = function
+        | [] -> []
+        | t :: ts ->
+            // eliminate initial duplicate
+            ins (t, ts)
+
+    let rec meldUniq = function
+        | [], ts
+        | ts, [] ->
+            ts
+        | t1 :: ts1, t2 :: ts2 ->
+            if rank t1 < rank t2 then
+                t1 :: meldUniq (ts1, t2 :: ts2)
+            elif rank t2 < rank t1 then
+                t2 :: meldUniq (t1 :: ts1, ts2)
+            else
+                ins (link (t1, t2), meldUniq (ts1, ts2))
+
+    let empty = []
+
+    let isEmpty ts = List.isEmpty ts
+
+    let insert x = function
+        | t1 :: t2 :: rest as ts ->
+            if rank t1 = rank t2 then
+                skewLink (Node (x, 0, []), t1, t2) :: rest
+            else
+                Node (x, 0, []) :: ts
+        | ts ->
+            Node (x, 0, []) :: ts
+
+    let meld (ts, ts') =
+        meldUniq (uniqify ts, uniqify ts')
+
+    exception EMPTY
+
+    let rec findMin = function
+        | [] ->
+            raise EMPTY
+        | [t] ->
+            root t
+        | t :: ts ->
+            let x = findMin ts
+            let rt = root t
+            if rt <= x then rt else x
+
+    let deleteMin = function
+        | [] ->
+            raise EMPTY
+        | ts ->
+            let rec getMin = function
+                | [] ->
+                    invalidArg "ts" "The tree list is empty."
+                | [t] ->
+                    t, []
+                | t :: ts ->
+                    let t', ts' = getMin ts
+                    if root t <= root t' then
+                        t, ts
+                    else
+                        t', t :: ts'
+
+            let rec split = function
+                | (ts, xs, []) ->
+                    ts, xs
+                | (ts, xs, t :: c) ->
+                    if rank t = 0 then
+                        split (ts, root t :: xs, c)
+                    else
+                        split (t :: ts, xs, c)
+
+            let (Node (x,r,c), ts) = getMin ts
+            let ts', xs' = split ([], [], c)
+            List.foldBack insert xs' (meld (ts, ts'))
+*)
