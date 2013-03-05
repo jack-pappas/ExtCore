@@ -264,14 +264,9 @@ module LazyList =
         assert (not <| isNull list)
         Cons (value, list)
 
-    /// Gets the internal LazyListCell representation of a LazyList.
-    let inline private getCell (list : LazyList<'T>) =
-        assert (not <| isNull list)
-        list.Value
-
     /// Alias for LazyList.CreateLazy.
     let inline private lzy cellCreator : LazyList<'T> =
-        LazyList<_>.CreateLazy cellCreator    
+        LazyList<_>.CreateLazy cellCreator
 
     /// Apply the given function to successive elements of the list, returning the first
     /// result where function returns <c>Some(x)</c> for some x.
@@ -451,7 +446,7 @@ module LazyList =
 
     let rec private skipCell count (list : LazyList<'T>) =
         if count = 0 then
-            getCell list
+            list.Value
         else
             match list.Value with
             | Cons (_, tl) ->
@@ -547,7 +542,7 @@ module LazyList =
         checkNonNull "list" list
 
         let rec lengthAux acc (list : LazyList<'T>) =
-            match getCell list with
+            match list.Value with
             | Empty ->
                 int acc
             | Cons (_, tl) ->
