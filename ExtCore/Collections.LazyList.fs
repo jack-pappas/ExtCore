@@ -94,7 +94,7 @@ and [<NoEquality; NoComparison>]
             match this.Value with
             | Cons (hd, _) -> hd
             | Empty ->
-                invalidArg "s" "The list is empty."
+                invalidOp "The list is empty."
 
     /// Return the list corresponding to the remaining items in the sequence.
     /// Forces the evaluation of the first cell of the list if it is not already evaluated.
@@ -103,7 +103,7 @@ and [<NoEquality; NoComparison>]
             match this.Value with
             | Cons (_, tl) -> tl
             | Empty ->
-                invalidArg "s" "The list is empty."
+                invalidOp "The list is empty."
 
     /// Test if a list is empty.
     /// Forces the evaluation of the first element of the stream if it is not already evaluated.
