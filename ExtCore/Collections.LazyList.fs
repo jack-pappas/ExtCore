@@ -44,8 +44,8 @@ type
 // so CellEmpty would be represented as null?
 and [<NoEquality; NoComparison>]
     internal LazyListCell<'T> =
-        | CellEmpty
-        | CellCons of 'T * LazyList<'T>
+        | Empty
+        | Cons of 'T * LazyList<'T>
 
 /// LazyLists are possibly-infinite, cached sequences.  See also IEnumerable/Seq for
 /// uncached sequences. LazyLists normally involve delayed computations without 
@@ -92,9 +92,9 @@ and [<NoEquality; NoComparison>]
         let toSeq s =
             s |> Seq.unfold (fun list ->
                 match getCell list with
-                | CellEmpty ->
+                | Empty ->
                     None
-                | CellCons (hd, tl) ->
+                | Cons (hd, tl) ->
                     Some (hd, tl))
         (toSeq this).GetEnumerator ()
             
@@ -110,9 +110,9 @@ and [<NoEquality; NoComparison>]
 //
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LazyList =
-    /// Curried form of the CellCons constructor.
+    /// Curried form of the Cons constructor.
     let inline private consc value (list : LazyList<'T>) =
-        CellCons (value, list)
+        Cons (value, list)
 
     //
     let inline private lzy cellCreator : LazyList<'T> =
@@ -126,15 +126,15 @@ module LazyList =
     [<GeneralizableValue>]
     [<CompiledName("Empty")>]
     let empty<'T> : LazyList<'T> =
-        LazyList (Value CellEmpty)
+        LazyList (Value Empty)
     
     /// Get the first cell of the list.
     [<CompiledName("TryGet")>]
     let tryGet (list : LazyList<'T>) =
         match getCell list with
-        | CellEmpty ->
+        | Empty ->
             None
-        | CellCons (hd, tl) ->
+        | Cons (hd, tl) ->
             Some (hd, tl)
     
     /// Return a new list which contains the given item followed by the given list.
@@ -160,9 +160,9 @@ module LazyList =
         lzy <| fun () ->
             match generator state with
             | None ->
-                CellEmpty
+                Empty
             | Some (value, state) ->
-                CellCons (value, unfold generator state)
+                Cons (value, unfold generator state)
 
     /// Return the list which contains on demand the elements of the
     /// first list followed by the elements of the second list.
@@ -173,9 +173,9 @@ module LazyList =
 
     and private appendc l1 l2 =
         match getCell l1 with
-        | CellEmpty ->
+        | Empty ->
             getCell l2
-        | CellCons (hd, tl) ->
+        | Cons (hd, tl) ->
             consc hd (append tl l2)
 
     /// Return a list that is -- in effect -- the list returned by the given computation.
@@ -199,9 +199,9 @@ module LazyList =
     let rec map (mapping : 'T -> 'U) (list : LazyList<'T>) =
         lzy <| fun () ->
             match getCell list with
-            | CellEmpty ->
-                CellEmpty
-            | CellCons (hd, tl) ->
+            | Empty ->
+                Empty
+            | Cons (hd, tl) ->
                 consc (mapping hd) (map mapping tl)
 
     /// Build a new collection whose elements are the results of applying the given function
@@ -210,27 +210,27 @@ module LazyList =
     let rec map2 (mapping : 'T1 -> 'T2 -> 'U) (list1 : LazyList<'T1>) (list2 : LazyList<'T2>) =
         lzy <| fun () ->
             match getCell list1, getCell list2 with
-            | CellCons (hd1, tl1), CellCons (hd2, tl2) ->
+            | Cons (hd1, tl1), Cons (hd2, tl2) ->
                 consc (mapping hd1 hd2) (map2 mapping tl1 tl2)
-            | _ -> CellEmpty
+            | _ -> Empty
 
     /// Return the list which contains on demand the pair of elements of the first and second list.
     [<CompiledName("Zip")>]
     let rec zip (list1 : LazyList<'T>) (list2 : LazyList<'T>) =
         lzy <| fun () ->
             match getCell list1, getCell list2 with
-            | CellCons (hd1, tl1), CellCons (hd2, tl2) ->
+            | Cons (hd1, tl1), Cons (hd2, tl2) ->
                 consc (hd1, hd2) (zip tl1 tl2)
-            | _ -> CellEmpty
+            | _ -> Empty
 
     /// Return the list which contains on demand the list of elements of the list of lazy lists.
     [<CompiledName("Concat")>]
     let rec concat (lists : LazyList<LazyList<'T>>) =
         lzy <| fun () ->
             match getCell lists with
-            | CellEmpty ->
-                CellEmpty
-            | CellCons (hd, tl) ->
+            | Empty ->
+                Empty
+            | Cons (hd, tl) ->
                 appendc hd (concat tl)
 
     /// Return a new collection which on consumption will consist of only the elements of the collection
@@ -242,9 +242,9 @@ module LazyList =
 
     and private filterc predicate list =
         match getCell list with
-        | CellEmpty ->
-            CellEmpty
-        | CellCons (hd, tl) ->
+        | Empty ->
+            Empty
+        | Cons (hd, tl) ->
             if predicate hd then
                 consc hd (filter predicate tl)
             else
@@ -256,9 +256,9 @@ module LazyList =
     [<CompiledName("TryFind")>]
     let rec tryFind predicate (list : LazyList<'T>) =
         match getCell list with
-        | CellEmpty ->
+        | Empty ->
             None
-        | CellCons (hd, tl) ->
+        | Cons (hd, tl) ->
             if predicate hd then Some hd
             else tryFind predicate tl
 
@@ -278,9 +278,9 @@ module LazyList =
     let rec scan (folder : 'State -> 'T -> 'State) (state : 'State) (list : LazyList<'T>) =
         lzy <| fun () ->
             match getCell list with
-            | CellEmpty ->
+            | Empty ->
                 consc state empty
-            | CellCons (hd, tl) ->
+            | Cons (hd, tl) ->
                 let state' = folder state hd
                 consc state (scan folder state' tl)
 
@@ -289,8 +289,8 @@ module LazyList =
     [<CompiledName("Head")>]
     let head (list : LazyList<'T>) =
         match getCell list with
-        | CellCons (hd, _) -> hd
-        | CellEmpty ->
+        | Cons (hd, _) -> hd
+        | Empty ->
             invalidArg "s" "The list is empty."
 
     /// Return the list corresponding to the remaining items in the sequence.
@@ -298,8 +298,8 @@ module LazyList =
     [<CompiledName("Tail")>]
     let tail (list : LazyList<'T>) =
         match getCell list with
-        | CellCons (_, tl) -> tl
-        | CellEmpty ->
+        | Cons (_, tl) -> tl
+        | Empty ->
             invalidArg "s" "The list is empty."
 
     /// Test if a list is empty.
@@ -307,8 +307,8 @@ module LazyList =
     [<CompiledName("IsEmpty")>]
     let isEmpty (list : LazyList<'T>) =
         match getCell list with
-        | CellCons _ -> false
-        | CellEmpty -> true
+        | Cons _ -> false
+        | Empty -> true
 
     /// Return the list which on consumption will consist of
     /// at most 'count' elements of the input list.
@@ -318,12 +318,12 @@ module LazyList =
             if count < 0 then
                 invalidArg "count" "Cannot take a negative number of elements."
             elif count = 0 then
-                CellEmpty
+                Empty
             else
                 match getCell list with
-                | CellCons (hd, tl) ->
+                | Cons (hd, tl) ->
                     consc hd (take (count - 1) tl)
-                | CellEmpty ->
+                | Empty ->
                     invalidArg "count" "not enough items in the list"
 
     let rec private skipc n (list : LazyList<'T>) =
@@ -331,9 +331,9 @@ module LazyList =
             getCell list
         else
             match getCell list with
-            | CellCons (_, tl) ->
+            | Cons (_, tl) ->
                 skipc (n - 1) tl
-            | CellEmpty ->
+            | Empty ->
                 invalidArg "n" "not enough items in the list"
 
     /// Return the list which on consumption will skip the first 'count' elements of the input list.
@@ -352,7 +352,7 @@ module LazyList =
         lzy <| fun () ->
             match list with
             | [] ->
-                CellEmpty
+                Empty
             | hd :: tl ->
                 consc hd (ofList tl)
 
@@ -362,9 +362,9 @@ module LazyList =
     let toList (list : LazyList<'T>) =
         let rec loop acc (list : LazyList<'T>) =
             match getCell list with
-            | CellEmpty ->
+            | Empty ->
                 List.rev acc
-            | CellCons (hd, tl) ->
+            | Cons (hd, tl) ->
                 loop (hd :: acc) tl
         loop [] list
 
@@ -372,23 +372,23 @@ module LazyList =
     [<CompiledName("Iterate")>]
     let rec iter (action : 'T -> unit) (list : LazyList<'T>) =
         match getCell list with
-        | CellEmpty -> ()
-        | CellCons (hd, tl) ->
+        | Empty -> ()
+        | Cons (hd, tl) ->
             action hd
             iter action tl
 
     let rec private copyFrom index (array : 'T[]) =
         lzy <| fun () ->
             if index >= Array.length array then
-                CellEmpty
+                Empty
             else
                 copyFrom (index + 1) array
                 |> consc array.[index]
 
     let rec private copyTo (array : 'T[]) (list : LazyList<'T>) index =
         match getCell list with
-        | CellEmpty -> ()
-        | CellCons (hd, tl) ->
+        | Empty -> ()
+        | Cons (hd, tl) ->
             array.[index] <- hd
             copyTo array tl (index + 1)
 
@@ -407,8 +407,8 @@ module LazyList =
 
     let rec private lengthAux n (list : LazyList<'T>) =
         match getCell list with
-        | CellEmpty -> n
-        | CellCons (_, tl) ->
+        | Empty -> n
+        | Cons (_, tl) ->
             lengthAux (n + 1) tl
 
     /// Return the length of the list.
@@ -428,7 +428,7 @@ module LazyList =
                 consc e.Current (ofFreshIEnumerator e)
             else
                e.Dispose ()
-               CellEmpty
+               Empty
 
     /// Build a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
@@ -439,7 +439,7 @@ module LazyList =
     // Active pattern for deconstructing lazy lists.
     let (|Cons|Nil|) (list : LazyList<'T>) =
         match getCell list with
-        | CellCons (hd, tl) ->
+        | Cons (hd, tl) ->
             Cons (hd, tl)
-        | CellEmpty ->
+        | Empty ->
             Nil
