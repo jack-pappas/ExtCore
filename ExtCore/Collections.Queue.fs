@@ -31,20 +31,14 @@ open ExtCore
 (*   3. (in the absence of insertf's)                *)
 (*      pending = nthtail (front, length rear)       *)
 //
-type internal QueueData<'T> = {
-    Front : LazyList<'T>;
-    Rear : 'T list;
-    Pending : LazyList<'T>;
-}
-
-//
-type Queue<'T> private (data : QueueData<'T>) =
+type Queue<'T> private
+    (front : LazyList<'T>, rear : 'T list, pending : LazyList<'T>) =
     //
     static let emptyQueue : Queue<'T> =
-        Queue {
-            Front = LazyList.empty;
-            Rear = [];
-            Pending = LazyList.empty; }
+        Queue (
+            LazyList.empty,
+            [],
+            LazyList.empty)
 
     //
     static member Empty
@@ -54,36 +48,38 @@ type Queue<'T> private (data : QueueData<'T>) =
     member __.IsEmpty
         with get () =
             (* by Invariant 1, front = empty implies rear = [] *)
-            LazyList.isEmpty data.Front
+            LazyList.isEmpty front
 
     /// The number of elements in the queue.
     member __.GetLength () =
         (* = LazyList.length front + length rear -- by Invariant 2 *)
-        LazyList.length data.Pending + 2 * List.length data.Rear
+        LazyList.length pending + 2 * List.length rear
 
     /// take from front of queue
     member __.Dequeue () =
         // Preconditions
-        if LazyList.isEmpty data.Front then
-            invalidArg "front" "The queue is empty."
+        if LazyList.isEmpty front then
+            invalidOp "The queue is empty."
 
-        LazyList.head data.Front,
-        Queue<_>.CreateQueue
-            { data with
-                Front = LazyList.tail data.Front; }
+        LazyList.head front,
+        Queue<_>.CreateQueue (
+            LazyList.tail front,
+            rear,
+            pending)
 
     /// add to rear of queue
     member __.Enqueue value =
-        Queue<_>.CreateQueue
-            { data with
-                Rear = value :: data.Rear; }
+        Queue<_>.CreateQueue (
+            front,
+            value :: rear,
+            pending)
 
     /// add to front of queue
     member __.EnqueueFront value =
-        Queue {
-            Front = LazyList.cons value data.Front;
-            Rear = data.Rear;
-            Pending = LazyList.cons value data.Pending; }
+        Queue (
+            LazyList.cons value front,
+            rear,
+            LazyList.cons value pending)
 
     //
     member this.ToArray () : 'T[] =
@@ -120,19 +116,16 @@ type Queue<'T> private (data : QueueData<'T>) =
                     Queue<_>.Rotate (LazyList.tail xs, ys, LazyList.cons y rys)
 
     //
-    static member private CreateQueue { Front = front; Rear = rear; Pending = pending; } =
+    static member private CreateQueue (front, rear, pending) =
         if LazyList.isEmpty pending then
             (* length rear = length front + 1 *)
             let front = Queue<_>.Rotate (front, rear, LazyList.empty)
-            Queue {
-                Front = front;
-                Rear = [];
-                Pending = front; }
+            Queue (front, [], front)
         else
-            Queue {
-                Front = front;
-                Rear = rear;
-                Pending = LazyList.tail pending; }
+            Queue (
+                front,
+                rear,
+                LazyList.tail pending)
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
