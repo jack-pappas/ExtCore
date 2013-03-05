@@ -436,10 +436,15 @@ module LazyList =
         sequence.GetEnumerator ()
         |> ofFreshIEnumerator
 
+
+//
+[<AutoOpen>]
+module LazyListPatterns =
     // Active pattern for deconstructing lazy lists.
     let (|Cons|Nil|) (list : LazyList<'T>) =
-        match getCell list with
+        match list.Value with
         | Cons (hd, tl) ->
             Cons (hd, tl)
         | Empty ->
             Nil
+
