@@ -1234,7 +1234,7 @@ module TagMap =
 
     /// Returns the number of bindings in the TagMap.
     [<CompiledName("Count")>]
-    let inline count (map : IntMap<'T>) : int =
+    let inline count (map : TagMap<'Tag, 'T>) : int =
         // Retype as IntMap.
         let map : IntMap<'T> = retype map
 
