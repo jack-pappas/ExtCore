@@ -63,7 +63,7 @@ type ArgType =
     static member String r = StringArg r
     static member Unit r = UnitArg r
 
-
+//
 type ArgInfo (name, action, help) =
     /// Return the name of the argument
     member x.Name = name
@@ -72,7 +72,9 @@ type ArgInfo (name, action, help) =
     /// Return the usage help associated with the argument
     member x.HelpText = help
   
+//
 exception Bad of string
+//
 exception HelpText of string
 
 [<Sealed>]

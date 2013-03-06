@@ -680,7 +680,7 @@ type IntSet private (trie : PatriciaSet) =
 
         /// <inherit />
         member __.Contains (item : int) =
-            notImpl "Contains"
+            notImpl "ICollection`1.Contains"
 //            match PatriciaSet.TryFind (uint32 item.Key, trie) with
 //            | None ->
 //                false
@@ -719,7 +719,7 @@ and [<Sealed>]
             set.ToArray ()
 
 
-//
+/// Functional programming operators related to the IntSet type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module IntSet =
     /// The empty IntSet.
@@ -935,11 +935,11 @@ module IntSet =
 
 #if PROTO_COMPILER
 
-//
+/// An IntSet whose values are tagged with a unit-of-measure type.
 [<MeasureAnnotatedAbbreviation>]
 type TagSet<[<Measure>] 'Tag> = IntSet
 
-//
+/// Functional programming operators related to the TagMap<_> type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TagSet =
     /// Retypes a value without emitting any IL instructions.

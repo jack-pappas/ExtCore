@@ -29,6 +29,7 @@ open ExtCore
 (* TODO :   Extract code for Brodal-Okasaki meldable heaps from the Coq theories here:
             https://code.google.com/p/priority-queues/ *)
 
+(*
 // TODO : Tag this with a unit-of-measure.
 type Rank = int
 
@@ -203,7 +204,7 @@ module AddRoot =
             if Q.isEmpty q then Empty
             else
                 Root (Q.findMin q, Q.deleteMin q)
-
+*)
 (*
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

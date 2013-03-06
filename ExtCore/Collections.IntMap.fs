@@ -747,6 +747,8 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         | Some key ->
             key
         | None ->
+            // TODO : Add a better error message
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     //
@@ -770,6 +772,8 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         | Some value ->
             value
         | None ->
+            // TODO : Add a better error message
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     //
@@ -868,7 +872,7 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
 
         /// <inherit />
         member __.Contains (item : KeyValuePair<int, 'T>) =
-            notImpl "Contains"
+            notImpl "ICollection`1.Contains"
 //            match PatriciaMap.TryFind (uint32 item.Key, trie) with
 //            | None ->
 //                false
@@ -912,12 +916,12 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         /// <inherit />
         member __.Keys
             with get () =
-                notImpl "Keys"
+                notImpl "IDictionary`2.Keys"
 
         /// <inherit />
         member __.Values
             with get () =
-                notImpl "Values"
+                notImpl "IDictionary`2.Values"
 
         /// <inherit />
         member __.Add (key, value) =
@@ -950,7 +954,7 @@ and [<Sealed>]
             map.ToKvpArray ()
 
 
-//
+/// Functional programming operators related to the IntMap<_> type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module IntMap =
     /// The empty IntMap.
@@ -1206,7 +1210,7 @@ module IntMap =
 type TagMap<[<Measure>] 'Tag, 'T> =
     IntMap<'T>
 
-//
+/// Functional programming operators related to the TagMap<_,_> type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TagMap =
     /// Retypes a value without emitting any IL instructions.

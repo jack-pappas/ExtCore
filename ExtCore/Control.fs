@@ -1723,30 +1723,36 @@ module WorkflowBuilders =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module State =
     //
+    [<CompiledName("Condition")>]
     let inline run (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
         stateFunc initialState
     
     //
+    [<CompiledName("Condition")>]
     let evaluate (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final state value and return the final result value.
         fst <| stateFunc initialState
 
     //
+    [<CompiledName("Condition")>]
     let execute (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final result value and return the final state value.
         snd <| stateFunc initialState
 
     //
+    [<CompiledName("Condition")>]
     let inline getState (state : 'State) =
         state, state
 
     //
+    [<CompiledName("Condition")>]
     let inline setState (state : 'State) =
         fun _ -> ((), state)
 
     //
+    [<CompiledName("Condition")>]
     let inline bindChoice (k : 'T -> StateFuncIndexed<'S2, 'S3, 'U>) (m : ProtectedStateFuncIndexed<_,_,_,_>) =
         fun (state : 'S1) ->
             match m state with
@@ -1759,12 +1765,13 @@ module State =
     /// so it can be used with the State workflow.
     /// Used when a function which only reads the state needs to be
     /// called from within the State workflow.
+    [<CompiledName("Readonly")>]
     let inline readonly (reader : 'State -> 'T) : StateFunc<'State, 'T> =
         fun (state : 'State) ->
             let result = reader state
             result, state
 
-
+(*
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -1803,22 +1810,14 @@ module ReaderWriterState =
 module Maybe =
     //
     let dummy () = ()
-
+*)
 
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
-    /// Transforms a Choice's first value by using a specified mapping function.
-    let inline map (f : 'T -> 'U) (x : Choice<'T, 'Error>) =
-        match x with
-        | Choice2Of2 x ->
-            Choice2Of2 x
-        | Choice1Of2 x ->
-            f x
-            |> Choice1Of2
-
     //
+    [<CompiledName("BindOrRaise")>]
     let inline bindOrRaise (x : Choice<'T, #exn>) =
         match x with
         | Choice2Of2 e ->
@@ -1827,6 +1826,7 @@ module Choice =
             r
 
     //
+    [<CompiledName("BindOrFail")>]
     let inline bindOrFail (x : Choice<'T, string>) =
         match x with
         | Choice1Of2 r -> r
@@ -1834,27 +1834,30 @@ module Choice =
             raise <| System.Exception msg
 
     //
+    [<CompiledName("SetError")>]
     let inline setError error : Choice<'T, 'Error> =
         Choice2Of2 error
 
     //
+    [<CompiledName("Failwith")>]
     let inline failwith errorMsg : Choice<'T, string> =
         Choice2Of2 errorMsg
 
-
+(*
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderChoice =
     //
     let dummy () = ()
-
+*)
 
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ProtectedState =
     //
+    [<CompiledName("Bind")>]
     let inline bind k m =
         fun state ->
         match m state with
@@ -1864,19 +1867,23 @@ module ProtectedState =
             k value state
 
     //
+    [<CompiledName("Delay")>]
     let inline delay f =
         bind f <| fun state ->
             Choice1Of2 ((), state)
 
     //
+    [<CompiledName("Combine")>]
     let inline combine (r1, r2) =
         bind (fun () -> r2) r1
 
     //
+    [<CompiledName("LiftState")>]
     let inline liftState (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) : ProtectedStateFuncIndexed<'S1, 'S2, 'T, 'Error> =
         stateFunc >> Choice1Of2
 
     //
+    [<CompiledName("LiftEither")>]
     let inline liftEither (valueOrError : Choice<'T, 'Error>) =
         match valueOrError with
         | Choice2Of2 error ->
@@ -1888,12 +1895,14 @@ module ProtectedState =
     /// Adapts a function designed for use with the Reader monad
     /// so it can be used with the ProtectedState monad.
     /// Used for functions which only need to read from the state.
+    [<CompiledName("LiftReader")>]
     let inline liftReader (readerM : 'State -> 'T) : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
             let result = readerM state
             Choice1Of2 (result, state)
 
     //
+    [<CompiledName("LiftReaderChoice")>]
     let inline liftReaderChoice (readerChoiceFunc : 'State -> Choice<'T, 'Error>) : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
             match readerChoiceFunc state with
@@ -1903,18 +1912,22 @@ module ProtectedState =
                 Choice1Of2 (result, state)
 
     //
+    [<CompiledName("SetProtectedState")>]
     let inline setProtectedState (state : 'State) =
         Choice1Of2 ((), state)
 
     //
+    [<CompiledName("GetProtectedState")>]
     let inline getProtectedState (state : 'State) =
         Choice1Of2 (state, state)
 
     /// Sets an error value in the computation. The monadic equivalent of raising an exception.
+    [<CompiledName("SetError")>]
     let inline setError error (_ : 'State) : Choice<'T * 'State, 'Error> =
         Choice2Of2 error
 
     /// The monadic equivalent of F#'s built-in 'failwith' operator.
+    [<CompiledName("Failwith")>]
     let inline failwith (errorMsg : string) (_ : 'State) : Choice<'T * 'State, string> =
         Choice2Of2 errorMsg
 
@@ -1922,6 +1935,7 @@ module ProtectedState =
     /// Useful when the state value is only needed during the computation;
     /// by discarding the state when the computation is complete, the return
     /// value can be adapted to the Either workflow.
+    [<CompiledName("DiscardState")>]
     let inline discardState (protectedStateM : 'State1 -> Choice<'T * 'State2, 'Error>) =
         fun state ->
             match protectedStateM state with
@@ -1930,31 +1944,34 @@ module ProtectedState =
             | Choice1Of2 (result, _) ->
                 Choice1Of2 result
 
-
+(*
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderProtectedState =
     //
     let dummy () = ()
-
+*)
 
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module StatefulChoice =
     //
+    [<CompiledName("LiftState")>]
     let liftState (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error> =
         fun state ->
         let value, state = stateFunc state
         (Choice1Of2 value), state
 
     //
+    [<CompiledName("LiftEither")>]
     let inline liftEither (valueOrError : Choice<'T, 'Error>) : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         valueOrError, state
 
     //
+    [<CompiledName("SetState")>]
     let setState (state : 'State) : StatefulChoiceFuncIndexed<_,_,unit,'Error> =
         // TODO : Instead of using unit input and output here, should we accept
         // any input value and pass it through?
@@ -1962,6 +1979,7 @@ module StatefulChoice =
         (Choice1Of2 ()), state
 
     //
+    [<CompiledName("GetState")>]
     let inline getState (state : 'State) =
         (Choice1Of2 state), state
 
@@ -1970,6 +1988,7 @@ module StatefulChoice =
         (Choice1Of2 value), state
 
     //
+    [<CompiledName("Bind")>]
     let private bind k m =
         fun state ->
         match m state with
@@ -1979,11 +1998,12 @@ module StatefulChoice =
             (Choice2Of2 error), state
 
     /// Transforms a value in the StatefulChoice workflow by using a specified mapping function.
+    [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (m : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error>)
             : StatefulChoiceFuncIndexed<'S1, 'S2, 'U, 'Error> =
         bind (mapping >> ``return``) m
 
-
+(*
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -2014,4 +2034,4 @@ module StateContinuation =
 module ProtectedStateContinuation =
     //
     let dummy () = ()
-
+*)

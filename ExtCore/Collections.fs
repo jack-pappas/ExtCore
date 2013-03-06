@@ -90,22 +90,23 @@ module Range =
             index <- index + GenericOne
         state
 
-
     // TODO
     // mapReduce
 
 
-//
+/// Functional programming operators related to the System.Collections.Generic.KeyValuePair<_,_> type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module KeyValuePair =
     open System.Collections.Generic
 
     /// Gets the key in the key/value pair.
-    let [<NoDynamicInvocation>] inline key (kvp : KeyValuePair<'Key, 'T>) =
+    [<CompiledName("Key")>]
+    let inline key (kvp : KeyValuePair<'Key, 'T>) =
         kvp.Key
 
     /// Gets the value in the key/value pair.
-    let [<NoDynamicInvocation>] inline value (kvp : KeyValuePair<'Key, 'T>) =
+    [<CompiledName("Value")>]
+    let inline value (kvp : KeyValuePair<'Key, 'T>) =
         kvp.Value
 
 
@@ -113,22 +114,34 @@ module KeyValuePair =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     /// Returns the length of the sequence as an unsigned integer.
-    let [<NoDynamicInvocation>] inline natLength (sequence : seq<'T>) =
+    [<CompiledName("NatLength")>]
+    let inline natLength (sequence : seq<'T>) =
         uint32 <| Seq.length sequence
 
     //
-    let [<NoDynamicInvocation>] inline appendSingleton sequence (value : 'T) =
+    [<CompiledName("AppendSingleton")>]
+    let inline appendSingleton sequence (value : 'T) =
         Seq.append sequence (Seq.singleton value)
 
     //
-    [<CompiledName("Project")>]
-    let project (mapping : 'T -> 'U) (source : seq<'T>) =
+    [<CompiledName("ProjectValues")>]
+    let projectValues (mapping : 'Key -> 'T) (source : seq<'Key>) =
         // Preconditions
         checkNonNull "source" source
 
         source
         |> Seq.map (fun x ->
             x, mapping x)
+
+    //
+    [<CompiledName("ProjectKeys")>]
+    let projectKeys (mapping : 'T -> 'Key) (source : seq<'T>) =
+        // Preconditions
+        checkNonNull "source" source
+
+        source
+        |> Seq.map (fun x ->
+            mapping x, x)
 
     (* TODO
 
@@ -145,50 +158,56 @@ module Seq =
         Returns a sequence containing every n-th element of the input sequence.
 
     *)
-    
-    
 
 
 /// Additional functional operators on immutable lists.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
     /// A curried "cons" operator.
-    let [<NoDynamicInvocation>] inline cons (list : 'T list) value =
+    [<CompiledName("Cons")>]
+    let inline cons (list : 'T list) value =
         value :: list
 
     /// A curried "optional-cons" operator.
-    let [<NoDynamicInvocation>] inline optcons (list : 'T list) value =
+    [<CompiledName("ConsOption")>]
+    let inline optcons (list : 'T list) value =
         match value with
         | None -> list
         | Some x -> x :: list
 
     /// Returns the length of the list as an unsigned integer.
-    let [<NoDynamicInvocation>] inline natLength (list : 'T list) =
+    [<CompiledName("NatLength")>]
+    let inline natLength (list : 'T list) =
         uint32 <| List.length list
 
     //
-    let [<NoDynamicInvocation>] inline tryHead (list : 'T list) =
+    [<CompiledName("TryHead")>]
+    let inline tryHead (list : 'T list) =
         match list with
         | [] -> None
         | hd :: _ ->
             Some hd
 
     //
-    let [<NoDynamicInvocation>] inline ofOption (value : 'T option) =
+    [<CompiledName("OfOption")>]
+    let inline ofOption (value : 'T option) =
         match value with
         | None -> []
         | Some x -> [x]
 
     //
-    let [<NoDynamicInvocation>] inline singleton (value : 'T) =
+    [<CompiledName("Singleton")>]
+    let inline singleton (value : 'T) =
         [value]
 
     //
-    let [<NoDynamicInvocation>] inline ofSet (set : Set<'T>) =
+    [<CompiledName("OfSet")>]
+    let inline ofSet (set : Set<'T>) =
         Set.toList set
 
     //
-    let [<NoDynamicInvocation>] inline toSet (list : 'T list) =
+    [<CompiledName("ToSet")>]
+    let inline toSet (list : 'T list) =
         Set.ofList list
 
     //
@@ -552,24 +571,29 @@ module List =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     /// Returns the length of the array as an unsigned integer.
-    let [<NoDynamicInvocation>] inline natLength (arr : 'T[]) =
+    [<CompiledName("NatLength")>]
+    let inline natLength (arr : 'T[]) =
         uint32 arr.Length
 
     /// Given an element, creates an array containing just that element.
-    let [<NoDynamicInvocation>] inline singleton (value : 'T) =
+    [<CompiledName("Singleton")>]
+    let inline singleton (value : 'T) =
         [| value |]
 
     /// Wraps the array in a ReadOnlyCollection<'T> to only allow
     /// read access while still providing O(n) lookup.
-    let [<NoDynamicInvocation>] inline readonly (arr : 'T[]) =
+    [<CompiledName("Readonly")>]
+    let inline readonly (arr : 'T[]) =
         System.Array.AsReadOnly arr
 
     //
-    let [<NoDynamicInvocation>] inline ofSet (set : Set<'T>) : 'T[] =
+    [<CompiledName("OfSet")>]
+    let inline ofSet (set : Set<'T>) : 'T[] =
         Set.toArray set
 
     //
-    let [<NoDynamicInvocation>] inline toSet (array : 'T[]) : Set<'T> =
+    [<CompiledName("ToSet")>]
+    let inline toSet (array : 'T[]) : Set<'T> =
         Set.ofArray array
 
     /// Applies a function to each element of the array, returning a new array whose elements are
@@ -590,19 +614,22 @@ module Array =
         array |> Array.map (fun x -> projection x, x)
 
     /// Returns the first element in the array.
-    let [<NoDynamicInvocation>] inline first (array : 'T[]) =
+    [<CompiledName("First")>]
+    let inline first (array : 'T[]) =
         if Array.isEmpty array then
             invalidOp "Cannot retrieve the first element of an empty array."
         else array.[0]
 
     /// Returns the index of the last element in the array.
-    let [<NoDynamicInvocation>] inline lastIndex (array : 'T[]) =
+    [<CompiledName("LastIndex")>]
+    let inline lastIndex (array : 'T[]) =
         if Array.isEmpty array then
             invalidOp "The array is empty."
         else array.Length - 1
 
     /// Returns the last element in the array.
-    let [<NoDynamicInvocation>] inline last (array : 'T[]) =
+    [<CompiledName("Last")>]
+    let inline last (array : 'T[]) =
         if Array.isEmpty array then
             invalidOp "Cannot retrieve the last element of an empty array."
         else array.[array.Length - 1]
@@ -958,23 +985,28 @@ module TaggedArray =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArraySegment =
     //
-    let [<NoDynamicInvocation>] inline array (segment : ArraySegment<'T>) =
+    [<CompiledName("Array")>]
+    let inline array (segment : ArraySegment<'T>) =
         segment.Array
 
     //
-    let [<NoDynamicInvocation>] inline count (segment : ArraySegment<'T>) =
+    [<CompiledName("Count")>]
+    let inline count (segment : ArraySegment<'T>) =
         segment.Count
 
     //
-    let [<NoDynamicInvocation>] inline offset (segment : ArraySegment<'T>) =
+    [<CompiledName("Offset")>]
+    let inline offset (segment : ArraySegment<'T>) =
         segment.Offset
 
     //
-    let [<NoDynamicInvocation>] inline isEmpty (arrSeg : ArraySegment<'T>) =
+    [<CompiledName("IsEmpty")>]
+    let inline isEmpty (arrSeg : ArraySegment<'T>) =
         arrSeg.Count = 0
 
     /// Creates an ArraySegment spanning the entire length of an array.
-    let [<NoDynamicInvocation>] inline ofArray (array : 'T[]) : ArraySegment<'T> =
+    [<CompiledName("OfArray")>]
+    let inline ofArray (array : 'T[]) : ArraySegment<'T> =
         ArraySegment (array)
 
     /// Gets an element of an ArraySegment<'T>.
@@ -994,24 +1026,28 @@ module ArraySegment =
             segment.Array.[segment.Offset + index] <- value
 
     /// Gets the first element in an ArraySegment<'T>.
-    let [<NoDynamicInvocation>] inline first (segment : ArraySegment<'T>) =
+    [<CompiledName("First")>]
+    let inline first (segment : ArraySegment<'T>) =
         if isEmpty segment then
             invalidOp "Cannot retrieve the first element of an empty ArraySegment<'T>."
         else segment.Array.[segment.Offset]
 
     /// Gets the index of the last element in an ArraySegment<'T>, within the original array.
     /// NOTE : This implemention is meant for internal use only, and does NOT perform bounds checking.
-    let [<NoDynamicInvocation>] inline private lastIndexUnsafe (segment : ArraySegment<'T>) =
+    [<CompiledName("LastIndexUnsafe")>]
+    let inline private lastIndexUnsafe (segment : ArraySegment<'T>) =
         segment.Offset + (segment.Count - 1)
 
     /// Gets the index of the last element in an ArraySegment<'T>, within the original array.
-    let [<NoDynamicInvocation>] inline lastIndex (segment : ArraySegment<'T>) =
+    [<CompiledName("LastIndex")>]
+    let inline lastIndex (segment : ArraySegment<'T>) =
         if isEmpty segment then
             invalidOp "The ArraySegment<'T> is empty."
         else lastIndexUnsafe segment
 
     /// Gets the last element in an ArraySegment<'T>.
-    let [<NoDynamicInvocation>] inline last (segment : ArraySegment<'T>) =
+    [<CompiledName("Last")>]
+    let inline last (segment : ArraySegment<'T>) =
         if isEmpty segment then
             invalidOp "Cannot retrieve the last element of an empty ArraySegment<'T>."
         else segment.Array.[lastIndexUnsafe segment]
@@ -1293,8 +1329,9 @@ module ArraySegment =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Set =
     /// Returns the number of elements in the set as an unsigned integer.
-    let [<NoDynamicInvocation>] inline natCount s =
-        uint32 <| Set.count s
+    [<CompiledName("NatCount")>]
+    let inline natCount (set : Set<'T>) =
+        uint32 <| Set.count set
 
     //
     [<CompiledName("OfArraySegment")>]
@@ -1667,11 +1704,13 @@ module Map =
     open System.Collections.Generic
 
     /// Determines the number of items in the Map.
-    let [<NoDynamicInvocation>] inline count (map : Map<'Key, 'Value>) =
+    [<CompiledName("Count")>]
+    let inline count (map : Map<'Key, 'Value>) =
         map.Count
 
     //
-    let [<NoDynamicInvocation>] inline findOrDefault defaultValue key (map : Map<'Key, 'T>) =
+    [<CompiledName("FindOrDefault")>]
+    let inline findOrDefault defaultValue key (map : Map<'Key, 'T>) =
         defaultArg (Map.tryFind key map) defaultValue
 
     //
@@ -1982,49 +2021,60 @@ module ResizeArray =
     open System.Collections.Generic
 
     //
-    let [<NoDynamicInvocation>] inline length (resizeArray : ResizeArray<'T>) =
+    [<CompiledName("NatLength")>]
+    let inline length (resizeArray : ResizeArray<'T>) =
         resizeArray.Count
 
     //
+    [<CompiledName("IsEmpty")>]
     let inline isEmpty (resizeArray : ResizeArray<'T>) =
         resizeArray.Count = 0
 
     //
-    let [<NoDynamicInvocation>] inline add item (resizeArray : ResizeArray<'T>) =
+    [<CompiledName("Add")>]
+    let inline add item (resizeArray : ResizeArray<'T>) =
         resizeArray.Add item
 
     //
-    let [<NoDynamicInvocation>] inline toArray (resizeArray : ResizeArray<'T>) =
+    [<CompiledName("ToArray")>]
+    let inline toArray (resizeArray : ResizeArray<'T>) =
         resizeArray.ToArray ()
 
     //
-    let [<NoDynamicInvocation>] inline ofArray (arr : 'T[]) : ResizeArray<'T> =
+    [<CompiledName("OfArray")>]
+    let inline ofArray (arr : 'T[]) : ResizeArray<'T> =
         ResizeArray (arr)
 
     //
-    let [<NoDynamicInvocation>] inline ofSeq (sequence : seq<'T>) : ResizeArray<'T> =
+    [<CompiledName("OfSeq")>]
+    let inline ofSeq (sequence : seq<'T>) : ResizeArray<'T> =
         ResizeArray (sequence)
 
     //
-    let [<NoDynamicInvocation>] inline get (resizeArray : ResizeArray<'T>) index =
+    [<CompiledName("Get")>]
+    let inline get (resizeArray : ResizeArray<'T>) index =
         resizeArray.[index]
 
     //
-    let [<NoDynamicInvocation>] inline set (resizeArray : ResizeArray<'T>) index value =
+    [<CompiledName("Set")>]
+    let inline set (resizeArray : ResizeArray<'T>) index value =
         resizeArray.[index] <- value
 
     //
-    let [<NoDynamicInvocation>] inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
+    [<CompiledName("SortInPlace")>]
+    let inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
         resizeArray.Sort ()
         
     //
-    let [<NoDynamicInvocation>] inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
+    [<CompiledName("SortInPlaceBy")>]
+    let inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
             (projection : 'T -> 'Key) (resizeArray : ResizeArray<'T>) =
         resizeArray.Sort (fun x y ->
             compare (projection x) (projection y))
 
     //
-    let [<NoDynamicInvocation>] inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
+    [<CompiledName("SortInPlaceWith")>]
+    let inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
         resizeArray.Sort (comparer)
 
     //
@@ -2307,6 +2357,7 @@ module Dict =
     /// Thread-safe functional programming operators for mutable instances of System.Collections.Generic.IDictionary.
     module Safe =
         /// Attempts to retrieve the value associated with the specified key.
+        [<CompiledName("TryFind")>]
         let tryFind key (dict : IDictionary<'Key, 'T>) =
             // Preconditions
             checkNonNull "dict" dict
@@ -2319,13 +2370,15 @@ module Dict =
         
         /// Lookup an element in the Dictionary, raising KeyNotFoundException if
         /// the Dictionary does not contain an element with the specified key.
-        let find key (dict : IDictionary<'Key, 'T>) =
+        [<CompiledName("Find")>]
+        let inline find key (dict : IDictionary<'Key, 'T>) =
             // Preconditions
             checkNonNull "dict" dict
 
             lock dict <| fun () -> dict.[key]
 
         /// Adds a new entry to the Dictionary.
+        [<CompiledName("Add")>]
         let add key value (dict : IDictionary<'Key, 'T>) =
             // Preconditions
             checkNonNull "dict" dict
@@ -2338,6 +2391,7 @@ module Dict =
         /// Updates an existing entry in the dictionary with a new value,
         /// raising KeyNotFoundException if the Dictionary does not
         /// contain an element with the specified key.
+        [<CompiledName("Update")>]
         let update key value (dict : IDictionary<'Key, 'T>) =
             // Preconditions
             checkNonNull "dict" dict
@@ -2354,6 +2408,7 @@ module Dict =
 
         /// Removes the entry with the specified key from the Dictionary,
         /// returning a value indicating the success of the operation.
+        [<CompiledName("Remove")>]
         let remove (key : 'Key) (dict : IDictionary<'Key, 'T>) =
             // Preconditions
             checkNonNull "dict" dict
@@ -2366,6 +2421,7 @@ module Dict =
         /// Updates the value of an entry (which has the specified key)
         /// in the Dictionary, or creates a new entry if one doesn't exist.
         /// If the Dictionary is read-only, an InvalidOperationException is raised.
+        [<CompiledName("UpdateOrAdd")>]
         let updateOrAdd key value (dict : IDictionary<'Key, 'T>) =
             // Preconditions
             checkNonNull "dict" dict
@@ -2379,7 +2435,8 @@ module Dict =
         /// The entries are shallow-copied to the created Dictionary; that is,
         /// reference-typed keys and values will reference the same instances as
         /// in the mutable Dictionary, so care should be taken when using mutable keys and values.
-        let toImmutable (dictionary : IDictionary<'Key, 'T>) =
+        [<CompiledName("Immutable")>]
+        let immutable (dictionary : IDictionary<'Key, 'T>) =
             // Preconditions
             checkNonNull "dictionary" dictionary
 
@@ -2391,41 +2448,59 @@ module Dict =
 
 
     /// Views the keys of the Dictionary as a sequence.
-    let [<NoDynamicInvocation>] inline keys (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Keys")>]
+    let inline keys (dictionary : IDictionary<'Key, 'T>) =
         dictionary.Keys :> IEnumerable<'Key>
 
     /// Views the values of the Dictionary as a sequence.
-    let [<NoDynamicInvocation>] inline values (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Values")>]
+    let inline values (dictionary : IDictionary<'Key, 'T>) =
         dictionary.Values :> IEnumerable<'T>
 
     /// Determines whether the Dictionary is empty.
-    let [<NoDynamicInvocation>] inline isEmpty (dictionary : IDictionary<'Key,'T>) =
+    [<CompiledName("IsEmpty")>]
+    let inline isEmpty (dictionary : IDictionary<'Key,'T>) =
         dictionary.Count = 0
 
     /// Gets the number of entries in the Dictionary.
-    let [<NoDynamicInvocation>] inline count (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Count")>]
+    let inline count (dictionary : IDictionary<'Key, 'T>) =
         dictionary.Count
 
     /// Gets the number of entries in the Dictionary as an unsigned integer.
-    let [<NoDynamicInvocation>] inline natCount (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("NatCount")>]
+    let inline natCount (dictionary : IDictionary<'Key, 'T>) =
         Checked.uint32 dictionary.Count
 
     /// Creates a mutable dictionary with the specified capacity.
-    let [<NoDynamicInvocation>] inline createMutable<'Key, 'T when 'Key : equality> (capacity : int) =
+    [<CompiledName("CreateMutable")>]
+    let inline createMutable<'Key, 'T when 'Key : equality> (capacity : int) =
         System.Collections.Generic.Dictionary<'Key, 'T> (capacity)
 
     /// Determines whether the Dictionary contains an element with the specified key.
-    let [<NoDynamicInvocation>] inline containsKey k (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("ContainsKey")>]
+    let inline containsKey k (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
         dictionary.ContainsKey k
 
     /// Adds a new entry to the dictionary.
-    let [<NoDynamicInvocation>] inline add k v (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Add")>]
+    let inline add k v (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
         dictionary.Add (k, v)
         dictionary
 
     /// Removes the entry with the specified key from the Dictionary.
     /// An exception is raised if the entry cannot be removed.
-    let [<NoDynamicInvocation>] inline remove (k : 'Key) (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Remove")>]
+    let inline remove (k : 'Key) (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
         if dictionary.Remove k then
             dictionary
         else
@@ -2434,18 +2509,30 @@ module Dict =
 
     /// Lookup an element in the Dictionary, raising KeyNotFoundException if
     /// the dictionary does not contain an element with the specified key.
-    let [<NoDynamicInvocation>] inline find k (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Find")>]
+    let inline find k (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
         dictionary.[k]
             
     /// Attempts to retrieve the value associated with the specified key.
-    let [<NoDynamicInvocation>] inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("TryFind")>]
+    let inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
         match dictionary.TryGetValue k with
         | false, _ -> None
         | true, v -> Some v
 
     /// Updates the value of an entry (which has the specified key) in the Dictionary.
     /// Raises a KeyNotFoundException if the Dictionary does not contain an entry with the specified key.
+    [<CompiledName("Update")>]
     let update k v (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
         if dictionary.ContainsKey k then
             dictionary.[k] <- v
             dictionary
@@ -2456,80 +2543,135 @@ module Dict =
 
     /// Updates the value of an entry (which has the specified key) in
     /// the Dictionary, or creates a new entry if one doesn't exist.
-    let [<NoDynamicInvocation>] inline updateOrAdd k v (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("UpdateOrAdd")>]
+    let inline updateOrAdd k v (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+        
         dictionary.[k] <- v
         dictionary    
 
     /// Applies the given function to successive entries, returning the
     /// first result where the function returns "Some(x)".
-    let [<NoDynamicInvocation>] inline tryPick f (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("TryPick")>]
+    let tryPick picker (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        let picker = FSharpFunc<_,_,_>.Adapt picker
+        
         dictionary
         |> Seq.tryPick (fun kvp ->
-            f kvp.Key kvp.Value)
+            picker.Invoke (kvp.Key, kvp.Value))
 
     /// Applies the given function to sucecssive entries, returning the
     /// first x where the function returns "Some(x)".
-    let [<NoDynamicInvocation>] inline pick f (dictionary : IDictionary<'Key, 'T>) =
-        match tryPick f dictionary with
+    [<CompiledName("Pick")>]
+    let pick picker (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        match tryPick picker dictionary with
         | Some res -> res
         | None ->
             // TODO : Add an error message which includes the key.
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     /// Views the Dictionary as a sequence of tuples.
+    [<CompiledName("ToSeq")>]
     let toSeq (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
         dictionary
         |> Seq.map (fun kvp ->
             kvp.Key, kvp.Value)
 
     /// Applies the given function to each entry in the Dictionary.
+    [<CompiledName("Iterate")>]
     let iter (action : 'Key -> 'T -> unit) (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
         dictionary
         |> Seq.iter (fun kvp ->
-            action kvp.Key kvp.Value)
+            action.Invoke (kvp.Key, kvp.Value))
 
     /// Returns a new Dictionary containing only the entries of the
     /// Dictionary for which the predicate returns 'true'.
+    [<CompiledName("Filter")>]
     let filter (predicate : 'Key -> 'T -> bool) (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
         dictionary
         |> Seq.choose (fun kvp ->
-            if predicate kvp.Key kvp.Value then
+            if predicate.Invoke (kvp.Key, kvp.Value) then
                 Some (kvp.Key, kvp.Value)
             else None)
         |> dict
 
     /// Builds a new Dictionary whose entries are the results of applying
     /// the given function to each element of the Dictionary.
-    let map (f : 'Key -> 'T -> 'U) (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Map")>]
+    let map (mapping : 'Key -> 'T -> 'U) (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
         dictionary
         |> Seq.map (fun kvp ->
-            kvp.Key, f kvp.Key kvp.Value)
+            kvp.Key, mapping.Invoke (kvp.Key, kvp.Value))
         |> dict
 
     /// Applies the given function to each element of the Dictionary.
     /// Returns a Dictionary comprised of the results "x,y" for each
     /// entry where the function returns Some(y).
-    let choose (f : 'Key -> 'T -> 'U option) (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Choose")>]
+    let choose (chooser : 'Key -> 'T -> 'U option) (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser        
+        
         dictionary
         |> Seq.choose (fun kvp ->
-            f kvp.Key kvp.Value
+            chooser.Invoke (kvp.Key, kvp.Value)
             |> Option.map (fun x -> kvp.Key, x))
         |> dict
 
     /// Applies a function to each entry of the Dictionary,
     /// threading an accumulator argument through the computation.
-    let fold f (state : 'State) (dictionary : IDictionary<'Key, 'T>) =
-        (state, dictionary)
+    [<CompiledName("Fold")>]
+    let fold folder (state : 'State) (dict : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dict" dict
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        (state, dict)
         ||> Seq.fold (fun state kvp ->
-            f state kvp.Key kvp.Value)
+            folder.Invoke (state, kvp.Key, kvp.Value))
 
     /// Splits the Dictionary into two Dictionaries, containing the entries
     /// for which the given predicate evaluates to "true" and "false".
-    let partition p (dictionary : IDictionary<'Key, 'T>) =
+    [<CompiledName("Partition")>]
+    let partition partitioner (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
+
         let t, f =
             ((Seq.empty, Seq.empty), dictionary)
             ||> fold (fun (trueSeq, falseSeq) k v ->
-                if p k v then
+                if partitioner.Invoke (k, v) then
                     (Seq.append trueSeq (Seq.singleton (k, v)), falseSeq)
                 else
                     (trueSeq, Seq.append falseSeq (Seq.singleton (k, v))))
@@ -2537,6 +2679,7 @@ module Dict =
         dict t, dict f
 
     //
+    [<CompiledName("Readonly")>]
     let readonly (dictionary : IDictionary<'Key, 'T>) =
         dict <| toSeq dictionary
 

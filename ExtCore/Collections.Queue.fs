@@ -155,6 +155,7 @@ module Queue =
         Queue<'T>.Empty
 
     /// Returns true if the given queue is empty; otherwise, false.
+    [<CompiledName("IsEmpty")>]
     let inline isEmpty (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
@@ -162,6 +163,7 @@ module Queue =
         queue.IsEmpty
 
     /// The number of elements in the queue.
+    [<CompiledName("Length")>]
     let inline length (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
@@ -169,6 +171,7 @@ module Queue =
         queue.GetLength ()
 
     /// add to rear of queue
+    [<CompiledName("Enqueue")>]
     let inline enqueue value (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
@@ -176,6 +179,7 @@ module Queue =
         queue.Enqueue value
 
     /// add to front of queue
+    [<CompiledName("EnqueueFront")>]
     let inline enqueuef value (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
@@ -183,6 +187,7 @@ module Queue =
         queue.EnqueueFront value
 
     /// take from front of queue
+    [<CompiledName("Dequeue")>]
     let inline dequeue (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
@@ -190,6 +195,7 @@ module Queue =
         queue.Dequeue ()
 
     //
+    [<CompiledName("ToList")>]
     let inline toList (queue : Queue<'T>) : 'T list =
         // Preconditions
         checkNonNull "queue" queue
@@ -197,6 +203,7 @@ module Queue =
         queue.ToList ()
 
     //
+    [<CompiledName("ToArray")>]
     let inline toArray (queue : Queue<'T>) : 'T[] =
         // Preconditions
         checkNonNull "queue" queue

@@ -44,64 +44,77 @@ module AdditionalOperators =
 
 
     /// The opticons ("optional cons") operator.
-    let [<NoDynamicInvocation>] inline (%?) (x : 'T option) lst =
+    let inline (%?) (x : 'T option) lst =
         match x with Some a -> a :: lst | None -> lst
 
     /// Swaps the values of a tuple so their order is reversed.
-    let [<NoDynamicInvocation>] inline swap (x : 'T, y : 'U) =
+    [<CompiledName("Swap")>]
+    let inline swap (x : 'T, y : 'U) =
         y, x
 
     /// Swaps the order of the arguments to a function.
-    let [<NoDynamicInvocation>] inline flip f (x : 'T) (y : 'U) : 'V =
+    [<CompiledName("Flip")>]
+    let inline flip f (x : 'T) (y : 'U) : 'V =
         f y x
 
     /// Raises a System.NotImplementedException.
-    let [<NoDynamicInvocation>] inline notImpl msg =
+    [<CompiledName("RaiseNotImplementedException")>]
+    let inline notImpl msg =
         raise <| System.NotImplementedException msg
 
     /// Raises a System.NotSupportedException.
-    let [<NoDynamicInvocation>] inline notSupported msg =
+    [<CompiledName("RaiseNotSupportedException")>]
+    let inline notSupported msg =
         raise <| System.NotSupportedException msg
 
     /// Raises a System.ArgumentOutOfRangeException.
-    let [<NoDynamicInvocation>] inline argOutOfRange (paramName : string) (message : string) =
+    [<CompiledName("RaiseArgumentOutOfRangeException")>]
+    let inline argOutOfRange (paramName : string) (message : string) =
         raise <| System.ArgumentOutOfRangeException (paramName, message)
 
     /// Compares two objects for reference equality.
-    let [<NoDynamicInvocation>] inline refEquals< ^T, ^U when ^T : not struct and ^U : not struct> (x : ^T) (y : ^U) =
+    [<CompiledName("RefEquals")>]
+    let inline refEquals< ^T, ^U when ^T : not struct and ^U : not struct> (x : ^T) (y : ^U) =
         System.Object.ReferenceEquals (x, y)
 
     /// Determines if a reference is a null reference.
-    let [<NoDynamicInvocation>] inline isNull< ^T when ^T : not struct> (x : ^T) =
+    [<CompiledName("IsNull")>]
+    let inline isNull< ^T when ^T : not struct> (x : ^T) =
         System.Object.ReferenceEquals (null, x)
 
     /// Determines if a reference is a null reference, and if it is, throws an ArgumentNullException.
-    let [<NoDynamicInvocation>] inline checkNonNull< ^T when ^T : not struct> argName (value : ^T) =
+    [<CompiledName("CheckNonNull")>]
+    let inline checkNonNull< ^T when ^T : not struct> argName (value : ^T) =
         if isNull value then
             nullArg argName
 
     /// Raises a System.Collections.Generic.KeyNotFoundException.
-    let [<NoDynamicInvocation>] inline keyNotFound (msg : string) =
+    [<CompiledName("RaiseKeyNotFoundException")>]
+    let inline keyNotFound (msg : string) =
         raise <| System.Collections.Generic.KeyNotFoundException msg
 
     /// Not-AND (NAND) of two boolean values.
     /// Returns false when both values are 'true'; otherwise, returns true.
-    let [<NoDynamicInvocation>] inline nand (p : bool) (q : bool) =
+    [<CompiledName("Nand")>]
+    let inline nand (p : bool) (q : bool) =
         not (p && q)
 
     /// Not-OR (NOR) of two boolean values.
     /// Returns true when both values are 'false'; otherwise, returns false.
-    let [<NoDynamicInvocation>] inline nor (p : bool) (q : bool) =
+    [<CompiledName("Nor")>]
+    let inline nor (p : bool) (q : bool) =
         not (p && q)
 
     /// Exclusive-or (XOR) of two boolean values.
-    let [<NoDynamicInvocation>] inline xor (p : bool) (q : bool) =
+    [<CompiledName("Xor")>]
+    let inline xor (p : bool) (q : bool) =
         // OPTIMIZE : Use inline IL to emit a 'xor' instead of 'ceq, ldc.i4.0, ceq'
         p <> q
 
     /// If-and-only-if (XNOR) of two boolean values.
     /// Also known as the logical biconditional.
-    let [<NoDynamicInvocation>] inline xnor (p : bool) (q : bool) =
+    [<CompiledName("Xnor")>]
+    let inline xnor (p : bool) (q : bool) =
         // OPTIMIZE : Use inline IL to emit 'xor, not' instead of 'ceq, ldc.i4.0, ceq, not'
         not (p <> q)    
 
@@ -149,11 +162,13 @@ module Enum =
 //        values< ^Enum, _> ()
 
     /// Alias for System.Enum.IsDefined.
-    let [<NoDynamicInvocation>] inline private isDefinedImpl<'Enum, 'T when 'Enum : enum<'T>> (value : 'Enum) =
+    [<CompiledName("IsDefinedImpl")>]
+    let inline private isDefinedImpl<'Enum, 'T when 'Enum : enum<'T>> (value : 'Enum) =
         System.Enum.IsDefined (typeof<'Enum>, value)
 
     /// Indicates whether a constant with the specified value exists in the given enumeration type.
-    let [<NoDynamicInvocation>] inline isDefined value =
+    [<CompiledName("IsDefined")>]
+    let inline isDefined value =
         isDefinedImpl< ^Enum, _> value
 
 
@@ -162,16 +177,19 @@ module Enum =
 module Lazy =
     /// Forces initialization of a lazily-initialized value (if it has not already
     /// been initialized) then returns the value.
-    let [<NoDynamicInvocation>] inline force (lazyValue : Lazy<'T>) =
+    [<CompiledName("Force")>]
+    let inline force (lazyValue : Lazy<'T>) =
         lazyValue.Force ()
 
     /// Retrieves the value from a lazily-initialized value.
-    let [<NoDynamicInvocation>] inline value (lazyValue : Lazy<'T>) =
+    [<CompiledName("Value")>]
+    let inline value (lazyValue : Lazy<'T>) =
         lazyValue.Value
 
     /// Creates a lazily-initialized value. When the lazy initialization occurs,
     /// the specified function is used to create the value.
-    let [<NoDynamicInvocation>] inline create creator : Lazy<'T> =
+    [<CompiledName("Create")>]
+    let inline create creator : Lazy<'T> =
         System.Lazy.Create creator
 
     /// Returns the value of a lazily-initialized value as <c>Some value</c> if it has already
@@ -193,54 +211,75 @@ module String =
     let [<Literal>] empty = ""
 
     /// Gets a character from a string.
-    let [<NoDynamicInvocation>] inline get (str : string) (index : int) =
+    [<CompiledName("Get")>]
+    let inline get (str : string) (index : int) =
         str.[index]
 
     /// Indicates whether the specified string is null or empty.
-    let [<NoDynamicInvocation>] inline isNullOrEmpty str =
+    [<CompiledName("IsNullOrEmpty")>]
+    let inline isNullOrEmpty str =
         System.String.IsNullOrEmpty str
 
     /// Indicates whether the specified string is empty.
-    let [<NoDynamicInvocation>] inline isEmpty (str : string) =
+    [<CompiledName("IsEmpty")>]
+    let inline isEmpty (str : string) =
         str.Length < 1
 
     /// <summary>Returns a new string created by concatenating the strings in the specified string array.</summary>
     /// <remarks>For a smaller number (&lt;10) of fairly short strings,
     /// this method is the empirically fastest-known way to concatenate
     /// strings without the overhead of a System.Text.StringBuilder.</remarks>
-    let [<NoDynamicInvocation>] inline concatArray (arr : string[]) =
+    [<CompiledName("ConcatArray")>]
+    let inline concatArray (arr : string[]) =
         System.String.Join (empty, arr)
 
     /// Creates a new string by joining the specified strings using
     /// an environment-specific newline character sequence.
-    let [<NoDynamicInvocation>] inline ofLines (lines : string[]) =
+    [<CompiledName("OfLines")>]
+    let inline ofLines (lines : string[]) =
         System.String.Join (System.Environment.NewLine, lines)
 
     /// Splits a string into individual lines.
-    let [<NoDynamicInvocation>] inline toLines (str : string) =
+    [<CompiledName("ToLines")>]
+    let inline toLines (str : string) =
         str.Split ([| '\r'; '\n' |], System.StringSplitOptions.RemoveEmptyEntries)
+
+    /// Creates a string from an F# option value.
+    /// If the option value is <c>None</c>, returns an empty string;
+    /// returns <c>s</c> when the option value is <c>Some s</c>
+    [<CompiledName("OfOption")>]
+    let inline ofOption value =
+        match value with
+        | None -> empty
+        | Some str -> str
 
     /// Creates an F# option value from the specified string.
     /// If the string 's' is null or empty, returns None; otherwise, returns Some s.
-    let [<NoDynamicInvocation>] inline toOption str =
-        if System.String.IsNullOrEmpty str then None else Some str
+    [<CompiledName("ToOption")>]
+    let inline toOption str =
+        if System.String.IsNullOrEmpty str then None
+        else Some str
 
     /// Creates a new string by removing all leading and
     /// trailing white-space characters from a string.
-    let [<NoDynamicInvocation>] inline trim (str : string) =
+    [<CompiledName("Trim")>]
+    let inline trim (str : string) =
         str.Trim ()
 
     /// Removes all leading and trailing occurrences of
     /// the specified characters from a string.
-    let [<NoDynamicInvocation>] inline trimChars (chars : char[]) (str : string) =
+    [<CompiledName("TrimChars")>]
+    let inline trimChars (chars : char[]) (str : string) =
         str.Trim chars
 
     /// Builds a character array from the given string.
-    let [<NoDynamicInvocation>] inline toArray (str : string) =
+    [<CompiledName("ToArray")>]
+    let inline toArray (str : string) =
         str.ToCharArray ()
 
     /// Builds a string from the given character array.
-    let [<NoDynamicInvocation>] inline ofArray (chars : char[]) =
+    [<CompiledName("OfArray")>]
+    let inline ofArray (chars : char[]) =
         System.String (chars)
 
     /// Returns the index of the first character in the string which satisfies the given predicate.
@@ -302,11 +341,13 @@ module String =
         | idx -> idx
 
     /// Removes all leading occurrences of the specified set of characters from a string.
-    let [<NoDynamicInvocation>] inline trimStart trimChars (str : string) =
+    [<CompiledName("TrimStart")>]
+    let inline trimStart trimChars (str : string) =
         str.TrimStart trimChars
 
     /// Removes all trailing occurrences of the specified set of characters from a string.
-    let [<NoDynamicInvocation>] inline trimEnd trimChars (str : string) =
+    [<CompiledName("TrimEnd")>]
+    let inline trimEnd trimChars (str : string) =
         str.TrimEnd trimChars
 
     /// Removes all leading occurrences of characters satisfying the given predicate from a string.
@@ -687,52 +728,66 @@ module Option =
 
     /// Creates an F# option from an instance of a reference type.
     /// If the reference is null, returns None; otherwise, (Some value).
-    let [<NoDynamicInvocation>] inline ofNull (value : 'T) =
+    [<CompiledName("OfNull")>]
+    let inline ofNull (value : 'T) =
         if isNull value then None else Some value
 
     /// Creates an instance of a type with the 'null' constraint from an F# option value for that type.
     /// If the option value is None, returns 'null'. Otherwise, returns the reference contained in the Some.
-    let [<NoDynamicInvocation>] inline toNull (value : 'T option) =
+    [<CompiledName("ToNull")>]
+    let inline toNull (value : 'T option) =
         match value with Some x -> x | None -> null
 
     /// Creates an F# option from a nullable value.
-    let [<NoDynamicInvocation>] inline ofNullable (arg : Nullable<'T>) =
+    [<CompiledName("OfNullable")>]
+    let inline ofNullable (arg : Nullable<'T>) =
         if arg.HasValue then Some arg.Value else None
 
     /// Creates a nullable value from an F# option.
-    let [<NoDynamicInvocation>] inline toNullable (value : 'T option) =
+    [<CompiledName("ToNullable")>]
+    let inline toNullable (value : 'T option) =
         match value with
         | Some x -> Nullable<_> x
         | None -> Nullable<_> ()
 
     /// Creates an F# option from a value 'x'.
     /// When the specified condition is true, returns Some x; otherwise, None.
-    let [<NoDynamicInvocation>] inline ofCondition cond value =
+    [<CompiledName("Conditional")>]
+    let inline conditional cond value =
         if cond then Some value else None
+
+    //
+    [<CompiledName("Condition")>]
+    let condition (predicate : 'T -> bool) value =
+        if predicate value then Some value else None
 
     /// Chains two option values together.
     /// If the first value is Some, it is returned; otherwise, the second value is returned.
     /// Similar to the (??) operator in C#.
-    let [<NoDynamicInvocation>] inline coalesce (x : 'T option) (y : 'T option) =
+    [<CompiledName("Coalesce")>]
+    let inline coalesce (x : 'T option) (y : 'T option) =
         match x with
         | (Some _) -> x
         | None -> y
 
     /// <summary>Gets the value of the option if Some, otherwise returns the specified default value.</summary>
     /// <remarks>Identical to the built-in 'defaultArg' operator, but with the arguments swapped.</remarks>
-    let [<NoDynamicInvocation>] inline fill defaultValue (value : 'T option) =
+    [<CompiledName("Fill")>]
+    let inline fill defaultValue (value : 'T option) =
         defaultArg value defaultValue
 
     /// <summary>Uses the specified function, if necessary, to create a default value for an option.</summary>
     /// <remarks>Similar to the 'defaultArg' operator -- but 'defaultArg' requires the
     /// default value to already be created, while this method allows for lazy creation.</remarks>
-    let [<NoDynamicInvocation>] inline fillWith generator (value : 'T option) =
+    [<CompiledName("FillWith")>]
+    let inline fillWith generator (value : 'T option) =
         match value with
         | Some x -> x
         | None -> generator ()
 
     //
-    let [<NoDynamicInvocation>] inline toOutAndBool value ([<Out>] outValue : byref<'T>) =
+    [<CompiledName("ToOutAndBool")>]
+    let inline toOutAndBool value ([<Out>] outValue : byref<'T>) =
         match value with
         | Some x ->
             outValue <- x
@@ -741,10 +796,7 @@ module Option =
             false
 
     //
-    let ofPredicate (predicate : 'T -> bool) value =
-        if predicate value then Some value else None
-
-    //
+    [<CompiledName("Filter")>]
     let filter (predicate : 'T -> bool) value =
         match value with
         | None -> None
@@ -752,6 +804,7 @@ module Option =
             if predicate x then Some x else None
 
     //
+    [<CompiledName("Bind2")>]
     let bind2 (binder : 'T1 -> 'T2 -> 'U option) value1 value2 =
         match value1, value2 with
         | Some x, Some y ->
@@ -760,20 +813,21 @@ module Option =
             None
 
 
-(*
 /// Additional functional operators on Choice<_,_> values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
-    //
+    /// Transforms a Choice's first value by using a specified mapping function.
+    [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) = function
         | Choice1Of2 result -> Choice1Of2 (mapping result)
         | Choice2Of2 error -> Choice2Of2 error
 
     //
+    [<CompiledName("Bind")>]
     let bind (binding : 'T -> Choice<'U, 'Error>) = function
         | Choice1Of2 result -> binding result
         | Choice2Of2 error -> Choice2Of2 error
-*)
+
 
 /// Extensible printf-style formatting for numbers and other datatypes.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -813,10 +867,12 @@ module Tag =
     open LanguagePrimitives
 
     /// Creates a tagged integer from an integer value.
-    let [<NoDynamicInvocation>] inline ofInt<[<Measure>] 'Tag> (value : int) : int<'Tag> =
+    [<CompiledName("OfInt")>]
+    let inline ofInt<[<Measure>] 'Tag> (value : int) : int<'Tag> =
         Int32WithMeasure value
 
     /// Removes the tag from a tagged integer, returning just the integer value.
-    let [<NoDynamicInvocation>] inline toInt<[<Measure>] 'Tag> (tag : int<'Tag>) : int =
+    [<CompiledName("ToInt")>]
+    let inline toInt<[<Measure>] 'Tag> (tag : int<'Tag>) : int =
         int tag
 
