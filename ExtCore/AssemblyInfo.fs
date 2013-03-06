@@ -48,9 +48,9 @@ let [<Literal>] private assemblyConfig =
     #endif
 
 // Version information
-[<assembly: AssemblyVersion("0.8.2")>]
-[<assembly: AssemblyFileVersion("0.8.2")>]
-[<assembly: AssemblyInformationalVersion("0.8.2")>]
+[<assembly: AssemblyVersion("0.8.3")>]
+[<assembly: AssemblyFileVersion("0.8.3")>]
+[<assembly: AssemblyInformationalVersion("0.8.3")>]
 
 // Assembly information
 [<assembly: AssemblyTitle("ExtCore")>]
