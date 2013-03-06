@@ -12,7 +12,7 @@
         <projectUrl>https://github.com/jack-pappas/ExtCore</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>ExtCore extends the F# core library (FSharp.Core) by adding new functions to existing modules (e.g., Array, List) and providing new workflows and data structures useful for building real-world F# applications.</description>
-        <tags>fsharp,workflow,collections,immutable,workflow,monad,computation</tags>
+        <tags>fsharp workflow collections immutable workflow monad computation</tags>
     </metadata>
     <files>
         <file src="_NuGetBuild\net40\ExtCore.XML" target="lib\net40\ExtCore.XML" />
