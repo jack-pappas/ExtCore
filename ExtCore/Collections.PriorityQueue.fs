@@ -35,15 +35,6 @@ type Rank = int
 type Tree<'T when 'T : comparison> =
     Node of 'T * Rank * Tree<'T> list
 
-//type Tree<'T when 'T : comparison> = {
-//    //
-//    Value : 'T;
-//    //
-//    Children : Tree<'T> list;
-//    //
-//    Rank : Rank;
-//}
-
 (* auxiliary functions *)
 
 //
@@ -157,24 +148,19 @@ module SkewBinomialQueue =
             let ts', xs' = split ([], [], c)
             List.foldBack insert xs' (meld (ts, ts'))
 
-
-//
-type RootedPriorityQueue<'T when 'T : comparison> =
-    //
-    | Empty
-    //
-    | Root of 'T * SkewBinomialQueue.T<'T>
-
-
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module RootedPriorityQueue =
+module AddRoot =
     module Q = SkewBinomialQueue
+
+    type T<'T when 'T : comparison> =
+        | Empty
+        | Root of 'T * Q.T<'T>
 
     //
     [<CompiledName("Empty")>]
     [<GeneralizableValue>]
-    let empty<'T when 'T : comparison> : RootedPriorityQueue<'T> =
+    let empty<'T when 'T : comparison> : T<'T> =
         Empty
 
     //
@@ -218,4 +204,74 @@ module RootedPriorityQueue =
             else
                 Root (Q.findMin q, Q.deleteMin q)
 
+(*
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Bootstrap =
+    module Q = SkewBinomialQueue
+
+    //
+    type Root<'T when 'T : comparison> =
+        Root of 'T * Q.T<'T>
+
+    //
+    type T<'T when 'T : comparison> =
+        | Empty
+        | NonEmpty of Root<'T>
+
+    //
+    [<CompiledName("Empty")>]
+    [<GeneralizableValue>]
+    let empty<'T when 'T : comparison> : T<'T> =
+        Empty
+
+    //
+    let isEmpty = function
+        | Empty -> true
+        | _ -> false
+
+    //
+    let rec meld = function
+        | Empty, xs
+        | xs, Empty ->
+            xs
+        | NonEmpty (Root (x1, q1) as r1), NonEmpty (Root (x2, q2) as r2) ->
+            if x1 <= x2 then
+                NonEmpty (Root (x1, Q.insert r2 q1))
+            else
+                NonEmpty (Root (x2, Q.insert r1 q2))
+        
+    //
+    let insert (x, xs) =
+        meld (NonEmpty (Root (x, Q.empty)), xs)
+
+    exception EMPTY
+
+    let findMin = function
+        | Empty ->
+            raise EMPTY
+        | NonEmpty (Root (x, q)) -> x
+
+    let deleteMin = function
+        | Empty ->
+            raise EMPTY
+        | NonEmpty (Root (x, q)) ->
+            if Q.isEmpty q then Empty
+            else
+                let (Root (y, q1)) = Q.findMin q
+                let q2 = Q.deleteMin q
+                NonEmpty (Root (y, Q.meld (q1, q2)))
+
+
+//
+type Tree2<'T when 'T : comparison> = {
+    //
+    Value : 'T;
+    //
+    Children : Tree<'T> list;
+    //
+    Rank : Rank;
+}
+
+*)
 
