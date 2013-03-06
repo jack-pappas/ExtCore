@@ -29,21 +29,34 @@ open ExtCore
 (* TODO :   Extract code for Brodal-Okasaki meldable heaps from the Coq theories here:
             https://code.google.com/p/priority-queues/ *)
 
-
+// TODO : Tag this with a unit-of-measure.
 type Rank = int
+
 type Tree<'T when 'T : comparison> =
     Node of 'T * Rank * Tree<'T> list
-type T<'T when 'T : comparison> = Tree<'T> list
+
+//type Tree<'T when 'T : comparison> = {
+//    //
+//    Value : 'T;
+//    //
+//    Children : Tree<'T> list;
+//    //
+//    Rank : Rank;
+//}
 
 (* auxiliary functions *)
-(*
+
 //
-module BrodalOkasaki =
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module SkewBinomialQueue =
+    type T<'T when 'T : comparison> = Tree<'T> list
+
     let root (Node (x,r,c)) = x
     let rank (Node (x,r,c)) = r
 
-    let link = function
-        | (Node (x1, r1, c1) as t1), (Node (x2, r2, c2) as t2)
+    let link (t1, t2) =
+        match t1, t2 with
+        | Node (x1, r1, c1), Node (x2, r2, c2)
             when r1 = r2 ->
             if x1 <= x2 then
                 Node (x1, r1 + 1, t2 :: c1)
@@ -143,4 +156,66 @@ module BrodalOkasaki =
             let (Node (x,r,c), ts) = getMin ts
             let ts', xs' = split ([], [], c)
             List.foldBack insert xs' (meld (ts, ts'))
-*)
+
+
+//
+type RootedPriorityQueue<'T when 'T : comparison> =
+    //
+    | Empty
+    //
+    | Root of 'T * SkewBinomialQueue.T<'T>
+
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module RootedPriorityQueue =
+    module Q = SkewBinomialQueue
+
+    //
+    [<CompiledName("Empty")>]
+    [<GeneralizableValue>]
+    let empty<'T when 'T : comparison> : RootedPriorityQueue<'T> =
+        Empty
+
+    //
+    let isEmpty = function
+        | Empty -> true
+        | _ -> false
+
+    //
+    let insert y = function
+        | Empty ->
+            Root (y, Q.empty)
+        | Root (x, q) ->
+            if y <= x then
+                Root (y, Q.insert x q)
+            else
+                Root (x, Q.insert y q)
+
+    //
+    let meld = function
+        | Empty, rq
+        | rq, Empty ->
+            rq
+        | Root (x1, q1), Root (x2, q2) ->
+            if x1 <= x2 then
+                Root (x1, Q.insert x2 <| Q.meld (q1, q2))
+            else
+                Root (x2, Q.insert x1 <| Q.meld (q1, q2))
+
+    exception EMPTY
+
+    let findMin = function
+        | Root (x, _) -> x
+        | Empty ->
+            raise EMPTY
+
+    let deleteMin = function
+        | Empty ->
+            raise EMPTY
+        | Root (x, q) ->
+            if Q.isEmpty q then Empty
+            else
+                Root (Q.findMin q, Q.deleteMin q)
+
+
