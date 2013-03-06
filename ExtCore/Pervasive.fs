@@ -613,7 +613,7 @@ module String =
             // Create a new string from the mapped characters.
             ofArray mappedChars
 
-
+    (*
     /// String-splitting functions.
     /// These work like String.Split but without creating the intermediate array.
     [<RequireQualifiedAccess>]
@@ -660,7 +660,7 @@ module String =
             // TODO : What if separator is empty?
 
             notImpl "String.Split.foldi"
-
+    *)
     (*
     - String.Split.filter
     - String.Split.choose
@@ -805,4 +805,18 @@ module Printf =
     [<CompiledName("PrintFormatLineToTraceListeners")>]
     let inline tprintfn fmt : 'T =
         ksprintf Trace.WriteLine fmt
+
+
+/// Helper functions for working with tagged integers.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Tag =
+    open LanguagePrimitives
+
+    /// Creates a tagged integer from an integer value.
+    let [<NoDynamicInvocation>] inline ofInt<[<Measure>] 'Tag> (value : int) : int<'Tag> =
+        Int32WithMeasure value
+
+    /// Removes the tag from a tagged integer, returning just the integer value.
+    let [<NoDynamicInvocation>] inline toInt<[<Measure>] 'Tag> (tag : int<'Tag>) : int =
+        int tag
 

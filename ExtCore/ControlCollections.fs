@@ -225,6 +225,7 @@ module Async =
                 do! action.Invoke (index, el)
                 })
 
+        (*
         //
         [<CompiledName("Reduce")>]
         let reduce (reduction : 'T -> 'T -> Async<'T>) (array : 'T[]) : Async<'T> =
@@ -263,7 +264,7 @@ module Async =
                 invalidArg "array" "The array is empty."
 
             raise <| System.NotImplementedException "ExtCore.Control.Collections.Async.Array.find"
-                    
+        *)
 
         // TODO : mapReduce
 
