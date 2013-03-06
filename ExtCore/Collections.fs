@@ -100,11 +100,11 @@ module Range =
 module KeyValuePair =
     open System.Collections.Generic
 
-    //
+    /// Gets the key in the key/value pair.
     let [<NoDynamicInvocation>] inline key (kvp : KeyValuePair<'Key, 'T>) =
         kvp.Key
 
-    //
+    /// Gets the value in the key/value pair.
     let [<NoDynamicInvocation>] inline value (kvp : KeyValuePair<'Key, 'T>) =
         kvp.Value
 
@@ -113,12 +113,12 @@ module KeyValuePair =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     /// Returns the length of the sequence as an unsigned integer.
-    let [<NoDynamicInvocation>] inline natLength s =
-        uint32 <| Seq.length s
+    let [<NoDynamicInvocation>] inline natLength (sequence : seq<'T>) =
+        uint32 <| Seq.length sequence
 
     //
-    let [<NoDynamicInvocation>] inline appendSingleton s el =
-        Seq.append s (Seq.singleton el)
+    let [<NoDynamicInvocation>] inline appendSingleton sequence (value : 'T) =
+        Seq.append sequence (Seq.singleton value)
 
     //
     [<CompiledName("Project")>]
@@ -2016,7 +2016,7 @@ module ResizeArray =
     //
     let [<NoDynamicInvocation>] inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
         resizeArray.Sort ()
-
+        
     //
     let [<NoDynamicInvocation>] inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
             (projection : 'T -> 'Key) (resizeArray : ResizeArray<'T>) =
@@ -2091,6 +2091,8 @@ module ResizeArray =
 
         match resizeArray.FindIndex (System.Predicate predicate) with
         | -1 ->
+            // TODO : Add a better error message.
+            // keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
         | index ->
             index
@@ -2103,6 +2105,8 @@ module ResizeArray =
 
         match resizeArray.FindIndex (System.Predicate predicate) with
         | -1 ->
+            // TODO : Add a better error message.
+            // keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
         | index ->
             resizeArray.[index]
@@ -2290,6 +2294,8 @@ module ResizeArray =
         | Some result ->
             result
         | None ->
+            // TODO : Return a better error message
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
 
@@ -2301,32 +2307,46 @@ module Dict =
     /// Thread-safe functional programming operators for mutable instances of System.Collections.Generic.IDictionary.
     module Safe =
         /// Attempts to retrieve the value associated with the specified key.
-        let tryFind k (d : IDictionary<'Key, 'T>) =
-            match lock d <| fun () -> d.TryGetValue k with
-            | false, _ -> None
-            | true, v -> Some v
+        let tryFind key (dict : IDictionary<'Key, 'T>) =
+            // Preconditions
+            checkNonNull "dict" dict
+
+            match lock dict <| fun () -> dict.TryGetValue key with
+            | false, _ ->
+                None
+            | true, value ->
+                Some value
         
         /// Lookup an element in the Dictionary, raising KeyNotFoundException if
         /// the Dictionary does not contain an element with the specified key.
-        let find k (d : IDictionary<'Key, 'T>) =
-            lock d <| fun () -> d.[k]
+        let find key (dict : IDictionary<'Key, 'T>) =
+            // Preconditions
+            checkNonNull "dict" dict
+
+            lock dict <| fun () -> dict.[key]
 
         /// Adds a new entry to the Dictionary.
-        let add k v (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
+        let add key value (dict : IDictionary<'Key, 'T>) =
+            // Preconditions
+            checkNonNull "dict" dict
+
+            if dict.IsReadOnly then
                 invalidOp "Cannot add an entry to a read-only dictionary."
-            lock d <| fun () ->
-                d.Add (k, v)
+            lock dict <| fun () ->
+                dict.Add (key, value)
 
         /// Updates an existing entry in the dictionary with a new value,
         /// raising KeyNotFoundException if the Dictionary does not
         /// contain an element with the specified key.
-        let update k v (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
+        let update key value (dict : IDictionary<'Key, 'T>) =
+            // Preconditions
+            checkNonNull "dict" dict
+
+            if dict.IsReadOnly then
                 invalidOp "Cannot update an entry in a read-only dictionary."
-            lock d <| fun () ->
-                if d.ContainsKey k then
-                    d.[k] <- v
+            lock dict <| fun () ->
+                if dict.ContainsKey key then
+                    dict.[key] <- value
                 else
                     // TODO : Return a better error message
                     //keyNotFound ""
@@ -2334,28 +2354,37 @@ module Dict =
 
         /// Removes the entry with the specified key from the Dictionary,
         /// returning a value indicating the success of the operation.
-        let remove (k : 'Key) (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
+        let remove (key : 'Key) (dict : IDictionary<'Key, 'T>) =
+            // Preconditions
+            checkNonNull "dict" dict
+
+            if dict.IsReadOnly then
                 invalidOp "Cannot remove an entry from a read-only dictionary."
-            lock d <| fun () ->
-                d.Remove k
+            lock dict <| fun () ->
+                dict.Remove key
 
         /// Updates the value of an entry (which has the specified key)
         /// in the Dictionary, or creates a new entry if one doesn't exist.
         /// If the Dictionary is read-only, an InvalidOperationException is raised.
-        let updateOrAdd k v (d : IDictionary<'Key, 'T>) =
-            if d.IsReadOnly then
+        let updateOrAdd key value (dict : IDictionary<'Key, 'T>) =
+            // Preconditions
+            checkNonNull "dict" dict
+            
+            if dict.IsReadOnly then
                 invalidOp "Cannot update or add an entry to a read-only dictionary."
-            lock d <| fun () ->
-                d.[k] <- v
+            lock dict <| fun () ->
+                dict.[key] <- value
 
         /// Creates an immutable copy of a Dictionary.
         /// The entries are shallow-copied to the created Dictionary; that is,
         /// reference-typed keys and values will reference the same instances as
         /// in the mutable Dictionary, so care should be taken when using mutable keys and values.
-        let toImmutable (d : IDictionary<'Key, 'T>) =
-            lock d <| fun () ->
-                d
+        let toImmutable (dictionary : IDictionary<'Key, 'T>) =
+            // Preconditions
+            checkNonNull "dictionary" dictionary
+
+            lock dictionary <| fun () ->
+                dictionary
                 |> Seq.map (fun kvp ->
                     kvp.Key, kvp.Value)
                 |> dict
