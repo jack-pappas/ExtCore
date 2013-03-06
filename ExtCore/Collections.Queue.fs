@@ -83,7 +83,7 @@ type Queue<'T> private
 
     //
     member this.ToArray () : 'T[] =
-        // OPTIMIZATION : If the queue is empty, return an empty array.
+        // OPTIMIZATION : If the queue is empty return immediately.
         if this.IsEmpty then
             Array.empty
         else
@@ -100,6 +100,21 @@ type Queue<'T> private
                 queue <- queue'
 
             result.ToArray ()
+
+    //
+    member this.ToList () : 'T list =
+        // OPTIMIZATION : If the queue is empty return immediately.
+        if this.IsEmpty then
+            List.empty
+        else
+            let mutable resultList = []
+            let mutable queue = this
+            while not <| queue.IsEmpty do
+                let item, queue' = queue.Dequeue ()
+                resultList <- item :: resultList
+                queue <- queue'
+
+            List.rev resultList
 
     //
     static member private Rotate (xs : LazyList<'T>, ys : 'T list, rys : LazyList<'T>) =
@@ -127,6 +142,9 @@ type Queue<'T> private
                 rear,
                 LazyList.tail pending)
 
+    // TODO
+    // functions for converting to/from System.Collections.Generic.Queue?
+
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Queue =
@@ -144,7 +162,7 @@ module Queue =
         queue.IsEmpty
 
     /// The number of elements in the queue.
-    let inline size (queue : Queue<'T>) =
+    let inline length (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
 
@@ -170,6 +188,13 @@ module Queue =
         checkNonNull "queue" queue
 
         queue.Dequeue ()
+
+    //
+    let inline toList (queue : Queue<'T>) : 'T list =
+        // Preconditions
+        checkNonNull "queue" queue
+        
+        queue.ToList ()
 
     //
     let inline toArray (queue : Queue<'T>) : 'T[] =
