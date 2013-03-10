@@ -313,6 +313,26 @@ module List =
 
         List.rev results, state
 
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'S1 -> 'T -> 'S2 -> 'S1 * 'S2) (innerState : 'S1) (list : 'T list) (outerState : 'S2) : 'S1 * 'S2 =
+        // Preconditions
+        checkNonNull "list" list
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        let mutable list = list
+        let mutable innerState = innerState
+        let mutable outerState = outerState
+
+        while not <| List.isEmpty list do
+            let innerState', outerState' =
+                folder.Invoke (innerState, List.head list, outerState)
+            innerState <- innerState'
+            outerState <- outerState'
+            list <- List.tail list
+
+        innerState, outerState
+
 
 /// The ExtCore.Collections.TaggedArray module, lifted into the State monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -463,4 +483,41 @@ module ArraySegment =
             state <- state'
 
         results, state
+
+
+/// The F# Set module, lifted into the State monad.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Set =
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> 'State -> unit * 'State) (set : Set<'T>) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        // Implement based on the standard Set.fold function.
+        let state =
+            (state, set)
+            ||> Set.fold (fun state el ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
+    //
+    [<CompiledName("IterateBack")>]
+    let iterBack (action : 'T -> 'State -> unit * 'State) (set : Set<'T>) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        // Implement based on the standard Set.foldBack function.
+        let state =
+            (set, state)
+            ||> Set.foldBack (fun el state ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
 

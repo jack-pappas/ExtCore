@@ -1771,6 +1771,20 @@ module State =
             let result = reader state
             result, state
 
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> 'U) (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>)
+        : StateFuncIndexed<'S1, 'S2, 'U> =
+        fun (state : 'S1) ->
+            // "Run" the provided state function by applying the given state.
+            let result, state = stateFunc state
+
+            // Map the result value using the mapping function.
+            let result = mapping result
+
+            // Return the mapped result value and the new state value.
+            result, state
+
 
 /// <summary>
 /// </summary>
