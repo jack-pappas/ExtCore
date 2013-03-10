@@ -1723,36 +1723,36 @@ module WorkflowBuilders =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module State =
     //
-    [<CompiledName("Condition")>]
+    [<CompiledName("Run")>]
     let inline run (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
         stateFunc initialState
     
     //
-    [<CompiledName("Condition")>]
+    [<CompiledName("Evaluate")>]
     let evaluate (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final state value and return the final result value.
         fst <| stateFunc initialState
 
     //
-    [<CompiledName("Condition")>]
+    [<CompiledName("Execute")>]
     let execute (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final result value and return the final state value.
         snd <| stateFunc initialState
 
     //
-    [<CompiledName("Condition")>]
+    [<CompiledName("GetState")>]
     let inline getState (state : 'State) =
         state, state
 
     //
-    [<CompiledName("Condition")>]
+    [<CompiledName("SetState")>]
     let inline setState (state : 'State) =
-        fun _ -> ((), state)
+        fun (_ : 'State) -> ((), state)
 
     //
-    [<CompiledName("Condition")>]
+    [<CompiledName("BindChoice")>]
     let inline bindChoice (k : 'T -> StateFuncIndexed<'S2, 'S3, 'U>) (m : ProtectedStateFuncIndexed<_,_,_,_>) =
         fun (state : 'S1) ->
             match m state with
@@ -1771,7 +1771,7 @@ module State =
             let result = reader state
             result, state
 
-(*
+
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -1785,9 +1785,16 @@ module Reader =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderState =
     //
-    let dummy () = ()
+    [<CompiledName("GetState")>]
+    let inline getState (reader : 'Env) (state : 'State) =
+        state, state
 
+    //
+    [<CompiledName("SetState")>]
+    let inline setState (state : 'State) =
+        fun (_ : 'Env) (_ : 'State) -> ((), state)
 
+(*
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
