@@ -41,10 +41,12 @@ type IMapReduction<'Key, 'T> =
 module Range =
     open LanguagePrimitives
 
+    (* NOTE :   In the functions below, 'start' and 'finish'
+                are *inclusive*, just like the F# 'for' loop. *)
+
     //
-    // start and finish are _inclusive_ (like F# for loop)
     [<CompiledName("Iterate")>]
-    let inline iter start finish (action : ^T -> unit) : unit =
+    let inline iter (action : ^T -> unit) start finish : unit =
         let mutable index = start
         while index <= finish do
             action index
@@ -52,7 +54,7 @@ module Range =
 
     //
     [<CompiledName("Fold")>]
-    let inline fold start finish state (folder : ^State -> ^T -> ^State) : ^State =
+    let inline fold (folder : ^State -> ^T -> ^State) start finish state : ^State =
         let mutable state = state
         let mutable index = start
         while index <= finish do
@@ -62,7 +64,7 @@ module Range =
 
     //
     [<CompiledName("FoldBack")>]
-    let inline foldBack start finish state (folder : ^T -> ^State -> ^State) : ^State =
+    let inline foldBack (folder : ^T -> ^State -> ^State) start finish state : ^State =
         let mutable state = state
         let mutable index = finish
         while index >= start do
@@ -72,23 +74,23 @@ module Range =
 
     //
     [<CompiledName("Exists")>]
-    let inline exists start finish state (predicate : ^T -> bool) : bool =
+    let inline exists (predicate : ^T -> bool) start finish : bool =
         let mutable foundMatch = false
         let mutable index = start
         while index <= finish && not foundMatch do
             foundMatch <- predicate index
             index <- index + GenericOne
-        state
+        foundMatch
 
     //
     [<CompiledName("Forall")>]
-    let inline forall start finish state (predicate : ^T -> bool) : bool =
+    let inline forall (predicate : ^T -> bool) start finish : bool =
         let mutable allMatch = true
         let mutable index = start
         while index <= finish && allMatch do
             allMatch <- predicate index
             index <- index + GenericOne
-        state
+        allMatch
 
     // TODO
     // mapReduce
