@@ -1674,14 +1674,14 @@ module WorkflowBuilders =
     let reader = ReaderBuilder ()
     //
     let readerState = ReaderStateBuilder ()
-    /// <summary>
-    /// </summary>
-    /// <typeparam name="Writer"></typeparam>
-    [<GeneralizableValue>]
-    let writer<'Writer
-        when 'Writer :> IWriter<'Writer>
-        and 'Writer : (new : unit -> 'Writer)> =
-        WriterBuilder<'Writer> (new 'Writer())
+//    /// <summary>
+//    /// </summary>
+//    /// <typeparam name="Writer"></typeparam>
+//    [<GeneralizableValue>]
+//    let writer<'Writer
+//        when 'Writer :> IWriter<'Writer>
+//        and 'Writer : (new : unit -> 'Writer)> =
+//        WriterBuilder<'Writer> (new 'Writer())
     //
     //let rws = ReaderWriterStateBuilder ()
     //
@@ -1791,7 +1791,13 @@ module State =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Reader =
     //
-    let dummy () = ()
+    [<CompiledName("Run")>]
+    let inline run (readerFunc : ReaderFunc<'Env, 'T>) env =
+        readerFunc env
+
+    //
+    [<CompiledName("Read")>]
+    let inline read (env : 'Env) = env
 
 
 /// <summary>
@@ -1799,8 +1805,30 @@ module Reader =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderState =
     //
+    [<CompiledName("Run")>]
+    let inline run (readerStateFunc : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T>)
+        env initialState =
+        readerStateFunc env initialState
+    
+    //
+    [<CompiledName("Evaluate")>]
+    let evaluate (readerStateFunc : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T>)
+        env initialState =
+        // "Run" the state function, starting with the initial state.
+        // Discard the final state value and return the final result value.
+        fst <| readerStateFunc env initialState
+
+    //
+    [<CompiledName("Execute")>]
+    let execute (readerStateFunc : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T>)
+        env initialState =
+        // "Run" the state function, starting with the initial state.
+        // Discard the final result value and return the final state value.
+        snd <| readerStateFunc env initialState
+
+    //
     [<CompiledName("GetState")>]
-    let inline getState (reader : 'Env) (state : 'State) =
+    let inline getState (env : 'Env) (state : 'State) =
         state, state
 
     //
@@ -2037,9 +2065,11 @@ module Transaction =
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Continuation =
-    //
-    let dummy () = ()
-
+    /// Call with current continuation.
+    [<CompiledName("CallCC")>]
+    let inline callCC kk k =
+        kk (fun x _ -> k x) k
+        
 
 /// <summary>
 /// </summary>
