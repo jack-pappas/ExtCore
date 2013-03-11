@@ -816,17 +816,35 @@ module Option =
 /// Additional functional operators on Choice<_,_> values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
-    /// Transforms a Choice's first value by using a specified mapping function.
+    /// <summary>
+    /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
+    /// </summary>
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) = function
-        | Choice1Of2 result -> Choice1Of2 (mapping result)
-        | Choice2Of2 error -> Choice2Of2 error
+    let map (mapping : 'T -> 'U) (value : Choice<'T, 'Error>) =
+        match value with
+        | Choice1Of2 result ->
+            Choice1Of2 (mapping result)
+        | Choice2Of2 error ->
+            Choice2Of2 error
+
+    //
+    [<CompiledName("MapError")>]
+    let mapError (mapping : 'Err1 -> 'Err2) (value : Choice<'T, 'Err1>) =
+        match value with
+        | Choice1Of2 result ->
+            Choice1Of2 result
+        | Choice2Of2 error ->
+            Choice2Of2 (mapping error)
 
     //
     [<CompiledName("Bind")>]
-    let bind (binding : 'T -> Choice<'U, 'Error>) = function
-        | Choice1Of2 result -> binding result
-        | Choice2Of2 error -> Choice2Of2 error
+    let bind (binding : 'T -> Choice<'U, 'Error>) value =
+        match value with
+        | Choice1Of2 result ->
+            binding result
+        | Choice2Of2 error ->
+            Choice2Of2 error
 
 
 /// Extensible printf-style formatting for numbers and other datatypes.
