@@ -28,16 +28,32 @@ namespace ExtCore
             needing to convert/validate it manually. *)
 
 ////
-//type ArgInfo<'T> = {
+//type TypedArgInfo<'T> = {
 //    //
 //    ShortName : char option;
 //    //
+//    ShortAliases : Set<char>;
+//    //
 //    Name : string;
+//    //
+//    Aliases : Set<string>;
 //    //
 //    Description : string option;
 //    //
 //    DefaultValue : 'T option;
 //}
+//
+//module Example =
+//    /// Help options.
+//    let helpArgInfo : TypedArgInfo<unit> = {
+//        ShortName = Some 'h';
+//        ShortAliases = Set.singleton '?';
+//        Name = "help";
+//        Aliases = Set.empty;
+//        Description = Some "Display this list of options.";
+//        DefaultValue = None;
+//    }
+
 
 (*  The code below is from the F# PowerPack and is only temporary --
     eventually it will be replaced with a new, functional-style API. *)
@@ -47,75 +63,77 @@ namespace ExtCore
 /// The spec value describes the action of the argument,
 /// and whether it expects a following parameter.
 type ArgType =
-    | ClearArg of bool ref
-    | FloatArg of (float -> unit)
-    | IntArg of (int -> unit)
-    | RestArg of (string -> unit)
-    | SetArg of bool ref
-    | StringArg of (string -> unit)
-    | UnitArg of (unit -> unit)
-
-    static member Clear r = ClearArg r
-    static member Float r = FloatArg r
-    static member Int r = IntArg r
-    static member Rest r = RestArg r
-    static member Set r = SetArg r
-    static member String r = StringArg r
-    static member Unit r = UnitArg r
+    //
+    | Clear of bool ref
+    //
+    | Float of (float -> unit)
+    //
+    | Int of (int -> unit)
+    //
+    | Rest of (string -> unit)
+    //
+    | Set of bool ref
+    //
+    | String of (string -> unit)
+    //
+    | Unit of (unit -> unit)
 
 //
-type ArgInfo (name, action, help) =
-    /// Return the name of the argument
-    member x.Name = name
-    /// Return the argument type and action of the argument
-    member x.ArgType = action
-    /// Return the usage help associated with the argument
-    member x.HelpText = help
+type ArgInfo = {
+    /// The name of the argument.
+    Name : string;
+    /// The argument type and action of the argument.
+    Type : ArgType;
+    /// The usage help associated with the argument.
+    HelpText : string;
+} with
+    /// Create an ArgInfo instance.
+    static member Create (name, argType, helpText) =
+        { Name = name;
+          Type = argType;
+          HelpText = helpText; }
   
 //
-exception Bad of string
+exception private Bad of string
 //
-exception HelpText of string
+exception private HelpText of string
 
+//
 [<Sealed>]
 type ArgParser () =
-    static let getUsage specs u =
+    static let getUsage specs (u : string) =
         let sb = System.Text.StringBuilder 100
 
-        let inline pstring (str : string) =
-            sb.Append str |> ignore
-        let inline pendline str =
-            sb.AppendLine str |> ignore
+        sb.AppendLine u |> ignore
 
-        pendline u
         specs
         |> List.iter (fun (arg : ArgInfo) ->
-            match arg.ArgType with
-            | UnitArg _
-            | SetArg _
-            | ClearArg _ ->
-                //Printf.bprintfn sb "\t%s: %s" arg.Name arg.HelpText
-                pstring "\t"; pstring arg.Name; pstring ": "; pendline arg.HelpText
-            | StringArg _ ->
-                pstring "\t"; pstring arg.Name; pstring " <string>: "; pendline arg.HelpText
-            | IntArg _ ->
-                pstring "\t"; pstring arg.Name; pstring " <int>: "; pendline arg.HelpText
-            | FloatArg _ ->
-                pstring "\t"; pstring arg.Name; pstring " <float>: "; pendline arg.HelpText
-            | RestArg _ ->
-                pstring "\t"; pstring arg.Name; pstring " ...: "; pendline arg.HelpText
-                )
+            let argDisplayType =
+                match arg.Type with
+                | Unit _
+                | Set _
+                | Clear _ ->
+                    None
+                | String _ ->
+                    Some "<string>"
+                | Int _ ->
+                    Some "<int>"
+                | Float _ ->
+                    Some "<float>"
+                | Rest _ ->
+                    Some "..."
 
-        pstring "\t"
-        pstring "--help"
-        pstring ": "
-        pendline "display this list of options"
+            match argDisplayType with
+            | None ->
+                Printf.bprintfn sb "\t%s: %s" arg.Name arg.HelpText
+            | Some displayType ->
+                Printf.bprintfn sb "\t%s %s: %s" arg.Name displayType arg.HelpText)
 
-        pstring "\t"
-        pstring "-help"
-        pstring ": "
-        pendline "display this list of options"
+        // Append the help options.
+        sb.AppendLine "\t--help: display this list of options" |> ignore
+        sb.AppendLine "\t-help: display this list of options" |> ignore
 
+        // Return the usage text.
         sb.ToString ()
 
     /// Parse some of the arguments given by 'argv', starting at the given position
@@ -129,19 +147,26 @@ type ArgParser () =
         let specs =
             argSpecs
             |> List.map (fun (arg : ArgInfo) ->
-                arg.Name, arg.ArgType)
+                arg.Name, arg.Type)
 
         while !cursor < nargs do
             let arg = argv.[!cursor]
             let rec findMatchingArg args =
                 match args with
                 | [] ->
+                    // If any of the supplied arguments is a help switch, immediately print the help text and exit.
                     if arg = "-help" || arg = "--help" || arg = "/help" || arg = "/help" || arg = "/?" then
                         raise <| HelpText (getUsage argSpecs usageText)
+
                     // Note: for '/abc/def' does not count as an argument
                     // Note: '/abc' does
                     elif arg.Length > 0 && (arg.[0] = '-' || (arg.[0] = '/' && not (arg.Length > 1 && arg.[1..].Contains "/"))) then
-                        raise <| Bad ("unrecognized argument: "+ arg + "\n" + getUsage argSpecs usageText)
+                        let msg =
+                            sprintf "Unrecognized argument: %s" arg
+                            + System.Environment.NewLine
+                            + getUsage argSpecs usageText
+                        raise <| Bad msg
+
                     else
                        other arg
                        incr cursor
@@ -157,20 +182,20 @@ type ArgParser () =
                         argv.[!cursor + 1]
                  
                     match action with
-                    | UnitArg f ->
+                    | Unit f ->
                          f ()
                          incr cursor
-                    | SetArg f ->
+                    | Set f ->
                          f := true
                          incr cursor
-                    | ClearArg f ->
+                    | Clear f ->
                          f := false
                          incr cursor
-                    | StringArg f ->
+                    | String f ->
                          let arg2 = getSecondArg ()
                          f arg2
                          cursor := !cursor + 2
-                    | IntArg f ->
+                    | Int f ->
                          let arg2 =
                             let arg2 = getSecondArg ()
                             try int32 arg2
@@ -178,7 +203,7 @@ type ArgParser () =
                                 raise <| Bad (getUsage argSpecs usageText)
                          f arg2
                          cursor := !cursor + 2
-                    | FloatArg f ->
+                    | Float f ->
                          let arg2 =
                             let arg2 = getSecondArg ()
                             try float arg2
@@ -186,7 +211,7 @@ type ArgParser () =
                                 raise <| Bad (getUsage argSpecs usageText)
                          f arg2
                          cursor := !cursor + 2
-                    | RestArg f ->
+                    | Rest f ->
                         incr cursor
                         while !cursor < nargs do
                              f argv.[!cursor]
@@ -199,8 +224,9 @@ type ArgParser () =
 
     /// Prints the help for each argument.
     static member Usage (specs, ?usage) =
-        let usage = defaultArg usage ""
-        System.Console.Error.WriteLine (getUsage (Seq.toList specs) usage)
+        defaultArg usage ""
+        |> getUsage (Seq.toList specs)
+        |> System.Console.Error.WriteLine
 
     #if FX_NO_COMMAND_LINE_ARGS
     #else
