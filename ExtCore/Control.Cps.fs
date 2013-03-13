@@ -93,6 +93,7 @@ type ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
 
 (*** Workflow Builders ***)
 
+(*
 /// <summary>
 /// </summary>
 [<Sealed>]
@@ -145,7 +146,7 @@ type TransactionBuilder () =
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
     member __.For (sequence : seq<_>, body) =
         notImpl "For"
-
+*)
 
 /// <summary>
 /// </summary>
