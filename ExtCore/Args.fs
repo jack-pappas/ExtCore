@@ -93,18 +93,16 @@ type ArgInfo = {
           Type = argType;
           HelpText = helpText; }
   
-//
-exception private Bad of string
-//
-exception private HelpText of string
+/// When thrown, the string will be displayed to the user (usually printed to the console).
+exception private ShowText of string
 
 //
 [<Sealed>]
 type ArgParser () =
-    static let getUsage specs (u : string) =
+    static let getUsage specs (usageText : string) =
         let sb = System.Text.StringBuilder 100
 
-        sb.AppendLine u |> ignore
+        sb.AppendLine usageText |> ignore
 
         specs
         |> List.iter (fun (arg : ArgInfo) ->
@@ -138,17 +136,16 @@ type ArgParser () =
 
     /// Parse some of the arguments given by 'argv', starting at the given position
     [<System.Obsolete("This method should not be used directly as it will be removed in a future revision of this library")>]
-    static member private ParsePartial (cursor, argv, argSpecs : seq<ArgInfo>, ?other, ?usageText) =
-        let other = defaultArg other (fun _ -> ())
+    static member private ParsePartial (cursor, argv, argSpecs : ArgInfo list, ?other, ?usageText) =
+        let other = defaultArg other ignore
         let usageText = defaultArg usageText ""
         let nargs = Array.length argv
         incr cursor
-        let argSpecs = Seq.toList argSpecs
         let specs =
             argSpecs
             |> List.map (fun (arg : ArgInfo) ->
                 arg.Name, arg.Type)
-
+                
         while !cursor < nargs do
             let arg = argv.[!cursor]
             let rec findMatchingArg args =
@@ -156,7 +153,7 @@ type ArgParser () =
                 | [] ->
                     // If any of the supplied arguments is a help switch, immediately print the help text and exit.
                     if arg = "-help" || arg = "--help" || arg = "/help" || arg = "/help" || arg = "/?" then
-                        raise <| HelpText (getUsage argSpecs usageText)
+                        raise <| ShowText (getUsage argSpecs usageText)
 
                     // Note: for '/abc/def' does not count as an argument
                     // Note: '/abc' does
@@ -165,7 +162,7 @@ type ArgParser () =
                             sprintf "Unrecognized argument: %s" arg
                             + System.Environment.NewLine
                             + getUsage argSpecs usageText
-                        raise <| Bad msg
+                        raise <| ShowText msg
 
                     else
                        other arg
@@ -178,7 +175,7 @@ type ArgParser () =
                                 sprintf "option %s needs an argument." s
                                 + System.Environment.NewLine
                                 + getUsage argSpecs usageText
-                            raise <| Bad msg
+                            raise <| ShowText msg
                         argv.[!cursor + 1]
                  
                     match action with
@@ -200,7 +197,7 @@ type ArgParser () =
                             let arg2 = getSecondArg ()
                             try int32 arg2
                             with _ ->
-                                raise <| Bad (getUsage argSpecs usageText)
+                                raise <| ShowText (getUsage argSpecs usageText)
                          f arg2
                          cursor := !cursor + 2
                     | Float f ->
@@ -208,7 +205,7 @@ type ArgParser () =
                             let arg2 = getSecondArg ()
                             try float arg2
                             with _ ->
-                                raise <| Bad (getUsage argSpecs usageText)
+                                raise <| ShowText (getUsage argSpecs usageText)
                          f arg2
                          cursor := !cursor + 2
                     | Rest f ->
@@ -225,7 +222,7 @@ type ArgParser () =
     /// Prints the help for each argument.
     static member Usage (specs, ?usage) =
         defaultArg usage ""
-        |> getUsage (Seq.toList specs)
+        |> getUsage (Array.toList specs)
         |> System.Console.Error.WriteLine
 
     #if FX_NO_COMMAND_LINE_ARGS
@@ -237,13 +234,14 @@ type ArgParser () =
     static member Parse (specs, ?other, ?usageText) =
         let current = ref 0
         let argv = System.Environment.GetCommandLineArgs () 
-        try ArgParser.ParsePartial (current, argv, specs, ?other = other, ?usageText = usageText)
+        try
+            ArgParser.ParsePartial (
+                current, argv, Array.toList specs, ?other = other, ?usageText = usageText)
         with
-            | Bad h
-            | HelpText h ->
-                System.Console.Error.WriteLine h
-                System.Console.Error.Flush ()
-                exit 1
-            | e ->
-                reraise ()
+        | ShowText text ->
+            System.Console.Error.WriteLine text
+            System.Console.Error.Flush ()
+            exit 1
+        | e ->
+            reraise ()
     #endif
