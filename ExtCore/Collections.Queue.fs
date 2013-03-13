@@ -99,7 +99,7 @@ type Queue<'T> private
                 result.Add item
                 queue <- queue'
 
-            result.ToArray ()
+            ResizeArray.toArray result
 
     //
     member this.ToList () : 'T list =

@@ -49,10 +49,16 @@ module AdditionalOperators =
                 assert (index < this.Count)
                 this.Array.[this.Offset + index] <- value
 
+    /// Physical equality operator.
+    let inline (===) x y =
+        LanguagePrimitives.PhysicalEquality x y
 
     /// The opticons ("optional cons") operator.
-    let inline (%?) (x : 'T option) lst =
-        match x with Some a -> a :: lst | None -> lst
+    let inline (%?) (x : 'T option) list =
+        match x with
+        | None -> list
+        | Some x ->
+            x :: list
 
     /// Swaps the values of a tuple so their order is reversed.
     [<CompiledName("Swap")>]
@@ -143,6 +149,12 @@ module AdditionalOperators =
     let tap (action : 'T -> unit) (value : 'T) =
         action value
         value
+
+    /// Creates a 'lazy' value whose value is immediately available; that is,
+    /// it does not need to execute a thunk to compute it's value.
+    [<CompiledName("NotLazy")>]
+    let inline notlazy (value : 'T) =
+        Lazy.CreateFromValue value
 
 (*
 #if PROTO_COMPILER
