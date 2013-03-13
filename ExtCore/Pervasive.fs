@@ -151,15 +151,16 @@ module AdditionalOperators =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Enum =
     /// Returns an array of the values defined by an enumeration type.
-    [<CompiledName("GetValues")>]
-    let values<'Enum, 'T when 'Enum : enum<'T>> () =
+    [<CompiledName("GetValuesImpl")>]
+    let inline private valuesImpl<'Enum, 'T when 'Enum : enum<'T>> () =
         typeof<'Enum>
         |> System.Enum.GetValues
         :?> 'Enum[]
 
-//    //
-//    let inline values2 () =
-//        values< ^Enum, _> ()
+    /// Returns an array of the values defined by an enumeration type.
+    [<CompiledName("GetValues")>]
+    let inline values () : ^Enum[] =
+        valuesImpl< ^Enum, _> ()
 
     /// Alias for System.Enum.IsDefined.
     [<CompiledName("IsDefinedImpl")>]
