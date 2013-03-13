@@ -48,7 +48,6 @@ type ReaderStateFunc<'Env, 'State, 'T> =
     'Env -> 'State -> 'T * 'State
 
 /// <summary>
-/// 
 /// </summary>
 /// <typeparam name="Output"></typeparam>
 type IWriter<'Output> =
@@ -560,25 +559,43 @@ type MaybeBuilder () =
 
 //    // M<'T> -> M<'T> -> M<'T>
 //    member this.TryWith (body, handler) : _ option =
-//        notImpl "TryWith"
+//        fun value ->
+//            try body value
+//            with ex ->
+//                handler ex
 //
 //    // M<'T> -> M<'T> -> M<'T>
 //    member this.TryFinally (body, handler) : _ option =
-//        notImpl "TryFinally"
-//
-//    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-//    member this.Using (resource : ('T :> System.IDisposable), body) : _ option =
-//        notImpl "Using"
-//
-//    // (unit -> bool) * M<'T> -> M<'T>
-//    member this.While (guard, body) : _ option =
-//        notImpl "While"
-//
-//    // seq<'T> * ('T -> M<'U>) -> M<'U>
-//    // or
-//    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-//    member this.For (sequence : seq<_>, body : 'T -> unit option) : _ option =
-//        notImpl "For"
+//        fun value ->
+//            try body value
+//            finally
+//                handler ()
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), body : _ -> _ option) : _ option =
+        try body resource
+        finally
+            if not <| isNull (box resource) then
+                resource.Dispose ()
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : _ option) : _ option =
+        if guard () then
+            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member this.For (sequence : seq<_>, body : 'T -> unit option) : _ option =
+        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
+        this.Using (sequence.GetEnumerator (), fun enum ->
+            this.While (
+                enum.MoveNext,
+                this.Delay (fun () ->
+                    body enum.Current)))
 
 
 /// <summary>
@@ -619,19 +636,19 @@ type ChoiceBuilder () =
         | Choice1Of2 x ->
             f x
 
-//    // M<'T> -> M<'T> -> M<'T>
-//    member inline __.TryWith (body : 'T -> Choice<'U, 'Error>, handler) =
-//        fun value ->
-//            try body value
-//            with ex ->
-//                handler ex
-//
-//    // M<'T> -> M<'T> -> M<'T>
-//    member inline __.TryFinally (body : 'T -> Choice<'U, 'Error>, handler) =
-//        fun value ->
-//            try body value
-//            finally
-//                handler ()
+    // M<'T> -> M<'T> -> M<'T>
+    member inline __.TryWith (body : 'T -> Choice<'U, 'Error>, handler) =
+        fun value ->
+            try body value
+            with ex ->
+                handler ex
+
+    // M<'T> -> M<'T> -> M<'T>
+    member inline __.TryFinally (body : 'T -> Choice<'U, 'Error>, handler) =
+        fun value ->
+            try body value
+            finally
+                handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : _ -> Choice<_,_>)
@@ -641,24 +658,24 @@ type ChoiceBuilder () =
             if not <| isNull (box resource) then
                 resource.Dispose ()
 
-//    // (unit -> bool) * M<'T> -> M<'T>
-//    member this.While (guard, body : Choice<unit, 'Error>) : Choice<_,_> =
-//        if guard () then
-//            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
-//            this.Bind (body, (fun () -> this.While (guard, body)))
-//        else
-//            this.Zero ()
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : Choice<unit, 'Error>) : Choice<_,_> =
+        if guard () then
+            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
 
-//    // seq<'T> * ('T -> M<'U>) -> M<'U>
-//    // or
-//    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-//    member this.For (sequence : seq<_>, body : 'T -> Choice<unit, 'Error>) =
-//        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
-//        this.Using (sequence.GetEnumerator (), fun enum ->
-//            this.While (
-//                enum.MoveNext,
-//                this.Delay (fun () ->
-//                    body enum.Current)))
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member this.For (sequence : seq<_>, body : 'T -> Choice<unit, 'Error>) =
+        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
+        this.Using (sequence.GetEnumerator (), fun enum ->
+            this.While (
+                enum.MoveNext,
+                this.Delay (fun () ->
+                    body enum.Current)))
 
 
 /// <summary>

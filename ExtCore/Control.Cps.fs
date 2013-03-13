@@ -267,7 +267,7 @@ type StateContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member __.Combine (r1 : StateContinuationFunc<'State, unit, _>, r2 : StateContinuationFunc<_,_,_>)
+    member inline __.Combine (r1 : StateContinuationFunc<'State, unit, _>, r2 : StateContinuationFunc<_,_,_>)
         : StateContinuationFunc<'State, 'T, 'K> =
         fun (state : 'State) cont ->
             r1 state <| fun ((), state) ->
@@ -275,7 +275,7 @@ type StateContinuationBuilder () =
 
     // M<'T> -> M<'T> -> M<'T>
     member inline __.TryWith (body : StateContinuationFunc<_,_,_>, handler : exn -> StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<_,_,_> =
+        : StateContinuationFunc<'State, 'T, 'K> =
         fun state cont ->
             try body state cont
             with ex ->
@@ -283,7 +283,7 @@ type StateContinuationBuilder () =
 
     // M<'T> -> M<'T> -> M<'T>
     member inline __.TryFinally (body : StateContinuationFunc<_,_,_>, handler)
-        : StateContinuationFunc<_,_,_> =
+        : StateContinuationFunc<'State, 'T, 'K> =
         fun state cont ->
             try body state cont
             finally
@@ -291,14 +291,16 @@ type StateContinuationBuilder () =
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<_,_,_> =
-        this.TryFinally (body resource, (fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ()))
+        : StateContinuationFunc<'State, 'U, 'K> =
+        fun state cont ->
+            try body resource state cont
+            finally
+                if not <| isNull (box resource) then
+                    resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<_,_,_> =
+        : StateContinuationFunc<'State, unit, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -308,7 +310,7 @@ type StateContinuationBuilder () =
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
     member this.For (sequence : seq<_>, body : 'T -> StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<_,_,_> =
+        : StateContinuationFunc<'State, unit, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -357,7 +359,7 @@ type MaybeContinuationBuilder () =
     // or
     // M<unit> -> M<'T> -> M<'T>
     member inline __.Combine (r1 : MaybeContinuationFunc<_,_>, r2 : MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<_,_> =
+        : MaybeContinuationFunc<'T, 'K> =
         fun cont ->
             r1 <| fun result ->
             match result with
@@ -368,7 +370,7 @@ type MaybeContinuationBuilder () =
 
     // M<'T> -> M<'T> -> M<'T>
     member inline __.TryWith (body : MaybeContinuationFunc<_,_>, handler : exn -> MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<_,_> =
+        : MaybeContinuationFunc<'T, 'K> =
         fun cont ->
             try body cont
             with ex ->
@@ -391,7 +393,7 @@ type MaybeContinuationBuilder () =
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<_,_> =
+        : MaybeContinuationFunc<unit, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -400,8 +402,8 @@ type MaybeContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<_,_> =
+    member this.For (sequence : seq<_>, body : 'T -> MaybeContinuationFunc<_,_>)
+        : MaybeContinuationFunc<unit, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -602,9 +604,9 @@ type ProtectedStateContinuationBuilder () =
 /// </summary>
 [<RequireQualifiedAccess>]
 module Cps =
-    //
-    [<CompiledName("Transaction")>]
-    let transaction = TransactionBuilder ()
+//    //
+//    [<CompiledName("Transaction")>]
+//    let transaction = TransactionBuilder ()
     //
     [<CompiledName("Cont")>]
     let cont = ContinuationBuilder ()
