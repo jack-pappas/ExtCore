@@ -1196,10 +1196,8 @@ module ArraySegment =
         let mutable index = segment.Offset
 
         while not foundMatchingElement && index <= endIndex do
-            if predicate array.[index] then
-                foundMatchingElement <- true
-            else
-                index <- index + 1
+            foundMatchingElement <- predicate array.[index]
+            index <- index + 1
 
         // Return the value indicating if any element matched the predicate.
         foundMatchingElement
@@ -1216,10 +1214,8 @@ module ArraySegment =
         let mutable index = segment.Offset
 
         while allElementsMatched && index <= endIndex do
-            if predicate array.[index] then
-                index <- index + 1
-            else
-                allElementsMatched <- false
+            allElementsMatched <- predicate array.[index]
+            index <- index + 1
 
         // Return the value indicating if all elements matched the predicate.
         allElementsMatched
