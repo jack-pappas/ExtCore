@@ -1325,7 +1325,7 @@ module ProtectedState =
     /// by discarding the state when the computation is complete, the return
     /// value can be adapted to the Either workflow.
     [<CompiledName("DiscardState")>]
-    let inline discardState (protectedStateM : 'State1 -> Choice<'T * 'State2, 'Error>) =
+    let inline discardState (protectedStateM : 'State -> Choice<'T * 'State, 'Error>) =
         fun state ->
             match protectedStateM state with
             | Choice2Of2 error ->
