@@ -72,17 +72,17 @@ module AdditionalOperators =
 
     /// Raises a System.NotImplementedException.
     [<CompiledName("RaiseNotImplementedException")>]
-    let inline notImpl msg : unit =
+    let inline notImpl msg : 'T =
         raise <| System.NotImplementedException msg
 
     /// Raises a System.NotSupportedException.
     [<CompiledName("RaiseNotSupportedException")>]
-    let inline notSupported msg : unit =
+    let inline notSupported msg : 'T =
         raise <| System.NotSupportedException msg
 
     /// Raises a System.ArgumentOutOfRangeException.
     [<CompiledName("RaiseArgumentOutOfRangeException")>]
-    let inline argOutOfRange (paramName : string) (message : string) : unit =
+    let inline argOutOfRange (paramName : string) (message : string) : 'T =
         raise <| System.ArgumentOutOfRangeException (paramName, message)
 
     /// Compares two objects for reference equality.
@@ -103,7 +103,7 @@ module AdditionalOperators =
 
     /// Raises a System.Collections.Generic.KeyNotFoundException.
     [<CompiledName("RaiseKeyNotFoundException")>]
-    let inline keyNotFound (msg : string) : unit =
+    let inline keyNotFound (msg : string) : 'T =
         raise <| System.Collections.Generic.KeyNotFoundException msg
 
     /// Not-AND (NAND) of two boolean values.
