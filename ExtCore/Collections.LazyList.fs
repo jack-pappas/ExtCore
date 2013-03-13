@@ -52,9 +52,6 @@ open ExtCore
 *)
 
 //
-exception UndefinedException
-
-//
 [<NoEquality; NoComparison>]
 type internal LazyCellStatus<'T> =
     //
@@ -91,6 +88,12 @@ and [<NoEquality; NoComparison; Sealed>]
     LazyList<'T> internal (initialStatus) =
     //
     static let emptyList = LazyList (Value Empty)
+    
+    /// The status for undefined values.
+    static let undefinedValue =
+        System.InvalidOperationException "The value of the LazyList cell is undefined."
+        :> exn
+        |> Exception
 
     //
     let mutable status : LazyCellStatus<'T> = initialStatus
@@ -107,7 +110,7 @@ and [<NoEquality; NoComparison; Sealed>]
             lock this <| fun () ->
                 match status with
                 | Delayed f ->
-                    status <- Exception UndefinedException
+                    status <- undefinedValue
                     try
                         let res = f ()
                         status <- Value res
