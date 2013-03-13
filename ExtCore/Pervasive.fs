@@ -50,7 +50,7 @@ module AdditionalOperators =
                 this.Array.[this.Offset + index] <- value
 
     /// Physical equality operator.
-    let inline (===) x y =
+    let inline (===) (x : 'T) y =
         LanguagePrimitives.PhysicalEquality x y
 
     /// The opticons ("optional cons") operator.
@@ -72,17 +72,17 @@ module AdditionalOperators =
 
     /// Raises a System.NotImplementedException.
     [<CompiledName("RaiseNotImplementedException")>]
-    let inline notImpl msg =
+    let inline notImpl msg : unit =
         raise <| System.NotImplementedException msg
 
     /// Raises a System.NotSupportedException.
     [<CompiledName("RaiseNotSupportedException")>]
-    let inline notSupported msg =
+    let inline notSupported msg : unit =
         raise <| System.NotSupportedException msg
 
     /// Raises a System.ArgumentOutOfRangeException.
     [<CompiledName("RaiseArgumentOutOfRangeException")>]
-    let inline argOutOfRange (paramName : string) (message : string) =
+    let inline argOutOfRange (paramName : string) (message : string) : unit =
         raise <| System.ArgumentOutOfRangeException (paramName, message)
 
     /// Compares two objects for reference equality.
@@ -103,7 +103,7 @@ module AdditionalOperators =
 
     /// Raises a System.Collections.Generic.KeyNotFoundException.
     [<CompiledName("RaiseKeyNotFoundException")>]
-    let inline keyNotFound (msg : string) =
+    let inline keyNotFound (msg : string) : unit =
         raise <| System.Collections.Generic.KeyNotFoundException msg
 
     /// Not-AND (NAND) of two boolean values.
