@@ -405,38 +405,38 @@ module TaggedArray =
         innerState, outerState
 
 
-/// The ExtCore.Collections.ArraySegment module, lifted into the State monad.
+/// The ExtCore.Collections.ArrayView module, lifted into the State monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ArraySegment =
-    /// A specialization of ArraySegment.iter which threads an accumulator through the computation; this allows
+module ArrayView =
+    /// A specialization of ArrayView.iter which threads an accumulator through the computation; this allows
     /// the use of actions requiring a (possibly mutable) state variable.
     [<CompiledName("Iterate")>]
     let iter (action : 'T -> 'State -> unit * 'State)
-            (segment : System.ArraySegment<'T>) (state : 'State) : unit * 'State =
+            (view : ArrayView<'T>) (state : 'State) : unit * 'State =
         let action = FSharpFunc<_,_,_>.Adapt action
 
-        let array = segment.Array
-        let endExclusive = segment.Offset + segment.Count
+        let array = view.Array
+        let endExclusive = view.Offset + view.Count
         let mutable state = state
 
-        for i = segment.Offset to endExclusive - 1 do
+        for i = view.Offset to endExclusive - 1 do
             state <- snd <| action.Invoke (array.[i], state)
 
         (), state
 
-    /// A specialization of ArraySegment.iteri which threads an accumulator through the computation; this allows
+    /// A specialization of ArrayView.iteri which threads an accumulator through the computation; this allows
     /// the use of actions requiring a (possibly mutable) state variable.
     [<CompiledName("IterateIndexed")>]
     let iteri (action : int -> 'T -> 'State -> unit * 'State)
-            (segment : System.ArraySegment<'T>) (state : 'State) : unit * 'State =
+            (view : ArrayView<'T>) (state : 'State) : unit * 'State =
         let action = FSharpFunc<_,_,_,_>.Adapt action
 
-        let array = segment.Array
-        let endExclusive = segment.Offset + segment.Count
+        let array = view.Array
+        let endExclusive = view.Offset + view.Count
         let mutable state = state
         let mutable idx = 0
 
-        for i = segment.Offset to endExclusive - 1 do
+        for i = view.Offset to endExclusive - 1 do
             state <- snd <| action.Invoke (idx, array.[i], state)
             idx <- idx + 1
 
@@ -446,12 +446,12 @@ module ArraySegment =
     /// the use of mapping functions requiring a (possibly mutable) state variable.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'State -> 'U * 'State)
-            (segment : System.ArraySegment<'T>) (state : 'State) : 'U[] * 'State =
+            (view : ArrayView<'T>) (state : 'State) : 'U[] * 'State =
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
-        let array = segment.Array
-        let offset = segment.Offset
-        let count = segment.Count
+        let array = view.Array
+        let offset = view.Offset
+        let count = view.Count
             
         let results = Array.zeroCreate count
         let mutable state = state
@@ -467,12 +467,12 @@ module ArraySegment =
     /// the use of mapping functions requiring a (possibly mutable) state variable.
     [<CompiledName("MapIndexed")>]
     let mapi (mapping : int -> 'T -> 'State -> 'U * 'State)
-            (segment : System.ArraySegment<'T>) (state : 'State) : 'U[] * 'State =
+            (view : ArrayView<'T>) (state : 'State) : 'U[] * 'State =
         let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
 
-        let array = segment.Array
-        let offset = segment.Offset
-        let count = segment.Count
+        let array = view.Array
+        let offset = view.Offset
+        let count = view.Count
             
         let results = Array.zeroCreate count
         let mutable state = state

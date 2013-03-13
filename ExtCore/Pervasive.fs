@@ -26,8 +26,15 @@ module AdditionalOperators =
     /// Type abbreviation for System.NotImplementedException.
     type notImplExn = System.NotImplementedException
 
-    /// Type abbreviation for System.ArraySegment.
-    type ArraySegment<'T> = System.ArraySegment<'T>
+    /// <summary>
+    /// Array views are similar to array slices, but instead of creating a copy of the
+    /// 'sliced' elements they simply provide convienient access to some section of the
+    /// underlying array.
+    /// </summary>
+    /// <remarks>
+    /// Type abbreviation for System.ArraySegment&lt;T&gt;
+    /// </remarks>
+    type ArrayView<'T> = System.ArraySegment<'T>
 
     (* Type extensions for System.ArraySegment<'T> *)
     type System.ArraySegment<'T> with

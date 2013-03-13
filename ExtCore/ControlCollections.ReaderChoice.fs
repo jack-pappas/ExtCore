@@ -514,19 +514,19 @@ module Set =
             Choice1Of2 results
 
 
-/// The ArraySegment module, lifted into the ReaderChoice monad.
+/// The ArrayView module, lifted into the ReaderChoice monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ArraySegment =
+module ArrayView =
     //
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> 'T -> 'Env -> Choice<'State, 'Error>)
-            (state : 'State) (segment : System.ArraySegment<'T>) (env : 'Env) =
+            (state : 'State) (view : ArrayView<'T>) (env : 'Env) =
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
-        let array = segment.Array
-        let endExclusive = segment.Offset + segment.Count
+        let array = view.Array
+        let endExclusive = view.Offset + view.Count
 
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
         let mutable state = state
         let mutable error = None
 

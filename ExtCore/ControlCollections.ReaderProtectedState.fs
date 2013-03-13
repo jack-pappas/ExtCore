@@ -196,22 +196,22 @@ module List =
         mapRec ([], state, list)
 
 
-/// The ExtCore.Collections.ArraySegment module, lifted into the ReaderProtectedState monad.
+/// The ExtCore.Collections.ArrayView module, lifted into the ReaderProtectedState monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ArraySegment =
-    /// A specialization of ArraySegment.iter which threads an accumulator through the
+module ArrayView =
+    /// A specialization of ArrayView.iter which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("Iterate")>]
     let iter (action : 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
-            (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
             : Choice<unit * 'State, 'Error> =
         let action = FSharpFunc<_,_,_,_>.Adapt action
 
-        let array = segment.Array
-        let endExclusive = segment.Offset + segment.Count
+        let array = view.Array
+        let endExclusive = view.Offset + view.Count
 
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
         let mutable state = state
         let mutable error = None
 
@@ -230,19 +230,19 @@ module ArraySegment =
         | None ->
             Choice1Of2 ((), state)
 
-    /// A specialization of ArraySegment.iteri which threads an accumulator through the
+    /// A specialization of ArrayView.iteri which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("IterateIndexed")>]
     let iteri (action : int -> 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
-            (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
             : Choice<unit * 'State, 'Error> =
         let action = FSharpFunc<_,_,_,_,_>.Adapt action
 
-        let array = segment.Array
-        let endExclusive = segment.Offset + segment.Count
+        let array = view.Array
+        let endExclusive = view.Offset + view.Count
 
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
         let mutable state = state
         let mutable error = None
 
@@ -261,21 +261,21 @@ module ArraySegment =
         | None ->
             Choice1Of2 ((), state)
 
-    /// A specialization of ArraySegment.map which threads an accumulator through the
+    /// A specialization of ArrayView.map which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
-            (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
             : Choice<'U[] * 'State, 'Error> =
         let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
 
-        let array = segment.Array
-        let endExclusive = segment.Offset + segment.Count
+        let array = view.Array
+        let endExclusive = view.Offset + view.Count
         /// Holds the mapped results.
-        let results = Array.zeroCreate segment.Count
+        let results = Array.zeroCreate view.Count
 
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
         let mutable state = state
         let mutable error = None
 
@@ -296,21 +296,21 @@ module ArraySegment =
         | None ->
             Choice1Of2 (results, state)
 
-    /// A specialization of ArraySegment.mapi which threads an accumulator through the
+    /// A specialization of ArrayView.mapi which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("MapIndexed")>]
     let mapi (mapping : int -> 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
-            (segment : System.ArraySegment<'T>) (env : 'Env) (state : 'State)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
             : Choice<'U[] * 'State, 'Error> =
         let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
 
-        let array = segment.Array
-        let endExclusive = segment.Offset + segment.Count
+        let array = view.Array
+        let endExclusive = view.Offset + view.Count
         /// Holds the mapped results.
-        let results = Array.zeroCreate segment.Count
+        let results = Array.zeroCreate view.Count
 
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
         let mutable state = state
         let mutable error = None
 

@@ -36,7 +36,7 @@ type IMapReduction<'Key, 'T> =
 // MapReduction.fromFunctions
 
 
-//
+/// Functional operators over a range of values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Range =
     open LanguagePrimitives
@@ -689,10 +689,10 @@ module Array =
         segments.ToArray ()
 
     /// Splits an array into one or more segments by applying the specified predicate
-    /// to each element of the array and starting a new segment at each element where
+    /// to each element of the array and starting a new view at each element where
     /// the predicate returns true.
     [<CompiledName("Segment")>]
-    let segment (predicate : 'T -> bool) (array : 'T[]) =
+    let segment (predicate : 'T -> bool) (array : 'T[]) : ArrayView<'T>[] =
         // Preconditions
         checkNonNull "array" array
         
@@ -706,7 +706,7 @@ module Array =
                 // NOTE : The current element is the first element in the *new* segment!
                 let offset = i - segmentLength
 
-                System.ArraySegment<_> (array, offset, segmentLength)
+                ArrayView<_> (array, offset, segmentLength)
                 |> segments.Add
 
                 segmentLength <- 1
@@ -718,16 +718,17 @@ module Array =
         // Finish the last/current segment, then return the list of segments as an array.
         let offset = len - segmentLength
 
-        System.ArraySegment<_> (array, offset, segmentLength)
+        ArrayView<_> (array, offset, segmentLength)
         |> segments.Add
 
         segments.ToArray()
 
     /// Splits two arrays into one or more segments by applying the specified predicate
-    /// to the each pair of array elements and starting a new segment whenever the
+    /// to the each pair of array elements and starting a new view whenever the
     /// predicate returns true.
     [<CompiledName("Segment2")>]
-    let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[]) =
+    let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[])
+        : ArrayView<'T>[] * ArrayView<'U>[] =
         // Preconditions
         checkNonNull "array1" array1
         checkNonNull "array2" array2
@@ -747,9 +748,9 @@ module Array =
                 // NOTE : The current element is the first element in the *new* segment!
                 let offset = i - segmentLength
 
-                System.ArraySegment<_> (array1, offset, segmentLength)
+                ArrayView<_> (array1, offset, segmentLength)
                 |> segments1.Add
-                System.ArraySegment<_> (array2, offset, segmentLength)
+                ArrayView<_> (array2, offset, segmentLength)
                 |> segments2.Add
 
                 segmentLength <- 1
@@ -761,9 +762,9 @@ module Array =
         // Finish the last/current segment, then return the list of segments as an array.
         let offset = len1 - segmentLength
 
-        System.ArraySegment<_> (array1, offset, segmentLength)
+        ArrayView<_> (array1, offset, segmentLength)
         |> segments1.Add
-        System.ArraySegment<_> (array2, offset, segmentLength)
+        ArrayView<_> (array2, offset, segmentLength)
         |> segments2.Add
 
         segments1.ToArray(), segments2.ToArray()
@@ -983,99 +984,99 @@ module TaggedArray =
         state
 
 
-/// Functional operators on ArraySegments.
+/// Functional operators on ArrayViews.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ArraySegment =
+module ArrayView =
     //
     [<CompiledName("Array")>]
-    let inline array (segment : ArraySegment<'T>) =
-        segment.Array
+    let inline array (view : ArrayView<'T>) =
+        view.Array
 
     //
     [<CompiledName("Count")>]
-    let inline count (segment : ArraySegment<'T>) =
-        segment.Count
+    let inline count (view : ArrayView<'T>) =
+        view.Count
 
     //
     [<CompiledName("Offset")>]
-    let inline offset (segment : ArraySegment<'T>) =
-        segment.Offset
+    let inline offset (view : ArrayView<'T>) =
+        view.Offset
 
     //
     [<CompiledName("IsEmpty")>]
-    let inline isEmpty (arrSeg : ArraySegment<'T>) =
-        arrSeg.Count = 0
+    let inline isEmpty (view : ArrayView<'T>) =
+        view.Count = 0
 
-    /// Creates an ArraySegment spanning the entire length of an array.
+    /// Creates an ArrayView spanning the entire length of an array.
     [<CompiledName("OfArray")>]
-    let inline ofArray (array : 'T[]) : ArraySegment<'T> =
-        ArraySegment (array)
+    let inline ofArray (array : 'T[]) : ArrayView<'T> =
+        ArrayView (array)
 
-    /// Gets an element of an ArraySegment<'T>.
+    /// Gets an element of an ArrayView<'T>.
     [<CompiledName("Get")>]
-    let get (segment : ArraySegment<'T>) index =
-        if index < 0 || index >= (count segment) then
+    let get (view : ArrayView<'T>) index =
+        if index < 0 || index >= (count view) then
             raise <| System.IndexOutOfRangeException ()
         else
-            segment.Array.[segment.Offset + index]
+            view.Array.[view.Offset + index]
 
-    /// Sets an element of an ArraySegment<'T>.
+    /// Sets an element of an ArrayView<'T>.
     [<CompiledName("Set")>]
-    let set (segment : ArraySegment<'T>) index value =
-        if index < 0 || index >= (count segment) then
+    let set (view : ArrayView<'T>) index value =
+        if index < 0 || index >= (count view) then
             raise <| System.IndexOutOfRangeException ()
         else
-            segment.Array.[segment.Offset + index] <- value
+            view.Array.[view.Offset + index] <- value
 
-    /// Gets the first element in an ArraySegment<'T>.
+    /// Gets the first element in an ArrayView<'T>.
     [<CompiledName("First")>]
-    let inline first (segment : ArraySegment<'T>) =
-        if isEmpty segment then
-            invalidOp "Cannot retrieve the first element of an empty ArraySegment<'T>."
-        else segment.Array.[segment.Offset]
+    let inline first (view : ArrayView<'T>) =
+        if isEmpty view then
+            invalidOp "Cannot retrieve the first element of an empty ArrayView<'T>."
+        else view.Array.[view.Offset]
 
-    /// Gets the index of the last element in an ArraySegment<'T>, within the original array.
+    /// Gets the index of the last element in an ArrayView<'T>, within the original array.
     /// NOTE : This implemention is meant for internal use only, and does NOT perform bounds checking.
     [<CompiledName("LastIndexUnsafe")>]
-    let inline private lastIndexUnsafe (segment : ArraySegment<'T>) =
-        segment.Offset + (segment.Count - 1)
+    let inline private lastIndexUnsafe (view : ArrayView<'T>) =
+        view.Offset + (view.Count - 1)
 
-    /// Gets the index of the last element in an ArraySegment<'T>, within the original array.
+    /// Gets the index of the last element in an ArrayView<'T>, within the original array.
     [<CompiledName("LastIndex")>]
-    let inline lastIndex (segment : ArraySegment<'T>) =
-        if isEmpty segment then
-            invalidOp "The ArraySegment<'T> is empty."
-        else lastIndexUnsafe segment
+    let inline lastIndex (view : ArrayView<'T>) =
+        if isEmpty view then
+            invalidOp "The ArrayView<'T> is empty."
+        else lastIndexUnsafe view
 
-    /// Gets the last element in an ArraySegment<'T>.
+    /// Gets the last element in an ArrayView<'T>.
     [<CompiledName("Last")>]
-    let inline last (segment : ArraySegment<'T>) =
-        if isEmpty segment then
-            invalidOp "Cannot retrieve the last element of an empty ArraySegment<'T>."
-        else segment.Array.[lastIndexUnsafe segment]
+    let inline last (view : ArrayView<'T>) =
+        if isEmpty view then
+            invalidOp "Cannot retrieve the last element of an empty ArrayView<'T>."
+        else view.Array.[lastIndexUnsafe view]
 
-    /// Builds a new array from the elements within the ArraySegment<'T>.
+    /// Builds a new array from the elements within the ArrayView<'T>.
     [<CompiledName("ToArray")>]
-    let toArray (segment : ArraySegment<'T>) =
-        if isEmpty segment then
+    let toArray (view : ArrayView<'T>) =
+        if isEmpty view then
             Array.empty
         else
-            segment.Array.[segment.Offset .. (lastIndexUnsafe segment)]
+            view.Array.[view.Offset .. (lastIndexUnsafe view)]
 
     //
     [<CompiledName("MapToArray")>]
-    let mapToArray (mapping : 'T -> 'U) (segment : ArraySegment<'T>) =
-        if isEmpty segment then
+    let mapToArray (mapping : 'T -> 'U) (view : ArrayView<'T>) =
+        if isEmpty view then
             Array.empty
         else
             //
-            let lastIndex = lastIndexUnsafe segment
+            let lastIndex = lastIndexUnsafe view
             //
-            let results = Array.zeroCreate (count segment)
+            let results = Array.zeroCreate (count view)
 
             //
-            let arr = array segment
-            for i = (offset segment) to lastIndex do
+            let arr = array view
+            for i = (offset view) to lastIndex do
                 results.[i] <- mapping arr.[i]
 
             // Return the mapped results.
@@ -1083,14 +1084,14 @@ module ArraySegment =
 
     //
     [<CompiledName("TryPick")>]
-    let tryPick picker (segment : ArraySegment<'T>) : 'U option =
+    let tryPick picker (view : ArrayView<'T>) : 'U option =
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
         let mutable matchResult = None
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
 
         while Option.isNone matchResult && index <= endIndex do
             match picker array.[index] with
@@ -1104,24 +1105,26 @@ module ArraySegment =
 
     //
     [<CompiledName("Pick")>]
-    let pick picker (segment : ArraySegment<'T>) : 'U =
+    let pick picker (view : ArrayView<'T>) : 'U =
         // Call tryPick to find the value; if no match is found, raise an exception.
-        match tryPick picker segment with
+        match tryPick picker view with
         | Some result ->
             result
         | None ->
+            // TODO : Provide a better error message
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     //
     [<CompiledName("TryFind")>]
-    let tryFind predicate (segment : ArraySegment<'T>) =
+    let tryFind predicate (view : ArrayView<'T>) =
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
         let mutable matchedElement = None
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
 
         while Option.isNone matchedElement && index <= endIndex do
             let el = array.[index]
@@ -1135,24 +1138,26 @@ module ArraySegment =
 
     //
     [<CompiledName("Find")>]
-    let find predicate (segment : ArraySegment<'T>) =
+    let find predicate (view : ArrayView<'T>) =
         // Call tryFind to find the value; if no match is found, raise an exception.
-        match tryFind predicate segment with
+        match tryFind predicate view with
         | Some element ->
             element
         | None ->
+            // TODO : Provide a better error message
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     //
     [<CompiledName("TryFindIndex")>]
-    let tryFindIndex predicate (segment : ArraySegment<'T>) =
+    let tryFindIndex predicate (view : ArrayView<'T>) =
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
         let mutable matchedIndex = None
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
 
         while Option.isNone matchedIndex && index <= endIndex do
             if predicate array.[index] then
@@ -1165,35 +1170,37 @@ module ArraySegment =
 
     //
     [<CompiledName("FindIndex")>]
-    let findIndex predicate (segment : ArraySegment<'T>) =
+    let findIndex predicate (view : ArrayView<'T>) =
         // Call tryFindIndex to find the value; if no match is found, raise an exception.
-        match tryFindIndex predicate segment with
+        match tryFindIndex predicate view with
         | Some index ->
             index
         | None ->
+            // TODO : Provide a better error message
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     //
     [<CompiledName("Iterate")>]
-    let iter action (segment : ArraySegment<'T>) =
+    let iter action (view : ArrayView<'T>) =
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
-        for i = segment.Offset to endIndex do
+        for i = view.Offset to endIndex do
             action array.[i]
 
     //
     [<CompiledName("Exists")>]
-    let exists predicate (segment : ArraySegment<'T>) =
+    let exists predicate (view : ArrayView<'T>) =
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
         let mutable foundMatchingElement = false
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
 
         while not foundMatchingElement && index <= endIndex do
             foundMatchingElement <- predicate array.[index]
@@ -1204,14 +1211,14 @@ module ArraySegment =
 
     //
     [<CompiledName("Forall")>]
-    let forall predicate (segment : ArraySegment<'T>) =
+    let forall predicate (view : ArrayView<'T>) =
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
         let mutable allElementsMatched = true
-        let mutable index = segment.Offset
+        let mutable index = view.Offset
 
         while allElementsMatched && index <= endIndex do
             allElementsMatched <- predicate array.[index]
@@ -1222,16 +1229,16 @@ module ArraySegment =
 
     //
     [<CompiledName("Fold")>]
-    let fold folder (state : 'State) (segment : ArraySegment<'T>) =
+    let fold folder (state : 'State) (view : ArrayView<'T>) =
         let folder = FSharpFunc<_,_,_>.Adapt folder
 
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
         let mutable state = state
-        for i = segment.Offset to endIndex do
+        for i = view.Offset to endIndex do
             state <- folder.Invoke (state, array.[i])
 
         // Return the final state value.
@@ -1239,16 +1246,16 @@ module ArraySegment =
 
     //
     [<CompiledName("FoldBack")>]
-    let foldBack folder (segment : ArraySegment<'T>) (state : 'State) =
+    let foldBack folder (view : ArrayView<'T>) (state : 'State) =
         let folder = FSharpFunc<_,_,_>.Adapt folder
 
         // OPTIMIZATION : Use imperative/mutable style for maximum performance.
-        let array = segment.Array
-        /// The last index (inclusive) in the underlying array which belongs to this ArraySegment.
-        let endIndex = lastIndexUnsafe segment
+        let array = view.Array
+        /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
+        let endIndex = lastIndexUnsafe view
 
         let mutable state = state
-        for i = endIndex downto segment.Offset do
+        for i = endIndex downto view.Offset do
             state <- folder.Invoke (array.[i], state)
 
         // Return the final state value.
@@ -1256,31 +1263,31 @@ module ArraySegment =
 
     //
     [<CompiledName("Reduce")>]
-    let reduce (reduction : 'T -> 'T -> 'T) (segment : ArraySegment<'T>) =
+    let reduce (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) =
         // Preconditions
-        if isEmpty segment then
-            invalidArg "segment" "Cannot reduce an empty ArraySegment<'T>."
+        if isEmpty view then
+            invalidArg "view" "Cannot reduce an empty ArrayView<'T>."
 
         // Create a new array segment which excludes the first element
         // of the input segment, then call 'fold' with it.
-        let segment' = ArraySegment (segment.Array, segment.Offset + 1, segment.Count - 1)
-        fold reduction segment.[0] segment'
+        let segment' = ArrayView (view.Array, view.Offset + 1, view.Count - 1)
+        fold reduction view.[0] segment'
 
     //
     [<CompiledName("ReduceBack")>]
-    let reduceBack (reduction : 'T -> 'T -> 'T) (segment : ArraySegment<'T>) =
+    let reduceBack (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) =
         // Preconditions
-        if isEmpty segment then
-            invalidArg "segment" "Cannot reduce an empty ArraySegment<'T>."
+        if isEmpty view then
+            invalidArg "view" "Cannot reduce an empty ArrayView<'T>."
 
         // Create a new array segment which excludes the last element
         // of the input segment, then call 'foldBack' with it.
-        let segment' = ArraySegment (segment.Array, segment.Offset, segment.Count - 1)
-        foldBack reduction segment' segment.[segment.Count - 1]
+        let segment' = ArrayView (view.Array, view.Offset, view.Count - 1)
+        foldBack reduction segment' view.[view.Count - 1]
 
     //
     [<CompiledName("ToList")>]
-    let toList (segment : ArraySegment<'T>) =
+    let toList (segment : ArrayView<'T>) =
         // OPTIMIZATION : If the segment is empty return immediately.
         if isEmpty segment then []
         else
@@ -1292,28 +1299,28 @@ module ArraySegment =
 
     //
     [<CompiledName("Minimum")>]
-    let min<'T when 'T : comparison> (segment : ArraySegment<'T>) =
+    let min<'T when 'T : comparison> (segment : ArrayView<'T>) =
         // Preconditions
         if isEmpty segment then
-            invalidArg "segment" "Cannot compute the minimum element of an empty ArraySegment<'T>."
+            invalidArg "segment" "Cannot compute the minimum element of an empty ArrayView<'T>."
 
         reduce min segment
 
     //
     [<CompiledName("Maximum")>]
-    let max<'T when 'T : comparison> (segment : ArraySegment<'T>) =
+    let max<'T when 'T : comparison> (segment : ArrayView<'T>) =
         // Preconditions
         if isEmpty segment then
-            invalidArg "segment" "Cannot compute the maximum element of an empty ArraySegment<'T>."
+            invalidArg "segment" "Cannot compute the maximum element of an empty ArrayView<'T>."
 
         reduce max segment
 
     //
     [<CompiledName("Sum")>]
-    let inline sum (segment : ArraySegment<'T>) =
+    let inline sum (segment : ArrayView<'T>) =
         // Preconditions
         if isEmpty segment then
-            invalidArg "segment" "Cannot compute the sum of an empty ArraySegment<'T>."
+            invalidArg "segment" "Cannot compute the sum of an empty ArrayView<'T>."
 
         reduce (+) segment
 
@@ -1332,10 +1339,10 @@ module Set =
         uint32 <| Set.count set
 
     //
-    [<CompiledName("OfArraySegment")>]
-    let ofArraySegment (segment : System.ArraySegment<'T>) : Set<'T> =
-        (Set.empty, segment)
-        ||> ArraySegment.fold (fun set el ->
+    [<CompiledName("OfArrayView")>]
+    let ofArrayView (view : ArrayView<'T>) : Set<'T> =
+        (Set.empty, view)
+        ||> ArrayView.fold (fun set el ->
             Set.add el set)
 
     //
