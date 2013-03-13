@@ -27,20 +27,10 @@ open ExtCore
 
 /// <summary>
 /// </summary>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-type StateFuncIndexed<'S1, 'S2, 'T> =
-    'S1 -> 'T * 'S2
-
-/// <summary>
-/// Synonym for StateFuncIndexed where the initial and final state are "clamped" to the
-/// same type. In other words, the function does not change the type of the state value.
-/// </summary>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 type StateFunc<'State, 'T> =
-    StateFuncIndexed<'State, 'State, 'T>
+    'State -> 'T * 'State
 
 /// <summary>
 /// </summary>
@@ -52,21 +42,10 @@ type ReaderFunc<'Env, 'T> =
 /// <summary>
 /// </summary>
 /// <typeparam name="Env"></typeparam>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-type ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T> =
-    'Env -> 'S1 -> 'T * 'S2
-
-/// <summary>
-/// Synonym for ReaderStateFuncIndexed where the initial and final state are "clamped" to the
-/// same type. In other words, the function does not change the type of the state value.
-/// </summary>
-/// <typeparam name="Env"></typeparam>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 type ReaderStateFunc<'Env, 'State, 'T> =
-    ReaderStateFuncIndexed<'Env, 'State, 'State, 'T>
+    'Env -> 'State -> 'T * 'State
 
 /// <summary>
 /// 
@@ -85,23 +64,11 @@ type IWriter<'Output> =
 /// </summary>
 /// <typeparam name="Env"></typeparam>
 /// <typeparam name="Writer"></typeparam>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-type ReaderWriterStateFuncIndexed<'Env, 'Writer, 'S1, 'S2, 'T> =
-    //'Env -> 'S1 -> ('T * 'S2) * 'Writer
-    'Env -> 'S1 -> 'T * 'S2 * 'Writer
-
-/// <summary>
-/// Synonym for ReaderWriterStateFuncIndexed where the initial and final state are "clamped" to the
-/// same type. In other words, the function does not change the type of the state value.
-/// </summary>
-/// <typeparam name="Env"></typeparam>
-/// <typeparam name="Writer"></typeparam>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 type ReaderWriterStateFunc<'Env, 'Writer, 'State, 'T> =
-    ReaderWriterStateFuncIndexed<'Env, 'Writer, 'State, 'State, 'T>
+    //'Env -> 'State -> ('T * 'State) * 'Writer
+    'Env -> 'State -> 'T * 'State * 'Writer
 
 /// <summary>
 /// </summary>
@@ -113,62 +80,28 @@ type ReaderChoiceFunc<'Env, 'T, 'Error> =
 
 /// <summary>
 /// </summary>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="Error"></typeparam>
-type ProtectedStateFuncIndexed<'S1, 'S2, 'T, 'Error> =
-    'S1 -> Choice<'T * 'S2, 'Error>
-
-/// <summary>
-/// Synonym for ProtectedStateFuncIndexed where the initial and final state are "clamped" to the
-/// same type. In other words, the function does not change the type of the state value.
-/// </summary>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type ProtectedStateFunc<'State, 'T, 'Error> =
-    ProtectedStateFuncIndexed<'State, 'State, 'T, 'Error>
+    'State -> Choice<'T * 'State, 'Error>
 
 /// <summary>
-/// </summary>
-/// <typeparam name="Env"></typeparam>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="Error"></typeparam>
-type ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S2, 'T, 'Error> =
-    'Env -> 'S1 -> Choice<'T * 'S2, 'Error>
-
-/// <summary>
-/// Synonym for ReaderProtectedStateFuncIndexed where the initial and final state are "clamped" to the
-/// same type. In other words, the function does not change the type of the state value.
 /// </summary>
 /// <typeparam name="Env"></typeparam>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-    ReaderProtectedStateFuncIndexed<'Env, 'State, 'State, 'T, 'Error>
+    'Env -> 'State -> Choice<'T * 'State, 'Error>
 
 /// <summary>
-/// </summary>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="Error"></typeparam>
-type StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error> =
-    'S1 -> Choice<'T, 'Error> * 'S2
-
-/// <summary>
-/// Synonym for StatefulChoiceFuncIndexed where the initial and final state are "clamped" to the
-/// same type. In other words, the function does not change the type of the state value.
 /// </summary>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type StatefulChoiceFunc<'State, 'T, 'Error> =
-    StatefulChoiceFuncIndexed<'State, 'State, 'T, 'Error>
+    'State -> Choice<'T, 'Error> * 'State
 
 /// <summary>
 /// </summary>
@@ -203,20 +136,11 @@ type ContinuationFunc<'T, 'K> =
 
 /// <summary>
 /// </summary>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="K"></typeparam>
-type StateContinuationFuncIndexed<'S1, 'S2, 'T, 'K> =
-    'S1 -> ('T * 'S2 -> 'K) -> 'K
-
-/// <summary>
-/// </summary>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="K"></typeparam>
 type StateContinuationFunc<'State, 'T, 'K> =
-    StateContinuationFuncIndexed<'State, 'State, 'T, 'K>
+    'State -> ('T * 'State -> 'K) -> 'K
 
 /// <summary>
 /// </summary>
@@ -235,23 +159,12 @@ type ChoiceContinuationFunc<'T, 'Error, 'K> =
 
 /// <summary>
 /// </summary>
-/// <typeparam name="S1"></typeparam>
-/// <typeparam name="S2"></typeparam>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="Error"></typeparam>
-/// <typeparam name="K"></typeparam>
-type ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
-    'S1 -> (Choice<'T * 'S2, 'Error> -> 'K) -> 'K
-
-/// <summary>
-/// </summary>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
 type ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
-    ProtectedStateContinuationFuncIndexed<'State, 'State, 'T, 'Error, 'K>
-
+    'State -> (Choice<'T * 'State, 'Error> -> 'K) -> 'K
 
 
 (*** Workflow Builders ***)
@@ -268,7 +181,7 @@ type StateBuilder () =
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : StateFuncIndexed<'S1, 'S2, 'T> =
+        : StateFunc<'State, 'T> =
         func
 
     // unit -> M<'T>
@@ -277,43 +190,43 @@ type StateBuilder () =
         this.Return ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : StateFuncIndexed<_,'S2,'T>, k : 'T -> StateFuncIndexed<_,_,_>)
-        : StateFuncIndexed<'S1, 'S3, 'U> =
+    member inline __.Bind (m : StateFunc<_, 'T>, k : 'T -> StateFunc<_,_>)
+        : StateFunc<'State, 'U> =
         fun state ->
             let result, state = m state
             (k result) state
 
     // (unit -> M<'T>) -> M<'T>
-    member inline this.Delay (f : unit -> StateFuncIndexed<_,_,_>)
-        : StateFuncIndexed<'S1, 'S2, 'T> =
+    member inline this.Delay (f : unit -> StateFunc<_,_>)
+        : StateFunc<'State, 'T> =
         this.Bind (this.Return (), f)
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline this.Combine (r1 : StateFuncIndexed<_,'S2,_>, r2 : StateFuncIndexed<_,_,_>)
-        : StateFuncIndexed<'S1, 'S3, 'T> =
+    member inline this.Combine (r1 : StateFunc<_,_>, r2 : StateFunc<_,_>)
+        : StateFunc<'State, 'T> =
         this.Bind (r1, fun () -> r2)
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : StateFuncIndexed<_,_,_>, handler : exn -> StateFuncIndexed<_,_,_>)
-        : StateFuncIndexed<'S1, 'S2, 'T> =
+    member inline __.TryWith (body : StateFunc<_,_>, handler : exn -> StateFunc<_,_>)
+        : StateFunc<'State, 'T> =
         fun state ->
             try body state
             with ex ->
                 handler ex state
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : StateFuncIndexed<_,_,_>, handler)
-        : StateFuncIndexed<'S1, 'S2, 'T> =
+    member inline __.TryFinally (body : StateFunc<_,_>, handler)
+        : StateFunc<'State, 'T> =
         fun state ->
             try body state
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member inline this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateFuncIndexed<_,_,_>)
-        : StateFuncIndexed<'S1, 'S2, 'U> =
+    member inline this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateFunc<_,_>)
+        : StateFunc<'State, 'U> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
@@ -440,7 +353,7 @@ type ReaderStateBuilder () =
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
-        : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T> =
+        : ReaderStateFunc<'Env, 'State, 'T> =
         func
 
     // unit -> M<'T>
@@ -449,43 +362,43 @@ type ReaderStateBuilder () =
         this.Return ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ReaderStateFuncIndexed<_,_,'S2,_>, k : 'T -> ReaderStateFuncIndexed<_,_,_,_>)
-        : ReaderStateFuncIndexed<'Env, 'S1, 'S3, 'U> =
+    member __.Bind (m : ReaderStateFunc<_,_,_>, k : 'T -> ReaderStateFunc<_,_,_>)
+        : ReaderStateFunc<'Env, 'State, 'U> =
         fun env state ->
             let result, state = m env state
             (k result) env state
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ReaderStateFuncIndexed<_,_,_,_>)
-        : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T> =
+    member this.Delay (f : unit -> ReaderStateFunc<_,_,_>)
+        : ReaderStateFunc<'Env, 'State, 'T> =
         this.Bind (this.Return (), f)
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ReaderStateFuncIndexed<_,_,'S2,_>, r2 : ReaderStateFuncIndexed<_,_,_,_>)
-        : ReaderStateFuncIndexed<'Env, 'S1, 'S3, 'T> =
+    member this.Combine (r1 : ReaderStateFunc<_,_,_>, r2 : ReaderStateFunc<_,_,_>)
+        : ReaderStateFunc<'Env, 'State, 'T> =
         this.Bind (r1, fun () -> r2)
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : ReaderStateFuncIndexed<_,_,_,_>, handler : exn -> ReaderStateFuncIndexed<_,_,_,_>)
-        : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T> =
+    member __.TryWith (body : ReaderStateFunc<_,_,_>, handler : exn -> ReaderStateFunc<_,_,_>)
+        : ReaderStateFunc<'Env, 'State, 'T> =
         fun env state ->
             try body env state
             with ex ->
                 handler ex env state
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : ReaderStateFuncIndexed<_,_,_,_>, handler)
-        : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T> =
+    member __.TryFinally (body : ReaderStateFunc<_,_,_>, handler)
+        : ReaderStateFunc<'Env, 'State, 'T> =
         fun env state ->
             try body env state
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : _ -> ReaderStateFuncIndexed<_,_,_,_>)
-        : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'U> =
+    member this.Using (resource : ('T :> System.IDisposable), body : _ -> ReaderStateFunc<_,_,_>)
+        : ReaderStateFunc<'Env, 'State, 'U> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
@@ -913,7 +826,7 @@ type ProtectedStateBuilder () =
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
-        : ProtectedStateFuncIndexed<'S1, 'S2, 'T, 'Error> =
+        : ProtectedStateFunc<'State, 'T, 'Error> =
         func
 
     // unit -> M<'T>
@@ -923,13 +836,13 @@ type ProtectedStateBuilder () =
         Choice1Of2 ((), state)
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ProtectedStateFuncIndexed<_,_,_,_>)
-        : ProtectedStateFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    member this.Delay (f : unit -> ProtectedStateFunc<_,_,_>)
+        : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state -> f () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ProtectedStateFuncIndexed<_,'S2,_,_>, k : 'T -> ProtectedStateFuncIndexed<_,_,_,_>)
-        : ProtectedStateFuncIndexed<'S1, 'S3, 'U, 'Error> =
+    member __.Bind (m : ProtectedStateFunc<_,_,_>, k : 'T -> ProtectedStateFunc<_,_,_>)
+        : ProtectedStateFunc<'State, 'U, 'Error> =
         fun state ->
         match m state with
         | Choice2Of2 error ->
@@ -940,29 +853,29 @@ type ProtectedStateBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ProtectedStateFuncIndexed<_,'S2,_,_>, r2 : ProtectedStateFuncIndexed<_,_,_,_>)
-        : ProtectedStateFuncIndexed<'S1, 'S3, 'T, 'Error> =
+    member this.Combine (r1 : ProtectedStateFunc<_,_,_>, r2 : ProtectedStateFunc<_,_,_>)
+        : ProtectedStateFunc<'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : ProtectedStateFuncIndexed<_,_,_,_>, handler : exn -> ProtectedStateFuncIndexed<_,_,_,_>)
-        : ProtectedStateFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    member __.TryWith (body : ProtectedStateFunc<_,_,_>, handler : exn -> ProtectedStateFunc<_,_,_>)
+        : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
         try body state
         with ex ->
             handler ex state
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : ProtectedStateFuncIndexed<_,_,_,_>, handler)
-        : ProtectedStateFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    member __.TryFinally (body : ProtectedStateFunc<_,_,_>, handler)
+        : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
         try body state
         finally
             handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateFuncIndexed<_,_,_,_>)
-        : ProtectedStateFuncIndexed<'S1, 'S2, 'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateFunc<_,_,_>)
+        : ProtectedStateFunc<'State, 'U, 'Error> =
         this.TryFinally (body resource, fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ())
@@ -999,7 +912,7 @@ type ReaderProtectedStateBuilder () =
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
-        : ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S2, 'T, 'Error> =
+        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         func
 
     // unit -> M<'T>
@@ -1009,13 +922,13 @@ type ReaderProtectedStateBuilder () =
         Choice1Of2 ((), state)
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ReaderProtectedStateFuncIndexed<_,_,_,_,_>)
-        : ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S2, 'T, 'Error> =
+    member this.Delay (f : unit -> ReaderProtectedStateFunc<_,_,_,_>)
+        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         fun env state -> f () env state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ReaderProtectedStateFuncIndexed<_,_,'S2,_,_>, k : 'T -> ReaderProtectedStateFuncIndexed<_,_,_,_,_>)
-        : ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S3, 'U, 'Error> =
+    member __.Bind (m : ReaderProtectedStateFunc<_,_,_,_>, k : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
+        : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
         fun env state ->
         match m env state with
         | Choice2Of2 error ->
@@ -1026,29 +939,29 @@ type ReaderProtectedStateBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ReaderProtectedStateFuncIndexed<_,_,'S2,_,_>, r2 : ReaderProtectedStateFuncIndexed<_,_,_,_,_>)
-        : ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S3, 'T, 'Error> =
+    member this.Combine (r1 : ReaderProtectedStateFunc<_,_,_,_>, r2 : ReaderProtectedStateFunc<_,_,_,_>)
+        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : ReaderProtectedStateFuncIndexed<_,_,_,_,_>, handler : exn -> ReaderProtectedStateFuncIndexed<_,_,_,_,_>)
-        : ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S2, 'T, 'Error> =
+    member __.TryWith (body : ReaderProtectedStateFunc<_,_,_,_>, handler : exn -> ReaderProtectedStateFunc<_,_,_,_>)
+        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         fun state ->
         try body state
         with ex ->
             handler ex state
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : ReaderProtectedStateFuncIndexed<_,_,_,_,_>, handler)
-        : ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S2, 'T, 'Error> =
+    member __.TryFinally (body : ReaderProtectedStateFunc<_,_,_,_>, handler)
+        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         fun state ->
         try body state
         finally
             handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderProtectedStateFuncIndexed<_,_,_,_,_>)
-        : ReaderProtectedStateFuncIndexed<'Env, 'S1, 'S2, 'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
+        : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
         this.TryFinally (body resource, fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ())
@@ -1085,7 +998,7 @@ type StatefulChoiceBuilder () =
 
     // M<'T> -> M<'T>
     member __.ReturnFrom (func)
-        : StatefulChoiceFuncIndexed<_,_,_,_> =
+        : StatefulChoiceFunc<_,_,_> =
         func
 
     // unit -> M<'T>
@@ -1095,13 +1008,13 @@ type StatefulChoiceBuilder () =
         (Choice1Of2 ()), state
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> StatefulChoiceFuncIndexed<_,_,_,_>)
-        : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    member this.Delay (f : unit -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state -> f () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (f : StatefulChoiceFuncIndexed<_,_,_,_>, k : 'T -> StatefulChoiceFunc<_,_,_>)
-        : StatefulChoiceFuncIndexed<'S1, 'S2, 'U, 'Error> =
+    member __.Bind (f : StatefulChoiceFunc<_,_,_>, k : 'T -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'U, 'Error> =
         fun state ->
         match f state with
         | (Choice1Of2 value), state ->
@@ -1112,29 +1025,29 @@ type StatefulChoiceBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : StatefulChoiceFuncIndexed<_,_,_,_>, r2 : StatefulChoiceFunc<_,_,_>)
-        : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    member this.Combine (r1 : StatefulChoiceFunc<_,_,_>, r2 : StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : StatefulChoiceFuncIndexed<_,_,_,_>, handler : exn -> StatefulChoiceFuncIndexed<_,_,_,_>)
-        : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    member __.TryWith (body : StatefulChoiceFunc<_,_,_>, handler : exn -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         try body state
         with ex ->
             handler ex state
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryFinally (body : StatefulChoiceFuncIndexed<_,_,_,_>, handler)
-        : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    member __.TryFinally (body : StatefulChoiceFunc<_,_,_>, handler)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         try body state
         finally
             handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StatefulChoiceFuncIndexed<_,_,_,_>)
-        : StatefulChoiceFuncIndexed<'S1, 'S2, 'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'U, 'Error> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
@@ -1309,7 +1222,7 @@ type StateContinuationBuilder () =
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : StateContinuationFuncIndexed<'S1, 'S2, 'T, 'K> =
+        : StateContinuationFunc<'State, 'T, 'K> =
         func
 
     // unit -> M<'T>
@@ -1320,44 +1233,44 @@ type StateContinuationBuilder () =
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : StateContinuationFuncIndexed<'S1, 'S2, 'T, 'K> =
+        : StateContinuationFunc<'State, 'T, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : StateContinuationFuncIndexed<_,'S2,_,_>, k : 'T -> StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<'S1, 'S3, 'U, 'K> =
+    member inline __.Bind (m : StateContinuationFunc<_,_,_>, k : 'T -> StateContinuationFunc<_,_,_>)
+        : StateContinuationFunc<'State, 'U, 'K> =
         fun state cont ->
             m state <| fun (result, state) ->
                 k result state cont
 
-    // M<'T> -> M<'T> -> M<'T>
-    // or
-    // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : StateContinuationFuncIndexed<_,_,_,_>, r2 : StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<_,_,_,_> =
-        fun state cont ->
-            r1 state <| fun ((), state) ->
-                r2 () state cont
+//    // M<'T> -> M<'T> -> M<'T>
+//    // or
+//    // M<unit> -> M<'T> -> M<'T>
+//    member __.Combine (r1 : StateContinuationFunc<_,_,_>, r2 : StateContinuationFunc<_,_,_>)
+//        : StateContinuationFunc<_,_,_> =
+//        fun state cont ->
+//            r1 state <| fun ((), state) ->
+//                r2 () state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : StateContinuationFuncIndexed<_,_,_,_>, handler : exn -> StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member inline __.TryWith (body : StateContinuationFunc<_,_,_>, handler : exn -> StateContinuationFunc<_,_,_>)
+        : StateContinuationFunc<_,_,_> =
         fun state cont ->
             try body state cont
             with ex ->
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : StateContinuationFuncIndexed<_,_,_,_>, handler)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member inline __.TryFinally (body : StateContinuationFunc<_,_,_>, handler)
+        : StateContinuationFunc<_,_,_> =
         fun state cont ->
             try body state cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateContinuationFunc<_,_,_>)
+        : StateContinuationFunc<_,_,_> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
@@ -1582,7 +1495,7 @@ type ProtectedStateContinuationBuilder () =
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
@@ -1593,11 +1506,11 @@ type ProtectedStateContinuationBuilder () =
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>, k : 'T -> ProtectedStateContinuationFuncIndexed<_,_,_,_,_>) =
+    member inline __.Bind (m : ProtectedStateContinuationFunc<_,_,_,_>, k : 'T -> ProtectedStateContinuationFunc<_,_,_,_>) =
         fun state cont ->
             m state <| fun result ->
                 match result with
@@ -1610,8 +1523,8 @@ type ProtectedStateContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : ProtectedStateContinuationFuncIndexed<_,'S2,_,_,_>, r2 : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S3, 'T, 'Error, 'K>=
+    member inline __.Combine (r1 : ProtectedStateContinuationFunc<_,_,_,_>, r2 : ProtectedStateContinuationFunc<_,_,_,_>)
+        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K>=
         fun state cont ->
             r1 state <| fun result ->
                 match result with
@@ -1622,24 +1535,24 @@ type ProtectedStateContinuationBuilder () =
                     r2 state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>, handler : exn -> ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+    member inline __.TryWith (body : ProtectedStateContinuationFunc<_,_,_,_>, handler : exn -> ProtectedStateContinuationFunc<_,_,_,_>)
+        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             with ex ->
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>, handler)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+    member inline __.TryFinally (body : ProtectedStateContinuationFunc<_,_,_,_>, handler)
+        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'U, 'Error, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateContinuationFunc<_,_,_,_>)
+        : ProtectedStateContinuationFunc<'State, 'U, 'Error, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
@@ -1724,19 +1637,19 @@ module WorkflowBuilders =
 module State =
     //
     [<CompiledName("Run")>]
-    let inline run (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
+    let inline run (stateFunc : StateFunc<'State, 'T>) initialState =
         stateFunc initialState
     
     //
     [<CompiledName("Evaluate")>]
-    let evaluate (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
+    let evaluate (stateFunc : StateFunc<'State, 'T>) initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final state value and return the final result value.
         fst <| stateFunc initialState
 
     //
     [<CompiledName("Execute")>]
-    let execute (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) initialState =
+    let execute (stateFunc : StateFunc<'State, 'T>) initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final result value and return the final state value.
         snd <| stateFunc initialState
@@ -1753,8 +1666,8 @@ module State =
 
     //
     [<CompiledName("BindChoice")>]
-    let inline bindChoice (k : 'T -> StateFuncIndexed<'S2, 'S3, 'U>) (m : ProtectedStateFuncIndexed<_,_,_,_>) =
-        fun (state : 'S1) ->
+    let inline bindChoice (k : 'T -> StateFunc<'State, 'U>) (m : ProtectedStateFunc<_,_,_>) =
+        fun state ->
             match m state with
             | Choice2Of2 ex ->
                 raise ex
@@ -1773,9 +1686,9 @@ module State =
 
     //
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>)
-        : StateFuncIndexed<'S1, 'S2, 'U> =
-        fun (state : 'S1) ->
+    let map (mapping : 'T -> 'U) (stateFunc : StateFunc<'State, 'T>)
+        : StateFunc<'State, 'U> =
+        fun state ->
             // "Run" the provided state function by applying the given state.
             let result, state = stateFunc state
 
@@ -1806,13 +1719,13 @@ module Reader =
 module ReaderState =
     //
     [<CompiledName("Run")>]
-    let inline run (readerStateFunc : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T>)
+    let inline run (readerStateFunc : ReaderStateFunc<'Env, 'State, 'T>)
         env initialState =
         readerStateFunc env initialState
     
     //
     [<CompiledName("Evaluate")>]
-    let evaluate (readerStateFunc : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T>)
+    let evaluate (readerStateFunc : ReaderStateFunc<'Env, 'State, 'T>)
         env initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final state value and return the final result value.
@@ -1820,7 +1733,7 @@ module ReaderState =
 
     //
     [<CompiledName("Execute")>]
-    let execute (readerStateFunc : ReaderStateFuncIndexed<'Env, 'S1, 'S2, 'T>)
+    let execute (readerStateFunc : ReaderStateFunc<'Env, 'State, 'T>)
         env initialState =
         // "Run" the state function, starting with the initial state.
         // Discard the final result value and return the final state value.
@@ -1928,7 +1841,7 @@ module ProtectedState =
 
     //
     [<CompiledName("LiftState")>]
-    let inline liftState (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) : ProtectedStateFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    let inline liftState (stateFunc : StateFunc<'State, 'T>) : ProtectedStateFunc<'State, 'T, 'Error> =
         stateFunc >> Choice1Of2
 
     //
@@ -2008,7 +1921,7 @@ module ReaderProtectedState =
 module StatefulChoice =
     //
     [<CompiledName("LiftState")>]
-    let liftState (stateFunc : StateFuncIndexed<'S1, 'S2, 'T>) : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error> =
+    let liftState (stateFunc : StateFunc<'State, 'T>) : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         let value, state = stateFunc state
         (Choice1Of2 value), state
@@ -2021,10 +1934,8 @@ module StatefulChoice =
 
     //
     [<CompiledName("SetState")>]
-    let setState (state : 'State) : StatefulChoiceFuncIndexed<_,_,unit,'Error> =
-        // TODO : Instead of using unit input and output here, should we accept
-        // any input value and pass it through?
-        fun () ->
+    let setState (state : 'State) : StatefulChoiceFunc<_,_,'Error> =
+        fun _ ->
         (Choice1Of2 ()), state
 
     //
@@ -2048,8 +1959,8 @@ module StatefulChoice =
 
     /// Transforms a value in the StatefulChoice workflow by using a specified mapping function.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) (m : StatefulChoiceFuncIndexed<'S1, 'S2, 'T, 'Error>)
-            : StatefulChoiceFuncIndexed<'S1, 'S2, 'U, 'Error> =
+    let map (mapping : 'T -> 'U) (m : StatefulChoiceFunc<'State, 'T, 'Error>)
+            : StatefulChoiceFunc<'State, 'U, 'Error> =
         bind (mapping >> ``return``) m
 
 (*
