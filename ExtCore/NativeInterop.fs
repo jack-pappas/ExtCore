@@ -28,10 +28,13 @@ open Microsoft.FSharp.NativeInterop
 [<RequireQualifiedAccess>]
 module NativePtr =
     //
-    let (*[<Literal>]*) zero<'T when 'T : unmanaged> : nativeptr<'T> =
+    //[<Literal>]
+    [<CompiledName("Zero")>]
+    let zero<'T when 'T : unmanaged> : nativeptr<'T> =
         NativePtr.ofNativeInt 0n
 
     //
+    [<CompiledName("IsNull")>]
     let [<NoDynamicInvocation>] inline isNull (ptr : nativeptr<'T>) =
         0n = NativePtr.toNativeInt ptr
 
