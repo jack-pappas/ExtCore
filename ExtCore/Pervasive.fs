@@ -776,14 +776,19 @@ module Option =
     let inline conditional cond value =
         if cond then Some value else None
 
-    //
+    /// Applies a predicate function to the given value, returning <c>Some(value)</c>
+    /// when the predicate returns 'true' and <c>None</c> otherwise.
     [<CompiledName("Condition")>]
     let condition (predicate : 'T -> bool) value =
         if predicate value then Some value else None
 
+    /// <summary>
     /// Chains two option values together.
     /// If the first value is Some, it is returned; otherwise, the second value is returned.
+    /// </summary>
+    /// <remarks>
     /// Similar to the (??) operator in C#.
+    /// </remarks>
     [<CompiledName("Coalesce")>]
     let inline coalesce (x : 'T option) (y : 'T option) =
         match x with
@@ -807,7 +812,7 @@ module Option =
 
     //
     [<CompiledName("ToOutAndBool")>]
-    let inline toOutAndBool value ([<Out>] outValue : byref<'T>) =
+    let inline toOutAndBool (value, [<Out>] outValue : byref<'T>) : bool =
         match value with
         | Some x ->
             outValue <- x
@@ -815,7 +820,8 @@ module Option =
         | None ->
             false
 
-    //
+    /// Filters a option value by applying the given predicate function to the value it
+    /// contains (if any).
     [<CompiledName("Filter")>]
     let filter (predicate : 'T -> bool) value =
         match value with
@@ -823,7 +829,8 @@ module Option =
         | Some x ->
             if predicate x then Some x else None
 
-    //
+    /// Applies the specified function to two (2) option values when both values are Some.
+    /// Otherwise, returns None.
     [<CompiledName("Bind2")>]
     let bind2 (binder : 'T1 -> 'T2 -> 'U option) value1 value2 =
         match value1, value2 with
@@ -848,7 +855,9 @@ module Choice =
         | Choice2Of2 error ->
             Choice2Of2 error
 
-    //
+    /// Applies the specified mapping function to a choice value representing an error value
+    /// (Choice2Of2). If the choice value represents a result value (Choice1Of2), the result value
+    /// is passed through without modification.
     [<CompiledName("MapError")>]
     let mapError (mapping : 'Err1 -> 'Err2) (value : Choice<'T, 'Err1>) =
         match value with
@@ -857,7 +866,9 @@ module Choice =
         | Choice2Of2 error ->
             Choice2Of2 (mapping error)
 
-    //
+    /// Applies the specified binding function to a choice value representing a result value
+    /// (Choice1Of2). If the choice value represents an error value (Choice2Of2), the error value
+    /// is passed through without modification.
     [<CompiledName("Bind")>]
     let bind (binding : 'T -> Choice<'U, 'Error>) value =
         match value with
