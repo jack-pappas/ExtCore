@@ -38,11 +38,15 @@
   <ItemGroup>
     <None Include="packages.config" />
     <Compile Include="Pervasive.fs" />
+    <Compile Include="Control.fs" />
+    <Compile Include="Control.Cps.fs" />
     <Compile Include="Collections.fs" />
     <Compile Include="Collections.IntMap.fs" />
     <Compile Include="Collections.IntSet.fs" />
     <Compile Include="Collections.Bimap.fs" />
     <Compile Include="Collections.LazyList.fs" />
+    <Compile Include="Collections.Queue.fs" />
+    <Compile Include="Collections.PriorityQueue.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">
