@@ -1237,7 +1237,7 @@ module Choice =
         match x with
         | Choice1Of2 r -> r
         | Choice2Of2 msg ->
-            raise <| System.Exception msg
+            raise <| exn msg
 
     //
     [<CompiledName("SetError")>]
@@ -1271,17 +1271,6 @@ module ProtectedState =
             Choice2Of2 error
         | Choice1Of2 (value, state) ->
             k value state
-
-    //
-    [<CompiledName("Delay")>]
-    let inline delay f =
-        bind f <| fun state ->
-            Choice1Of2 ((), state)
-
-    //
-    [<CompiledName("Combine")>]
-    let inline combine (r1, r2) =
-        bind (fun () -> r2) r1
 
     //
     [<CompiledName("LiftState")>]
@@ -1318,13 +1307,13 @@ module ProtectedState =
                 Choice1Of2 (result, state)
 
     //
-    [<CompiledName("SetProtectedState")>]
-    let inline setProtectedState (state : 'State) =
+    [<CompiledName("SetState")>]
+    let inline setState (state : 'State) =
         Choice1Of2 ((), state)
 
     //
-    [<CompiledName("GetProtectedState")>]
-    let inline getProtectedState (state : 'State) =
+    [<CompiledName("GetState")>]
+    let inline getState (state : 'State) =
         Choice1Of2 (state, state)
 
     /// Sets an error value in the computation. The monadic equivalent of raising an exception.
