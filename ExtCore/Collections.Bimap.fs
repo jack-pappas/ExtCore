@@ -19,6 +19,7 @@ limitations under the License.
 //
 namespace ExtCore.Collections
 
+open System.Collections.Generic
 open System.Diagnostics
 open LanguagePrimitives
 open OptimizedClosures
@@ -28,7 +29,7 @@ open ExtCore
 /// A bi-directional map.
 [<Sealed>]
 [<NoEquality; NoComparison>]
-//[<DebuggerTypeProxy(typedefof<BimapDebuggerProxy<int,int>>)>]
+[<DebuggerTypeProxy(typedefof<BimapDebuggerProxy<int,int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
 type Bimap<'T1, 'T2
     when 'T1 : comparison
@@ -147,7 +148,7 @@ type Bimap<'T1, 'T2
             this
 
     //
-    member __.Iter (action : 'T1 -> 'T2 -> unit) : unit =
+    member __.Iterate (action : 'T1 -> 'T2 -> unit) : unit =
         Map.iter action left
 
     //
@@ -203,10 +204,45 @@ type Bimap<'T1, 'T2
     member this.ToArray () =
         let elements = ResizeArray ()
 
-        this.Iter (fun x y ->
-            elements.Add (x, y))
+        this.Iterate <| fun x y ->
+            elements.Add (x, y)
 
         ResizeArray.toArray elements
+
+    //
+    member internal this.LeftKvpArray () : KeyValuePair<'T1, 'T2>[] =
+        let elements = ResizeArray (1024)
+
+        this.Iterate <| fun x y ->
+            elements.Add (
+                KeyValuePair (x, y))
+
+        elements.ToArray ()
+
+    //
+    member internal this.RightKvpArray () : KeyValuePair<'T2, 'T1>[] =
+        let elements = ResizeArray (1024)
+
+        this.Iterate <| fun x y ->
+            elements.Add (
+                KeyValuePair (y, x))
+
+        elements.ToArray ()
+
+//
+and [<Sealed>]
+    internal BimapDebuggerProxy<'T1, 'T2
+        when 'T1 : comparison and 'T2 : comparison> (bimap : Bimap<'T1, 'T2>) =
+
+    [<DebuggerBrowsable(DebuggerBrowsableState.Collapsed)>]
+    member __.Left
+        with get () : KeyValuePair<'T1, 'T2>[] =
+            bimap.LeftKvpArray ()
+
+    [<DebuggerBrowsable(DebuggerBrowsableState.Collapsed)>]
+    member __.Right
+        with get () : KeyValuePair<'T2, 'T1>[] =
+            bimap.RightKvpArray ()
 
 /// Functional programming operators related to the Bimap<_,_> type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -334,7 +370,7 @@ module Bimap =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.Iter action
+        bimap.Iterate action
 
     //
     [<CompiledName("Fold")>]
