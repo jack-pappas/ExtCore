@@ -156,6 +156,36 @@ module AdditionalOperators =
     let inline notlazy (value : 'T) =
         Lazy.CreateFromValue value
 
+    /// Applies a mapping function to two (2) values, returning the input value
+    /// whose mapped value was the smaller (lesser) of the mapped values.
+    [<CompiledName("MinBy")>]
+    let inline minBy (mapping : 'T -> 'Key) (x : 'T) (y : 'T) =
+        if mapping x <= mapping y then x else y
+
+    /// Applies a mapping function to two (2) values, returning the input value
+    /// whose mapped value was the larger (greater) of the mapped values.
+    [<CompiledName("MaxBy")>]
+    let inline maxBy (mapping : 'T -> 'Key) (x : 'T) (y : 'T) =
+        if mapping x < mapping y then y else x
+
+    /// Applies a mapping function to two (2) values, returning the
+    /// smaller (lesser) of the resulting values.
+    [<CompiledName("MinWith")>]
+    let inline minWith (mapping : 'T -> 'U) (x : 'T) (y : 'T) =
+        let mapped_x = mapping x
+        let mapped_y = mapping y
+
+        if mapped_x <= mapped_y then mapped_x else mapped_y
+
+    /// Applies a mapping function to two (2) values, returning the
+    /// larger (greater) of the resulting values.
+    [<CompiledName("MaxWith")>]
+    let inline maxWith (mapping : 'T -> 'U) (x : 'T) (y : 'T) =
+        let mapped_x = mapping x
+        let mapped_y = mapping y
+
+        if mapped_x < mapped_y then mapped_y else mapped_x
+
 (*
 #if PROTO_COMPILER
     /// Returns the RuntimeTypeHandle of the specified type.
