@@ -444,146 +444,97 @@ module Bimap =
 
 
 /// <summary>A bi-directional IntMap.</summary>
+[<Sealed>]
 [<NoEquality; NoComparison>]
-type IntBimap<'T when 'T : comparison> = {
+[<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
+[<DebuggerDisplay("Count = {Count}")>]
+type IntBimap<'T when 'T : comparison>
+    private (left : IntMap<'T>, right : Map<'T, int>) =
     //
-    Left : IntMap<'T>;
-    //
-    Right : Map<'T, int>;
-}
-
-/// Functional programming operators related to the IntBimap type.
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module IntBimap =
-    /// The empty Bimap.
-    [<CompiledName("Empty")>]
-    let empty<'T when 'T : comparison> : IntBimap<'T> =
-        { Left = IntMap.empty; Right = Map.empty; }
+    static let empty = IntBimap (IntMap.Empty, Map.empty)
 
     //
-    [<CompiledName("Singleton")>]
-    let singleton x y : IntBimap<'T> =
-        { Left = IntMap.singleton x y;
-          Right = Map.singleton y x; }
+    static member Empty
+        with get () = empty
 
     //
-    [<CompiledName("IsEmpty")>]
-    let inline isEmpty (bimap : IntBimap<'T>) : bool =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.isEmpty bimap.Left
+    member __.Count
+        with get () =
+            IntMap.count left
 
     //
-    [<CompiledName("Count")>]
-    let inline count (bimap : IntBimap<'T>) : int =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.count bimap.Left
+    member __.IsEmpty
+        with get () =
+            IntMap.isEmpty left
 
     //
-    [<CompiledName("ContainsKey")>]
-    let inline containsKey key (bimap : IntBimap<'T>) : bool =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.containsKey key bimap.Left
+    member __.ContainsKey key =
+        IntMap.containsKey key left
 
     //
-    [<CompiledName("ContainsKeyBack")>]
-    let inline containsKeyBack key (bimap : IntBimap<'T>) : bool =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        Map.containsKey key bimap.Right
+    member __.ContainsKeyBack key =
+        Map.containsKey key right
 
     //
-    [<CompiledName("Paired")>]
-    let paired x y (bimap : IntBimap<'T>) : bool =
-        // Preconditions
-        checkNonNull "bimap" bimap
+    member __.Find key =
+        IntMap.find key left
 
+    //
+    member __.FindBack key =
+        Map.find key right
+
+    //
+    member __.Paired (x, y) =
         // NOTE : We only need to check one of the maps, because all
         // Bimap functions maintain the invariant.
-        match IntMap.tryFind x bimap.Left with
+        match IntMap.tryFind x left with
         | None ->
             false
         | Some value ->
             value = y
 
     //
-    [<CompiledName("TryFind")>]
-    let tryFind key (bimap : IntBimap<'T>) : 'T option =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.tryFind key bimap.Left
-
-    //
-    [<CompiledName("TryFindBack")>]
-    let tryFindBack key (bimap : IntBimap<'T>) : int option =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        Map.tryFind key bimap.Right
-
-    //
-    [<CompiledName("Find")>]
-    let find key (bimap : IntBimap<'T>) : 'T =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.find key bimap.Left
-
-    //
-    [<CompiledName("FindBack")>]
-    let findBack key (bimap : IntBimap<'T>) : int =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        Map.find key bimap.Right
-
-    //
-    [<CompiledName("Remove")>]
-    let remove key (bimap : IntBimap<'T>) : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
+    member this.Remove key =
         // Use the key to find its corresponding value.
-        match IntMap.tryFind key bimap.Left with
+        match IntMap.tryFind key left with
         | None ->
-            // The key doesn't exist, so return the original Bimap.
-            bimap
+            // The key doesn't exist. No changes are needed, so return this Bimap.
+            this
         | Some value ->
             // Remove the values from both maps.
-            { bimap with
-                Left = IntMap.remove key bimap.Left;
-                Right = Map.remove value bimap.Right; }
+            IntBimap (
+                IntMap.remove key left,
+                Map.remove value right)
 
     //
-    [<CompiledName("RemoveBack")>]
-    let removeBack key (bimap : IntBimap<'T>) : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
+    member this.RemoveBack key =
         // Use the key to find its corresponding value.
-        match Map.tryFind key bimap.Right with
+        match Map.tryFind key right with
         | None ->
-            // The key doesn't exist, so return the original Bimap.
-            bimap
+            // The key doesn't exist. No changes are needed, so return this Bimap.
+            this
         | Some value ->
             // Remove the values from both maps.
-            { bimap with
-                Left = IntMap.remove value bimap.Left;
-                Right = Map.remove key bimap.Right; }
+            IntBimap (
+                IntMap.remove value left,
+                Map.remove key right)
 
     //
-    [<CompiledName("Add")>]
-    let add x y (bimap : IntBimap<'T>) : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "bimap" bimap
+    member __.TryFind key =
+        IntMap.tryFind key left
 
+    //
+    member __.TryFindBack key =
+        Map.tryFind key right
+
+    //
+    static member Singleton (x, y) : IntBimap<'T> =
+        IntBimap (
+            IntMap.singleton x y,
+            Map.singleton y x)
+
+    //
+    member this.Add (x, y) =
         // Add the values to both maps.
         // As in Map, we overwrite any existing entry; however, we have to be
         // a bit more thorough here to ensure the invariant is maintained.
@@ -591,137 +542,316 @@ module IntBimap =
         // unnecessary or duplicated checks while still maintaining the invariant.
         // It'd also be nice if we could do this in a way that detects if the values
         // are already present and bound to each other, so we don't need to alter the Bimap at all...
-        let bimap = remove x bimap
-        let bimap = removeBack y bimap
-        { bimap with
-            Left = IntMap.add x y bimap.Left;
-            Right = Map.add y x bimap.Right; }
+        let bimap = this.Remove x
+        let bimap = this.RemoveBack y
+        bimap.TryAdd (x, y)    // TODO : Create a private "AddUnsafe" method to avoid the lookups in TryAdd
 
     //
-    [<CompiledName("TryAdd")>]
-    let tryAdd x y (bimap : IntBimap<'T>) : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
+    member this.TryAdd (x, y) =
         // Check that neither value is already bound in the Bimap
         // before adding them; if either already belongs to the map
         // return the original Bimap.
-        match IntMap.tryFind x bimap.Left, Map.tryFind y bimap.Right with
+        match IntMap.tryFind x left, Map.tryFind y right with
         | None, None ->
-            { bimap with
-                Left = IntMap.add x y bimap.Left;
-                Right = Map.add y x bimap.Right; }
+            IntBimap (
+                IntMap.add x y left,
+                Map.add y x right)
 
         | _, _ ->
             // NOTE : We also return the original map when *both* values already
             // belong to the Bimap and are bound to each other -- because adding
             // them again wouldn't have any effect!
-            bimap
+            this
 
     //
-    [<CompiledName("Iterate")>]
-    let iter (action : int -> 'T -> unit) (bimap : IntBimap<'T>) : unit =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.iter action bimap.Left
+    member __.Iterate (action : int -> 'T -> unit) : unit =
+        IntMap.iter action left
 
     //
-    [<CompiledName("Fold")>]
-    let fold (folder : 'State -> int -> 'T -> 'State)
-            (state : 'State) (bimap : IntBimap<'T>) : 'State =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.fold folder state bimap.Left
+    member __.Fold (folder : 'State -> int -> 'T -> 'State, state : 'State) : 'State =
+        IntMap.fold folder state left
 
     //
-    [<CompiledName("FoldBack")>]
-    let foldBack (folder : int -> 'T -> 'State -> 'State)
-            (bimap : IntBimap<'T>) (state : 'State) : 'State =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        IntMap.foldBack folder bimap.Left state
+    member __.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
+        IntMap.foldBack folder left state
 
     //
-    [<CompiledName("Filter")>]
-    let filter (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>) : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
+    member this.Filter (predicate : int -> 'T -> bool) =
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
-        (bimap, bimap)
-        ||> fold (fun bimap x y ->
+        this.Fold ((fun (bimap : IntBimap<_>) x y ->
             if predicate.Invoke (x, y) then
                 bimap
             else
-                remove x bimap)
+                bimap.Remove x), this)
 
     //
-    [<CompiledName("Partition")>]
-    let partition (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>)
-            : IntBimap<'T> * IntBimap<'T> =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
+    member this.Partition (predicate : int -> 'T -> bool) =
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
         // Partition efficiently by removing elements from the original map
         // and adding them to a new map when the predicate returns false
         // (instead of creating two new maps).
-        ((bimap, empty), bimap)
-        ||> fold (fun (trueBimap, falseBimap) x y ->
+        this.Fold ((fun (trueBimap : IntBimap<_>, falseBimap : IntBimap<_>) x y ->
             if predicate.Invoke (x, y) then
                 trueBimap, falseBimap
             else
-                remove x trueBimap,
-                add x y falseBimap)
+                trueBimap.Remove x,
+                falseBimap.Add (x, y)), (this, empty))
+
+    //
+    static member OfList list =
+        (empty, list)
+        ||> List.fold (fun bimap (x, y) ->
+            bimap.Add (x, y))
+
+    //
+    member this.ToList () =
+        this.FoldBack ((fun x y list ->
+            (x, y) :: list), [])
+
+    //
+    static member OfArray array =
+        (empty, array)
+        ||> Array.fold (fun bimap (x, y) ->
+            bimap.Add (x, y))
+
+    //
+    member this.ToArray () =
+        let elements = ResizeArray ()
+
+        this.Iterate <| fun x y ->
+            elements.Add (x, y)
+
+        ResizeArray.toArray elements
+
+    //
+    member internal this.LeftKvpArray () : KeyValuePair<int, 'T>[] =
+        let elements = ResizeArray (1024)
+
+        this.Iterate <| fun x y ->
+            elements.Add (
+                KeyValuePair (x, y))
+
+        elements.ToArray ()
+
+    //
+    member internal this.RightKvpArray () : KeyValuePair<'T, int>[] =
+        let elements = ResizeArray (1024)
+
+        this.Iterate <| fun x y ->
+            elements.Add (
+                KeyValuePair (y, x))
+
+        elements.ToArray ()
+
+//
+and [<Sealed>]
+    internal IntBimapDebuggerProxy<'T when 'T : comparison> (bimap : IntBimap<'T>) =
+
+    [<DebuggerBrowsable(DebuggerBrowsableState.Collapsed)>]
+    member __.Left
+        with get () : KeyValuePair<int, 'T>[] =
+            bimap.LeftKvpArray ()
+
+    [<DebuggerBrowsable(DebuggerBrowsableState.Collapsed)>]
+    member __.Right
+        with get () : KeyValuePair<'T, int>[] =
+            bimap.RightKvpArray ()
+
+
+/// Functional programming operators related to the IntBimap type.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module IntBimap =
+    /// The empty IntBimap.
+    [<CompiledName("Empty")>]
+    [<GeneralizableValue>]
+    let empty<'T when 'T : comparison> : IntBimap<'T> =
+        IntBimap<'T>.Empty
+
+    //
+    [<CompiledName("Singleton")>]
+    let inline singleton x y : IntBimap<'T> =
+        IntBimap.Singleton (x, y)
+
+    //
+    [<CompiledName("IsEmpty")>]
+    let inline isEmpty (bimap : IntBimap<'T>) : bool =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.IsEmpty
+
+    //
+    [<CompiledName("Count")>]
+    let inline count (bimap : IntBimap<'T>) : int =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Count
+
+    //
+    [<CompiledName("ContainsKey")>]
+    let inline containsKey key (bimap : IntBimap<'T>) : bool =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ContainsKey key
+
+    //
+    [<CompiledName("ContainsKeyBack")>]
+    let inline containsKeyBack key (bimap : IntBimap<'T>) : bool =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ContainsKeyBack key
+
+    //
+    [<CompiledName("Paired")>]
+    let inline paired x y (bimap : IntBimap<'T>) : bool =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Paired (x, y)
+
+    //
+    [<CompiledName("TryFind")>]
+    let inline tryFind key (bimap : IntBimap<'T>) : 'T option =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.TryFind key
+
+    //
+    [<CompiledName("TryFindBack")>]
+    let inline tryFindBack key (bimap : IntBimap<'T>) : int option =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.TryFindBack key
+
+    //
+    [<CompiledName("Find")>]
+    let inline find key (bimap : IntBimap<'T>) : 'T =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Find key
+
+    //
+    [<CompiledName("FindBack")>]
+    let inline findBack key (bimap : IntBimap<'T>) : int =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.FindBack key
+
+    //
+    [<CompiledName("Remove")>]
+    let inline remove key (bimap : IntBimap<'T>) : IntBimap<'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Remove key
+
+    //
+    [<CompiledName("RemoveBack")>]
+    let inline removeBack key (bimap : IntBimap<'T>) : IntBimap<'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.RemoveBack key
+
+    //
+    [<CompiledName("Add")>]
+    let inline add x y (bimap : IntBimap<'T>) : IntBimap<'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Add (x, y)
+
+    //
+    [<CompiledName("TryAdd")>]
+    let inline tryAdd x y (bimap : IntBimap<'T>) : IntBimap<'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.TryAdd (x, y)
+
+    //
+    [<CompiledName("Iterate")>]
+    let inline iter (action : int -> 'T -> unit) (bimap : IntBimap<'T>) : unit =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Iterate action
+
+    //
+    [<CompiledName("Fold")>]
+    let inline fold (folder : 'State -> int -> 'T -> 'State)
+            (state : 'State) (bimap : IntBimap<'T>) : 'State =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Fold (folder, state)
+
+    //
+    [<CompiledName("FoldBack")>]
+    let inline foldBack (folder : int -> 'T -> 'State -> 'State)
+            (bimap : IntBimap<'T>) (state : 'State) : 'State =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.FoldBack (folder, state)
+
+    //
+    [<CompiledName("Filter")>]
+    let inline filter (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>) : IntBimap<'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Filter predicate
+
+    //
+    [<CompiledName("Partition")>]
+    let inline partition (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>)
+            : IntBimap<'T> * IntBimap<'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Partition predicate
 
     //
     [<CompiledName("OfList")>]
-    let ofList list : IntBimap<'T> =
+    let inline ofList list : IntBimap<'T> =
         // Preconditions
         checkNonNull "list" list
 
-        (empty, list)
-        ||> List.fold (fun bimap (x, y) ->
-            add x y bimap)
+        IntBimap<_>.OfList list
 
     //
     [<CompiledName("ToList")>]
-    let toList (bimap : IntBimap<'T>) : _ list =
+    let inline toList (bimap : IntBimap<'T>) : _ list =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        (bimap, [])
-        ||> foldBack (fun x y list ->
-            (x, y) :: list)
+        bimap.ToList ()
 
     //
     [<CompiledName("OfArray")>]
-    let ofArray array : IntBimap<'T> =
+    let inline ofArray array : IntBimap<'T> =
         // Preconditions
         checkNonNull "array" array
 
-        (empty, array)
-        ||> Array.fold (fun bimap (x, y) ->
-            add x y bimap)
+        IntBimap<_>.OfArray array
 
     //
     [<CompiledName("ToArray")>]
-    let toArray (bimap : IntBimap<'T>) =
+    let inline toArray (bimap : IntBimap<'T>) =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        let elements = ResizeArray ()
-
-        bimap
-        |> iter (fun x y ->
-            elements.Add (x, y))
-
-        ResizeArray.toArray elements
+        bimap.ToArray ()
 
     // TODO
     // ofMap, toMap, tryOfMap
