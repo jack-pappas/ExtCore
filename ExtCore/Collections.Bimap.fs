@@ -315,11 +315,11 @@ module Bimap =
 
 /// <summary>A bi-directional IntMap.</summary>
 [<NoEquality; NoComparison>]
-type IntBimap = {
+type IntBimap<'T when 'T : comparison> = {
     //
-    Left : IntMap<int>;
+    Left : IntMap<'T>;
     //
-    Right : IntMap<int>;
+    Right : Map<'T, int>;
 }
 
 /// Functional programming operators related to the IntBimap type.
@@ -327,18 +327,18 @@ type IntBimap = {
 module IntBimap =
     /// The empty Bimap.
     [<CompiledName("Empty")>]
-    let empty : IntBimap =
-        { Left = IntMap.empty; Right = IntMap.empty; }
+    let empty<'T when 'T : comparison> : IntBimap<'T> =
+        { Left = IntMap.empty; Right = Map.empty; }
 
     //
     [<CompiledName("Singleton")>]
-    let singleton x y : IntBimap =
+    let singleton x y : IntBimap<'T> =
         { Left = IntMap.singleton x y;
-          Right = IntMap.singleton y x; }
+          Right = Map.singleton y x; }
 
     //
     [<CompiledName("IsEmpty")>]
-    let inline isEmpty (bimap : IntBimap) : bool =
+    let inline isEmpty (bimap : IntBimap<'T>) : bool =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -346,7 +346,7 @@ module IntBimap =
 
     //
     [<CompiledName("Count")>]
-    let inline count (bimap : IntBimap) : int =
+    let inline count (bimap : IntBimap<'T>) : int =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -354,7 +354,7 @@ module IntBimap =
 
     //
     [<CompiledName("ContainsKey")>]
-    let inline containsKey key (bimap : IntBimap) : bool =
+    let inline containsKey key (bimap : IntBimap<'T>) : bool =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -362,15 +362,15 @@ module IntBimap =
 
     //
     [<CompiledName("ContainsKeyBack")>]
-    let inline containsKeyBack key (bimap : IntBimap) : bool =
+    let inline containsKeyBack key (bimap : IntBimap<'T>) : bool =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        IntMap.containsKey key bimap.Right
+        Map.containsKey key bimap.Right
 
     //
     [<CompiledName("Paired")>]
-    let paired x y (bimap : IntBimap) : bool =
+    let paired x y (bimap : IntBimap<'T>) : bool =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -384,7 +384,7 @@ module IntBimap =
 
     //
     [<CompiledName("TryFind")>]
-    let tryFind key (bimap : IntBimap) : int option =
+    let tryFind key (bimap : IntBimap<'T>) : 'T option =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -392,15 +392,15 @@ module IntBimap =
 
     //
     [<CompiledName("TryFindBack")>]
-    let tryFindBack key (bimap : IntBimap) : int option =
+    let tryFindBack key (bimap : IntBimap<'T>) : int option =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        IntMap.tryFind key bimap.Right
+        Map.tryFind key bimap.Right
 
     //
     [<CompiledName("Find")>]
-    let find key (bimap : IntBimap) : int =
+    let find key (bimap : IntBimap<'T>) : 'T =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -408,15 +408,15 @@ module IntBimap =
 
     //
     [<CompiledName("FindBack")>]
-    let findBack key (bimap : IntBimap) : int =
+    let findBack key (bimap : IntBimap<'T>) : int =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        IntMap.find key bimap.Right
+        Map.find key bimap.Right
 
     //
     [<CompiledName("Remove")>]
-    let remove key (bimap : IntBimap) : IntBimap =
+    let remove key (bimap : IntBimap<'T>) : IntBimap<'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -429,16 +429,16 @@ module IntBimap =
             // Remove the values from both maps.
             { bimap with
                 Left = IntMap.remove key bimap.Left;
-                Right = IntMap.remove value bimap.Right; }
+                Right = Map.remove value bimap.Right; }
 
     //
     [<CompiledName("RemoveBack")>]
-    let removeBack key (bimap : IntBimap) : IntBimap =
+    let removeBack key (bimap : IntBimap<'T>) : IntBimap<'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
         // Use the key to find its corresponding value.
-        match IntMap.tryFind key bimap.Right with
+        match Map.tryFind key bimap.Right with
         | None ->
             // The key doesn't exist, so return the original Bimap.
             bimap
@@ -446,11 +446,11 @@ module IntBimap =
             // Remove the values from both maps.
             { bimap with
                 Left = IntMap.remove value bimap.Left;
-                Right = IntMap.remove key bimap.Right; }
+                Right = Map.remove key bimap.Right; }
 
     //
     [<CompiledName("Add")>]
-    let add x y (bimap : IntBimap) : IntBimap =
+    let add x y (bimap : IntBimap<'T>) : IntBimap<'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -465,22 +465,22 @@ module IntBimap =
         let bimap = removeBack y bimap
         { bimap with
             Left = IntMap.add x y bimap.Left;
-            Right = IntMap.add y x bimap.Right; }
+            Right = Map.add y x bimap.Right; }
 
     //
     [<CompiledName("TryAdd")>]
-    let tryAdd x y (bimap : IntBimap) : IntBimap =
+    let tryAdd x y (bimap : IntBimap<'T>) : IntBimap<'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
         // Check that neither value is already bound in the Bimap
         // before adding them; if either already belongs to the map
         // return the original Bimap.
-        match IntMap.tryFind x bimap.Left, IntMap.tryFind y bimap.Right with
+        match IntMap.tryFind x bimap.Left, Map.tryFind y bimap.Right with
         | None, None ->
             { bimap with
                 Left = IntMap.add x y bimap.Left;
-                Right = IntMap.add y x bimap.Right; }
+                Right = Map.add y x bimap.Right; }
 
         | _, _ ->
             // NOTE : We also return the original map when *both* values already
@@ -490,7 +490,7 @@ module IntBimap =
 
     //
     [<CompiledName("Iterate")>]
-    let iter (action : int -> int -> unit) (bimap : IntBimap) : unit =
+    let iter (action : int -> 'T -> unit) (bimap : IntBimap<'T>) : unit =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -498,8 +498,8 @@ module IntBimap =
 
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> int -> int -> 'State)
-            (state : 'State) (bimap : IntBimap) : 'State =
+    let fold (folder : 'State -> int -> 'T -> 'State)
+            (state : 'State) (bimap : IntBimap<'T>) : 'State =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -507,8 +507,8 @@ module IntBimap =
 
     //
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : int -> int -> 'State -> 'State)
-            (bimap : IntBimap) (state : 'State) : 'State =
+    let foldBack (folder : int -> 'T -> 'State -> 'State)
+            (bimap : IntBimap<'T>) (state : 'State) : 'State =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -516,7 +516,7 @@ module IntBimap =
 
     //
     [<CompiledName("Filter")>]
-    let filter (predicate : int -> int -> bool) (bimap : IntBimap) : IntBimap =
+    let filter (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>) : IntBimap<'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -531,8 +531,8 @@ module IntBimap =
 
     //
     [<CompiledName("Partition")>]
-    let partition (predicate : int -> int -> bool) (bimap : IntBimap)
-            : IntBimap * IntBimap =
+    let partition (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>)
+            : IntBimap<'T> * IntBimap<'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -551,7 +551,7 @@ module IntBimap =
 
     //
     [<CompiledName("OfList")>]
-    let ofList list : IntBimap =
+    let ofList list : IntBimap<'T> =
         // Preconditions
         checkNonNull "list" list
 
@@ -561,7 +561,7 @@ module IntBimap =
 
     //
     [<CompiledName("ToList")>]
-    let toList (bimap : IntBimap) : _ list =
+    let toList (bimap : IntBimap<'T>) : _ list =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -571,7 +571,7 @@ module IntBimap =
 
     //
     [<CompiledName("OfArray")>]
-    let ofArray array : IntBimap =
+    let ofArray array : IntBimap<'T> =
         // Preconditions
         checkNonNull "array" array
 
@@ -581,7 +581,7 @@ module IntBimap =
 
     //
     [<CompiledName("ToArray")>]
-    let toArray (bimap : IntBimap) =
+    let toArray (bimap : IntBimap<'T>) =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -600,10 +600,10 @@ module IntBimap =
 #if PROTO_COMPILER
 
 /// <summary>A bi-directional TagMap.</summary>
-/// <typeparam name="Tag1">The tag (measure) type for the first set of values.</typeparam>
-/// <typeparam name="Tag2">The tag (measure) type for the second set of values.</typeparam>
+/// <typeparam name="Tag">The tag (measure) type for the first set of values.</typeparam>
+/// <typeparam name="T">The type of the second set of values.</typeparam>
 [<MeasureAnnotatedAbbreviation>]
-type TagBimap< [<Measure>] 'Tag1, [<Measure>] 'Tag2 > = IntBimap
+type TagBimap< [<Measure>] 'Tag, 'T when 'T : comparison > = IntBimap<'T>
 
 #endif
 

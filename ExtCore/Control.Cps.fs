@@ -54,7 +54,7 @@ type TransactionFunc<'State, 'T, 'Error, 'K> =
 /// </summary>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="K"></typeparam>
-type ContinuationFunc<'T, 'K> =
+type ContFunc<'T, 'K> =
     ('T -> 'K) -> 'K
 
 /// <summary>
@@ -62,23 +62,23 @@ type ContinuationFunc<'T, 'K> =
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="K"></typeparam>
-type StateContinuationFunc<'State, 'T, 'K> =
+type StateContFunc<'State, 'T, 'K> =
     'State -> ('T * 'State -> 'K) -> 'K
 
 /// <summary>
 /// </summary>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="K"></typeparam>
-type MaybeContinuationFunc<'T, 'K> =
-    ContinuationFunc<'T option, 'K>
+type MaybeContFunc<'T, 'K> =
+    ContFunc<'T option, 'K>
 
 /// <summary>
 /// </summary>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
-type ChoiceContinuationFunc<'T, 'Error, 'K> =
-    ContinuationFunc<Choice<'T, 'Error>, 'K>
+type ChoiceContFunc<'T, 'Error, 'K> =
+    ContFunc<Choice<'T, 'Error>, 'K>
 
 /// <summary>
 /// </summary>
@@ -86,7 +86,7 @@ type ChoiceContinuationFunc<'T, 'Error, 'K> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
-type ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
+type ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
     'State -> (Choice<'T * 'State, 'Error> -> 'K) -> 'K
 
 
@@ -151,30 +151,30 @@ type TransactionBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ContinuationBuilder () =
+type ContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : ContinuationFunc<'T, 'K> =
+        : ContFunc<'T, 'K> =
         fun k -> k value
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : ContinuationFunc<'T, 'K> =
+        : ContFunc<'T, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : ContinuationFunc<unit, 'K> =
+        : ContFunc<unit, 'K> =
         fun k -> k ()
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : ContinuationFunc<'T, 'K> =
+        : ContFunc<'T, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : ContinuationFunc<_,_>, f : 'T -> ContinuationFunc<_,_>)
-        : ContinuationFunc<'U, 'K> =
+    member inline __.Bind (m : ContFunc<_,_>, f : 'T -> ContFunc<_,_>)
+        : ContFunc<'U, 'K> =
         fun cont ->
             m <| fun result ->
                 f result cont
@@ -182,38 +182,38 @@ type ContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : ContinuationFunc<unit, 'K>, r2 : ContinuationFunc<'T, 'K>)
-        : ContinuationFunc<'T, 'K> =
+    member inline __.Combine (r1 : ContFunc<unit, 'K>, r2 : ContFunc<'T, 'K>)
+        : ContFunc<'T, 'K> =
         fun cont ->
             r1 <| fun () ->
                 r2 cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : ContinuationFunc<_,_>, handler : exn -> ContinuationFunc<_,_>)
-        : ContinuationFunc<'T, 'K> =
+    member inline __.TryWith (body : ContFunc<_,_>, handler : exn -> ContFunc<_,_>)
+        : ContFunc<'T, 'K> =
         fun state ->
             try body state
             with ex ->
                 handler ex state
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : ContinuationFunc<_,_>, handler)
-        : ContinuationFunc<'T, 'K> =
+    member inline __.TryFinally (body : ContFunc<_,_>, handler)
+        : ContFunc<'T, 'K> =
         fun state ->
             try body state
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ContinuationFunc<_,_>)
-        : ContinuationFunc<'U, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ContFunc<_,_>)
+        : ContFunc<'U, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ContinuationFunc<_,_>)
-        : ContinuationFunc<unit, 'K> =
+    member this.While (guard, body : ContFunc<_,_>)
+        : ContFunc<unit, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -222,8 +222,8 @@ type ContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ContinuationFunc<_,_>)
-        : ContinuationFunc<unit, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> ContFunc<_,_>)
+        : ContFunc<unit, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -234,32 +234,32 @@ type ContinuationBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type StateContinuationBuilder () =
+type StateContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : StateContinuationFunc<'State, 'T, 'K> =
+        : StateContFunc<'State, 'T, 'K> =
         fun state cont ->
             cont (value, state)
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : StateContinuationFunc<'State, 'T, 'K> =
+        : StateContFunc<'State, 'T, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : StateContinuationFunc<'State, unit, 'K> =
+        : StateContFunc<'State, unit, 'K> =
         fun state cont ->
             cont ((), state)
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : StateContinuationFunc<'State, 'T, 'K> =
+        : StateContFunc<'State, 'T, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : StateContinuationFunc<_,_,_>, k : 'T -> StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<'State, 'U, 'K> =
+    member inline __.Bind (m : StateContFunc<_,_,_>, k : 'T -> StateContFunc<_,_,_>)
+        : StateContFunc<'State, 'U, 'K> =
         fun state cont ->
             m state <| fun (result, state) ->
                 k result state cont
@@ -267,31 +267,31 @@ type StateContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : StateContinuationFunc<'State, unit, _>, r2 : StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<'State, 'T, 'K> =
+    member inline __.Combine (r1 : StateContFunc<'State, unit, _>, r2 : StateContFunc<_,_,_>)
+        : StateContFunc<'State, 'T, 'K> =
         fun (state : 'State) cont ->
             r1 state <| fun ((), state) ->
                 r2 state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : StateContinuationFunc<_,_,_>, handler : exn -> StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<'State, 'T, 'K> =
+    member inline __.TryWith (body : StateContFunc<_,_,_>, handler : exn -> StateContFunc<_,_,_>)
+        : StateContFunc<'State, 'T, 'K> =
         fun state cont ->
             try body state cont
             with ex ->
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : StateContinuationFunc<_,_,_>, handler)
-        : StateContinuationFunc<'State, 'T, 'K> =
+    member inline __.TryFinally (body : StateContFunc<_,_,_>, handler)
+        : StateContFunc<'State, 'T, 'K> =
         fun state cont ->
             try body state cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<'State, 'U, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateContFunc<_,_,_>)
+        : StateContFunc<'State, 'U, 'K> =
         fun state cont ->
             try body resource state cont
             finally
@@ -299,8 +299,8 @@ type StateContinuationBuilder () =
                     resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<'State, unit, 'K> =
+    member this.While (guard, body : StateContFunc<_,_,_>)
+        : StateContFunc<'State, unit, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -309,8 +309,8 @@ type StateContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> StateContinuationFunc<_,_,_>)
-        : StateContinuationFunc<'State, unit, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> StateContFunc<_,_,_>)
+        : StateContFunc<'State, unit, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -321,32 +321,32 @@ type StateContinuationBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type MaybeContinuationBuilder () =
+type MaybeContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : MaybeContinuationFunc<'T, 'K> =
+        : MaybeContFunc<'T, 'K> =
         fun cont ->
             cont (Some value)
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : MaybeContinuationFunc<'T, 'K> =
+        : MaybeContFunc<'T, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : MaybeContinuationFunc<unit, 'K> =
+        : MaybeContFunc<unit, 'K> =
         fun cont ->
             cont (Some ())
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : MaybeContinuationFunc<_,_> =
+        : MaybeContFunc<_,_> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : MaybeContinuationFunc<_,_>, k : 'T -> MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<'U, 'K> =
+    member inline __.Bind (m : MaybeContFunc<_,_>, k : 'T -> MaybeContFunc<_,_>)
+        : MaybeContFunc<'U, 'K> =
         fun cont ->
             m <| fun result ->
             match result with
@@ -358,8 +358,8 @@ type MaybeContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : MaybeContinuationFunc<_,_>, r2 : MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<'T, 'K> =
+    member inline __.Combine (r1 : MaybeContFunc<_,_>, r2 : MaybeContFunc<_,_>)
+        : MaybeContFunc<'T, 'K> =
         fun cont ->
             r1 <| fun result ->
             match result with
@@ -369,31 +369,31 @@ type MaybeContinuationBuilder () =
                 r2 cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : MaybeContinuationFunc<_,_>, handler : exn -> MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<'T, 'K> =
+    member inline __.TryWith (body : MaybeContFunc<_,_>, handler : exn -> MaybeContFunc<_,_>)
+        : MaybeContFunc<'T, 'K> =
         fun cont ->
             try body cont
             with ex ->
                 handler ex cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : MaybeContinuationFunc<_,_>, handler)
-        : MaybeContinuationFunc<'T, 'K> =
+    member inline __.TryFinally (body : MaybeContFunc<_,_>, handler)
+        : MaybeContFunc<'T, 'K> =
         fun cont ->
             try body cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<'U, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> MaybeContFunc<_,_>)
+        : MaybeContFunc<'U, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<unit, 'K> =
+    member this.While (guard, body : MaybeContFunc<_,_>)
+        : MaybeContFunc<unit, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -402,8 +402,8 @@ type MaybeContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> MaybeContinuationFunc<_,_>)
-        : MaybeContinuationFunc<unit, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> MaybeContFunc<_,_>)
+        : MaybeContFunc<unit, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -414,32 +414,32 @@ type MaybeContinuationBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ChoiceContinuationBuilder () =
+type ChoiceContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : ChoiceContinuationFunc<'T, 'Error, 'K> =
+        : ChoiceContFunc<'T, 'Error, 'K> =
         fun cont ->
             cont (Choice1Of2 value)
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : ChoiceContinuationFunc<'T, 'Error, 'K> =
+        : ChoiceContFunc<'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : ChoiceContinuationFunc<unit, 'Error, 'K> =
+        : ChoiceContFunc<unit, 'Error, 'K> =
         fun cont ->
             cont (Choice1Of2 ())
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : ChoiceContinuationFunc<'T, 'Error, 'K> =
+        : ChoiceContFunc<'T, 'Error, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : ChoiceContinuationFunc<_,_,_>, k : 'T -> ChoiceContinuationFunc<_,_,_>)
-        : ChoiceContinuationFunc<'U, 'Error, 'K> =
+    member inline __.Bind (m : ChoiceContFunc<_,_,_>, k : 'T -> ChoiceContFunc<_,_,_>)
+        : ChoiceContFunc<'U, 'Error, 'K> =
         fun cont ->
             m <| fun result ->
             match result with
@@ -452,8 +452,8 @@ type ChoiceContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : ChoiceContinuationFunc<_,_,_>, r2 : ChoiceContinuationFunc<_,_,_>)
-        : ChoiceContinuationFunc<'T, 'Error, 'K> =
+    member inline __.Combine (r1 : ChoiceContFunc<_,_,_>, r2 : ChoiceContFunc<_,_,_>)
+        : ChoiceContFunc<'T, 'Error, 'K> =
         fun cont ->
             r1 <| fun result ->
             match result with
@@ -464,31 +464,31 @@ type ChoiceContinuationBuilder () =
                 r2 cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : ChoiceContinuationFunc<_,_,_>, handler : exn -> ChoiceContinuationFunc<_,_,_>)
-        : ChoiceContinuationFunc<'T, 'Error, 'K> =
+    member inline __.TryWith (body : ChoiceContFunc<_,_,_>, handler : exn -> ChoiceContFunc<_,_,_>)
+        : ChoiceContFunc<'T, 'Error, 'K> =
         fun cont ->
             try body cont
             with ex ->
                 handler ex cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : ChoiceContinuationFunc<_,_,_>, handler)
-        : ChoiceContinuationFunc<'T, 'Error, 'K> =
+    member inline __.TryFinally (body : ChoiceContFunc<_,_,_>, handler)
+        : ChoiceContFunc<'T, 'Error, 'K> =
         fun cont ->
             try body cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ChoiceContinuationFunc<_,_,_>)
-        : ChoiceContinuationFunc<'U, 'Error, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ChoiceContFunc<_,_,_>)
+        : ChoiceContFunc<'U, 'Error, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ChoiceContinuationFunc<_,_,_>)
-        : ChoiceContinuationFunc<unit, 'Error, 'K> =
+    member this.While (guard, body : ChoiceContFunc<_,_,_>)
+        : ChoiceContFunc<unit, 'Error, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -497,8 +497,8 @@ type ChoiceContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ChoiceContinuationFunc<_,_,_>)
-        : ChoiceContinuationFunc<unit, 'Error, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> ChoiceContFunc<_,_,_>)
+        : ChoiceContFunc<unit, 'Error, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -509,31 +509,31 @@ type ChoiceContinuationBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ProtectedStateContinuationBuilder () =
+type ProtectedStateContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             cont (Choice1Of2 (value, state))
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : ProtectedStateContinuationFunc<'State, unit, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, unit, 'Error, 'K> =
         fun state cont ->
             cont (Choice1Of2 ((), state))
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : ProtectedStateContinuationFunc<_,_,_,_>, k : 'T -> ProtectedStateContinuationFunc<_,_,_,_>) =
+    member inline __.Bind (m : ProtectedStateContFunc<_,_,_,_>, k : 'T -> ProtectedStateContFunc<_,_,_,_>) =
         fun state cont ->
             m state <| fun result ->
                 match result with
@@ -546,8 +546,8 @@ type ProtectedStateContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : ProtectedStateContinuationFunc<_,_,_,_>, r2 : ProtectedStateContinuationFunc<_,_,_,_>)
-        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K>=
+    member inline __.Combine (r1 : ProtectedStateContFunc<_,_,_,_>, r2 : ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K>=
         fun state cont ->
             r1 state <| fun result ->
                 match result with
@@ -558,31 +558,31 @@ type ProtectedStateContinuationBuilder () =
                     r2 state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : ProtectedStateContinuationFunc<_,_,_,_>, handler : exn -> ProtectedStateContinuationFunc<_,_,_,_>)
-        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
+    member inline __.TryWith (body : ProtectedStateContFunc<_,_,_,_>, handler : exn -> ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             with ex ->
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : ProtectedStateContinuationFunc<_,_,_,_>, handler)
-        : ProtectedStateContinuationFunc<'State, 'T, 'Error, 'K> =
+    member inline __.TryFinally (body : ProtectedStateContFunc<_,_,_,_>, handler)
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateContinuationFunc<_,_,_,_>)
-        : ProtectedStateContinuationFunc<'State, 'U, 'Error, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, 'U, 'Error, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ProtectedStateContinuationFunc<_,_,_,_>)
-        : ProtectedStateContinuationFunc<'State, unit, 'Error, 'K> =
+    member this.While (guard, body : ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, unit, 'Error, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -591,8 +591,8 @@ type ProtectedStateContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ProtectedStateContinuationFunc<_,_,_,_>)
-        : ProtectedStateContinuationFunc<'State, unit, 'Error, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, unit, 'Error, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -602,26 +602,26 @@ type ProtectedStateContinuationBuilder () =
 
 /// <summary>
 /// </summary>
-[<RequireQualifiedAccess>]
-module Cps =
+[<AutoOpen>]
+module WorkflowBuilders =
 //    //
 //    [<CompiledName("Transaction")>]
 //    let transaction = TransactionBuilder ()
     //
     [<CompiledName("Cont")>]
-    let cont = ContinuationBuilder ()
+    let cont = ContBuilder ()
     //
-    [<CompiledName("State")>]
-    let state = StateContinuationBuilder ()
+    [<CompiledName("StateCont")>]
+    let stateCont = StateContBuilder ()
     //
-    [<CompiledName("Maybe")>]
-    let maybe = MaybeContinuationBuilder ()
+    [<CompiledName("MaybeCont")>]
+    let maybeCont = MaybeContBuilder ()
     //
-    [<CompiledName("Choice")>]
-    let choice = ChoiceContinuationBuilder ()
+    [<CompiledName("ChoiceCont")>]
+    let choiceCont = ChoiceContBuilder ()
     //
-    [<CompiledName("ProtectedState")>]
-    let protectedState = ProtectedStateContinuationBuilder ()
+    [<CompiledName("ProtectedStateCont")>]
+    let protectedStateCont = ProtectedStateContBuilder ()
 
 
 (*
@@ -631,12 +631,12 @@ module Cps =
 module Transaction =
     //
     let dummy () = ()
-
+*)
 
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Continuation =
+module Cont =
     /// Call with current continuation.
     [<CompiledName("CallCC")>]
     let inline callCC kk k =
@@ -646,11 +646,62 @@ module Continuation =
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module StateContinuation =
+module StateCont =
+    //
+    [<CompiledName("Run")>]
+    let inline run (stateFunc : StateContFunc<'State, 'T, 'K>) initialState cont =
+        stateFunc initialState cont
+    
+    //
+    [<CompiledName("Evaluate")>]
+    let evaluate (stateFunc : StateContFunc<'State, 'T, 'K>) initialState cont =
+        // "Run" the state function, starting with the initial state.
+        // Discard the final state value and return the final result value.
+        stateFunc initialState (fst >> cont)
+
+    //
+    [<CompiledName("Execute")>]
+    let execute (stateFunc : StateContFunc<'State, 'T, 'K>) initialState cont =
+        // "Run" the state function, starting with the initial state.
+        // Discard the final result value and return the final state value.
+        stateFunc initialState (snd >> cont)
+
+    //
+    [<CompiledName("GetState")>]
+    let inline getState (state : 'State) cont : 'K =
+        cont (state, state)
+
+    //
+    [<CompiledName("SetState")>]
+    let inline setState (state : 'State) (_ : 'State) cont : 'K =
+        cont ((), state)
+
+(*
+/// <summary>
+/// </summary>
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module MaybeCont =
     //
     let dummy () = ()
+*)
 
+/// <summary>
+/// </summary>
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ChoiceCont =
+    //
+    [<CompiledName("SetError")>]
+    let inline setError error cont : Choice<'T, 'Error> =
+        Choice2Of2 error
+        |> cont
 
+    //
+    [<CompiledName("Failwith")>]
+    let inline failwith errorMsg cont : Choice<'T, string> =
+        Choice2Of2 errorMsg
+        |> cont
+
+(*
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -668,7 +719,7 @@ module ProtectedStateContinuation =
 /// <typeparam name="S2"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="K"></typeparam>
-type StateContinuationFuncIndexed<'S1, 'S2, 'T, 'K> =
+type StateContFuncIndexed<'S1, 'S2, 'T, 'K> =
     'S1 -> ('T * 'S2 -> 'K) -> 'K
 
 /// <summary>
@@ -678,38 +729,38 @@ type StateContinuationFuncIndexed<'S1, 'S2, 'T, 'K> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
-type ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+type ProtectedStateContFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
     'S1 -> (Choice<'T * 'S2, 'Error> -> 'K) -> 'K
 
 /// <summary>
 /// </summary>
 [<Sealed>]
-type StateContinuationBuilder () =
+type StateContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : StateContinuationFuncIndexed<'State, 'State, 'T, 'K> =
+        : StateContFuncIndexed<'State, 'State, 'T, 'K> =
         fun state cont ->
             cont (value, state)
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : StateContinuationFuncIndexed<'S1, 'S2, 'T, 'K> =
+        : StateContFuncIndexed<'S1, 'S2, 'T, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : StateContinuationFuncIndexed<'State, 'State, unit, 'K> =
+        : StateContFuncIndexed<'State, 'State, unit, 'K> =
         fun state cont ->
             cont ((), state)
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : StateContinuationFuncIndexed<'S1, 'S2, 'T, 'K> =
+        : StateContFuncIndexed<'S1, 'S2, 'T, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : StateContinuationFuncIndexed<_,'S2,_,_>, k : 'T -> StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<'S1, 'S3, 'U, 'K> =
+    member inline __.Bind (m : StateContFuncIndexed<_,'S2,_,_>, k : 'T -> StateContFuncIndexed<_,_,_,_>)
+        : StateContFuncIndexed<'S1, 'S3, 'U, 'K> =
         fun state cont ->
             m state <| fun (result, state) ->
                 k result state cont
@@ -717,38 +768,38 @@ type StateContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : StateContinuationFuncIndexed<_,'S2,_,_>, r2 : StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<'S1, 'S3, 'T, 'K> =
+    member inline __.Combine (r1 : StateContFuncIndexed<_,'S2,_,_>, r2 : StateContFuncIndexed<_,_,_,_>)
+        : StateContFuncIndexed<'S1, 'S3, 'T, 'K> =
         fun state cont ->
             r1 state <| fun ((), state) ->
                 r2 state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : StateContinuationFuncIndexed<_,_,_,_>, handler : exn -> StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member inline __.TryWith (body : StateContFuncIndexed<_,_,_,_>, handler : exn -> StateContFuncIndexed<_,_,_,_>)
+        : StateContFuncIndexed<_,_,_,_> =
         fun state cont ->
             try body state cont
             with ex ->
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : StateContinuationFuncIndexed<_,_,_,_>, handler)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member inline __.TryFinally (body : StateContFuncIndexed<_,_,_,_>, handler)
+        : StateContFuncIndexed<_,_,_,_> =
         fun state cont ->
             try body state cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateContFuncIndexed<_,_,_,_>)
+        : StateContFuncIndexed<_,_,_,_> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member this.While (guard, body : StateContFuncIndexed<_,_,_,_>)
+        : StateContFuncIndexed<_,_,_,_> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -757,8 +808,8 @@ type StateContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> StateContinuationFuncIndexed<_,_,_,_>)
-        : StateContinuationFuncIndexed<_,_,_,_> =
+    member this.For (sequence : seq<_>, body : 'T -> StateContFuncIndexed<_,_,_,_>)
+        : StateContFuncIndexed<_,_,_,_> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -768,31 +819,31 @@ type StateContinuationBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ProtectedStateContinuationBuilder () =
+type ProtectedStateContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : ProtectedStateContinuationFuncIndexed<'State, 'State, 'T, 'Error, 'K> =
+        : ProtectedStateContFuncIndexed<'State, 'State, 'T, 'Error, 'K> =
         fun state cont ->
             cont (Choice1Of2 (value, state))
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+        : ProtectedStateContFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : ProtectedStateContinuationFuncIndexed<'State, 'State, unit, 'Error, 'K> =
+        : ProtectedStateContFuncIndexed<'State, 'State, unit, 'Error, 'K> =
         fun state cont ->
             cont (Choice1Of2 ((), state))
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+        : ProtectedStateContFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>, k : 'T -> ProtectedStateContinuationFuncIndexed<_,_,_,_,_>) =
+    member inline __.Bind (m : ProtectedStateContFuncIndexed<_,_,_,_,_>, k : 'T -> ProtectedStateContFuncIndexed<_,_,_,_,_>) =
         fun state cont ->
             m state <| fun result ->
                 match result with
@@ -805,8 +856,8 @@ type ProtectedStateContinuationBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : ProtectedStateContinuationFuncIndexed<_,'S2,_,_,_>, r2 : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S3, 'T, 'Error, 'K>=
+    member inline __.Combine (r1 : ProtectedStateContFuncIndexed<_,'S2,_,_,_>, r2 : ProtectedStateContFuncIndexed<_,_,_,_,_>)
+        : ProtectedStateContFuncIndexed<'S1, 'S3, 'T, 'Error, 'K>=
         fun state cont ->
             r1 state <| fun result ->
                 match result with
@@ -817,31 +868,31 @@ type ProtectedStateContinuationBuilder () =
                     r2 state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryWith (body : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>, handler : exn -> ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+    member inline __.TryWith (body : ProtectedStateContFuncIndexed<_,_,_,_,_>, handler : exn -> ProtectedStateContFuncIndexed<_,_,_,_,_>)
+        : ProtectedStateContFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             with ex ->
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>, handler)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
+    member inline __.TryFinally (body : ProtectedStateContFuncIndexed<_,_,_,_,_>, handler)
+        : ProtectedStateContFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'S1, 'S2, 'U, 'Error, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateContFuncIndexed<_,_,_,_,_>)
+        : ProtectedStateContFuncIndexed<'S1, 'S2, 'U, 'Error, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'State, 'State, unit, 'Error, 'K> =
+    member this.While (guard, body : ProtectedStateContFuncIndexed<_,_,_,_,_>)
+        : ProtectedStateContFuncIndexed<'State, 'State, unit, 'Error, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -850,8 +901,8 @@ type ProtectedStateContinuationBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ProtectedStateContinuationFuncIndexed<_,_,_,_,_>)
-        : ProtectedStateContinuationFuncIndexed<'State, 'State, unit, 'Error, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> ProtectedStateContFuncIndexed<_,_,_,_,_>)
+        : ProtectedStateContFuncIndexed<'State, 'State, unit, 'Error, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
