@@ -71,7 +71,7 @@ module Cont =
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module State =
+module StateCont =
     /// The standard F# Array module, lifted into the Cps.State monad.
     [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Array =
