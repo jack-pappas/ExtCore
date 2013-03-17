@@ -672,7 +672,7 @@ module IntBimap =
     //
     [<CompiledName("Singleton")>]
     let inline singleton x y : IntBimap<'T> =
-        IntBimap.Singleton (x, y)
+        IntBimap<'T>.Singleton (x, y)
 
     //
     [<CompiledName("IsEmpty")>]
@@ -864,6 +864,281 @@ module IntBimap =
 /// <typeparam name="T">The type of the second set of values.</typeparam>
 [<MeasureAnnotatedAbbreviation>]
 type TagBimap< [<Measure>] 'Tag, 'T when 'T : comparison > = IntBimap<'T>
+
+/// Functional programming operators related to the TagBimap<_,_> type.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module TagBimap =
+    /// Retypes a value without emitting any IL instructions.
+    /// WARNING: This should be used with EXTREME CAUTION.
+    [<NoDynamicInvocation>]
+    [<CompiledName("RetypeInlined")>]
+    let inline private retype<'T,'U> (x:'T) : 'U = (# "" x : 'U #)
+
+    /// The empty TagBimap.
+    [<CompiledName("Empty")>]
+    [<GeneralizableValue>]
+    let empty<'T when 'T : comparison> : TagBimap<'Tag, 'T> =
+        retype IntBimap<'T>.Empty
+
+    //
+    [<CompiledName("Singleton")>]
+    let inline singleton (x : int<'Tag>) y : TagBimap<'Tag, 'T> =
+        IntBimap.Singleton (retype x, y)
+        |> retype
+
+    //
+    [<CompiledName("IsEmpty")>]
+    let inline isEmpty (bimap : TagBimap<'Tag, 'T>) : bool =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.IsEmpty
+
+    //
+    [<CompiledName("Count")>]
+    let inline count (bimap : TagBimap<'Tag, 'T>) : int =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Count
+
+    //
+    [<CompiledName("ContainsKey")>]
+    let inline containsKey (key : int<'Tag>) (bimap : TagBimap<'Tag, 'T>) : bool =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+        
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ContainsKey (retype key)
+
+    //
+    [<CompiledName("ContainsKeyBack")>]
+    let inline containsKeyBack key (bimap : TagBimap<'Tag, 'T>) : bool =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ContainsKeyBack key
+
+    //
+    [<CompiledName("Paired")>]
+    let inline paired (x : int<'Tag>) y (bimap : TagBimap<'Tag, 'T>) : bool =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Paired (retype x, y)
+
+    //
+    [<CompiledName("TryFind")>]
+    let inline tryFind (key : int<'Tag>) (bimap : TagBimap<'Tag, 'T>) : 'T option =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.TryFind (retype key)
+
+    //
+    [<CompiledName("TryFindBack")>]
+    let inline tryFindBack key (bimap : TagBimap<'Tag, 'T>) : int<'Tag> option =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.TryFindBack key
+        |> retype
+
+    //
+    [<CompiledName("Find")>]
+    let inline find (key : int<'Tag>) (bimap : TagBimap<'Tag, 'T>) : 'T =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+        
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Find (retype key)
+
+    //
+    [<CompiledName("FindBack")>]
+    let inline findBack key (bimap : TagBimap<'Tag, 'T>) : int<'Tag> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.FindBack key
+        |> retype
+
+    //
+    [<CompiledName("Remove")>]
+    let inline remove (key : int<'Tag>) (bimap : TagBimap<'Tag, 'T>) : TagBimap<'Tag, 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Remove (retype key)
+        |> retype
+
+    //
+    [<CompiledName("RemoveBack")>]
+    let inline removeBack key (bimap : TagBimap<'Tag, 'T>) : TagBimap<'Tag, 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.RemoveBack key
+        |> retype
+
+    //
+    [<CompiledName("Add")>]
+    let inline add (x : int<'Tag>) y (bimap : TagBimap<'Tag, 'T>) : TagBimap<'Tag, 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Add (retype x, y)
+        |> retype
+
+    //
+    [<CompiledName("TryAdd")>]
+    let inline tryAdd (x : int<'Tag>) y (bimap : TagBimap<'Tag, 'T>) : TagBimap<'Tag, 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.TryAdd (retype x, y)
+        |> retype
+
+    //
+    [<CompiledName("Iterate")>]
+    let inline iter (action : int<'Tag> -> 'T -> unit) (bimap : TagBimap<'Tag, 'T>) : unit =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Iterate (retype action)
+
+    //
+    [<CompiledName("Fold")>]
+    let inline fold (folder : 'State -> int<'Tag> -> 'T -> 'State)
+            (state : 'State) (bimap : TagBimap<'Tag, 'T>) : 'State =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Fold (retype folder, state)
+
+    //
+    [<CompiledName("FoldBack")>]
+    let inline foldBack (folder : int<'Tag> -> 'T -> 'State -> 'State)
+            (bimap : TagBimap<'Tag, 'T>) (state : 'State) : 'State =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.FoldBack (retype folder, state)
+
+    //
+    [<CompiledName("Filter")>]
+    let inline filter (predicate : int<'Tag> -> 'T -> bool) (bimap : TagBimap<'Tag, 'T>) : TagBimap<'Tag, 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Filter (retype predicate)
+        |> retype
+
+    //
+    [<CompiledName("Partition")>]
+    let inline partition (predicate : int<'Tag> -> 'T -> bool) (bimap : TagBimap<'Tag, 'T>)
+            : TagBimap<'Tag, 'T> * TagBimap<'Tag, 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        let trueMap, falseMap = bimap.Partition (retype predicate)
+        (retype trueMap), (retype falseMap)
+
+    //
+    [<CompiledName("OfList")>]
+    let inline ofList (list : (int<'Tag> * 'T) list) : TagBimap<'Tag, 'T> =
+        // Preconditions
+        checkNonNull "list" list
+
+        IntBimap<_>.OfList (retype list)
+        |> retype
+
+    //
+    [<CompiledName("ToList")>]
+    let inline toList (bimap : TagBimap<'Tag, 'T>) : (int<'Tag> * 'T) list =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToList ()
+        |> retype
+
+    //
+    [<CompiledName("OfArray")>]
+    let inline ofArray (array : (int<'Tag> * 'T)[]) : TagBimap<'Tag, 'T> =
+        // Preconditions
+        checkNonNull "array" array
+
+        IntBimap<_>.OfArray (retype array)
+        |> retype
+
+    //
+    [<CompiledName("ToArray")>]
+    let inline toArray (bimap : TagBimap<'Tag, 'T>) : (int<'Tag> * 'T)[] =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToArray ()
+        |> retype
+
+    // TODO
+    // ofMap, toMap, tryOfMap
 
 #endif
 
