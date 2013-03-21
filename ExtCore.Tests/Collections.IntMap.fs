@@ -17,9 +17,8 @@ limitations under the License.
 *)
 
 /// Tests for the IntMap data structure.
-module ExtCore.Collections.Tests.IntMap
+module ExtCore.Collections.IntMap.Tests
 
-open ExtCore.Collections
 open NUnit.Framework
 open FsCheck
 

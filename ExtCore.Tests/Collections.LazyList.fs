@@ -17,9 +17,8 @@ limitations under the License.
 *)
 
 //
-namespace ExtCore.Collections.Tests
+module ExtCore.Collections.LazyList.Tests
 
-open ExtCore.Collections
 open NUnit.Framework
 open FsCheck
 
