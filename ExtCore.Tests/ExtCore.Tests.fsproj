@@ -40,7 +40,15 @@
     <Compile Include="Pervasive.fs" />
     <Compile Include="Control.fs" />
     <Compile Include="Control.Cps.fs" />
-    <Compile Include="Collections.fs" />
+    <Compile Include="Collections.Range.fs" />
+    <Compile Include="Collections.Seq.fs" />
+    <Compile Include="Collections.List.fs" />
+    <Compile Include="Collections.Array.fs" />
+    <Compile Include="Collections.ArrayView.fs" />
+    <Compile Include="Collections.Set.fs" />
+    <Compile Include="Collections.Map.fs" />
+    <Compile Include="Collections.ResizeArray.fs" />
+    <Compile Include="Collections.Dict.fs" />
     <Compile Include="Collections.IntMap.fs" />
     <Compile Include="Collections.IntSet.fs" />
     <Compile Include="Collections.Bimap.fs" />

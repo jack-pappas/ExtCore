@@ -19,10 +19,11 @@ limitations under the License.
 //
 namespace ExtCore.Collections.Tests
 
+open ExtCore
 open ExtCore.Collections
 open NUnit.Framework
 open FsCheck
 
 
-(* TODO : Implement tests for some methods like Array.segment *)
+(* TODO : Implement tests for functions in the ExtCore.Collections.Dict module. *)
 
