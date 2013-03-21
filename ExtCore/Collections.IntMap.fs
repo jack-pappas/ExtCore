@@ -1002,6 +1002,11 @@ module IntMap =
         map.Find key
 
     //
+    [<CompiledName("FindOrDefault")>]
+    let inline findOrDefault defaultValue (key : int) (map : IntMap<'T>) =
+        defaultArg (map.TryFind key) defaultValue
+
+    //
     [<CompiledName("Add")>]
     let inline add (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
         // Preconditions

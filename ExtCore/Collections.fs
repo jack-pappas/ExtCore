@@ -187,7 +187,7 @@ module List =
         | None -> []
         | Some x -> [x]
 
-    //
+    /// Create a list containing the given value.
     [<CompiledName("Singleton")>]
     let inline singleton (value : 'T) =
         [value]
@@ -915,6 +915,8 @@ module Array =
 
         chosen.ToArray ()
 
+    // TODO : foldPairs, foldPairsBack
+
 
 #if PROTO_COMPILER
 // TODO : Re-implement this module using the F# proto compiler, as in the TagMap and TagSet modules.
@@ -1333,7 +1335,7 @@ module ArrayView =
 /// Additional functional operators on sets.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Set =
-    //
+    /// Creates a set with the same elements as the ArrayView.
     [<CompiledName("OfArrayView")>]
     let ofArrayView (view : ArrayView<'T>) : Set<'T> =
         (Set.empty, view)
@@ -1614,7 +1616,9 @@ module Set =
                 |> Set.union union)
 
 
-    //
+    /// Functions operating over the Cartesian product of two sets.
+    /// These functions can offer a large memory savings since they avoid
+    /// creating the product set.
     [<RequireQualifiedAccess>]
     module Cartesian =
         //
@@ -1713,7 +1717,7 @@ module Map =
     let inline findOrDefault defaultValue key (map : Map<'Key, 'T>) =
         defaultArg (Map.tryFind key map) defaultValue
 
-    //
+    /// The Map containing the given binding.
     [<CompiledName("Singleton")>]
     let inline singleton key value : Map<'Key, 'T> =
         Map.empty

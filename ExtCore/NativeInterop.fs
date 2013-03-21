@@ -27,13 +27,13 @@ open Microsoft.FSharp.NativeInterop
 //
 [<RequireQualifiedAccess>]
 module NativePtr =
-    //
+    /// The null pointer.
     //[<Literal>]
     [<CompiledName("Zero")>]
     let zero<'T when 'T : unmanaged> : nativeptr<'T> =
         NativePtr.ofNativeInt 0n
 
-    //
+    /// Determines if a pointer is null.
     [<CompiledName("IsNull")>]
     let [<NoDynamicInvocation>] inline isNull (ptr : nativeptr<'T>) =
         0n = NativePtr.toNativeInt ptr
