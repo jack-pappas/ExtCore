@@ -281,10 +281,10 @@ module List =
     [<CompiledName("Take")>]
     let take count (list : 'T list) =
         // Preconditions
+        checkNonNull "list" list
         if count < 0 then
             invalidArg "count" "The number of items to take from the list is negative."
-        checkNonNull "list" list
-        if count > List.length list then
+        elif count > List.length list then
             invalidArg "count" "The number of items to take from the list is greater than the length of the list."
 
         // OPTIMIZATION : If count = 0 return immediately.
@@ -308,10 +308,10 @@ module List =
     [<CompiledName("TakeArray")>]
     let takeArray count (list : 'T list) =
         // Preconditions
+        checkNonNull "list" list
         if count < 0 then
             invalidArg "count" "The number of items to take from the list is negative."
-        checkNonNull "list" list
-        if count > List.length list then
+        elif count > List.length list then
             invalidArg "count" "The number of items to take from the list is greater than the length of the list."
 
         // OPTIMIZATION : If count = 0 return immediately.
@@ -588,12 +588,12 @@ module Array =
     let inline readonly (arr : 'T[]) =
         System.Array.AsReadOnly arr
 
-    //
+    /// Builds an array that contains the elements of the set in order.
     [<CompiledName("OfSet")>]
     let inline ofSet (set : Set<'T>) : 'T[] =
         Set.toArray set
 
-    //
+    /// Builds a set that contains the same elements as the given array.
     [<CompiledName("ToSet")>]
     let inline toSet (array : 'T[]) : Set<'T> =
         Set.ofArray array
@@ -635,6 +635,16 @@ module Array =
         if Array.isEmpty array then
             invalidOp "Cannot retrieve the last element of an empty array."
         else array.[array.Length - 1]
+
+    /// Determines if an array contains a specified value.
+    [<CompiledName("Contains")>]
+    let contains value (array : 'T[]) : bool =
+        // Preconditions
+        checkNonNull "array" array
+
+        System.Array.FindIndex (
+            array,
+            System.Predicate ((=) value)) <> -1
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
     /// The integer index passed to the function indicates the array index of the element being transformed.
@@ -774,9 +784,9 @@ module Array =
     [<CompiledName("ExpandRight")>]
     let expandRight count (array : 'T[]) =
         // Preconditions
+        checkNonNull "array" array
         if count < 0 then
             invalidArg "count" "The number of elements to expand the array by is negative."
-        checkNonNull "array" array
 
         // Create the new "expanded" array. Copy the elements from the original array
         // into the "left" side of the new array, then return the expanded array.
@@ -789,9 +799,9 @@ module Array =
     [<CompiledName("ExpandLeft")>]
     let expandLeft count (array : 'T[]) =
         // Preconditions
+        checkNonNull "array" array
         if count < 0 then
             invalidArg "count" "The number of elements to expand the array by is negative."
-        checkNonNull "array" array
 
         // Create the new "expanded" array. Copy the elements from the original array
         // into the "right" side of the new array, then return the expanded array.
@@ -912,13 +922,10 @@ module Array =
         chosen.ToArray ()
 
 
-    // TODO :
-    // foldPairs, foldBackPairs
-    // derive    // takes a 'T -> 'T -> 'T like reduce, but only performs one step; used to perform 'divided differences'
-        // Other possible names: reduceOnce, reduceStep
-
-
-//
+#if PROTO_COMPILER
+// TODO : Re-implement this module using the F# proto compiler, as in the TagMap and TagSet modules.
+// This will avoid the need to create "concrete" implementations of these functions, as we'll be able
+// to simply re-use existing implementations for the standard array type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TaggedArray =
     /// Similar to Array.mapi, but 'tags' the index values with a unit-of-measure
@@ -932,7 +939,7 @@ module TaggedArray =
         let len = array.Length
         let results = Array.zeroCreate len
         for i = 0 to len - 1 do
-            results.[i] <- mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i])
+            results.[i] <- mapping.Invoke (Tag.ofInt<'Tag> i, array.[i])
         results
 
     /// Similar to Array.mapi, but 'tags' the index values with a unit-of-measure
@@ -950,7 +957,7 @@ module TaggedArray =
 
         let results = Array.zeroCreate len1
         for i = 0 to len1 - 1 do
-            results.[i] <- mapping.Invoke (Int32WithMeasure<'Tag> i, array1.[i], array2.[i])
+            results.[i] <- mapping.Invoke (Tag.ofInt<'Tag> i, array1.[i], array2.[i])
         results
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
@@ -965,7 +972,7 @@ module TaggedArray =
         let mutable state = state
         let len = Array.length array
         for i = 0 to len - 1 do
-            state <- folder.Invoke (Int32WithMeasure<'Tag> i, state, array.[i])
+            state <- folder.Invoke (Tag.ofInt<'Tag> i, state, array.[i])
         state
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
@@ -980,8 +987,9 @@ module TaggedArray =
         
         let mutable state = state
         for i = Array.length array - 1 downto 0 do
-            state <- folder.Invoke (Int32WithMeasure<'Tag> i, array.[i], state)
+            state <- folder.Invoke (Tag.ofInt<'Tag> i, array.[i], state)
         state
+#endif
 
 
 /// Functional operators on ArrayViews.
@@ -1012,21 +1020,19 @@ module ArrayView =
     let inline ofArray (array : 'T[]) : ArrayView<'T> =
         ArrayView (array)
 
+    /// Creates an ArrayView on an array, starting at the specified index.
+    let inline create (array : 'T[]) offset count : ArrayView<'T> =
+        ArrayView (array, offset, count)
+
     /// Gets an element of an ArrayView<'T>.
     [<CompiledName("Get")>]
-    let get (view : ArrayView<'T>) index =
-        if index < 0 || index >= (count view) then
-            raise <| System.IndexOutOfRangeException ()
-        else
-            view.Array.[view.Offset + index]
+    let inline get (view : ArrayView<'T>) index =
+        view.[index]
 
     /// Sets an element of an ArrayView<'T>.
     [<CompiledName("Set")>]
-    let set (view : ArrayView<'T>) index value =
-        if index < 0 || index >= (count view) then
-            raise <| System.IndexOutOfRangeException ()
-        else
-            view.Array.[view.Offset + index] <- value
+    let inline set (view : ArrayView<'T>) index value =
+        view.[index] <- value
 
     /// Gets the first element in an ArrayView<'T>.
     [<CompiledName("First")>]
