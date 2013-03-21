@@ -20,11 +20,11 @@ limitations under the License.
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ExtCore.Control.Collections.Async
-    
-open Microsoft.FSharp.Control
+
 open OptimizedClosures
 open ExtCore
 open ExtCore.Collections
+open ExtCore.Control
 
 
 /// The standard F# Array module, lifted into the Async monad.
@@ -147,8 +147,8 @@ module Array =
         // Return the completed results.
         // TODO : Make sure the previous operations are guaranteed to be completed.
         // If not, we need to insert a blocking mechanism here to ensure we're done before calling .ToArray().
-        let result1 = resultList1.ToArray ()
-        let result2 = resultList2.ToArray ()
+        let result1 = ResizeArray.toArray resultList1
+        let result2 = ResizeArray.toArray resultList2
         return result1, result2
         }
 
@@ -266,4 +266,139 @@ module Array =
     // TODO : mapReduce
 
 
+/// Functions for manipulating sequences within 'async' workflows.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Seq =
+(*
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> Async<'U>) (sequence : seq<'T>) : Async<seq<'U>> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        async {
+        // Apply the mapping function to each element.
+        for el in sequence do
+            let! mappedValue = mapping array.[i]
+            result.[i] <- mappedValue
+
+        // Return the completed results.
+        return result
+        }
+
+    //
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int -> 'T -> Async<'U>) (sequence : 'T[]) : Async<seq<'U>> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        let len = Array.length array
+        let result = Array.zeroCreate len
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        async {
+        // Apply the mapping function to each element.
+        for i in 0 .. len - 1 do
+            let! mappedValue = mapping.Invoke (i, array.[i])
+            result.[i] <- mappedValue
+
+        // Return the completed results.
+        return result
+        }
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> Async<'State>) (state : 'State) (sequence : 'T[]) : Async<'State> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+
+        (async.Return state, array)
+        ||> Array.fold (fun stateAsync el ->
+            async {
+            // Get the state.
+            let! state = stateAsync
+
+            // Invoke the folder and return the result.
+            return! folder.Invoke (state, el)
+            })
+
+    //
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : int -> 'State -> 'T -> Async<'State>) (state : 'State) (sequence : 'T[]) : Async<'State> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        (async.Return state, array)
+        ||> Array.foldi (fun index stateAsync el ->
+            async {
+            // Get the state.
+            let! state = stateAsync
+
+            // Invoke the folder and return the result.
+            return! folder.Invoke (index, state, el)
+            })
+
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> Async<unit>) (sequence : 'T[]) : Async<unit> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        (async.Zero (), array)
+        ||> Array.fold (fun iterPrevious el ->
+            async {
+            // Execute the workflow for the preceeding elements.
+            do! iterPrevious
+
+            // Asynchronously invoke the action for this element.
+            do! action el
+            })
+
+    //
+    [<CompiledName("IterateIndexed")>]
+    let iteri (action : int -> 'T -> Async<unit>) (sequence : 'T[]) : Async<unit> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        (async.Zero (), array)
+        ||> Array.foldi (fun index iterPrevious el ->
+            async {
+            // Execute the workflow for the preceeding elements.
+            do! iterPrevious
+
+            // Asynchronously invoke the action for this element.
+            do! action.Invoke (index, el)
+            })
+*)
+
+    //
+    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Parallel =
+        /// Segments a sequence of asynchronously-computed values into batches; the values
+        /// within each batch are computed in parallel while the batches are computed
+        /// sequentially. Computing the values in batches makes it possible to take advantage
+        /// of parallelism when processing a large collection while also avoiding the need
+        /// to wait for the entire dataset to be processed before returning.
+        [<CompiledName("Batch")>]
+        let batch size (sequence : seq<Async<'T>>) : seq<'T> =
+            // Preconditions
+            checkNonNull "sequence" sequence
+            if size < 1 then
+                invalidArg "size" "The batch size cannot be less than one (1)."
+
+            // OPTIMIZATION : If the batch size is one, there's no need to bother with Async.Parallel.
+            if size = 1 then
+                sequence
+                |> Seq.map Async.RunSynchronously
+            else
+                sequence
+                |> Seq.windowed size
+                |> Seq.collect (Async.Parallel >> Async.RunSynchronously)
 

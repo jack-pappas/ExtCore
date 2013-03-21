@@ -1396,3 +1396,20 @@ module StatefulChoice =
             : StatefulChoiceFunc<'State, 'U, 'Error> =
         bind (mapping >> ``return``) m
 
+
+/// Functions for working with F# Async workflows.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Async =
+    open Microsoft.FSharp.Control
+
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> 'U) (value : Async<'T>) : Async<'U> =
+        async {
+        // Get the input value.
+        let! x = value
+
+        // Apply the mapping function and return the result.
+        return mapping x
+        }
+
