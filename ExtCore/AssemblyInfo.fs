@@ -95,6 +95,14 @@ let [<Literal>] private assemblyConfig =
 [<assembly: DependencyAttribute("System.Core", LoadHint.Always)>]
 [<assembly: DefaultDependency(LoadHint.Always)>]
 
+(* Automatically open the basic namespaces, as in FSharp.Core. *)
+[<assembly: AutoOpen("ExtCore")>]
+[<assembly: AutoOpen("ExtCore.Collections")>]
+// These are disabled, for now, to avoid cluttering up everyone's default contexts.
+// If it seems reasonable to do so, enable these prior to releasing ExtCore 1.0.
+//[<assembly: AutoOpen("ExtCore.Control")>]
+//[<assembly: AutoOpen("ExtCore.Control.Collections")>]
+
 
 (*  F# considers modules which only contain attributes to be empty;
     so, we appease the compiler by adding an empty function. *)
