@@ -34,20 +34,22 @@ module AdditionalOperators =
     /// <remarks>
     /// Type abbreviation for System.ArraySegment&lt;T&gt;
     /// </remarks>
-    type ArrayView<'T> = System.ArraySegment<'T>
+    type ArrayView<'T> = System.ArraySegment<'T>        
 
     (* Type extensions for System.ArraySegment<'T> *)
     type System.ArraySegment<'T> with
         member this.Item
             with get index =
-                assert (index >= 0)
-                assert (index < this.Count)
-                this.Array.[this.Offset + index]
+                if index < 0 || index >= this.Count then
+                    raise <| System.IndexOutOfRangeException ()
+                else
+                    this.Array.[this.Offset + index]
                 
             and set index value =
-                assert (index >= 0)
-                assert (index < this.Count)
-                this.Array.[this.Offset + index] <- value
+                if index < 0 || index >= this.Count then
+                    raise <| System.IndexOutOfRangeException ()
+                else
+                    this.Array.[this.Offset + index] <- value
 
     /// Physical equality operator.
     let inline (===) (x : 'T) y =
