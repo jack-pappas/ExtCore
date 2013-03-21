@@ -639,7 +639,7 @@ module Transaction =
 module Cont =
     /// Call with current continuation.
     [<CompiledName("CallCC")>]
-    let inline callCC kk k =
+    let inline callCC (kk : ContFunc<_,_>) (k : ContFunc<'T, 'U>) =
         kk (fun x _ -> k x) k
         
 
@@ -691,13 +691,15 @@ module MaybeCont =
 module ChoiceCont =
     //
     [<CompiledName("SetError")>]
-    let inline setError error cont : Choice<'T, 'Error> =
+    let inline setError (error : 'Error) (cont : Choice<'T, 'Error> -> ChoiceContFunc<'T, 'Error, 'K>)
+        : ChoiceContFunc<'T, 'Error, 'K> =
         Choice2Of2 error
         |> cont
 
     //
     [<CompiledName("Failwith")>]
-    let inline failwith errorMsg cont : Choice<'T, string> =
+    let inline failwith (errorMsg : string) (cont : Choice<'T, string> -> ChoiceContFunc<'T, string, 'K>)
+        : ChoiceContFunc<'T, string, 'K> =
         Choice2Of2 errorMsg
         |> cont
 
