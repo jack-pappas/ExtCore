@@ -115,11 +115,6 @@ module KeyValuePair =
 /// Additional functional operators on sequences.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
-    /// Returns the length of the sequence as an unsigned integer.
-    [<CompiledName("NatLength")>]
-    let inline natLength (sequence : seq<'T>) =
-        uint32 <| Seq.length sequence
-
     //
     [<CompiledName("AppendSingleton")>]
     let inline appendSingleton sequence (value : 'T) =
@@ -177,11 +172,6 @@ module List =
         | None -> list
         | Some x -> x :: list
 
-    /// Returns the length of the list as an unsigned integer.
-    [<CompiledName("NatLength")>]
-    let inline natLength (list : 'T list) =
-        uint32 <| List.length list
-
     //
     [<CompiledName("TryHead")>]
     let inline tryHead (list : 'T list) =
@@ -202,12 +192,12 @@ module List =
     let inline singleton (value : 'T) =
         [value]
 
-    //
+    /// Builds a list that contains the elements of the set in order.
     [<CompiledName("OfSet")>]
     let inline ofSet (set : Set<'T>) =
         Set.toList set
 
-    //
+    /// Builds a set that contains the same elements as the given list.
     [<CompiledName("ToSet")>]
     let inline toSet (list : 'T list) =
         Set.ofList list
@@ -572,10 +562,14 @@ module List =
 /// Additional functional operators on arrays.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
+    #if PROTO_COMPILER
+    // TODO : Re-implement this using inline IL; it should simply provide a way
+    // to emit an 'ldlen' instruction given an array.
     /// Returns the length of the array as an unsigned integer.
-    [<CompiledName("NatLength")>]
-    let inline natLength (arr : 'T[]) =
-        uint32 arr.Length
+    [<CompiledName("RawLength")>]
+    let inline rawLength (arr : 'T[]) : unativeint =
+        unativeint arr.Length
+    #endif
 
     /// Given an element, creates an array containing just that element.
     [<CompiledName("Singleton")>]
@@ -1339,11 +1333,6 @@ module ArrayView =
 /// Additional functional operators on sets.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Set =
-    /// Returns the number of elements in the set as an unsigned integer.
-    [<CompiledName("NatCount")>]
-    let inline natCount (set : Set<'T>) =
-        uint32 <| Set.count set
-
     //
     [<CompiledName("OfArrayView")>]
     let ofArrayView (view : ArrayView<'T>) : Set<'T> =
@@ -2032,7 +2021,7 @@ module ResizeArray =
     open System.Collections.Generic
 
     //
-    [<CompiledName("NatLength")>]
+    [<CompiledName("Length")>]
     let inline length (resizeArray : ResizeArray<'T>) =
         resizeArray.Count
 
@@ -2477,11 +2466,6 @@ module Dict =
     [<CompiledName("Count")>]
     let inline count (dictionary : IDictionary<'Key, 'T>) =
         dictionary.Count
-
-    /// Gets the number of entries in the Dictionary as an unsigned integer.
-    [<CompiledName("NatCount")>]
-    let inline natCount (dictionary : IDictionary<'Key, 'T>) =
-        Checked.uint32 dictionary.Count
 
     /// Creates a mutable dictionary with the specified capacity.
     [<CompiledName("CreateMutable")>]
