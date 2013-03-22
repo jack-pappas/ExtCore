@@ -34,7 +34,7 @@ module AdditionalOperators =
     /// <remarks>
     /// Type abbreviation for System.ArraySegment&lt;T&gt;
     /// </remarks>
-    type ArrayView<'T> = System.ArraySegment<'T>        
+    type ArrayView<'T> = System.ArraySegment<'T>
 
     (* Type extensions for System.ArraySegment<'T> *)
     type System.ArraySegment<'T> with
@@ -50,6 +50,9 @@ module AdditionalOperators =
                     raise <| System.IndexOutOfRangeException ()
                 else
                     this.Array.[this.Offset + index] <- value
+
+    /// Type abbreviation for System.Collections.Generic.Queue.
+    type ResizeQueue<'T> = System.Collections.Generic.Queue<'T>
 
     /// Physical equality operator.
     let inline (===) (x : 'T) y =
@@ -148,7 +151,7 @@ module AdditionalOperators =
     /// function, then returned so it can continue through the pipeline.
     /// This function is primarily useful for debugging pipelines.
     [<CompiledName("Tap")>]
-    let tap (action : 'T -> unit) (value : 'T) =
+    let tap (action : 'T -> unit) (value : 'T) : 'T =
         action value
         value
 
@@ -251,7 +254,6 @@ module Lazy =
         if lazyValue.IsValueCreated then
             Some lazyValue.Value
         else None
-
 
 /// Additional functional operators on strings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
