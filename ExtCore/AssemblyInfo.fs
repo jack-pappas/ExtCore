@@ -26,26 +26,7 @@ open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 open System.Security
 open System.Security.Permissions
-    
 
-/// <summary>A subset of the conditional compilation symbols
-/// specified when this assembly was compiled.</summary>
-/// <remarks>Used for diagnostics purposes, e.g., to mark traced
-/// and debug builds.</remarks>
-let [<Literal>] private assemblyConfig =
-    #if DEBUG
-    #if TRACE
-    "DEBUG;TRACE"
-    #else
-    "DEBUG"
-    #endif
-    #else
-    #if TRACE
-    "TRACE"
-    #else
-    ""
-    #endif
-    #endif
 
 // Version information
 [<assembly: AssemblyVersion("0.8.8")>]
@@ -57,19 +38,12 @@ let [<Literal>] private assemblyConfig =
 [<assembly: AssemblyDescription("An extended core library for F#.")>]
 [<assembly: NeutralResourcesLanguage("en-US")>]
 [<assembly: Guid("ecbe6801-9675-413e-849b-c3359721cf06")>]
-
-// General Information about an assembly is controlled through the following
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
-[<assembly: AssemblyConfiguration(assemblyConfig)>]
 [<assembly: AssemblyCopyright("Copyright © Jack Pappas 2013")>]
-//[<assembly: AssemblyTrademark("")>]
-//[<assembly: AssemblyCulture("")>]
-
-// Setting ComVisible to false makes the types in this assembly not visible
-// to COM components.  If you need to access a type in this assembly from
-// COM, set the ComVisible attribute to true on that type.
 [<assembly: ComVisible(false)>]
+
+// This assembly is CLS-compliant.
+// TODO : Enable this once we can verify that the assembly is actually CLS-compliant.
+//[<assembly: CLSCompliant(true)>]
 
 // Only allow types derived from System.Exception to be thrown --
 // any other types should be automatically wrapped.
@@ -78,10 +52,6 @@ let [<Literal>] private assemblyConfig =
 // Security-related stuff.
 //[<assembly: AllowPartiallyTrustedCallers>]
 //[<assembly: SecurityTransparent>]
-
-// This assembly is CLS-compliant.
-// TODO : Enable this once we can verify that the assembly is actually CLS-compliant.
-//[<assembly: CLSCompliant(true)>]
 
 (*  Makes internal modules, types, and functions visible
     to the test project so they can be unit-tested. *)
@@ -103,6 +73,24 @@ let [<Literal>] private assemblyConfig =
 //[<assembly: AutoOpen("ExtCore.Control")>]
 //[<assembly: AutoOpen("ExtCore.Control.Collections")>]
 
+/// <summary>A subset of the conditional compilation symbols specified when this assembly was compiled.</summary>
+/// <remarks>Used for diagnostics purposes, e.g., to mark traced and debug builds.</remarks>
+let [<Literal>] private assemblyConfig =
+    #if DEBUG
+    #if TRACE
+    "DEBUG;TRACE"
+    #else
+    "DEBUG"
+    #endif
+    #else
+    #if TRACE
+    "TRACE"
+    #else
+    ""
+    #endif
+    #endif
+    
+[<assembly: AssemblyConfiguration(assemblyConfig)>]
 
 (*  F# considers modules which only contain attributes to be empty;
     so, we appease the compiler by adding an empty function. *)
