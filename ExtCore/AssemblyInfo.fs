@@ -73,24 +73,40 @@ open System.Security.Permissions
 //[<assembly: AutoOpen("ExtCore.Control")>]
 //[<assembly: AutoOpen("ExtCore.Control.Collections")>]
 
-/// <summary>A subset of the conditional compilation symbols specified when this assembly was compiled.</summary>
-/// <remarks>Used for diagnostics purposes, e.g., to mark traced and debug builds.</remarks>
-let [<Literal>] private assemblyConfig =
-    #if DEBUG
-    #if TRACE
-    "DEBUG;TRACE"
-    #else
-    "DEBUG"
-    #endif
-    #else
-    #if TRACE
-    "TRACE"
-    #else
-    ""
-    #endif
-    #endif
-    
-[<assembly: AssemblyConfiguration(assemblyConfig)>]
+(* Create an AssemblyConfiguration attribute with relevant conditional compilation symbols
+   defined when this assembly was compiled. This can be useful for diagnostic purposes. *)
+#if PROTO_COMPILER
+#if DEBUG
+#if TRACE
+[<assembly: AssemblyConfiguration("DEBUG;TRACE;PROTO_COMPILER")>]
+#else
+[<assembly: AssemblyConfiguration("DEBUG;PROTO_COMPILER")>]
+#endif
+#else
+#if TRACE
+[<assembly: AssemblyConfiguration("TRACE;PROTO_COMPILER")>]
+#else
+[<assembly: AssemblyConfiguration("PROTO_COMPILER")>]
+#endif
+#endif
+
+#else
+
+#if DEBUG
+#if TRACE
+[<assembly: AssemblyConfiguration("DEBUG;TRACE")>]
+#else
+[<assembly: AssemblyConfiguration("DEBUG")>]
+#endif
+#else
+#if TRACE
+[<assembly: AssemblyConfiguration("TRACE")>]
+#else
+[<assembly: AssemblyConfiguration("")>]
+#endif
+#endif
+
+#endif
 
 (*  F# considers modules which only contain attributes to be empty;
     so, we appease the compiler by adding an empty function. *)
