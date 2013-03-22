@@ -25,6 +25,10 @@ open OptimizedClosures
 open ExtCore
 
 
+(* TODO :   Implement interfaces:
+            - IReadOnlyDictionary<TKey, TValue> (.NET 4.5)
+            - IReadOnlyCollection<KeyValuePair<TKey, TValue>> (.NET 4.5)
+*)
 (* OPTIMIZE :   Some of the functional-style operations on IntMap use direct non-tail-recursion;
                 performance may be improved if we modify these to use CPS instead. *)
 
