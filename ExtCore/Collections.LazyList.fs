@@ -19,16 +19,12 @@ limitations under the License.
 
 namespace ExtCore.Collections
 
-open System
 open System.Collections.Generic
-open LanguagePrimitives
-open OptimizedClosures
 open ExtCore
 
 #nowarn "21" // recursive initialization
 #nowarn "40" // recursive initialization
 
-(* TODO :   Get rid of UndefinedException and use one of the "standard" .NET exceptions instead. *)
 (* OPTIMIZE :   The code below could likely be simplified and optimized by using System.Lazy<'T>
                 ("lazy" in F#) and Choice<_,_> instead of LazyCellStatus<'T>.
                 Basically, the Delayed and Value cases are replaced by Lazy<'T> and Choice1Of2,
@@ -49,6 +45,12 @@ open ExtCore
         This allows us to detect certain sequence types (like 'T[] and 'T list) and use optimized
         implementations, avoids the possibility of memory leaks, and avoids lazily-evaluating
         list elements when they don't really need it.
+*)
+(* TODO :   Implement additional interfaces.
+            - ICollection / ICollection<'T>
+            - IList / IList<'T>
+            - IReadOnlyList<'T> (.NET 4.5)
+            - IReadOnlyCollection<'T> (.NET 4.5)
 *)
 
 //
@@ -202,6 +204,8 @@ and [<NoEquality; NoComparison; Sealed>]
 /// Functional operators on LazyLists.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LazyList =
+    //open OptimizedClosures
+
     /// The empty LazyList.
     [<GeneralizableValue>]
     [<CompiledName("Empty")>]
@@ -263,7 +267,7 @@ module LazyList =
 
     /// Returns a new LazyListCell created by adding a value to the end of the given LazyList.
     /// This is simply a curried form of the Cons constructor.
-    let inline private consc value (list : LazyList<'T>) =
+    let inline private consCell value (list : LazyList<'T>) =
         assert (not <| isNull list)
         Cons (value, list)
 
@@ -309,7 +313,7 @@ module LazyList =
         | Empty ->
             list2.Value
         | Cons (hd, tl) ->
-            consc hd (append tl list2)
+            consCell hd (append tl list2)
 
     /// Return the list which contains on demand the list of elements of the list of lazy lists.
     [<CompiledName("Concat")>]
@@ -377,7 +381,7 @@ module LazyList =
             | Empty ->
                 Empty
             | Cons (hd, tl) ->
-                consc (mapping hd) (map mapping tl)
+                consCell (mapping hd) (map mapping tl)
 
     /// Build a new collection whose elements are the results of applying the given function
     /// to the corresponding elements of the two collections pairwise.
@@ -390,7 +394,7 @@ module LazyList =
         lzy <| fun () ->
             match list1.Value, list2.Value with
             | Cons (hd1, tl1), Cons (hd2, tl2) ->
-                consc (mapping hd1 hd2) (map2 mapping tl1 tl2)
+                consCell (mapping hd1 hd2) (map2 mapping tl1 tl2)
             | _ -> Empty
 
     /// Return the list which contains on demand the pair of elements of the first and second list.
@@ -404,7 +408,7 @@ module LazyList =
         lzy <| fun () ->
             match list1.Value, list2.Value with
             | Cons (hd1, tl1), Cons (hd2, tl2) ->
-                consc (hd1, hd2) (zip tl1 tl2)
+                consCell (hd1, hd2) (zip tl1 tl2)
             | _ -> Empty
 
     /// Return a new collection which on consumption will consist of only the
@@ -423,7 +427,7 @@ module LazyList =
             Empty
         | Cons (hd, tl) ->
             if predicate hd then
-                consc hd (filter predicate tl)
+                consCell hd (filter predicate tl)
             else
                 filterCell predicate tl
 
@@ -437,10 +441,10 @@ module LazyList =
         lzy <| fun () ->
             match list.Value with
             | Empty ->
-                consc state empty
+                consCell state empty
             | Cons (hd, tl) ->
                 let state' = folder state hd
-                consc state (scan folder state' tl)
+                consCell state (scan folder state' tl)
 
     /// Return the list which on consumption will consist of
     /// at most 'count' elements of the input list.
@@ -457,7 +461,7 @@ module LazyList =
             else
                 match list.Value with
                 | Cons (hd, tl) ->
-                    consc hd (take (count - 1) tl)
+                    consCell hd (take (count - 1) tl)
                 | Empty ->
                     let msg = sprintf "There are not enough items in the list. (Count = %i)" count
                     invalidArg "count" msg
@@ -502,12 +506,12 @@ module LazyList =
     let rec private ofFreshIEnumerator (e : IEnumerator<'T>) =
         lzy <| fun () ->
             if e.MoveNext () then
-                consc e.Current (ofFreshIEnumerator e)
+                consCell e.Current (ofFreshIEnumerator e)
             else
                e.Dispose ()
                Empty
 
-    /// Build a new collection from the given enumerable object.
+    /// Build a LazyList from the given sequence of elements.
     [<CompiledName("OfSeq")>]
     let ofSeq (sequence : seq<'T>) =
         // Preconditions
@@ -516,8 +520,7 @@ module LazyList =
         sequence.GetEnumerator ()
         |> ofFreshIEnumerator
 
-    /// Build a collection from the given list. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
+    /// Create a LazyList containing the elements of the given list.
     [<CompiledName("OfList")>]
     let rec ofList (list : 'T list) =
         // Preconditions
@@ -528,18 +531,18 @@ module LazyList =
             | [] ->
                 Empty
             | hd :: tl ->
-                consc hd (ofList tl)
+                consCell hd (ofList tl)
 
+    /// Creates a LazyList from an array by copying elements from the array into the LazyList.
     let rec private copyFrom index (array : 'T[]) =
         lzy <| fun () ->
             if index >= Array.length array then
                 Empty
             else
                 copyFrom (index + 1) array
-                |> consc array.[index]
+                |> consCell array.[index]
 
-    /// Build a collection from the given array. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
+    /// Create a LazyList containing the elements of the given array.
     [<CompiledName("OfArray")>]
     let ofArray (array : 'T[]) =
         // Preconditions
@@ -570,7 +573,8 @@ module LazyList =
                 loop (hd :: acc) tl
         loop [] list
 
-    /// Build an array from the given collection.
+    /// Build an array from the given LazyList. This function will eagerly
+    /// evaluate the entire list (and thus may not terminate).
     [<CompiledName("ToArray")>]
     let toArray (list : LazyList<'T>) =
         // Preconditions
