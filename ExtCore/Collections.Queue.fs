@@ -20,42 +20,55 @@ limitations under the License.
 //
 namespace ExtCore.Collections
 
-open LanguagePrimitives
-open OptimizedClosures
+//open System.Collections
+//open System.Collections.Generic
+//open System.Diagnostics.Contracts
 open ExtCore
 
+(* TODO :   ofList
+            ofArray
+            ofSeq
+            toSeq
+            peek
+            Implement interfaces.
+                - IEnumerable / IEnumerable<'T>
+                - ICollection / ICollection<'T>
+                - IList / IList<'T>
+                - IReadOnlyList<'T> (.NET 4.5)
+*)
 
 (* INVARIANTS                                        *)
 (*   1. length front >= length rear                  *)
 (*   2. length pending = length front - length rear  *)
 (*   3. (in the absence of insertf's)                *)
 (*      pending = nthtail (front, length rear)       *)
-//
+/// An immutable queue representing a first-in, first-out (FIFO) collection of objects.
 type Queue<'T> private
     (front : LazyList<'T>, rear : 'T list, pending : LazyList<'T>) =
-    //
+    /// The empty queue instance.
+    /// This avoids creating unnecessary instances, since all empty queues are equivalent.
     static let emptyQueue : Queue<'T> =
         Queue (
             LazyList.empty,
             [],
             LazyList.empty)
 
-    //
+    /// The empty queue.
     static member Empty
         with get () = emptyQueue
 
-    /// Returns true if the given queue is empty; otherwise, false.
+    /// Returns true if the given Queue is empty; otherwise, false.
     member __.IsEmpty
         with get () =
             (* by Invariant 1, front = empty implies rear = [] *)
             LazyList.isEmpty front
 
-    /// The number of elements in the queue.
+    /// The number of elements in the Queue.
     member __.GetLength () =
         (* = LazyList.length front + length rear -- by Invariant 2 *)
         LazyList.length pending + 2 * List.length rear
 
-    /// take from front of queue
+    /// Removes and returns the object at the beginning of the Queue.
     member __.Dequeue () =
         // Preconditions
         if LazyList.isEmpty front then
@@ -67,30 +80,29 @@ type Queue<'T> private
             rear,
             pending)
 
-    /// add to rear of queue
+    /// Returns a new Queue with the object added to the end of the Queue.
     member __.Enqueue value =
         Queue<_>.CreateQueue (
             front,
             value :: rear,
             pending)
 
-    /// add to front of queue
+    /// Returns a new Queue with the object added to the front of the Queue.
     member __.EnqueueFront value =
         Queue (
             LazyList.cons value front,
             rear,
             LazyList.cons value pending)
 
-    //
+    /// Create an array containing the elements of the Queue in order.
     member this.ToArray () : 'T[] =
         // OPTIMIZATION : If the queue is empty return immediately.
         if this.IsEmpty then
             Array.empty
         else
-            // Instead of creating a fixed-size array with
-                // Array.zeroCreate <| size queue
-            // use a ResizeArray<_> so we only need to traverse the queue once.
-            // TODO : Tune this for best average-case performance.
+            // OPTIMIZE : Tune this for best average-case performance.
+            // Perhaps we can use the LazyList.LazyLength property to
+            // estimate a better initial capacity for the ResizeArray.
             let result = ResizeArray<_> ()
 
             let mutable queue = this
@@ -101,7 +113,7 @@ type Queue<'T> private
 
             ResizeArray.toArray result
 
-    //
+    /// Create a list containing the elements of the Queue in order.
     member this.ToList () : 'T list =
         // OPTIMIZATION : If the queue is empty return immediately.
         if this.IsEmpty then
@@ -116,7 +128,53 @@ type Queue<'T> private
 
             List.rev resultList
 
-    //
+    /// Creates a Queue from the elements of a ResizeQueue.
+    static member OfResizeQueue (resizeQueue : ResizeQueue<'T>) : Queue<'T> =
+        // Preconditions
+        checkNonNull "resizeQueue" resizeQueue
+
+        /// A LazyList containing the elements copied from the queue.
+        let queueElements =
+            // Lock the ResizeQueue while copying to ensure it doesn't change.
+            lock ((resizeQueue :> System.Collections.ICollection).SyncRoot) <| fun () ->
+                (LazyList.empty, resizeQueue)
+                ||> Seq.fold (fun lazyList el ->
+                    LazyList.cons el lazyList)
+
+        // Create a new Queue from the copied elements.
+        Queue (queueElements, [], LazyList.empty)
+
+    /// Creates a ResizeQueue from the elements of the Queue.
+    member this.ToResizeQueue () : ResizeQueue<'T> =
+        // OPTIMIZATION : If the queue is empty return immediately.
+        if this.IsEmpty then
+            ResizeQueue ()
+        else
+            let resizeQueue = ResizeQueue ()
+            let mutable queue = this
+            while not <| queue.IsEmpty do
+                let item, queue' = queue.Dequeue ()
+                resizeQueue.Enqueue item
+                queue <- queue'
+
+            resizeQueue
+
+//    /// Used by Code Contracts to check that invariant contracts are met.
+//    [<ContractInvariantMethod>]
+//    member private this.ObjectInvariant () : unit =
+//        (*   1. length front >= length rear                  *)
+//        Contract.Invariant (
+//            LazyList.length front >= rear.Length)
+//        (*   2. length pending = length front - length rear  *)
+//        Contract.Invariant (
+//            LazyList.length pending = (LazyList.length front - rear.Length))
+//        (*   3. (in the absence of insertf's)                *)
+//        (*      pending = nthtail (front, length rear)       *)
+//        // TODO : Determine the best way to implement this last invariant condition.
+//        //
+
+    /// Performs the 'rotate' operation on a Queue, given the private fields
+    /// holding the queue elements.
     static member private Rotate (xs : LazyList<'T>, ys : 'T list, rys : LazyList<'T>) =
         match ys with
         | [] ->
@@ -130,11 +188,11 @@ type Queue<'T> private
                 LazyList.consDelayed (LazyList.head xs) <| fun () ->
                     Queue<_>.Rotate (LazyList.tail xs, ys, LazyList.cons y rys)
 
-    //
+    /// Creates a new Queue with the given field values.
     static member private CreateQueue (front, rear, pending) =
         if LazyList.isEmpty pending then
             (* length rear = length front + 1 *)
-            let front = Queue<_>.Rotate (front, rear, LazyList.empty)
+            let front = Queue<'T>.Rotate (front, rear, LazyList.empty)
             Queue (front, [], front)
         else
             Queue (
@@ -142,12 +200,11 @@ type Queue<'T> private
                 rear,
                 LazyList.tail pending)
 
-    // TODO
-    // functions for converting to/from System.Collections.Generic.Queue?
-
-//
+/// Functional operators related to the Queue type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Queue =
+    //open OptimizedClosures
+
     /// Returns an empty queue of the given type.
     [<CompiledName("Empty")>]
     [<GeneralizableValue>]
@@ -170,23 +227,23 @@ module Queue =
 
         queue.GetLength ()
 
-    /// add to rear of queue
+    /// Returns a new Queue with the object added to the end of the given Queue.
     [<CompiledName("Enqueue")>]
     let inline enqueue value (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
-
+        
         queue.Enqueue value
 
-    /// add to front of queue
+    /// Returns a new Queue with the object added to the front of the given Queue.
     [<CompiledName("EnqueueFront")>]
-    let inline enqueuef value (queue : Queue<'T>) =
+    let inline enqueueFront value (queue : Queue<'T>) =
         // Preconditions
         checkNonNull "queue" queue
 
         queue.EnqueueFront value
 
-    /// take from front of queue
+    /// Removes and returns the object at the beginning of the Queue.
     [<CompiledName("Dequeue")>]
     let inline dequeue (queue : Queue<'T>) =
         // Preconditions
@@ -194,7 +251,7 @@ module Queue =
 
         queue.Dequeue ()
 
-    //
+    /// Create a list containing the elements of the Queue in order.
     [<CompiledName("ToList")>]
     let inline toList (queue : Queue<'T>) : 'T list =
         // Preconditions
@@ -202,11 +259,25 @@ module Queue =
         
         queue.ToList ()
 
-    //
+    /// Create an array containing the elements of the Queue in order.
     [<CompiledName("ToArray")>]
     let inline toArray (queue : Queue<'T>) : 'T[] =
         // Preconditions
         checkNonNull "queue" queue
         
         queue.ToArray ()
+
+    /// Creates a Queue from the elements of a ResizeQueue.
+    [<CompiledName("OfResizeQueue")>]
+    let inline ofResizeQueue (resizeQueue : ResizeQueue<'T>) : Queue<'T> =
+        // Preconditions are checked within the method being called.
+        Queue.OfResizeQueue resizeQueue
+
+    /// Creates a ResizeQueue from the elements of the Queue.
+    [<CompiledName("ToResizeQueue")>]
+    let inline toResizeQueue (queue : Queue<'T>) : ResizeQueue<'T> =
+        // Preconditions
+        checkNonNull "queue" queue
+
+        queue.ToResizeQueue ()
 
