@@ -249,7 +249,7 @@ let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) =
     result
 
 //
-[<CompiledName("Iterate")>]
+[<CompiledName("Iter")>]
 let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
@@ -259,7 +259,7 @@ let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) =
         action resizeArray.[i]
 
 //
-[<CompiledName("IterateIndexed")>]
+[<CompiledName("IterIndexed")>]
 let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
@@ -413,40 +413,74 @@ let pick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
-
-(* Functions below this point still need to be cleaned up. *)
-
 //
 [<CompiledName("Concat")>]
-let concat (arrs: ResizeArray<'T> list) = new ResizeArray<_> (seq { for arr in arrs do for x in arr do yield x })
+let concat (resizeArrays : seq<ResizeArray<'T>>) : ResizeArray<'T> =
+    // Preconditions
+    checkNonNull "resizeArrays" resizeArrays
+
+    let flattened = ResizeArray ()
+    for resizeArray in resizeArrays do
+        flattened.AddRange resizeArray
+    flattened
     
 //
 [<CompiledName("Append")>]
-let append (arr1: ResizeArray<'T>) (arr2: ResizeArray<'T>) = concat [arr1; arr2]
+let append (resizeArray1 : ResizeArray<'T>) (resizeArray2 : ResizeArray<'T>) : ResizeArray<'T> =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let combined = ResizeArray (resizeArray1.Count + resizeArray2.Count)
+    combined.AddRange resizeArray1
+    combined.AddRange resizeArray2
+    combined
 
 //
-[<CompiledName("Unzip")>]
-let sub (arr: ResizeArray<'T>) start len =
-    if start < 0 then invalidArg "start" "index must be positive"
-    if len < 0 then invalidArg "len" "length must be positive"
-    if start + len > length arr then invalidArg "len" "length must be positive"
-    new ResizeArray<_> (seq { for i in start .. start+len-1 -> arr.[i] })
+[<CompiledName("Sub")>]
+let sub (resizeArray : ResizeArray<'T>) start count : ResizeArray<'T> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if start < 0 then
+        invalidArg "start" "The start index cannot be less than zero (0)."
+    elif count < 0 then
+        invalidArg "count" "The number of elements to copy cannot be less than zero (0)."
+    elif start + count > length resizeArray then
+        invalidArg "count" "There are fewer than 'count' elements between the 'start' index and the end of the collection."
+    
+    resizeArray.GetRange (start, count)
 
 //
 [<CompiledName("Fill")>]
-let fill (arr: ResizeArray<'T>) (start: int) (len: int) (x:'T) =
-    if start < 0 then invalidArg "start" "index must be positive"
-    if len < 0 then invalidArg "len" "length must be positive"
-    if start + len > length arr then invalidArg "len" "length must be positive"
-    for i = start to start + len - 1 do 
-        arr.[i] <- x
+let fill (resizeArray : ResizeArray<'T>) start count value : unit =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if start < 0 then
+        invalidArg "start" "The start index cannot be less than zero (0)."
+    elif count < 0 then
+        invalidArg "count" "The number of elements to copy cannot be less than zero (0)."
+    elif start + count > length resizeArray then
+        invalidArg "count" "There are fewer than 'count' elements between the 'start' index and the end of the collection."
+    
+    // Overwrite the items within the range using the specified value.
+    for i = start to start + count - 1 do
+        resizeArray.[i] <- value
 
 //
 [<CompiledName("Copy")>]
-let inline copy (arr: ResizeArray<'T>) = ResizeArray<_>(arr)
+let inline copy (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
+    ResizeArray (resizeArray)
 
-let inline private indexNotFound () =
-    keyNotFound "An index satisfying the predicate was not found in the collection"
+//
+[<CompiledName("Singleton")>]
+let singleton value : ResizeArray<'T> =
+    let resizeArray = ResizeArray ()
+    resizeArray.Add value
+    resizeArray
+
+
+
+(* Functions below this point still need to be cleaned up. *)
 
 //
 [<CompiledName("Iter2")>]
@@ -484,12 +518,6 @@ let exists2 f (arr1: ResizeArray<_>) (arr2: ResizeArray<_>) =
     if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
     let rec loop i = i < len1 && (f arr1.[i] arr2.[i] || loop (i+1))
     loop 0
-
-//
-[<CompiledName("FindIndexIndexed")>]
-let findIndexi f (arr: ResizeArray<_>) =
-    let rec go n = if n >= length arr then indexNotFound() elif f n arr.[n] then n else go (n+1)
-    go 0
 
 //
 [<CompiledName("FoldSub")>]
@@ -587,13 +615,6 @@ let scan f acc (arr : ResizeArray<'T>) =
 let scanBack f (arr : ResizeArray<'T>) acc = 
     let arrn = length arr
     scanBackSub f arr 0 (arrn - 1) acc
-
-//
-[<CompiledName("Singleton")>]
-let singleton x =
-    let res = new ResizeArray<_>(1)
-    res.Add(x)
-    res
         
 //
 [<CompiledName("TryFindIndexIndexed")>]
@@ -640,3 +661,14 @@ let partition f (arr: ResizeArray<_>) =
         let x = arr.[i] 
         if f x then res1.Add(x) else res2.Add(x)
     res1, res2
+
+
+let inline private indexNotFound () =
+    keyNotFound "An index satisfying the predicate was not found in the collection"
+
+//
+[<CompiledName("FindIndexIndexed")>]
+let findIndexi f (arr: ResizeArray<_>) =
+    let rec go n = if n >= length arr then indexNotFound() elif f n arr.[n] then n else go (n+1)
+    go 0
+
