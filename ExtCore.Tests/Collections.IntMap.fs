@@ -20,39 +20,8 @@ limitations under the License.
 module ExtCore.Collections.IntMap.Tests
 
 open NUnit.Framework
-open FsCheck
-
-open System.Collections.Generic
-
-type internal Generators =
-    /// Generates a random IntMap.
-    static member IntMap () =
-        let genIntMap =
-            gen {
-            let! keys =
-                Gen.arrayOf Arb.generate
-                |> Gen.map (Seq.distinct >> Seq.toArray)
-            let! values = Gen.arrayOfLength (Array.length keys) Arb.generate
-            return
-                (IntMap.empty, keys, values)
-                |||> Array.fold2 (fun map key value ->
-                    IntMap.add key value map)
-            }
-
-        Arb.fromGen genIntMap
+open FsUnit
+//open FsCheck
 
 
-let qq = Arb.register<Generators> ()
-
-
-
-
-let private elementCount<'T> (map : IntMap<'T>) =
-    IntMap.count map = (Array.length <| IntMap.toArray map)
-
-
-[<Test>]
-let ``element count`` () =
-    Check.QuickThrowOnFailure elementCount<int>
-
-
+(* TODO : Implement tests for IntMap. *)

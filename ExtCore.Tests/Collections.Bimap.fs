@@ -20,7 +20,8 @@ limitations under the License.
 module ExtCore.Collections.Bimap.Tests
 
 open NUnit.Framework
-open FsCheck
+open FsUnit
+//open FsCheck
 
 
 (* TODO : Implement tests for Bimap. *)

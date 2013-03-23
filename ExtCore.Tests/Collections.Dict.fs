@@ -20,7 +20,8 @@ limitations under the License.
 module ExtCore.Collections.Dict.Tests
 
 open NUnit.Framework
-open FsCheck
+open FsUnit
+//open FsCheck
 
 
 (* TODO : Implement tests for functions in the ExtCore.Collections.Dict module. *)
