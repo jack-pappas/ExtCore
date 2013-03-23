@@ -24,7 +24,7 @@ open Microsoft.FSharp.NativeInterop
 #nowarn "9"     // Disable warning about unverifiable IL
 
 
-//
+/// Functions for working with native pointers.
 [<RequireQualifiedAccess>]
 module NativePtr =
     /// The null pointer.

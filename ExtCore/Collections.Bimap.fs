@@ -26,7 +26,11 @@ open OptimizedClosures
 open ExtCore
 
 
-/// A bi-directional map.
+/// <summary>
+/// An immutable, bi-directional map. Keys are ordered by F# generic comparison.
+/// </summary>
+/// <typeparam name="T1">The first key type.</typeparam>
+/// <typeparam name="T2">The second key type.</typeparam>
 [<Sealed>]
 [<NoEquality; NoComparison>]
 [<DebuggerTypeProxy(typedefof<BimapDebuggerProxy<int,int>>)>]

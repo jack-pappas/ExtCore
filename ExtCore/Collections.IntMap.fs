@@ -87,6 +87,7 @@ open PatriciaTrieConstants
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntMap (and TagMap).
+//[<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
 type internal PatriciaMap<'T> =
     | Empty
     // Key * Value
@@ -191,7 +192,9 @@ type internal PatriciaMap<'T> =
 
     //
     static member Insert (key, value : 'T, map) =
-        // TODO : Lift this recursive function out into a private member
+        // TODO : There's no need to have a separate function here (which gets lifted out
+        // by the compiler); instead, we can make some small modifications to the code within
+        // it then recurse on the Insert method here.
         let rec ins = function
             | Empty ->
                 Lf (key, value)
@@ -596,7 +599,8 @@ type internal PatriciaMap<'T> =
             yield! right.ToSeq ()
         }
 
-//
+/// <summary>Immutable maps with integer keys.</summary>
+/// <typeparam name="T">The type of the values stored in the IntMap.</typeparam>
 [<Sealed>]
 [<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
@@ -702,14 +706,18 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
             IntMap (PatriciaMap.OfMap source)
 
     //
-    member __.ToArray () : (int * 'T)[] =
-        let elements = ResizeArray ()
-        trie.Iterate (FuncConvert.FuncFromTupled<_,_,_> elements.Add)
-        elements.ToArray ()
+    member __.ToSeq () =
+        trie.ToSeq ()
 
     //
     member __.ToList () : (int * 'T) list =
         trie.FoldBack ((fun k v list -> (k, v) :: list), [])
+
+    //
+    member __.ToArray () : (int * 'T)[] =
+        let elements = ResizeArray ()
+        trie.Iterate (FuncConvert.FuncFromTupled<_,_,_> elements.Add)
+        elements.ToArray ()
 
     //
     member __.ToMap () : Map<int, 'T> =
@@ -779,10 +787,6 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
             // TODO : Add a better error message
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
-
-    //
-    member __.ToSeq () =
-        trie.ToSeq ()
 
     //
     member this.Choose (chooser : int -> 'T -> 'U option) : IntMap<'U> =
@@ -997,7 +1001,8 @@ module IntMap =
         
         map.TryFind key
         
-    //
+    /// Look up an element in the IntMap, raising KeyNotFoundException
+    /// if no binding exists in the IntMap.
     [<CompiledName("Find")>]
     let inline find (key : int) (map : IntMap<'T>) : 'T =
         // Preconditions
@@ -1010,7 +1015,7 @@ module IntMap =
     let inline findOrDefault defaultValue (key : int) (map : IntMap<'T>) =
         defaultArg (map.TryFind key) defaultValue
 
-    //
+    /// Returns a new IntMap with the binding added to this IntMap.
     [<CompiledName("Add")>]
     let inline add (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
         // Preconditions
@@ -1018,7 +1023,8 @@ module IntMap =
 
         map.Add (key, value)
 
-    //
+    /// Removes an element from the domain of the IntMap.
+    /// No exception is raised if the element is not present.
     [<CompiledName("Remove")>]
     let inline remove (key : int) (map : IntMap<'T>) : IntMap<'T> =
         // Preconditions
@@ -1026,7 +1032,7 @@ module IntMap =
 
         map.Remove key
 
-    //
+    /// Tests if an element is in the domain of the IntMap.
     [<CompiledName("ContainsKey")>]
     let inline containsKey (key : int) (map : IntMap<'T>) : bool =
         // Preconditions
@@ -1034,7 +1040,7 @@ module IntMap =
 
         map.ContainsKey key
 
-    //
+    /// Returns a new IntMap created by merging the two specified IntMaps.
     [<CompiledName("Union")>]
     let inline union (map1 : IntMap<'T>) (map2 : IntMap<'T>) : IntMap<'T> =
         // Preconditions
@@ -1043,25 +1049,25 @@ module IntMap =
 
         map1.Union map2
 
-    //
+    /// Returns a new IntMap made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntMap<'T> =
         // Preconditions are checked by the member.
         IntMap.OfSeq source
 
-    //
+    /// Returns a new IntMap made from the given bindings.
     [<CompiledName("OfList")>]
     let inline ofList source : IntMap<'T> =
         // Preconditions are checked by the member.
         IntMap.OfList source
 
-    //
+    /// Returns a new IntMap made from the given bindings.
     [<CompiledName("OfArray")>]
     let inline ofArray source : IntMap<'T> =
         // Preconditions are checked by the member.
         IntMap.OfArray source
 
-    //
+    /// Returns a new IntMap made from the given bindings.
     [<CompiledName("OfMap")>]
     let inline ofMap source : IntMap<'T> =
         // Preconditions are checked by the member.
