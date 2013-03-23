@@ -23,8 +23,13 @@ namespace ExtCore
 /// Additional operators for F# data types.
 [<AutoOpen>]
 module AdditionalOperators =
+    (* Type abbreviations *)
+
     /// Type abbreviation for System.NotImplementedException.
     type notImplExn = System.NotImplementedException
+
+    /// Type abbreviation for System.Collections.Generic.Queue.
+    type ResizeQueue<'T> = System.Collections.Generic.Queue<'T>
 
     /// <summary>
     /// Array views are similar to array slices, but instead of creating a copy of the
@@ -36,7 +41,9 @@ module AdditionalOperators =
     /// </remarks>
     type ArrayView<'T> = System.ArraySegment<'T>
 
-    (* Type extensions for System.ArraySegment<'T> *)
+
+    (* Type extensions *)
+
     type System.ArraySegment<'T> with
         member this.Item
             with get index =
@@ -51,8 +58,8 @@ module AdditionalOperators =
                 else
                     this.Array.[this.Offset + index] <- value
 
-    /// Type abbreviation for System.Collections.Generic.Queue.
-    type ResizeQueue<'T> = System.Collections.Generic.Queue<'T>
+
+    (* Operators *)
 
     /// Physical equality operator.
     let inline (===) (x : 'T) y =
@@ -65,6 +72,9 @@ module AdditionalOperators =
         | Some x ->
             x :: list
 
+
+    (* Simple functions *)
+
     /// Swaps the values of a tuple so their order is reversed.
     [<CompiledName("Swap")>]
     let inline swap (x : 'T, y : 'U) =
@@ -75,21 +85,6 @@ module AdditionalOperators =
     let inline flip f (x : 'T) (y : 'U) : 'V =
         f y x
 
-    /// Raises a System.NotImplementedException.
-    [<CompiledName("RaiseNotImplementedException")>]
-    let inline notImpl msg : 'T =
-        raise <| System.NotImplementedException msg
-
-    /// Raises a System.NotSupportedException.
-    [<CompiledName("RaiseNotSupportedException")>]
-    let inline notSupported msg : 'T =
-        raise <| System.NotSupportedException msg
-
-    /// Raises a System.ArgumentOutOfRangeException.
-    [<CompiledName("RaiseArgumentOutOfRangeException")>]
-    let inline argOutOfRange (paramName : string) (message : string) : 'T =
-        raise <| System.ArgumentOutOfRangeException (paramName, message)
-
     /// Compares two objects for reference equality.
     [<CompiledName("RefEquals")>]
     let inline refEquals< ^T, ^U when ^T : not struct and ^U : not struct> (x : ^T) (y : ^U) =
@@ -99,17 +94,6 @@ module AdditionalOperators =
     [<CompiledName("IsNull")>]
     let inline isNull< ^T when ^T : not struct> (x : ^T) =
         System.Object.ReferenceEquals (null, x)
-
-    /// Determines if a reference is a null reference, and if it is, throws an ArgumentNullException.
-    [<CompiledName("CheckNonNull")>]
-    let inline checkNonNull< ^T when ^T : not struct> argName (value : ^T) =
-        if isNull value then
-            nullArg argName
-
-    /// Raises a System.Collections.Generic.KeyNotFoundException.
-    [<CompiledName("RaiseKeyNotFoundException")>]
-    let inline keyNotFound (msg : string) : 'T =
-        raise <| System.Collections.Generic.KeyNotFoundException msg
 
     /// Not-AND (NAND) of two boolean values.
     /// Returns false when both values are 'true'; otherwise, returns true.
@@ -134,18 +118,7 @@ module AdditionalOperators =
     [<CompiledName("Xnor")>]
     let inline xnor (p : bool) (q : bool) =
         // OPTIMIZE : Use inline IL to emit 'xor, not' instead of 'ceq, ldc.i4.0, ceq, not'
-        not (p <> q)    
-
-    /// Attempt to execute the function as a mutual-exclusion region using
-    /// the input value as a lock. If the lock cannot be entered within a specified
-    /// period of time, the attempt is abandoned and the function returns None.
-    [<CompiledName("TryLock")>]
-    let inline tryLock (timeout : System.TimeSpan) (lockObject : 'Lock) (action : unit -> 'T) : 'T option =
-        if System.Threading.Monitor.TryEnter (lockObject, timeout) then
-            try Some <| action ()
-            finally
-                System.Threading.Monitor.Exit lockObject
-        else None
+        not (p <> q)
 
     /// Intercepts a value within a pipeline. The value is applied to a given
     /// function, then returned so it can continue through the pipeline.
@@ -160,6 +133,20 @@ module AdditionalOperators =
     [<CompiledName("NotLazy")>]
     let inline notlazy (value : 'T) =
         Lazy.CreateFromValue value
+
+
+    (* General functions *)
+
+    /// Attempt to execute the function as a mutual-exclusion region using
+    /// the input value as a lock. If the lock cannot be entered within a specified
+    /// period of time, the attempt is abandoned and the function returns None.
+    [<CompiledName("TryLock")>]
+    let inline tryLock (timeout : System.TimeSpan) (lockObject : 'Lock) (action : unit -> 'T) : 'T option =
+        if System.Threading.Monitor.TryEnter (lockObject, timeout) then
+            try Some <| action ()
+            finally
+                System.Threading.Monitor.Exit lockObject
+        else None
 
     /// Applies a mapping function to two (2) values, returning the input value
     /// whose mapped value was the smaller (lesser) of the mapped values.
@@ -191,30 +178,63 @@ module AdditionalOperators =
 
         if mapped_x < mapped_y then mapped_y else mapped_x
 
-(*
-#if PROTO_COMPILER
+    (*
+    #if PROTO_COMPILER
     /// Returns the RuntimeTypeHandle of the specified type.
     [<NoDynamicInvocation>]
-    let inline typehandleof<'T> =
+    let inline typehandleof<'T> : System.RuntimeTypeHandle =
         let tok = (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
         tok
-#endif
-*)
+    #endif
+    *)
+
+    (* Exception-related functions *)
+
+    /// Raises a new exception of the specified type.
+    [<CompiledName("RaiseNew")>]
+    let inline raiseNew<'T when 'T :> exn and 'T : (new : unit -> 'T)> () : 'T =
+        raise <| new 'T()
+
+    /// Raises a System.NotImplementedException.
+    [<CompiledName("RaiseNotImplementedException")>]
+    let inline notImpl msg : 'T =
+        raise <| System.NotImplementedException msg
+
+    /// Raises a System.NotSupportedException.
+    [<CompiledName("RaiseNotSupportedException")>]
+    let inline notSupported msg : 'T =
+        raise <| System.NotSupportedException msg
+
+    /// Raises a System.ArgumentOutOfRangeException.
+    [<CompiledName("RaiseArgumentOutOfRangeException")>]
+    let inline argOutOfRange (paramName : string) (message : string) : 'T =
+        raise <| System.ArgumentOutOfRangeException (paramName, message)    
+
+    /// Determines if a reference is a null reference, and if it is, throws an ArgumentNullException.
+    [<CompiledName("CheckNonNull")>]
+    let inline checkNonNull< ^T when ^T : not struct> argName (value : ^T) =
+        if isNull value then
+            nullArg argName
+
+    /// Raises a System.Collections.Generic.KeyNotFoundException.
+    [<CompiledName("RaiseKeyNotFoundException")>]
+    let inline keyNotFound (msg : string) : 'T =
+        raise <| System.Collections.Generic.KeyNotFoundException msg
+    
 
 /// Functional operators on enumerations.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Enum =
     /// Returns an array of the values defined by an enumeration type.
     [<CompiledName("GetValuesImpl")>]
-    let inline private valuesImpl<'Enum, 'T when 'Enum : enum<'T>> () =
-        typeof<'Enum>
-        |> System.Enum.GetValues
+    let inline private valuesImpl<'Enum, 'T when 'Enum : enum<'T>> (enumType : System.Type) =
+        System.Enum.GetValues enumType
         :?> 'Enum[]
 
     /// Returns an array of the values defined by an enumeration type.
     [<CompiledName("GetValues")>]
     let inline values () : ^Enum[] =
-        valuesImpl< ^Enum, _> ()
+        valuesImpl< ^Enum, _> typeof<'Enum>
 
     /// Alias for System.Enum.IsDefined.
     [<CompiledName("IsDefinedImpl")>]
