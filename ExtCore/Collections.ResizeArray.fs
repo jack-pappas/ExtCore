@@ -478,46 +478,235 @@ let singleton value : ResizeArray<'T> =
     resizeArray.Add value
     resizeArray
 
-
-
-(* Functions below this point still need to be cleaned up. *)
-
 //
 [<CompiledName("Iter2")>]
-let iter2 f (arr1: ResizeArray<'T>) (arr2: ResizeArray<'b>) = 
-    let f = FSharpFunc<_,_,_>.Adapt(f)
-    let len1 = length arr1
-    if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    for i = 0 to len1 - 1 do 
-        f.Invoke(arr1.[i], arr2.[i])
+let iter2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T1>) : unit =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The ResizeArrays have different lengths."
+
+    let action = FSharpFunc<_,_,_>.Adapt action
+
+    for i = 0 to len - 1 do
+        action.Invoke (resizeArray1.[i], resizeArray2.[i])
 
 //
 [<CompiledName("Map2")>]
-let map2 f (arr1: ResizeArray<'T>) (arr2: ResizeArray<'b>) = 
-    let f = FSharpFunc<_,_,_>.Adapt(f)
-    let len1 = length arr1
-    if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    let res = new ResizeArray<_>(len1)
-    for i = 0 to len1 - 1 do
-        res.Add(f.Invoke(arr1.[i], arr2.[i]))
-    res
+let map2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
+    : ResizeArray<'U> =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The ResizeArrays have different lengths."
+
+    let mapping = FSharpFunc<_,_,_>.Adapt mapping
+    let results = ResizeArray (len)
+
+    for i = 0 to len - 1 do
+        mapping.Invoke (resizeArray1.[i], resizeArray2.[i])
+        |> results.Add
+    results
 
 //
 [<CompiledName("Rev")>]
-let rev (arr: ResizeArray<_>) = 
-    let len = length arr 
-    let res = new ResizeArray<_>(len)
-    for i = len - 1 downto 0 do 
-        res.Add(arr.[i])
-    res
+let rev (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    let len = length resizeArray
+    let result = ResizeArray (len)
+    for i = len - 1 downto 0 do
+        result.Add resizeArray.[i]
+    resizeArray
 
 //
 [<CompiledName("Exists2")>]
-let exists2 f (arr1: ResizeArray<_>) (arr2: ResizeArray<_>) =
-    let len1 = length arr1
-    if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    let rec loop i = i < len1 && (f arr1.[i] arr2.[i] || loop (i+1))
-    loop 0
+let exists2 predicate (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : bool =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The ResizeArrays have different lengths."
+
+    let predicate = FSharpFunc<_,_,_>.Adapt predicate
+    
+    let mutable index = 0
+    let mutable foundMatch = false
+    while index < len && not foundMatch do
+        foundMatch <- predicate.Invoke (resizeArray1.[index], resizeArray2.[index])
+        index <- index + 1
+    foundMatch
+
+//
+[<CompiledName("Forall2")>]
+let forall2 predicate (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : bool =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The ResizeArrays have different lengths."
+
+    let predicate = FSharpFunc<_,_,_>.Adapt predicate
+    
+    let mutable index = 0
+    let mutable allMatch = false
+    while index < len && allMatch do
+        allMatch <- predicate.Invoke (resizeArray1.[index], resizeArray2.[index])
+        index <- index + 1
+    allMatch
+
+//
+[<CompiledName("IterIndexed2")>]
+let iteri2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : unit =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The ResizeArrays have different lengths."
+
+    let action = FSharpFunc<_,_,_,_>.Adapt action
+
+    for i = 0 to len - 1 do
+        action.Invoke (i, resizeArray1.[i], resizeArray2.[i])
+
+//
+[<CompiledName("MapIndexed2")>]
+let mapi2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
+    : ResizeArray<'U> =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The ResizeArrays have different lengths."
+
+    let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+    let results = ResizeArray (len)
+
+    for i = 0 to len - 1 do
+        mapping.Invoke (i, resizeArray1.[i], resizeArray2.[i])
+        |> results.Add
+    results
+
+//
+[<CompiledName("TryFindIndexIndexed")>]
+let tryFindIndexi predicate (resizeArray : ResizeArray<'T>) : int option =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+    let len = length resizeArray
+    let mutable index = -1
+    let mutable foundMatch = false
+    while index < len && not foundMatch do
+        index <- index + 1
+        foundMatch <- predicate.Invoke (index, resizeArray.[index])
+
+    if foundMatch then
+        Some index
+    else None
+
+//
+[<CompiledName("FindIndexIndexed")>]
+let findIndexi predicate (resizeArray : ResizeArray<'T>) : int =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    match tryFindIndexi predicate resizeArray with
+    | Some index ->
+        index
+    | None ->
+        keyNotFound "An element satisfying the predicate was not found in the collection."
+
+//
+[<CompiledName("Blit")>]
+let blit (source : ResizeArray<'T>) sourceIndex (target : ResizeArray<'T>) targetIndex count : unit =
+    // Preconditions
+    checkNonNull "source" source
+    checkNonNull "target" target
+    if sourceIndex < 0 then
+        invalidArg "sourceIndex" "The source index cannot be negative."
+    elif targetIndex < 0 then
+        invalidArg "targetIndex" "The target index cannot be negative."
+    elif count < 0 then
+        invalidArg "count" "Cannot copy a negative number of items."
+    elif sourceIndex + count > length source then
+        invalidArg "sourceIndex" "There are fewer than 'count' elements between 'sourceIndex' and the end of the source ResizeArray."
+    elif targetIndex + count > length target then
+        invalidArg "sourceIndex" "There are fewer than 'count' elements between 'sourceIndex' and the end of the target ResizeArray."
+
+    for i = 0 to count - 1 do
+        target.[targetIndex + i] <- source.[sourceIndex + i]
+
+//
+[<CompiledName("Zip")>]
+let zip (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
+    : ResizeArray<'T1 * 'T2> =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len = length resizeArray2 then
+        invalidArg "resizeArray2" "The ResizeArrays have different lengths."
+
+    let results = ResizeArray (len)
+    for i = 0 to len - 1 do
+        results.Add (resizeArray1.[i], resizeArray2.[i])
+    results
+
+//
+[<CompiledName("Unzip")>]
+let unzip (resizeArray : ResizeArray<'T1 * 'T2>) : ResizeArray<'T1> * ResizeArray<'T2> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    let len = length resizeArray
+    let results1 = ResizeArray (len)
+    let results2 = ResizeArray (len)
+
+    for i = 0 to len - 1 do
+        let x, y = resizeArray.[i]
+        results1.Add x
+        results2.Add y
+
+    results1, results2
+
+//
+[<CompiledName("Partition")>]
+let partition predicate (resizeArray : ResizeArray<'T>) : ResizeArray<'T> * ResizeArray<'T> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    let trueResults = ResizeArray ()
+    let falseResults = ResizeArray ()
+
+    let len = length resizeArray
+    for i = 0 to len - 1 do
+        let el = resizeArray.[i]
+        if predicate el then
+            trueResults.Add el
+        else
+            falseResults.Add el
+
+    trueResults, falseResults
+
+(* Functions below this point still need to be cleaned up. *)
 
 //
 [<CompiledName("FoldSub")>]
@@ -558,29 +747,16 @@ let foldBack2 f (arr1: ResizeArray<'T1>) (arr2: ResizeArray<'T2>) (acc: 'b) =
     res
 
 //
-[<CompiledName("Forall2")>]
-let forall2 f (arr1: ResizeArray<_>) (arr2: ResizeArray<_>) = 
-    let len1 = length arr1
-    if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    let rec loop i = i >= len1 || (f arr1.[i] arr2.[i] && loop (i+1))
-    loop 0
-    
-//
-[<CompiledName("IterateIndexed2")>]
-let iteri2 f (arr1: ResizeArray<'T>) (arr2: ResizeArray<'b>) =
-    let f = FSharpFunc<_,_,_,_>.Adapt(f)
-    let len1 = length arr1
-    if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    for i = 0 to len1 - 1 do 
-        f.Invoke(i,arr1.[i], arr2.[i])
+[<CompiledName("Scan")>]
+let scan f acc (arr : ResizeArray<'T>) = 
+    let arrn = length arr
+    scanSub f acc arr 0 (arrn - 1)
 
 //
-[<CompiledName("MapIndexed2")>]
-let mapi2 (f: int -> 'T -> 'b -> 'c) (arr1: ResizeArray<'T>) (arr2: ResizeArray<'b>) = 
-    let f = FSharpFunc<_,_,_,_>.Adapt(f)
-    let len1 = length arr1
-    if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    init len1 (fun i -> f.Invoke(i, arr1.[i], arr2.[i]))
+[<CompiledName("ScanBack")>]
+let scanBack f (arr : ResizeArray<'T>) acc = 
+    let arrn = length arr
+    scanBackSub f arr 0 (arrn - 1) acc
 
 //
 [<CompiledName("ScanSub")>]
@@ -603,72 +779,4 @@ let scanBackSub f (arr: ResizeArray<'T>) start fin acc =
         state <- f.Invoke(arr.[i], state)
         res.[i - start] <- state
     res
-
-//
-[<CompiledName("Scan")>]
-let scan f acc (arr : ResizeArray<'T>) = 
-    let arrn = length arr
-    scanSub f acc arr 0 (arrn - 1)
-
-//
-[<CompiledName("ScanBack")>]
-let scanBack f (arr : ResizeArray<'T>) acc = 
-    let arrn = length arr
-    scanBackSub f arr 0 (arrn - 1) acc
-        
-//
-[<CompiledName("TryFindIndexIndexed")>]
-let tryFindIndexi f (arr: ResizeArray<'T>) = 
-    let rec go n = if n >= length arr then None elif f n arr.[n] then Some n else go (n+1)
-    go 0
-    
-//
-[<CompiledName("Zip")>]
-let zip (arr1: ResizeArray<_>) (arr2: ResizeArray<_>) = 
-    let len1 = length arr1 
-    if len1 <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    init len1 (fun i -> arr1.[i], arr2.[i])
-
-//
-[<CompiledName("Unzip")>]
-let unzip (arr: ResizeArray<_>) = 
-    let len = length arr
-    let res1 = new ResizeArray<_>(len)
-    let res2 = new ResizeArray<_>(len)
-    for i = 0 to len - 1 do 
-        let x,y = arr.[i] 
-        res1.Add(x)
-        res2.Add(y)
-    res1,res2
-
-//
-[<CompiledName("Blit")>]
-let blit (arr1: ResizeArray<'T>) start1 (arr2: ResizeArray<'T>) start2 len =
-    if start1 < 0 then invalidArg "start1" "index must be positive"
-    if start2 < 0 then invalidArg "start2" "index must be positive"
-    if len < 0 then invalidArg "len" "length must be positive"
-    if start1 + len > length arr1 then invalidArg "start1" "(start1+len) out of range"
-    if start2 + len > length arr2 then invalidArg "start2" "(start2+len) out of range"
-    for i = 0 to len - 1 do 
-        arr2.[start2+i] <- arr1.[start1 + i]
-
-//
-[<CompiledName("Partition")>]
-let partition f (arr: ResizeArray<_>) = 
-    let res1 = new ResizeArray<_>()
-    let res2 = new ResizeArray<_>()
-    for i = 0 to length arr - 1 do 
-        let x = arr.[i] 
-        if f x then res1.Add(x) else res2.Add(x)
-    res1, res2
-
-
-let inline private indexNotFound () =
-    keyNotFound "An index satisfying the predicate was not found in the collection"
-
-//
-[<CompiledName("FindIndexIndexed")>]
-let findIndexi f (arr: ResizeArray<_>) =
-    let rec go n = if n >= length arr then indexNotFound() elif f n arr.[n] then n else go (n+1)
-    go 0
 
