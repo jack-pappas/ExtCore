@@ -745,54 +745,124 @@ let foldBack2 folder (resizeArray1 : ResizeArray<'T1>)
         state <- folder.Invoke (resizeArray1.[i], resizeArray2.[i], state)
     state
 
-(* Functions below this point still need to be cleaned up. *)
-
 //
 [<CompiledName("FoldSub")>]
-let foldSub f acc (arr: ResizeArray<_>) start fin = 
-    let mutable res = acc
-    for i = start to fin do
-        res <- f res arr.[i] 
-    res
+let foldSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex endIndex : 'State =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if startIndex < 0 then
+        argOutOfRange "startIndex" "The starting index cannot be negative."
+    elif endIndex > 0 then
+        argOutOfRange "endIndex" "The ending index cannot be negative."
+    
+    let len = length resizeArray
+    if startIndex >= len then
+        argOutOfRange "startIndex" "The starting index is outside the bounds of the ResizeArray."
+    elif endIndex >= len then
+        argOutOfRange "endIndex" "The ending index is outside the bounds of the ResizeArray."
+
+    let folder = FSharpFunc<_,_,_>.Adapt folder
+
+    // Fold over the specified range of items.
+    let mutable state = state
+    for i = startIndex to endIndex do
+        state <- folder.Invoke (state, resizeArray.[i])
+    state
 
 //
 [<CompiledName("FoldBackSub")>]
-let foldBackSub f (arr: ResizeArray<_>) start fin acc = 
-    let mutable res = acc 
-    for i = fin downto start do
-        res <- f arr.[i] res
-    res
+let foldBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (state : 'State) : 'State =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if startIndex < 0 then
+        argOutOfRange "startIndex" "The starting index cannot be negative."
+    elif endIndex > 0 then
+        argOutOfRange "endIndex" "The ending index cannot be negative."
+    
+    let len = length resizeArray
+    if startIndex >= len then
+        argOutOfRange "startIndex" "The starting index is outside the bounds of the ResizeArray."
+    elif endIndex >= len then
+        argOutOfRange "endIndex" "The ending index is outside the bounds of the ResizeArray."
 
-//
-[<CompiledName("Scan")>]
-let scan f acc (arr : ResizeArray<'T>) = 
-    let arrn = length arr
-    scanSub f acc arr 0 (arrn - 1)
+    let folder = FSharpFunc<_,_,_>.Adapt folder
 
-//
-[<CompiledName("ScanBack")>]
-let scanBack f (arr : ResizeArray<'T>) acc = 
-    let arrn = length arr
-    scanBackSub f arr 0 (arrn - 1) acc
+    // Fold over the specified range of items.
+    let mutable state = state
+    for i = endIndex downto startIndex do
+        state <- folder.Invoke (resizeArray.[i], state)
+    state
 
 //
 [<CompiledName("ScanSub")>]
-let scanSub f  acc (arr : ResizeArray<'T>) start fin = 
-    let f = FSharpFunc<_,_,_>.Adapt(f)
-    let mutable state = acc
-    let res = create (fin-start+2) acc
-    for i = start to fin do
-        state <- f.Invoke(state, arr.[i])
-        res.[i - start+1] <- state
-    res
+let scanSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex endIndex : ResizeArray<'State> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if startIndex < 0 then
+        argOutOfRange "startIndex" "The starting index cannot be negative."
+    elif endIndex < 0 then
+        argOutOfRange "endIndex" "The ending index cannot be negative."
     
+    let len = length resizeArray
+    if startIndex >= len then
+        argOutOfRange "startIndex" "The starting index is outside the bounds of the ResizeArray."
+    elif endIndex >= len then
+        argOutOfRange "endIndex" "The ending index is outside the bounds of the ResizeArray."
+
+    let folder = FSharpFunc<_,_,_>.Adapt folder
+
+    // Holds the initial and intermediate state values.
+    let results = ResizeArray (endIndex - startIndex + 2)
+    results.Add state
+
+    // Fold over the specified range of items.
+    let mutable state = state
+    for i = startIndex to endIndex do
+        state <- folder.Invoke (state, resizeArray.[i])
+        results.Add state
+    results
+
 //
 [<CompiledName("ScanBackSub")>]
-let scanBackSub f (arr: ResizeArray<'T>) start fin acc = 
-    let f = FSharpFunc<_,_,_>.Adapt(f)
-    let mutable state = acc
-    let res = create (2+fin-start) acc
-    for i = fin downto start do
-        state <- f.Invoke(arr.[i], state)
-        res.[i - start] <- state
-    res
+let scanBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (state : 'State) : ResizeArray<'State> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if startIndex < 0 then
+        argOutOfRange "startIndex" "The starting index cannot be negative."
+    elif endIndex < 0 then
+        argOutOfRange "endIndex" "The ending index cannot be negative."
+    
+    let len = length resizeArray
+    if startIndex >= len then
+        argOutOfRange "startIndex" "The starting index is outside the bounds of the ResizeArray."
+    elif endIndex >= len then
+        argOutOfRange "endIndex" "The ending index is outside the bounds of the ResizeArray."
+
+    let folder = FSharpFunc<_,_,_>.Adapt folder
+
+    // Holds the initial and intermediate state values.
+    let results = ResizeArray (endIndex - startIndex + 2)
+    results.Add state
+
+    // Fold over the specified range of items.
+    let mutable state = state
+    for i = endIndex downto startIndex do
+        state <- folder.Invoke (resizeArray.[i], state)
+        results.Insert (0, state)
+    results
+
+//
+[<CompiledName("Scan")>]
+let scan folder (state : 'State) (resizeArray : ResizeArray<'T>) : ResizeArray<'State> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    scanSub folder state resizeArray 0 (length resizeArray - 1)
+
+//
+[<CompiledName("ScanBack")>]
+let scanBack folder (resizeArray : ResizeArray<'T>) (state : 'State) : ResizeArray<'State> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    scanBackSub folder resizeArray 0 (length resizeArray - 1) state
