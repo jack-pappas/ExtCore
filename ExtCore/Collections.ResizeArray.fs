@@ -34,7 +34,7 @@ open ExtCore
 let inline length (resizeArray : ResizeArray<'T>) =
     resizeArray.Count
 
-//
+/// Return true if the given array is empty, otherwise false.
 [<CompiledName("IsEmpty")>]
 let inline isEmpty (resizeArray : ResizeArray<'T>) =
     resizeArray.Count = 0
@@ -49,7 +49,7 @@ let inline get (resizeArray : ResizeArray<'T>) index =
 let inline set (resizeArray : ResizeArray<'T>) index value =
     resizeArray.[index] <- value
 
-/// Create an array whose elements are all initially the given value.
+/// Create a ResizeArray whose elements are all initially the given value.
 [<CompiledName("Create")>]
 let create count value : ResizeArray<'T> =
     // Preconditions
@@ -61,7 +61,7 @@ let create count value : ResizeArray<'T> =
         resizeArray.Add value
     resizeArray
 
-/// Create an array by calling the given generator on each index.
+/// Create a ResizeArray by calling the given generator on each index.
 [<CompiledName("Init")>]
 let init count initializer : ResizeArray<'T> =
     // Preconditions
@@ -86,12 +86,12 @@ let inline contains (value : 'T) (resizeArray : ResizeArray<'T>) =
 
     resizeArray.Contains value
 
-//
+/// Build a ResizeArray from the given sequence.
 [<CompiledName("OfSeq")>]
 let inline ofSeq (sequence : seq<'T>) : ResizeArray<'T> =
     ResizeArray (sequence)
 
-//
+/// Return a view of the ResizeArray as an enumerable object.
 [<CompiledName("ToSeq")>]
 let toSeq (resizeArray : ResizeArray<'T>) : seq<'T> =
     // Preconditions
@@ -99,7 +99,7 @@ let toSeq (resizeArray : ResizeArray<'T>) : seq<'T> =
 
     Seq.readonly resizeArray
 
-//
+/// Build an array from the given list.
 [<CompiledName("OfList")>]
 let ofList (list : 'T list) : ResizeArray<'T> =
     // Preconditions
@@ -113,7 +113,7 @@ let ofList (list : 'T list) : ResizeArray<'T> =
     add list
     res
 
-//
+/// Build a list from the given ResizeArray.
 [<CompiledName("ToList")>]
 let toList (resizeArray : ResizeArray<'T>) : 'T list =
     // Preconditions
@@ -124,12 +124,12 @@ let toList (resizeArray : ResizeArray<'T>) : 'T list =
         res <- resizeArray.[i] :: res
     res
 
-//
+/// Build a ResizeArray from the given elements.
 [<CompiledName("OfArray")>]
 let inline ofArray (arr : 'T[]) : ResizeArray<'T> =
     ResizeArray (arr)
 
-//
+/// Return a fixed-length array containing the elements of the input ResizeArray.
 [<CompiledName("ToArray")>]
 let inline toArray (resizeArray : ResizeArray<'T>) =
     resizeArray.ToArray ()
@@ -139,31 +139,31 @@ let inline toArray (resizeArray : ResizeArray<'T>) =
 let inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
     resizeArray.Sort ()
         
-//
+/// Sort the elements using the key extractor and generic comparison on the keys.
 [<CompiledName("SortInPlaceBy")>]
 let inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
         (projection : 'T -> 'Key) (resizeArray : ResizeArray<'T>) =
     resizeArray.Sort (fun x y ->
         compare (projection x) (projection y))
 
-//
+/// Sort the elements using the given comparison function.
 [<CompiledName("SortInPlaceWith")>]
 let inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
     resizeArray.Sort (comparer)
 
-//
+/// Build a new ResizeArray that contains the elements of the given ResizeArray.
 [<CompiledName("Copy")>]
 let inline copy (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
     ResizeArray (resizeArray)
 
-//
+/// Return an array containing the given element.
 [<CompiledName("Singleton")>]
 let singleton value : ResizeArray<'T> =
     let resizeArray = ResizeArray ()
     resizeArray.Add value
     resizeArray
 
-/// Build a new array that contains the elements of each of the given sequence of arrays.
+/// Build a new ResizeArray that contains the elements of each of the given sequence of ResizeArrays.
 [<CompiledName("Concat")>]
 let concat (resizeArrays : seq<ResizeArray<'T>>) : ResizeArray<'T> =
     // Preconditions
@@ -174,8 +174,8 @@ let concat (resizeArrays : seq<ResizeArray<'T>>) : ResizeArray<'T> =
         flattened.AddRange resizeArray
     flattened
     
-/// Build a new array that contains the elements of the first array followed by
-/// the elements of the second array.
+/// Build a new ResizeArray that contains the elements of the first ResizeArray followed by
+/// the elements of the second ResizeArray.
 [<CompiledName("Append")>]
 let append (resizeArray1 : ResizeArray<'T>) (resizeArray2 : ResizeArray<'T>) : ResizeArray<'T> =
     // Preconditions
@@ -187,7 +187,8 @@ let append (resizeArray1 : ResizeArray<'T>) (resizeArray2 : ResizeArray<'T>) : R
     combined.AddRange resizeArray2
     combined
 
-//
+/// Build a new ResizeArray that contains the given subrange specified by
+/// starting index and length.
 [<CompiledName("Sub")>]
 let sub (resizeArray : ResizeArray<'T>) start count : ResizeArray<'T> =
     // Preconditions
@@ -201,7 +202,7 @@ let sub (resizeArray : ResizeArray<'T>) start count : ResizeArray<'T> =
     
     resizeArray.GetRange (start, count)
 
-//
+/// Fill a range of the collection with the given element.
 [<CompiledName("Fill")>]
 let fill (resizeArray : ResizeArray<'T>) start count value : unit =
     // Preconditions
@@ -217,7 +218,7 @@ let fill (resizeArray : ResizeArray<'T>) start count value : unit =
     for i = start to start + count - 1 do
         resizeArray.[i] <- value
 
-//
+/// Return a new ResizeArray with the elements in reverse order.
 [<CompiledName("Rev")>]
 let rev (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
     // Preconditions
@@ -229,7 +230,7 @@ let rev (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
         result.Add resizeArray.[i]
     result
 
-//
+/// Read a range of elements from the first ResizeArray and write them into the second.
 [<CompiledName("Blit")>]
 let blit (source : ResizeArray<'T>) sourceIndex (target : ResizeArray<'T>) targetIndex count : unit =
     // Preconditions
@@ -249,7 +250,8 @@ let blit (source : ResizeArray<'T>) sourceIndex (target : ResizeArray<'T>) targe
     for i = 0 to count - 1 do
         target.[targetIndex + i] <- source.[sourceIndex + i]
 
-//
+/// Combine the two ResizeArrays into a ResizeArray of pairs.
+/// The two arrays must have equal lengths, otherwise an <c>ArgumentException</c> is raised.
 [<CompiledName("Zip")>]
 let zip (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
     : ResizeArray<'T1 * 'T2> =
@@ -266,7 +268,7 @@ let zip (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
         results.Add (resizeArray1.[i], resizeArray2.[i])
     results
 
-//
+/// Split a ResizeArray of pairs into two ResizeArrays.
 [<CompiledName("Unzip")>]
 let unzip (resizeArray : ResizeArray<'T1 * 'T2>) : ResizeArray<'T1> * ResizeArray<'T2> =
     // Preconditions
@@ -283,7 +285,9 @@ let unzip (resizeArray : ResizeArray<'T1 * 'T2>) : ResizeArray<'T1> * ResizeArra
 
     results1, results2
 
-//
+/// Test if any element of the array satisfies the given predicate.
+/// If the input function is <c>f</c> and the elements are <c>i0...iN</c> 
+/// then computes <c>p i0 or ... or p iN</c>.
 [<CompiledName("Exists")>]
 let inline exists (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : bool =
     // Preconditions
@@ -291,7 +295,8 @@ let inline exists (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : boo
 
     resizeArray.Exists (System.Predicate predicate)
 
-//
+/// Test elements of the two arrays pairwise to see if any pair of element satisfies the given predicate.
+/// Raise ArgumentException if the arrays have different lengths.
 [<CompiledName("Exists2")>]
 let exists2 predicate (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : bool =
     // Preconditions
@@ -311,7 +316,9 @@ let exists2 predicate (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeAr
         index <- index + 1
     foundMatch
 
-//
+/// Test if all elements of the array satisfy the given predicate.
+/// If the input function is <c>f</c> and the elements are <c>i0...iN</c> and "j0...jN"
+/// then computes <c>p i0 && ... && p iN</c>.
 [<CompiledName("Forall")>]
 let inline forall (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : bool =
     // Preconditions
@@ -319,7 +326,8 @@ let inline forall (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : boo
 
     resizeArray.TrueForAll (System.Predicate predicate)
 
-//
+/// Test elements of the two arrays pairwise to see if all pairs of elements satisfy the given predicate.
+/// Raise ArgumentException if the arrays have different lengths.
 [<CompiledName("Forall2")>]
 let forall2 predicate (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : bool =
     // Preconditions
@@ -339,7 +347,8 @@ let forall2 predicate (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeAr
         index <- index + 1
     allMatch
 
-//
+/// Return a new collection containing only the elements of the collection
+/// for which the given predicate returns <c>true</c>.
 [<CompiledName("Filter")>]
 let inline filter (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
     // Preconditions
@@ -347,7 +356,11 @@ let inline filter (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : Res
 
     resizeArray.FindAll (System.Predicate predicate)
 
-//
+/// <summary>
+/// Apply the given function to each element of the array. Return
+/// the array comprised of the results "x" for each element where
+/// the function returns <c>Some(x)</c>.
+/// </summary>
 [<CompiledName("Choose")>]
 let choose (chooser : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : ResizeArray<'U> =
     // Preconditions
@@ -368,7 +381,10 @@ let choose (chooser : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : ResizeA
 
         result
 
-//
+/// <summary>
+/// Return the first element for which the given function returns <c>true</c>.
+/// Return <c>None</c> if no such element exists.
+/// </summary>
 [<CompiledName("TryFind")>]
 let tryFind (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T option =
     // Preconditions
@@ -380,7 +396,10 @@ let tryFind (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T option
     | index ->
         Some resizeArray.[index]
 
-//
+/// <summary>
+/// Return the first element for which the given function returns <c>true</c>.
+/// Raise <c>KeyNotFoundException</c> if no such element exists.
+/// </summary>
 [<CompiledName("Find")>]
 let find (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T =
     // Preconditions
@@ -394,7 +413,8 @@ let find (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T =
     | index ->
         resizeArray.[index]
 
-//
+/// Return the index of the first element in the array
+/// that satisfies the given predicate.
 [<CompiledName("TryFindIndex")>]
 let tryFindIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int option =
     // Preconditions
@@ -406,7 +426,11 @@ let tryFindIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int 
     | index ->
         Some index
         
-//
+/// <summary>
+/// Return the index of the first element in the array
+/// that satisfies the given predicate. Raise <c>KeyNotFoundException</c> if 
+/// none of the elements satisfy the predicate.
+/// </summary>
 [<CompiledName("FindIndex")>]
 let findIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int =
     // Preconditions
@@ -420,7 +444,8 @@ let findIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int =
     | index ->
         index
 
-//
+/// Return the index of the first element in the array
+/// that satisfies the given predicate.
 [<CompiledName("TryFindIndexIndexed")>]
 let tryFindIndexi predicate (resizeArray : ResizeArray<'T>) : int option =
     // Preconditions
@@ -440,7 +465,11 @@ let tryFindIndexi predicate (resizeArray : ResizeArray<'T>) : int option =
         Some index
     else None
 
-//
+/// <summary>
+/// Return the index of the first element in the array
+/// that satisfies the given predicate. Raise <c>KeyNotFoundException</c> if 
+/// none of the elements satisfy the predicate.
+/// </summary>
 [<CompiledName("FindIndexIndexed")>]
 let findIndexi predicate (resizeArray : ResizeArray<'T>) : int =
     // Preconditions
@@ -452,7 +481,10 @@ let findIndexi predicate (resizeArray : ResizeArray<'T>) : int =
     | None ->
         keyNotFound "An element satisfying the predicate was not found in the collection."
 
-//
+/// <summary>
+/// Apply the given function to successive elements, returning the first
+/// result where function returns <c>Some(x)</c> for some x.
+/// </summary>
 [<CompiledName("TryPick")>]
 let tryPick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U option =
     // Preconditions
@@ -489,7 +521,7 @@ let pick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
-//
+/// Apply the given function to each element of the array.
 [<CompiledName("Iter")>]
 let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) =
     // Preconditions
@@ -499,7 +531,8 @@ let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) =
     for i = 0 to count - 1 do
         action resizeArray.[i]
 
-//
+/// Apply the given function to each element of the array. The integer passed to the
+/// function indicates the index of element.
 [<CompiledName("IterIndexed")>]
 let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) =
     // Preconditions
@@ -511,7 +544,10 @@ let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) =
     for i = 0 to count - 1 do
         action.Invoke (i, resizeArray.[i])
 
-//
+/// <summary>
+/// Apply the given function to two arrays simultaneously. The two arrays
+/// must have the same lengths, otherwise an <c>ArgumentException</c> is raised.
+/// </summary>
 [<CompiledName("Iter2")>]
 let iter2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T1>) : unit =
     // Preconditions
@@ -527,7 +563,11 @@ let iter2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'
     for i = 0 to len - 1 do
         action.Invoke (resizeArray1.[i], resizeArray2.[i])
 
-//
+/// <summary>
+/// Apply the given function to pair of elements drawn from matching indices in two arrays,
+/// also passing the index of the elements. The two arrays must have the same lengths, 
+/// otherwise an <c>ArgumentException</c> is raised.
+/// </summary>
 [<CompiledName("IterIndexed2")>]
 let iteri2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : unit =
     // Preconditions
@@ -543,7 +583,8 @@ let iteri2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<
     for i = 0 to len - 1 do
         action.Invoke (i, resizeArray1.[i], resizeArray2.[i])
 
-//
+/// Build a new array whose elements are the results of applying the given function
+/// to each of the elements of the array.
 [<CompiledName("Map")>]
 let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) =
     // Preconditions
@@ -551,7 +592,9 @@ let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) =
 
     resizeArray.ConvertAll (System.Converter mapping)
 
-//
+/// Build a new array whose elements are the results of applying the given function
+/// to each of the elements of the array. The integer index passed to the
+/// function indicates the index of element being transformed.
 [<CompiledName("MapIndexed")>]
 let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) =
     // Preconditions
@@ -565,7 +608,9 @@ let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) =
         result.Add <| mapping.Invoke (i, resizeArray.[i])
     result
 
-//
+/// Build a new collection whose elements are the results of applying the given function
+/// to the corresponding elements of the two collections pairwise. The two input
+/// arrays must have the same lengths.
 [<CompiledName("Map2")>]
 let map2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
     : ResizeArray<'U> =
@@ -585,7 +630,11 @@ let map2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'
         |> results.Add
     results
 
-//
+/// <summary>
+/// Build a new collection whose elements are the results of applying the given function
+/// to the corresponding elements of the two collections pairwise. The two input
+/// arrays must have the same lengths, otherwise an <c>ArgumentException</c> is raised.
+/// </summary>
 [<CompiledName("MapIndexed2")>]
 let mapi2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
     : ResizeArray<'U> =
@@ -605,7 +654,11 @@ let mapi2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<
         |> results.Add
     results
 
-//
+/// <summary>
+/// Apply a function to each element of the collection, threading an accumulator argument
+/// through the computation. If the input function is <c>f</c> and the elements are <c>i0...iN</c> 
+/// then computes <c>f (... (f s i0)...) iN</c>.
+/// </summary>
 [<CompiledName("Fold")>]
 let fold (folder : 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) =
     // Preconditions
@@ -657,7 +710,11 @@ let foldi (folder : int -> 'State -> 'T -> 'State) state (resizeArray : ResizeAr
         state <- folder.Invoke (i, state, resizeArray.[i])
     state
 
-//
+/// <summary>
+/// Apply a function to pairs of elements drawn from the two collections, left-to-right,
+/// threading an accumulator argument through the computation.  The two input arrays must
+/// have the same lengths, otherwise an <c>ArgumentException</c> is raised.
+/// </summary>
 [<CompiledName("Fold2")>]
 let fold2 folder (state : 'State)
     (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : 'State =
@@ -675,7 +732,11 @@ let fold2 folder (state : 'State)
         state <- folder.Invoke (state, resizeArray1.[i], resizeArray2.[i])
     state
 
-//
+/// <summary>
+/// Apply a function to each element of the array, threading an accumulator argument
+/// through the computation. If the input function is <c>f</c> and the elements are
+/// <c>i0...iN</c> then computes <c>f i0 (...(f iN s))</c>.
+/// </summary>
 [<CompiledName("FoldBack")>]
 let foldBack (folder : 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state =
     // Preconditions
@@ -725,7 +786,11 @@ let foldiBack (folder : int -> 'T -> 'State -> 'State) (resizeArray : ResizeArra
         state <- folder.Invoke (i, resizeArray.[i], state)
     state
 
-//
+/// <summary>
+/// Apply a function to pairs of elements drawn from the two collections, right-to-left, 
+/// threading an accumulator argument through the computation.  The two input
+/// arrays must have the same lengths, otherwise an <c>ArgumentException</c> is raised.
+/// </summary>
 [<CompiledName("FoldBack2")>]
 let foldBack2 folder (resizeArray1 : ResizeArray<'T1>)
     (resizeArray2 : ResizeArray<'T2>) (state : 'State) : 'State =
@@ -743,7 +808,12 @@ let foldBack2 folder (resizeArray1 : ResizeArray<'T1>)
         state <- folder.Invoke (resizeArray1.[i], resizeArray2.[i], state)
     state
 
-//
+/// <summary>
+/// Apply a function to each element of the array, threading an accumulator argument
+/// through the computation. If the input function is <c>f</c> and the elements are <c>i0...iN</c> 
+/// then computes <c>f (... (f i0 i1)...) iN</c>.
+/// Raises <c>ArgumentException</c> if the array has size zero.
+/// <summary>
 [<CompiledName("Reduce")>]
 let reduce (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) =
     // Preconditions
@@ -759,7 +829,12 @@ let reduce (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) =
         state <- reduction.Invoke (state, resizeArray.[i])
     state
 
-//
+/// <summary>
+/// Apply a function to each element of the array, threading an accumulator argument
+/// through the computation. If the input function is <c>f</c> and the elements are <c>i0...iN</c> then 
+/// computes <c>f i0 (...(f iN-1 iN))</c>.
+/// Raises <c>ArgumentException</c> if the array has size zero.
+/// </summary>
 [<CompiledName("ReduceBack")>]
 let reduceBack (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) : 'T =
     // Preconditions
@@ -805,7 +880,9 @@ let scanSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex e
         results.Add state
     results
 
-//
+/// <summary>
+/// Like <c>fold</c>, but return the intermediary and final results.
+/// </summary>
 [<CompiledName("Scan")>]
 let scan folder (state : 'State) (resizeArray : ResizeArray<'T>) : ResizeArray<'State> =
     // Preconditions
@@ -842,7 +919,9 @@ let scanBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (stat
         results.Insert (0, state)
     results
 
-//
+/// <summary>
+/// Like <c>foldBack</c>, but return both the intermediary and final results.
+/// </summary>
 [<CompiledName("ScanBack")>]
 let scanBack folder (resizeArray : ResizeArray<'T>) (state : 'State) : ResizeArray<'State> =
     // Preconditions
@@ -850,7 +929,10 @@ let scanBack folder (resizeArray : ResizeArray<'T>) (state : 'State) : ResizeArr
 
     scanBackSub folder resizeArray 0 (length resizeArray - 1) state
 
-//
+/// <summary>
+/// Split the collection into two collections, containing the elements for which
+/// the given predicate returns <c>true</c> and <c>false</c> respectively.
+/// </summary>
 [<CompiledName("Partition")>]
 let partition predicate (resizeArray : ResizeArray<'T>) : ResizeArray<'T> * ResizeArray<'T> =
     // Preconditions
