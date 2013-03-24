@@ -390,6 +390,7 @@ let tryPick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U opti
 
     while index < count && Option.isNone result do
         result <- picker resizeArray.[index]
+        index <- index + 1
     result
 
 //
@@ -404,6 +405,7 @@ let pick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U =
 
     while index < count && Option.isNone result do
         result <- picker resizeArray.[index]
+        index <- index + 1
 
     match result with
     | Some result ->
@@ -524,7 +526,7 @@ let rev (resizeArray : ResizeArray<'T>) : ResizeArray<'T> =
     let result = ResizeArray (len)
     for i = len - 1 downto 0 do
         result.Add resizeArray.[i]
-    resizeArray
+    result
 
 //
 [<CompiledName("Exists2")>]
@@ -560,7 +562,7 @@ let forall2 predicate (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeAr
     let predicate = FSharpFunc<_,_,_>.Adapt predicate
     
     let mutable index = 0
-    let mutable allMatch = false
+    let mutable allMatch = true
     while index < len && allMatch do
         allMatch <- predicate.Invoke (resizeArray1.[index], resizeArray2.[index])
         index <- index + 1
@@ -610,12 +612,13 @@ let tryFindIndexi predicate (resizeArray : ResizeArray<'T>) : int option =
 
     let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
-    let len = length resizeArray
+    let lastIndex = length resizeArray - 1
     let mutable index = -1
     let mutable foundMatch = false
-    while index < len && not foundMatch do
-        index <- index + 1
-        foundMatch <- predicate.Invoke (index, resizeArray.[index])
+    while index < lastIndex && not foundMatch do
+        let i = index + 1
+        index <- i
+        foundMatch <- predicate.Invoke (i, resizeArray.[i])
 
     if foundMatch then
         Some index
@@ -662,7 +665,7 @@ let zip (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
     checkNonNull "resizeArray2" resizeArray2
 
     let len = length resizeArray1
-    if len = length resizeArray2 then
+    if len <> length resizeArray2 then
         invalidArg "resizeArray2" "The ResizeArrays have different lengths."
 
     let results = ResizeArray (len)
@@ -706,6 +709,42 @@ let partition predicate (resizeArray : ResizeArray<'T>) : ResizeArray<'T> * Resi
 
     trueResults, falseResults
 
+//
+[<CompiledName("Fold2")>]
+let fold2 folder (state : 'State)
+    (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : 'State =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The arrays have different lengths."
+
+    let folder = FSharpFunc<_,_,_,_>.Adapt folder
+    let mutable state = state
+    for i = 0 to len - 1 do
+        state <- folder.Invoke (state, resizeArray1.[i], resizeArray2.[i])
+    state
+
+//
+[<CompiledName("FoldBack2")>]
+let foldBack2 folder (resizeArray1 : ResizeArray<'T1>)
+    (resizeArray2 : ResizeArray<'T2>) (state : 'State) : 'State =
+    // Preconditions
+    checkNonNull "resizeArray1" resizeArray1
+    checkNonNull "resizeArray2" resizeArray2
+
+    let len = length resizeArray1
+    if len <> length resizeArray2 then
+        invalidArg "resizeArray2" "The arrays have different lengths."
+
+    let folder = FSharpFunc<_,_,_,_>.Adapt folder
+    let mutable state = state
+    for i = len - 1 downto 0 do
+        state <- folder.Invoke (resizeArray1.[i], resizeArray2.[i], state)
+    state
+
 (* Functions below this point still need to be cleaned up. *)
 
 //
@@ -722,28 +761,6 @@ let foldBackSub f (arr: ResizeArray<_>) start fin acc =
     let mutable res = acc 
     for i = fin downto start do
         res <- f arr.[i] res
-    res
-
-//
-[<CompiledName("Fold2")>]
-let fold2 f (acc: 'T) (arr1: ResizeArray<'T1>) (arr2: ResizeArray<'T2>) =
-    let f = FSharpFunc<_,_,_,_>.Adapt(f)
-    let mutable res = acc 
-    let len = length arr1
-    if len <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    for i = 0 to len - 1 do
-        res <- f.Invoke(res,arr1.[i],arr2.[i])
-    res
-
-//
-[<CompiledName("FoldBack2")>]
-let foldBack2 f (arr1: ResizeArray<'T1>) (arr2: ResizeArray<'T2>) (acc: 'b) =
-    let f = FSharpFunc<_,_,_,_>.Adapt(f)
-    let mutable res = acc 
-    let len = length arr1
-    if len <> length arr2 then invalidArg "arr2" "the arrays have different lengths"
-    for i = len - 1 downto 0 do 
-        res <- f.Invoke(arr1.[i],arr2.[i],res)
     res
 
 //
@@ -779,4 +796,3 @@ let scanBackSub f (arr: ResizeArray<'T>) start fin acc =
         state <- f.Invoke(arr.[i], state)
         res.[i - start] <- state
     res
-
