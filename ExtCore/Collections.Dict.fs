@@ -346,7 +346,7 @@ let partition partitioner (dictionary : IDictionary<'Key, 'T>) =
 
     dict t, dict f
 
-//
+/// Returns a read-only view of a dictionary.
 [<CompiledName("Readonly")>]
 let readonly (dictionary : IDictionary<'Key, 'T>) =
     dict <| toSeq dictionary

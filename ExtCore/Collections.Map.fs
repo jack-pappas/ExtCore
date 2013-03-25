@@ -32,7 +32,8 @@ open ExtCore
 let inline count (map : Map<'Key, 'Value>) =
     map.Count
 
-//
+/// Lookup a key in the Map, and if found, return it's corresponding value.
+/// Otherwise, returns the given default value.
 [<CompiledName("FindOrDefault")>]
 let inline findOrDefault defaultValue key (map : Map<'Key, 'T>) =
     defaultArg (Map.tryFind key map) defaultValue
@@ -43,7 +44,7 @@ let inline singleton key value : Map<'Key, 'T> =
     Map.empty
     |> Map.add key value
 
-//
+/// Returns the key set of the Map.
 [<CompiledName("Keys")>]
 let keys (map : Map<'Key, 'T>) =
     // Preconditions
@@ -53,7 +54,8 @@ let keys (map : Map<'Key, 'T>) =
     ||> Map.fold (fun keys key _ ->
         Set.add key keys)
 
-//
+/// Returns the value set of the Map.
+// TODO : Should this be changed to return a Multiset?
 [<CompiledName("Values")>]
 let values (map : Map<'Key, 'T>) =
     // Preconditions
@@ -63,7 +65,7 @@ let values (map : Map<'Key, 'T>) =
     ||> Map.fold (fun values _ value ->
         Set.add value values)
 
-//
+/// Adds the given KeyValuePair to the Map.
 [<CompiledName("AddKvp")>]
 let inline addKvp (kvp : KeyValuePair<'Key, 'T>) map =
     // Preconditions
@@ -71,7 +73,7 @@ let inline addKvp (kvp : KeyValuePair<'Key, 'T>) map =
 
     Map.add kvp.Key kvp.Value map
 
-//
+/// Returns a new Map created from a sequence of key-value pairs.
 [<CompiledName("FromKvpSequence")>]
 let ofKvpSeq (sequence : seq<KeyValuePair<'Key, 'T>>) =
     // Preconditions
@@ -81,7 +83,8 @@ let ofKvpSeq (sequence : seq<KeyValuePair<'Key, 'T>>) =
     ||> Seq.fold (fun map kvp ->
         addKvp kvp map)
 
-//
+/// Creates a new Map from a set of keys by applying a mapping function to each
+/// key to generate it's corresponding value.
 [<CompiledName("FromKeys")>]
 let ofKeys (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'Key, 'T> =
     // Preconditions
@@ -95,7 +98,10 @@ let ofKeys (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'Key, 'T> =
         ||> Set.fold (fun map key ->
             Map.add key (mapping key) map)
 
-//
+/// Creates a new Map from a set of values by applying a mapping function to each
+/// value to extract a key from it. If the key-mapping function returns the same
+/// key for two or more values, the returned Map will only contain a binding for
+/// the greatest of those values.
 [<CompiledName("FromValues")>]
 let ofValues (mapping : 'T -> 'Key) (set : Set<'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -109,7 +115,8 @@ let ofValues (mapping : 'T -> 'Key) (set : Set<'T>) : Map<'Key, 'T> =
         ||> Set.fold (fun map value ->
             Map.add (mapping value) value map)
 
-//
+/// Builds a new Map containing only the bindings whose keys do not
+/// belong to a given set of keys.
 [<CompiledName("RemoveKeys")>]
 let removeKeys keys (map : Map<'Key, 'T>) =
     // Preconditions
@@ -126,7 +133,8 @@ let removeKeys keys (map : Map<'Key, 'T>) =
         ||> Set.fold (fun map key ->
             Map.remove key map)
 
-//
+/// Builds a new Map containing only the bindings whose keys
+/// belong to a given set of keys.
 [<CompiledName("SelectKeys")>]
 let selectKeys keys (map : Map<'Key, 'T>) =
     // Preconditions
@@ -141,7 +149,11 @@ let selectKeys keys (map : Map<'Key, 'T>) =
         |> Map.filter (fun key _ ->
             Set.contains key keys)
 
-//
+/// <summary>
+/// Applies the given function to each binding in the Map.
+/// Returns the Map comprised of the results "x" for each binding
+/// where the function returns <c>Some(x)</c>.
+/// </summary>
 [<CompiledName("Choose")>]
 let choose (chooser : 'Key -> 'T -> 'U option) map =
     // Preconditions
@@ -161,7 +173,12 @@ let choose (chooser : 'Key -> 'T -> 'U option) map =
             | Some newValue ->
                 Map.add key newValue chosenMap)
 
-//
+/// <summary>
+/// Like <c>Map.partition</c>, a function is applied to each binding in a Map to
+/// partition it into two parts. <c>mapPartition</c> differs in that it allows
+/// the values in the returned Maps to be different than the values in the input
+/// Map, and it also allows the values in the returned Maps to have different types.
+/// </summary>
 [<CompiledName("MapPartition")>]
 let mapPartition (partitioner : 'Key -> 'T -> Choice<'U, 'V>) map =
     // Preconditions
@@ -255,7 +272,9 @@ let join (joiner : 'Key -> 'T -> 'T -> 'T) (map1 : Map<'Key, 'T>) (map2 : Map<'K
             // Add the joined value to the map.
             Map.add key joinedValue joined)
 
-//
+/// Creates a new Map by inverting the given Map. The keys are the values of the
+/// original Map; the corresponding value is a non-empty set containing the original keys
+/// which pointed to the value.
 [<CompiledName("Pivot")>]
 let pivot (map : Map<'Key, 'T>) : Map<'T, Set<'Key>> =
     // Preconditions
@@ -278,8 +297,7 @@ let pivot (map : Map<'Key, 'T>) : Map<'T, Set<'Key>> =
             // Add/update the pivot map entry for this value.
             Map.add value keySet pivotMap)
 
-//
-// Combines Map.ofKeys and Map.pivot to avoid creating intermediate data structures.
+/// Combines Map.ofKeys and Map.pivot to avoid creating intermediate data structures.
 [<CompiledName("PivotKeySet")>]
 let pivotKeySet (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'T, Set<'Key>> =
     // Preconditions
@@ -305,7 +323,7 @@ let pivotKeySet (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'T, Set<'Key>> =
             // Add/update the key-set for this value in the pivot map.
             Map.add value keySet pivotMap)
 
-// Like Map.add, but doesn't overwrite an existing entry.
+/// Like Map.add, but doesn't overwrite an existing entry.
 [<CompiledName("TryAdd")>]
 let tryAdd key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -318,8 +336,8 @@ let tryAdd key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
         // Add the new entry.
         Map.add key value map
 
-// Like Map.add, but only overwrites the value of an existing entry
-// (i.e., it won't create a new entry in the map).
+/// Like Map.add, but only overwrites the value of an existing entry
+/// (i.e., it won't create a new entry in the map).
 [<CompiledName("TryUpdate")>]
 let tryUpdate key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
