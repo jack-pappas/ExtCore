@@ -349,9 +349,3 @@ let tryUpdate key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     else
         // Return the original map.
         map
-
-// TODO
-// mapi, mapiBack
-// foldi, foldiBack
-// reduce, reduceBack
-// update       // Similar to 'tryUpdate' but raises an exception if there's no existing entry.

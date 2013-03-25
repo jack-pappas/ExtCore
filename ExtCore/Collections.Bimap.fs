@@ -443,9 +443,6 @@ module Bimap =
 
         bimap.ToArray ()
 
-    // TODO
-    // ofMap, toMap, tryOfMap
-
 
 /// <summary>A bi-directional IntMap.</summary>
 [<Sealed>]
@@ -857,9 +854,6 @@ module IntBimap =
 
         bimap.ToArray ()
 
-    // TODO
-    // ofMap, toMap, tryOfMap
-
 
 #if PROTO_COMPILER
 
@@ -1140,9 +1134,6 @@ module TagBimap =
 
         bimap.ToArray ()
         |> retype
-
-    // TODO
-    // ofMap, toMap, tryOfMap
 
 #endif
 

@@ -378,5 +378,3 @@ let choosei (chooser : int -> 'T -> 'U option) array =
             chosen.Add value
 
     chosen.ToArray ()
-
-// TODO : foldPairs, foldPairsBack

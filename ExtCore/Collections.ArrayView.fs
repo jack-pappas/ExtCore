@@ -360,8 +360,3 @@ let inline sum (segment : ArrayView<'T>) =
         invalidArg "segment" "Cannot compute the sum of an empty ArrayView<'T>."
 
     reduce (+) segment
-
-// TODO
-// minBy
-// maxBy    
-// sumBy

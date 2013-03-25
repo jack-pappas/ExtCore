@@ -25,17 +25,6 @@ namespace ExtCore.Collections
 //open System.Diagnostics.Contracts
 open ExtCore
 
-(* TODO :   ofList
-            ofArray
-            ofSeq
-            toSeq
-            peek
-            Implement interfaces.
-                - IEnumerable / IEnumerable<'T>
-                - ICollection / ICollection<'T>
-                - IList / IList<'T>
-                - IReadOnlyList<'T> (.NET 4.5)
-*)
 
 (* INVARIANTS                                        *)
 (*   1. length front >= length rear                  *)

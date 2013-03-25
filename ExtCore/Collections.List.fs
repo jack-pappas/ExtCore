@@ -407,19 +407,3 @@ let unzipWith (mapping : 'T -> 'U * 'V) list : 'U list * 'V list =
         // Reverse the result lists before returning.
         List.rev resultList1,
         List.rev resultList2
-
-
-(* TODO
-
-List.choosei
-
-List.unzipMap
-    Similar to List.map2 (and List.zipMap, below). Given a list of tuples (a, b)
-    applies the elements of each tuple to a function 'f' (f a b).
-List.zipMap
-    Similar to List.map2, but combines the elements into a tuple before
-    applying them to the mapping function; this optimizes for the case where
-    we have List.zip immediately followed by List.map, or to simplify code
-    which needs to create the tuple and "manually" apply it to a function.
-
-*)

@@ -26,7 +26,7 @@ open OptimizedClosures
 open ExtCore
 
 
-//
+/// Appends an element to a sequence of elements.
 [<CompiledName("AppendSingleton")>]
 let inline appendSingleton sequence (value : 'T) =
     Seq.append sequence (Seq.singleton value)
@@ -51,18 +51,3 @@ let projectKeys (mapping : 'T -> 'Key) (source : seq<'T>) =
     |> Seq.map (fun x ->
         mapping x, x)
 
-(* TODO
-
-Seq.choosei
-
-Seq.segment
-    Groups elements of a sequence together "longitudinally" -- i.e., it works
-    in a streaming fashion, rather than Seq.groupBy which needs to see the
-    entire stream before returning. Alternatively, this can be thought of
-    as a generalized form of Seq.windowed.
-
-Seq.sample
-    Takes a positive integer and a sequence.
-    Returns a sequence containing every n-th element of the input sequence.
-
-*)

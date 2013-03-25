@@ -27,10 +27,6 @@ open ExtCore
 open BitOps
 open PatriciaTrieConstants
 
-(*  TODO :  Implement interfaces:
-            - ISet<'T>
-            - IReadOnlyCollection<'T> (.NET 4.5)
-*)
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntSet (and TagSet).

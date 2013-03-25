@@ -30,28 +30,6 @@ open ExtCore
                 Basically, the Delayed and Value cases are replaced by Lazy<'T> and Choice1Of2,
                 and the Exception case is replaced by Choice2Of2.
                 We'll still need LazyListCell<'T> though, since that's the actual list representation. *)
-(* TODO :   Implement some additional useful functions in the LazyList module (or class):
-    - force : LazyList<'T> -> unit
-        Traverses the LazyList and forces evaluation of all cells. May not terminate.
-    - forcePartial : int -> LazyList<'T> -> unit
-        Traverses the given number of cells in the LazyList (or to the end), forcing evaluation
-        of the traversed cells. May not terminate.
-    - lazyLength : LazyList<'T> -> int
-        Computes the "lazy" length of the LazyList<'T> -- that is, the number of cells which have
-        already been evaluated. Unlike LazyList.length, this does not force evaluation of any cells
-        and always terminates.
-    - ofSeqEager : seq<'T> -> LazyList<'T>
-        Similar to 'ofSeq', but eagerly enumerates the sequence to build a LazyList.
-        This allows us to detect certain sequence types (like 'T[] and 'T list) and use optimized
-        implementations, avoids the possibility of memory leaks, and avoids lazily-evaluating
-        list elements when they don't really need it.
-*)
-(* TODO :   Implement additional interfaces.
-            - ICollection / ICollection<'T>
-            - IList / IList<'T>
-            - IReadOnlyList<'T> (.NET 4.5)
-            - IReadOnlyCollection<'T> (.NET 4.5)
-*)
 
 //
 [<NoEquality; NoComparison>]
