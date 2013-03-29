@@ -19,6 +19,7 @@ limitations under the License.
 
 namespace ExtCore
 
+
 /// Additional functional operators on strings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module String =
@@ -100,6 +101,29 @@ module String =
     let inline ofArray (chars : char[]) =
         System.String (chars)
 
+    /// Returns the index of the first occurrence of a specified character within a string.
+    [<CompiledName("TryFindIndexOf")>]
+    let inline tryFindIndexOf (c : char) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        match str.IndexOf c with
+        | -1 -> None
+        | idx -> Some idx
+
+    /// Returns the index of the first occurrence of a specified character within a string.
+    [<CompiledName("FindIndexOf")>]
+    let inline findIndexOf (c : char) (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        match str.IndexOf c with
+        | -1 ->
+            // TODO : Return a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+        | idx -> idx
+
     /// Returns the index of the first character in the string which satisfies the given predicate.
     [<CompiledName("TryFindIndex")>]
     let tryFindIndex (predicate : char -> bool) (str : string) =
@@ -135,28 +159,192 @@ module String =
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    /// Returns the index of the first occurrence of a specified character within a string.
-    [<CompiledName("TryFindIndexOf")>]
-    let inline tryFindIndexOf (c : char) (str : string) =
+    /// Applies a function to each character of the string, threading an accumulator
+    /// argument through the computation.
+    /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> char -> 'State) (state : 'State) (str : string) : 'State =
         // Preconditions
         checkNonNull "str" str
 
-        match str.IndexOf c with
-        | -1 -> None
-        | idx -> Some idx
+        let folder = FSharpFunc<_,_,_>.Adapt folder
 
-    /// Returns the index of the first occurrence of a specified character within a string.
-    [<CompiledName("FindIndexOf")>]
-    let inline findIndexOf (c : char) (str : string) =
+        /// The length of the input string.
+        let len = String.length str
+
+        // Fold over the string.
+        let mutable state = state
+        for i = 0 to len - 1 do
+            state <- folder.Invoke (state, str.[i])
+        state
+
+    /// Applies a function to each character of the string, threading an accumulator
+    /// argument through the computation.
+    /// If the input function is f and the characters are c0...cN then computes f c0 (...(f cN s)).
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : char -> 'State -> 'State) (str : string) (state : 'State) : 'State =
         // Preconditions
         checkNonNull "str" str
 
-        match str.IndexOf c with
-        | -1 ->
-            // TODO : Return a better error message.
-            //keyNotFound ""
-            raise <| System.Collections.Generic.KeyNotFoundException ()
-        | idx -> idx
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+
+        /// The length of the input string.
+        let len = String.length str
+
+        // Fold backwards over the string.
+        let mutable state = state
+        for i = len - 1 downto 0 do
+            state <- folder.Invoke (str.[i], state)
+        state
+
+    /// Applies the given function to each character of the string.
+    [<CompiledName("Iterate")>]
+    let iter (action : char -> unit) (str : string) : unit =
+        // Preconditions
+        checkNonNull "str" str
+        
+        /// The length of the input string.
+        let len = String.length str
+
+        // Iterate over the string, applying the action to each character.
+        for i = 0 to len - 1 do
+            action str.[i]
+
+    /// Applies the given function to each character of the string.
+    /// The integer passed to the function indicates the index of the character.
+    [<CompiledName("IterateIndexed")>]
+    let iteri (action : int -> char -> unit) (str : string) : unit =
+        // Preconditions
+        checkNonNull "str" str
+        
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        /// The length of the input string.
+        let len = String.length str
+
+        // Iterate over the string, applying the action to each character.
+        for i = 0 to len - 1 do
+            action.Invoke (i, str.[i])
+
+    /// Builds a new string whose characters are the results of applying the given
+    /// function to each character of the string.
+    [<CompiledName("Map")>]
+    let map (mapping : char -> char) (str : string) : string =
+        // Preconditions
+        checkNonNull "str" str
+        
+        /// The length of the input string.
+        let len = String.length str
+
+        // OPTIMIZATION : If the input string is empty return immediately.
+        if len = 0 then
+            empty
+        else
+            /// The mapped characters.
+            let mappedChars = Array.zeroCreate len
+
+            // Iterate over the string, applying the mapping to each character
+            // and storing the result into the array of mapped characters.
+            for i = 0 to len - 1 do
+                mappedChars.[i] <- mapping str.[i]
+
+            // Create a new string from the mapped characters.
+            ofArray mappedChars
+
+    /// Builds a new string whose characters are the results of applying the given
+    /// function to each character of the string.
+    /// The integer index passed to the function indicates the index of the character being transformed.
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int -> char -> char) (str : string) : string =
+        // Preconditions
+        checkNonNull "str" str
+
+        /// The length of the input string.
+        let len = String.length str
+
+        // OPTIMIZATION : If the input string is empty return immediately.
+        if len = 0 then
+            empty
+        else
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+            /// The mapped characters.
+            let mappedChars = Array.zeroCreate len
+
+            // Iterate over the string, applying the mapping to each character
+            // and storing the result into the array of mapped characters.
+            for i = 0 to len - 1 do
+                mappedChars.[i] <- mapping.Invoke (i, str.[i])
+
+            // Create a new string from the mapped characters.
+            ofArray mappedChars
+
+    /// Applies the given function to each character in the string.
+    /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
+    [<CompiledName("Choose")>]
+    let choose (chooser : char -> char option) (str : string) : string =
+        // Preconditions
+        checkNonNull "str" str
+        
+        /// The length of the input string.
+        let len = String.length str
+
+        // OPTIMIZATION : If the input string is empty return immediately.
+        if len = 0 then
+            empty
+        else
+            /// The chosen characters.
+            let chosenChars = Array.zeroCreate len
+
+            /// The number of chosen characters.
+            let mutable chosenCount = 0
+
+            // Loop over the characters in the string, applying the chooser function and
+            // copying the result (if any) into the array of chosen characters.
+            for i = 0 to len - 1 do
+                match chooser str.[i] with
+                | None -> ()
+                | Some chosen ->
+                    chosenChars.[chosenCount] <- chosen
+                    chosenCount <- chosenCount + 1
+
+            // Create a new string from the chosen characters.
+            ofArray chosenChars.[..chosenCount]
+
+    /// Applies the given function to each character in the string.
+    /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
+    /// The integer index passed to the function indicates the index of the character being transformed.
+    [<CompiledName("ChooseIndexed")>]
+    let choosei (chooser : int -> char -> char option) (str : string) : string =
+        // Preconditions
+        checkNonNull "str" str
+        
+        /// The length of the input string.
+        let len = String.length str
+
+        // OPTIMIZATION : If the input string is empty return immediately.
+        if len = 0 then
+            empty
+        else
+            let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+            /// The chosen characters.
+            let chosenChars = Array.zeroCreate len
+
+            /// The number of chosen characters.
+            let mutable chosenCount = 0
+
+            // Loop over the characters in the string, applying the chooser function and
+            // copying the result (if any) into the array of chosen characters.
+            for i = 0 to len - 1 do
+                match chooser.Invoke (i, str.[i]) with
+                | None -> ()
+                | Some chosen ->
+                    chosenChars.[chosenCount] <- chosen
+                    chosenCount <- chosenCount + 1
+
+            // Create a new string from the chosen characters.
+            ofArray chosenChars.[..chosenCount]
 
     /// Removes all leading occurrences of the specified set of characters from a string.
     [<CompiledName("TrimStart")>]
@@ -284,193 +472,6 @@ module String =
                     str.[trimmedStartIndex].ToString ()
             else
                 empty
-
-    /// Applies the given function to each character in the string.
-    /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
-    [<CompiledName("Choose")>]
-    let choose (chooser : char -> char option) (str : string) : string =
-        // Preconditions
-        checkNonNull "str" str
-        
-        /// The length of the input string.
-        let len = String.length str
-
-        // OPTIMIZATION : If the input string is empty return immediately.
-        if len = 0 then
-            empty
-        else
-            /// The chosen characters.
-            let chosenChars = Array.zeroCreate len
-
-            /// The number of chosen characters.
-            let mutable chosenCount = 0
-
-            // Loop over the characters in the string, applying the chooser function and
-            // copying the result (if any) into the array of chosen characters.
-            for i = 0 to len - 1 do
-                match chooser str.[i] with
-                | None -> ()
-                | Some chosen ->
-                    chosenChars.[chosenCount] <- chosen
-                    chosenCount <- chosenCount + 1
-
-            // Create a new string from the chosen characters.
-            ofArray chosenChars.[..chosenCount]
-
-    /// Applies the given function to each character in the string.
-    /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
-    /// The integer index passed to the function indicates the index of the character being transformed.
-    [<CompiledName("ChooseIndexed")>]
-    let choosei (chooser : int -> char -> char option) (str : string) : string =
-        // Preconditions
-        checkNonNull "str" str
-        
-        /// The length of the input string.
-        let len = String.length str
-
-        // OPTIMIZATION : If the input string is empty return immediately.
-        if len = 0 then
-            empty
-        else
-            let chooser = FSharpFunc<_,_,_>.Adapt chooser
-
-            /// The chosen characters.
-            let chosenChars = Array.zeroCreate len
-
-            /// The number of chosen characters.
-            let mutable chosenCount = 0
-
-            // Loop over the characters in the string, applying the chooser function and
-            // copying the result (if any) into the array of chosen characters.
-            for i = 0 to len - 1 do
-                match chooser.Invoke (i, str.[i]) with
-                | None -> ()
-                | Some chosen ->
-                    chosenChars.[chosenCount] <- chosen
-                    chosenCount <- chosenCount + 1
-
-            // Create a new string from the chosen characters.
-            ofArray chosenChars.[..chosenCount]
-
-    /// Applies a function to each character of the string, threading an accumulator
-    /// argument through the computation.
-    /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
-    [<CompiledName("Fold")>]
-    let fold (folder : 'State -> char -> 'State) (state : 'State) (str : string) : 'State =
-        // Preconditions
-        checkNonNull "str" str
-
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-
-        /// The length of the input string.
-        let len = String.length str
-
-        // Fold over the string.
-        let mutable state = state
-        for i = 0 to len - 1 do
-            state <- folder.Invoke (state, str.[i])
-        state
-
-    /// Applies a function to each character of the string, threading an accumulator
-    /// argument through the computation.
-    /// If the input function is f and the characters are c0...cN then computes f c0 (...(f cN s)).
-    [<CompiledName("FoldBack")>]
-    let foldBack (folder : char -> 'State -> 'State) (str : string) (state : 'State) : 'State =
-        // Preconditions
-        checkNonNull "str" str
-
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-
-        /// The length of the input string.
-        let len = String.length str
-
-        // Fold backwards over the string.
-        let mutable state = state
-        for i = len - 1 downto 0 do
-            state <- folder.Invoke (str.[i], state)
-        state
-
-    /// Applies the given function to each character of the string.
-    [<CompiledName("Iterate")>]
-    let iter (action : char -> unit) (str : string) : unit =
-        // Preconditions
-        checkNonNull "str" str
-        
-        /// The length of the input string.
-        let len = String.length str
-
-        // Iterate over the string, applying the action to each character.
-        for i = 0 to len - 1 do
-            action str.[i]
-
-    /// Applies the given function to each character of the string.
-    /// The integer passed to the function indicates the index of the character.
-    [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> char -> unit) (str : string) : unit =
-        // Preconditions
-        checkNonNull "str" str
-        
-        let action = FSharpFunc<_,_,_>.Adapt action
-
-        /// The length of the input string.
-        let len = String.length str
-
-        // Iterate over the string, applying the action to each character.
-        for i = 0 to len - 1 do
-            action.Invoke (i, str.[i])
-
-    /// Builds a new string whose characters are the results of applying the given
-    /// function to each character of the string.
-    [<CompiledName("Map")>]
-    let map (mapping : char -> char) (str : string) : string =
-        // Preconditions
-        checkNonNull "str" str
-        
-        /// The length of the input string.
-        let len = String.length str
-
-        // OPTIMIZATION : If the input string is empty return immediately.
-        if len = 0 then
-            empty
-        else
-            /// The mapped characters.
-            let mappedChars = Array.zeroCreate len
-
-            // Iterate over the string, applying the mapping to each character
-            // and storing the result into the array of mapped characters.
-            for i = 0 to len - 1 do
-                mappedChars.[i] <- mapping str.[i]
-
-            // Create a new string from the mapped characters.
-            ofArray mappedChars
-
-    /// Builds a new string whose characters are the results of applying the given
-    /// function to each character of the string.
-    /// The integer index passed to the function indicates the index of the character being transformed.
-    [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> char -> char) (str : string) : string =
-        // Preconditions
-        checkNonNull "str" str
-
-        /// The length of the input string.
-        let len = String.length str
-
-        // OPTIMIZATION : If the input string is empty return immediately.
-        if len = 0 then
-            empty
-        else
-            let mapping = FSharpFunc<_,_,_>.Adapt mapping
-
-            /// The mapped characters.
-            let mappedChars = Array.zeroCreate len
-
-            // Iterate over the string, applying the mapping to each character
-            // and storing the result into the array of mapped characters.
-            for i = 0 to len - 1 do
-                mappedChars.[i] <- mapping.Invoke (i, str.[i])
-
-            // Create a new string from the mapped characters.
-            ofArray mappedChars
 
     (*
     /// String-splitting functions.
