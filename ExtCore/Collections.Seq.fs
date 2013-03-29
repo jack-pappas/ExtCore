@@ -28,7 +28,7 @@ open ExtCore
 
 /// Appends an element to a sequence of elements.
 [<CompiledName("AppendSingleton")>]
-let inline appendSingleton sequence (value : 'T) =
+let inline appendSingleton (value : 'T) sequence =
     Seq.append sequence (Seq.singleton value)
 
 //

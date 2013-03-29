@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.Seq module.
 module ExtCore.Collections.Seq.Tests
 
 open NUnit.Framework
@@ -24,5 +24,41 @@ open FsUnit
 //open FsCheck
 
 
-(* TODO : Implement tests for functions in the ExtCore.Collections.Seq module. *)
+[<TestCase>]
+let appendSingleton () : unit =
+    Seq.empty
+    |> Seq.appendSingleton 123
+    |> Seq.length
+    |> should equal 1
 
+    seq { 0 .. 4 }
+    |> Seq.appendSingleton 10
+    |> should equal [0; 1; 2; 3; 4; 10]
+
+[<TestCase>]
+let projectValues () : unit =
+    seq { 'a' .. 'e' }
+    |> Seq.projectValues (fun asciiChar ->
+        asciiChar.ToString().ToUpper())
+    |> Seq.toList
+    |> should equal
+       ['a', "A";
+        'b', "B";
+        'c', "C";
+        'd', "D";
+        'e', "E"]
+
+[<TestCase>]
+let projectKeys () : unit =
+    seq {
+        yield "Red"
+        yield "Blue"
+        yield "Green"
+        yield "Yellow" }
+    |> Seq.projectKeys String.length
+    |> Seq.toList
+    |> should equal
+       [3, "Red";
+        4, "Blue";
+        5, "Green";
+        6, "Yellow"]
