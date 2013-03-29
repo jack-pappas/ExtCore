@@ -16,13 +16,12 @@ limitations under the License.
 
 *)
 
-/// Unit tests for the ExtCore.Collections.Bimap type and module.
-module ExtCore.Collections.Bimap.Tests
+//
+namespace ExtCore.String.Tests
 
 open NUnit.Framework
-open FsUnit
-//open FsCheck
+open FsCheck
 
 
-(* TODO : Implement tests for Bimap. *)
+(* TODO : Implement tests ExtCore.String module. *)
 

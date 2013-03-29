@@ -39,6 +39,7 @@
     <None Include="packages.config" />
     <Compile Include="TestHelpers.fs" />
     <Compile Include="Pervasive.fs" />
+    <Compile Include="String.fs" />
     <Compile Include="Control.fs" />
     <Compile Include="Control.Cps.fs" />
     <Compile Include="Collections.Range.fs" />
@@ -50,9 +51,10 @@
     <Compile Include="Collections.Map.fs" />
     <Compile Include="Collections.ResizeArray.fs" />
     <Compile Include="Collections.Dict.fs" />
+    <Compile Include="Collections.Bimap.fs" />
     <Compile Include="Collections.IntMap.fs" />
     <Compile Include="Collections.IntSet.fs" />
-    <Compile Include="Collections.Bimap.fs" />
+    <Compile Include="Collections.IntBimap.fs" />
     <Compile Include="Collections.LazyList.fs" />
     <Compile Include="Collections.Queue.fs" />
     <Compile Include="Collections.PriorityQueue.fs" />

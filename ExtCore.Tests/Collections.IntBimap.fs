@@ -16,13 +16,13 @@ limitations under the License.
 
 *)
 
-/// Unit tests for the ExtCore.Collections.Bimap type and module.
-module ExtCore.Collections.Bimap.Tests
+/// Unit tests for the ExtCore.Collections.IntBimap type and module.
+module ExtCore.Collections.IntBimap.Tests
 
 open NUnit.Framework
 open FsUnit
 //open FsCheck
 
 
-(* TODO : Implement tests for Bimap. *)
+(* TODO : Implement tests for IntBimap. *)
 
