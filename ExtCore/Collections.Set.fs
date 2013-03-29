@@ -35,7 +35,7 @@ let ofArrayView (view : ArrayView<'T>) : Set<'T> =
 
 //
 [<CompiledName("FoldIndexed")>]
-let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (set : Set<'T>) =
+let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (set : Set<'T>) : 'State =
     // Preconditions
     checkNonNull "set" set
 
@@ -43,13 +43,13 @@ let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (set : Set<'
     let mutable state = state
     let mutable idx = 0
     for el in set do
-        state <- folder.Invoke (idx, state, el)
+        state <- folder.Invoke (state, idx, el)
         idx <- idx + 1
     state
 
 //
 [<CompiledName("MapToArray")>]
-let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) =
+let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) : 'U[] =
     // Preconditions
     checkNonNull "set" set
 
@@ -62,7 +62,7 @@ let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) =
 
 /// Creates a set given a number of items in the set and a generator function.
 [<CompiledName("Initialize")>]
-let init count (initializer : int -> 'T) =
+let init count (initializer : int -> 'T) : Set<'T> =
     // Preconditions
     if count < 0 then
         invalidArg "count" "The number of items cannot be negative."
@@ -76,9 +76,38 @@ let init count (initializer : int -> 'T) =
             result <- Set.add (initializer i) result
         result
 
-//
+/// Extracts the minimum element from a set, returning the element
+/// along with the updated set.
+[<CompiledName("TryExtractMin")>]
+let tryExtractMin (set : Set<'T>) : 'T option * Set<'T> =
+    // Preconditions
+    checkNonNull "set" set
+
+    if Set.isEmpty set then
+        None, set
+    else
+        let minElement = Set.minElement set
+        let set = Set.remove minElement set
+        Some minElement, set
+
+/// Extracts the maximum element from a set, returning the element
+/// along with the updated set.
+[<CompiledName("TryExtractMax")>]
+let tryExtractMax (set : Set<'T>) : 'T option * Set<'T> =
+    // Preconditions
+    checkNonNull "set" set
+
+    if Set.isEmpty set then
+        None, set
+    else
+        let maxElement = Set.maxElement set
+        let set = Set.remove maxElement set
+        Some maxElement, set
+
+/// Extracts the minimum element from a set, returning the element
+/// along with the updated set.
 [<CompiledName("ExtractMinimum")>]
-let extractMin (set : Set<'T>) =
+let extractMin (set : Set<'T>) : 'T * Set<'T> =
     // Preconditions
     checkNonNull "set" set
     if Set.isEmpty set then
@@ -88,9 +117,10 @@ let extractMin (set : Set<'T>) =
     let set = Set.remove minElement set
     minElement, set
 
-//
+/// Extracts the maximum element from a set, returning the element
+/// along with the updated set.
 [<CompiledName("ExtractMaximum")>]
-let extractMax (set : Set<'T>) =
+let extractMax (set : Set<'T>) : 'T * Set<'T> =
     // Preconditions
     checkNonNull "set" set
     if Set.isEmpty set then
@@ -103,7 +133,7 @@ let extractMax (set : Set<'T>) =
 /// Reduces elements in a set in order from the least (minimum) element
 /// to the greatest (maximum) element.
 [<CompiledName("Reduce")>]
-let reduce (reduction : 'T -> 'T -> 'T) (set : Set<'T>) =
+let reduce (reduction : 'T -> 'T -> 'T) (set : Set<'T>) : 'T =
     // Preconditions
     checkNonNull "set" set
     if Set.isEmpty set then
@@ -115,7 +145,7 @@ let reduce (reduction : 'T -> 'T -> 'T) (set : Set<'T>) =
 /// Reduces elements in a set in order from the greatest (maximum) element
 /// to the least (minimum) element.
 [<CompiledName("ReduceBack")>]
-let reduceBack (reduction : 'T -> 'T -> 'T) (set : Set<'T>) =
+let reduceBack (reduction : 'T -> 'T -> 'T) (set : Set<'T>) : 'T =
     // Preconditions
     checkNonNull "set" set
     if Set.isEmpty set then
@@ -168,6 +198,8 @@ let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
     | Some result ->
         result
     | None ->
+        // TODO : Return a better error message
+        //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
 //
@@ -196,11 +228,13 @@ let find (predicate : 'T -> bool) (set : Set<'T>) : 'T =
     | Some result ->
         result
     | None ->
+        // TODO : Return a better error message
+        //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
 //
 [<CompiledName("MapPartition")>]
-let mapPartition (partitioner : 'T -> Choice<'U, 'V>) set =
+let mapPartition (partitioner : 'T -> Choice<'U, 'V>) set : Set<'U> * Set<'V> =
     // Preconditions
     checkNonNull "set" set
 
@@ -254,7 +288,7 @@ let xor (set1 : Set<'T>) (set2 : Set<'T>) : Set<'T> =
 
 /// The Cartesian product of two sets.
 [<CompiledName("Cartesian")>]
-let cartesian (set1 : Set<'T>) (set2 : Set<'U>) =
+let cartesian (set1 : Set<'T>) (set2 : Set<'U>) : Set<'T * 'U> =
     // Preconditions
     checkNonNull "set1" set1
     checkNonNull "set2" set2
@@ -269,31 +303,10 @@ let cartesian (set1 : Set<'T>) (set2 : Set<'U>) =
             ||> Set.fold (fun product y ->
                 Set.add (x, y) product))
 
-//
-[<CompiledName("MapIntersect")>]
-let mapIntersect (mapping : 'T -> Set<'U>) set =
-    // Preconditions
-    checkNonNull "set" set
-
-    // OPTIMIZATION : If the set is empty return immediately.
-    if Set.isEmpty set then
-        Set.empty
-    else
-        // To compute the intersection, we must start with the mapped set
-        // for the first element -- if we used a "standard" fold and started
-        // with Set.empty, the result would always be Set.empty.
-
-        let minElement, set = extractMin set
-        let mappedMinElement = mapping minElement
-
-        (mappedMinElement, set)
-        ||> Set.fold (fun intersection el ->
-            mapping el
-            |> Set.intersect intersection)
-
-//
-[<CompiledName("MapUnion")>]
-let mapUnion (mapping : 'T -> Set<'U>) set =
+/// For each element of the set, applies the given function to produce a set of results.
+/// Computes the union of all result sets and returns the combined set.
+[<CompiledName("Collect")>]
+let collect (mapping : 'T -> Set<'U>) set : Set<'U> =
     // Preconditions
     checkNonNull "set" set
 
@@ -306,6 +319,43 @@ let mapUnion (mapping : 'T -> Set<'U>) set =
             mapping el
             |> Set.union union)
 
+/// For each element of the set, applies the given function to produce a set of results.
+/// Computes the intersection of all result sets and returns the combined set.
+[<CompiledName("Condense")>]
+let condense (mapping : 'T -> Set<'U>) set : Set<'U> =
+    // Preconditions
+    checkNonNull "set" set
+    
+    // If the set is empty, return immediately.
+    // This avoids throwing an exception when calling 'extractMin' below.
+    if Set.isEmpty set then
+        Set.empty
+    else
+        // To compute the intersection, we must use a map-reduction instead of a fold;
+        // if we used a fold with Set.empty as the initial state, the result would
+        // always be an empty set.
+        let minElement, set = extractMin set
+        let mappedMinElement = mapping minElement
+
+        (mappedMinElement, set)
+        ||> Set.fold (fun intersection el ->
+            mapping el
+            |> Set.intersect intersection)
+
+/// Determines if two sets are disjoint, i.e., whether they have no elements in common.
+[<CompiledName("Disjoint")>]
+let disjoint (set1 : Set<'T>) set2 : bool =
+    // Preconditions
+    checkNonNull "set1" set1
+    checkNonNull "set2" set2
+
+    // OPTIMIZATION : If either set is empty, return immediately.
+    if Set.isEmpty set1 || Set.isEmpty set2 then true
+    else
+        (set1 |> Set.exists (fun el -> Set.contains el set2) ||
+         set2 |> Set.exists (fun el -> Set.contains el set1))
+        |> not
+
 
 /// Functions operating over the Cartesian product of two sets.
 /// These functions can offer a large memory savings since they avoid
@@ -314,7 +364,7 @@ let mapUnion (mapping : 'T -> Set<'U>) set =
 module Cartesian =
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> 'U -> 'State) state set1 set2 =
+    let fold (folder : 'State -> 'T -> 'U -> 'State) state set1 set2 : 'State =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
@@ -329,7 +379,7 @@ module Cartesian =
 
     //
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : 'T -> 'U -> 'State -> 'State) set1 set2 state =
+    let foldBack (folder : 'T -> 'U -> 'State -> 'State) set1 set2 state : 'State =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
@@ -344,7 +394,7 @@ module Cartesian =
 
     //
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> 'U -> unit) set1 set2 =
+    let iter (action : 'T -> 'U -> unit) set1 set2 : unit =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
@@ -359,7 +409,7 @@ module Cartesian =
 
     //
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U -> 'V) set1 set2 =
+    let map (mapping : 'T1 -> 'T2 -> 'U) set1 set2 : Set<'U> =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
@@ -375,7 +425,7 @@ module Cartesian =
 
     //
     [<CompiledName("Choose")>]
-    let choose (chooser : 'T -> 'U -> 'V option) set1 set2 =
+    let choose (chooser : 'T1 -> 'T2 -> 'U option) set1 set2 : Set<'U> =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
