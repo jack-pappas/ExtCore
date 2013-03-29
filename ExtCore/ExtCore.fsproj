@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Pervasive.fs" />
+    <Compile Include="String.fs" />
     <Compile Include="Control.fs" />
     <Compile Include="Control.Indexed.fs" />
     <Compile Include="Control.Cps.fs" />
