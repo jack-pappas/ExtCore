@@ -172,20 +172,20 @@ module Array =
 
     //
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : int -> 'State -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
+    let foldi (folder : 'State -> int -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
         // Preconditions
         checkNonNull "array" array
 
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
         (async.Return state, array)
-        ||> Array.foldi (fun index stateAsync el ->
+        ||> Array.foldi (fun stateAsync index el ->
             async {
             // Get the state.
             let! state = stateAsync
 
             // Invoke the folder and return the result.
-            return! folder.Invoke (index, state, el)
+            return! folder.Invoke (state, index, el)
             })
 
     //
@@ -213,7 +213,7 @@ module Array =
         let action = FSharpFunc<_,_,_>.Adapt action
 
         (async.Zero (), array)
-        ||> Array.foldi (fun index iterPrevious el ->
+        ||> Array.foldi (fun iterPrevious index el ->
             async {
             // Execute the workflow for the preceeding elements.
             do! iterPrevious

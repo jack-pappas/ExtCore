@@ -107,7 +107,7 @@ let contains value (array : 'T[]) : bool =
 /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
 /// The integer index passed to the function indicates the array index of the element being transformed.
 [<CompiledName("FoldIndexed")>]
-let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[]) =
+let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (array : 'T[]) =
     // Preconditions
     checkNonNull "array" array
 
@@ -115,7 +115,7 @@ let foldi (folder : int -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[
     let mutable state = state
     let len = array.Length
     for i = 0 to len - 1 do
-        state <- folder.Invoke (i, state, array.[i])
+        state <- folder.Invoke (state, i, array.[i])
     state
 
 //
@@ -373,6 +373,28 @@ let choosei (chooser : int -> 'T -> 'U option) array =
 
     for i = 0 to len - 1 do
         match chooser.Invoke (i, array.[i]) with
+        | None -> ()
+        | Some value ->
+            chosen.Add value
+
+    chosen.ToArray ()
+
+//
+[<CompiledName("Choose2")>]
+let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
+    // Preconditions
+    checkNonNull "array1" array1
+    checkNonNull "array2" array2
+    if Array.length array1 <> Array.length array2 then
+        invalidArg "array2" "The arrays have different lengths."
+
+    let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+    let chosen = ResizeArray ()
+    let len = Array.length array1
+
+    for i = 0 to len - 1 do
+        match chooser.Invoke (array1.[i], array2.[i]) with
         | None -> ()
         | Some value ->
             chosen.Add value
