@@ -25,7 +25,7 @@ open System.Collections.Generic
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
-    
+
 
 /// Determines the number of items in the Map.
 [<CompiledName("Count")>]
@@ -135,8 +135,8 @@ let removeKeys keys (map : Map<'Key, 'T>) =
 
 /// Builds a new Map containing only the bindings whose keys
 /// belong to a given set of keys.
-[<CompiledName("SelectKeys")>]
-let selectKeys keys (map : Map<'Key, 'T>) =
+[<CompiledName("FilterKeys")>]
+let filterKeys keys (map : Map<'Key, 'T>) =
     // Preconditions
     checkNonNull "keys" keys
     checkNonNull "map" map
@@ -298,8 +298,8 @@ let pivot (map : Map<'Key, 'T>) : Map<'T, Set<'Key>> =
             Map.add value keySet pivotMap)
 
 /// Combines Map.ofKeys and Map.pivot to avoid creating intermediate data structures.
-[<CompiledName("PivotKeySet")>]
-let pivotKeySet (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'T, Set<'Key>> =
+[<CompiledName("PivotWith")>]
+let pivotWith (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'T, Set<'Key>> =
     // Preconditions
     checkNonNull "set" set
 
