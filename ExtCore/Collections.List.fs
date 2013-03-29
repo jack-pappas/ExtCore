@@ -217,7 +217,7 @@ let foldPairs (folder : 'State -> 'T -> 'T -> 'State) state list =
 
 //
 [<CompiledName("FoldPairsBack")>]
-let foldPairsBack (folder : 'T -> 'T -> 'State -> 'State) state list =
+let foldPairsBack (folder : 'T -> 'T -> 'State -> 'State) list state =
     // Preconditions
     checkNonNull "list" list
 
@@ -315,28 +315,34 @@ let choose2 (chooser : 'T1 -> 'T2 -> 'U option) list1 list2 : 'U list =
     // Preconditions
     checkNonNull "list1" list1
     checkNonNull "list2" list2
-    // OPTIMIZE : Instead of checking List.length on both lists (which is O(n)),
-    // just detect mismatched lengths on-the-fly.
-    if List.length list1 <> List.length list2 then
-        invalidArg "list2" "The lists have different lengths."
 
     let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
-    let mutable list1 = list1
-    let mutable list2 = list2
-    let mutable resultList = []
+    let rec choose2 (chosen, list1, list2) =
+        match list1, list2 with
+        | [], [] ->
+            // Reverse the list of chosen elements before returning it.
+            List.rev chosen
+        | [], _ ->
+            // The lists have unequal lengths.
+            invalidArg "list2" "The lists have different lengths. 'list2' is longer than 'list1'."
+        | _, [] ->
+            // The lists have unequal lengths.
+            invalidArg "list2" "The lists have different lengths. 'list2' is shorter than 'list1'."
+        | hd1 :: tl1, hd2 :: tl2 ->
+            // Invoke the chooser function; if it returns Some, cons the result onto the results list.
+            let chosen =
+                match chooser.Invoke (List.head list1, List.head list2) with
+                | None ->
+                    chosen
+                | Some result ->
+                    result :: chosen
 
-    while not <| List.isEmpty list1 do
-        match chooser.Invoke (List.head list1, List.head list2) with
-        | None -> ()
-        | Some result ->
-            resultList <- result :: resultList
+            // Process the rest of the list elements.
+            choose2 (chosen, tl1, tl2)
 
-        list1 <- List.tail list1
-        list2 <- List.tail list2
-
-    // Reverse the result list before returning.
-    List.rev resultList
+    // Process the lists recursively.
+    choose2 ([], list1, list2)
 
 //
 [<CompiledName("Unfold")>]
@@ -353,32 +359,6 @@ let unfold (generator : 'State -> ('T * 'State) option) (state : 'State) : 'T li
             state <- state'
         | None ->
             finished <- true
-
-    // Reverse the result list before returning.
-    List.rev resultList
-
-//
-[<CompiledName("ZipWith")>]
-let zipWith (mapping : 'T1 -> 'T2 -> 'U) list1 list2 : 'U list =
-    // Preconditions
-    checkNonNull "list1" list1
-    checkNonNull "list2" list2
-    // OPTIMIZE : Instead of checking List.length on both lists (which is O(n)),
-    // just detect mismatched lengths on-the-fly.
-    if List.length list1 <> List.length list2 then
-        invalidArg "list2" "The lists have different lengths."
-
-    let mapping = FSharpFunc<_,_,_>.Adapt mapping
-        
-    let mutable list1 = list1
-    let mutable list2 = list2
-    let mutable resultList = []
-
-    while not <| List.isEmpty list1 do
-        resultList <-
-            mapping.Invoke (List.head list1, List.head list2) :: resultList
-        list1 <- List.tail list1
-        list2 <- List.tail list2
 
     // Reverse the result list before returning.
     List.rev resultList
