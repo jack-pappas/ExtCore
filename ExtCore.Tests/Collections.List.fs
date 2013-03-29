@@ -178,13 +178,11 @@ let choose2 () : unit =
        ["Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
         "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"]
 
-    let result =
-        ([10..-1..0], colors)
-        ||> List.choose2 (fun x colorName ->
-            if (x + String.length colorName) % 2 = 0 then
-                Some <| colorName.ToLower ()
-            else None)
-    result
+    ([10..-1..0], colors)
+    ||> List.choose2 (fun x colorName ->
+        if (x + String.length colorName) % 2 = 0 then
+            Some <| colorName.ToLower ()
+        else None)
     |> should equal
        ["cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow"]
 
