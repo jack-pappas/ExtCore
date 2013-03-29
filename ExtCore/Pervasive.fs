@@ -61,9 +61,13 @@ module AdditionalOperators =
 
     (* Operators *)
 
-    /// Physical equality operator.
+    /// Reference/Physical-equality operator.
     let inline (===) (x : 'T) y =
         LanguagePrimitives.PhysicalEquality x y
+
+    /// Negated reference/physical-equality operator.
+    let inline (!==) (x : 'T) y =
+        not (LanguagePrimitives.PhysicalEquality x y)
 
     /// The opticons ("optional cons") operator.
     let inline (%?) (x : 'T option) list =
