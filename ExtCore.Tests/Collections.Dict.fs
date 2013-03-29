@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.Dict module.
 module ExtCore.Collections.Dict.Tests
 
 open NUnit.Framework

@@ -17,7 +17,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.ResizeArray module.
 module ExtCore.Collections.ResizeArray.Tests
 
 open NUnit.Framework

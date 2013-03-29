@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.IntSet type and module.
 module ExtCore.Collections.IntSet.Tests
 
 open NUnit.Framework

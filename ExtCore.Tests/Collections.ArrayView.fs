@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.ArrayView module.
 module ExtCore.Collections.ArrayView.Tests
 
 open NUnit.Framework

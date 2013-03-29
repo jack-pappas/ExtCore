@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.Map module.
 module ExtCore.Collections.Map.Tests
 
 open NUnit.Framework

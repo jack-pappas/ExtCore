@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-/// Tests for the IntMap data structure.
+/// Unit tests for the ExtCore.Collections.IntMap type and module.
 module ExtCore.Collections.IntMap.Tests
 
 open NUnit.Framework

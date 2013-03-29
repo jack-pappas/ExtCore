@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.PriorityQueue type and module.
 module ExtCore.Collections.PriorityQueue.Tests
 
 open NUnit.Framework

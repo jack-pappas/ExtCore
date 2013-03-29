@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-//
+/// Unit tests for the ExtCore.Collections.Queue type and module.
 module ExtCore.Collections.Queue.Tests
 
 open NUnit.Framework
