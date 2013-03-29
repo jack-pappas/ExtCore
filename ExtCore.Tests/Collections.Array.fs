@@ -239,14 +239,25 @@ let mapPartition3 () : unit =
     right
     |> should equal [| 4; 25; 64; 121; 196 |]
 
-//[<TestCase>]
-//let mapReduce () : unit =
-//    let expected =
-//        Map.ofArray [| 'i', 4; 'm', 1; 'p', 2; 's', 4 |]
-//
-//    "mississippi".ToCharArray ()
-//    |> Array.mapReduce
-//        { new IMapReduction<char, int>
+[<TestCase>]
+let mapReduce () : unit =
+    let expected =
+        Map.ofArray [| 'i', 4; 'm', 1; 'p', 2; 's', 4 |]
+
+    "mississippi".ToCharArray ()
+    |> Array.mapReduce
+        { new IMapReduction<char, Map<char, int>> with
+            member __.Map c =
+                Map.singleton c 1
+            member __.Reduce left right =
+                (left, right)
+                ||> Map.fold (fun charCounts c count ->
+                    match Map.tryFind c charCounts with
+                    | None ->
+                        Map.add c count charCounts
+                    | Some existingCount ->
+                        Map.add c (existingCount + count) charCounts) }
+    |> should equal expected
 
 [<TestCase>]
 let findIndices () : unit =
