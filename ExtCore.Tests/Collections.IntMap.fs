@@ -31,13 +31,6 @@ open FsUnit
 
 
 [<TestCase>]
-let index () : unit =
-    [(5, 'a'); (3, 'b')]
-    |> IntMap.ofList
-    |> IntMap.find 5
-    |> should equal 'a'
-
-[<TestCase>]
 let isEmpty () : unit =
     IntMap.empty
     |> IntMap.isEmpty
@@ -57,45 +50,105 @@ let count () : unit =
     |> IntMap.count
     |> should equal 1
 
-    [(1, 'a'); (2, 'c'); (3, 'b')]
-    |> IntMap.ofList
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
     |> IntMap.count
-    |> should equal 3
-
-[<TestCase>]
-let contains () : unit =
-    [(5, 'a'); (3, 'b')]
-    |> IntMap.ofList
-    |> IntMap.containsKey 5
-    |> should be True
-
-    [(5, 'a'); (3, 'b')]
-    |> IntMap.ofList
-    |> IntMap.containsKey 1
-    |> should be False
+    |> should equal 8
 
 [<TestCase>]
 let singleton () : unit =
     IntMap.singleton 1 'a'
-    |> should equal <| IntMap.ofList [(1, 'a')]
+    |> should equal (
+        IntMap.add 1 'a' IntMap.empty)
 
     IntMap.singleton 1 'a'
     |> IntMap.count
     |> should equal 1
 
 [<TestCase>]
-let add () : unit =
+let containsKey () : unit =
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.containsKey 5
+    |> should be True
+
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.containsKey 1
+    |> should be False
+
+[<TestCase>]
+let tryFind () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
-    |> IntMap.add 5 'x'
-    |> should equal (
-        IntMap.ofList [(3, 'b'); (5, 'x')])
+    |> IntMap.tryFind 5
+    |> should equal (Some 'a')
 
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
-    |> IntMap.add 7 'x'
-    |> should equal (
-        IntMap.ofList [(3, 'b'); (5, 'a'); (7, 'x')])
+    |> IntMap.tryFind 7
+    |> should equal None
+
+[<TestCase>]
+let find () : unit =
+    [(5, 'a'); (3, 'b')]
+    |> IntMap.ofList
+    |> IntMap.find 5
+    |> should equal 'a'
+
+[<TestCase>]
+let findOrDefault () : unit =
+    [(5, 'a'); (3, 'b')]
+    |> IntMap.ofList
+    |> IntMap.findOrDefault 'z' 5
+    |> should equal 'a'
+
+    [(5, 'a'); (3, 'b')]
+    |> IntMap.ofList
+    |> IntMap.findOrDefault 'z' 7
+    |> should equal 'z'
+
+[<TestCase>]
+let tryFindKey () : unit =
+    (IntMap.empty : IntMap<string>)
+    |> IntMap.tryFindKey (fun k v ->
+        k % 2 = 0)
+    |> should equal None
+
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.tryFindKey (fun k v ->
+        (k + int v) % 11 = 0)
+    |> should equal (Some 12)
+
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.tryFindKey (fun k v ->
+        (k + int v) % 289 = 0)
+    |> should equal None
+
+[<TestCase>]
+let add () : unit =
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.add 5 'x'
+    |> should equal (IntMap.ofArray
+       [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
+          (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |])
+
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.add 13 'x'
+    |> should equal (IntMap.ofArray
+       [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
+          (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (13, 'x'); |])
 
     IntMap.empty
     |> IntMap.add 5 'x'
@@ -104,21 +157,81 @@ let add () : unit =
 
 [<TestCase>]
 let remove () : unit =
+    (IntMap.empty : IntMap<string>)
+    |> IntMap.remove 5
+    |> should equal (IntMap.empty : IntMap<string>)
+
     [(5, "a"); (3, "b")]
     |> IntMap.ofList
     |> IntMap.remove 5
     |> should equal (
         IntMap.singleton 3 "b")
 
-    [(5, "a"); (3, "b")]
-    |> IntMap.ofList
-    |> IntMap.remove 7
-    |> should equal (
-        IntMap.ofList [(5, "a"); (3, "b")])
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.remove 4
+    |> should equal (IntMap.ofArray
+       [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
+          (17, 'a'); (12, 'b'); (14, 'c'); |])
 
-    (IntMap.empty : IntMap<string>)
-    |> IntMap.remove 5
-    |> should equal (IntMap.empty : IntMap<string>)
+[<TestCase>]
+let union () : unit =
+//    let a = IntMap.ofList [(5, "a"); (3, "b")]
+//    let b = IntMap.ofList [(5, "A"); (7, "C")]
+//    let c = IntMap.union a b
+//    let d = IntMap.ofList [(3, "b"); (5, "a"); (7, "C")]
+
+    IntMap.union
+        (IntMap.ofList [(5, "a"); (3, "b")])
+        (IntMap.ofList [(5, "A"); (7, "C")])
+    |> should equal (
+        IntMap.ofList [(3, "b"); (5, "a"); (7, "C")])
+
+[<TestCase>]
+let ofSeq () : unit =
+    (Seq.empty : seq<int * string>)
+    |> IntMap.ofSeq
+    |> should equal IntMap.empty
+
+//    seq {
+//        yield (
+
+//[<TestCase>]
+//let ofList () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let ofArray () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let ofMap () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let toSeq () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let toList () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let toArray () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let toMap () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let tryPick () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let pick () : unit =
+//    Assert.Fail ()
 
 [<TestCase>]
 let map () : unit =
@@ -128,12 +241,45 @@ let map () : unit =
     |> should equal (
         IntMap.ofList [(5, "5:a"); (3, "3:b")])
 
-
-
-
-
-
-
+//[<TestCase>]
+//let filter () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let choose () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let iter () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let iterBack () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let fold () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let foldBack () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let exists () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let forall () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let partition () : unit =
+//    Assert.Fail ()
+//
+//[<TestCase>]
+//let mapPartition () : unit =
+//    Assert.Fail ()
 
 
 
