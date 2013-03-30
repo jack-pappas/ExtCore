@@ -583,6 +583,7 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         | Some x -> x
         | None ->
             // TODO : Add a better error message which includes the key.
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     /// Returns a new IntMap with the binding added to this IntMap.
@@ -862,6 +863,8 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
                 | Some value ->
                     value
                 | None ->
+                    // TODO : Provide a better error message here.
+                    //keyNotFound ""
                     raise <| System.Collections.Generic.KeyNotFoundException ()
             and set key value =
                 notSupported "IntMaps cannot be mutated."
@@ -869,11 +872,13 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         /// <inherit />
         member __.Keys
             with get () =
+                // TODO : Return the keys as an ICollection<int>
                 notImpl "IDictionary`2.Keys"
 
         /// <inherit />
         member __.Values
             with get () =
+                // TODO : Return the values as an ICollection<'T>
                 notImpl "IDictionary`2.Values"
 
         /// <inherit />
@@ -937,6 +942,14 @@ module IntMap =
     let inline singleton (key : int) (value : 'T) : IntMap<'T> =
         IntMap.Singleton (key, value)
 
+    /// Tests if an element is in the domain of the IntMap.
+    [<CompiledName("ContainsKey")>]
+    let inline containsKey (key : int) (map : IntMap<'T>) : bool =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ContainsKey key
+
     /// Look up an element in the IntMap returning a Some value if the
     /// element is in the domain of the IntMap and None if not.
     [<CompiledName("TryFind")>]
@@ -960,6 +973,14 @@ module IntMap =
     let inline findOrDefault defaultValue (key : int) (map : IntMap<'T>) =
         defaultArg (map.TryFind key) defaultValue
 
+    //
+    [<CompiledName("TryFindKey")>]
+    let inline tryFindKey (predicate : int -> 'T -> bool) (map : IntMap<'T>) : int option =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryFindKey predicate
+
     /// Returns a new IntMap with the binding added to this IntMap.
     [<CompiledName("Add")>]
     let inline add (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
@@ -976,14 +997,6 @@ module IntMap =
         checkNonNull "map" map
 
         map.Remove key
-
-    /// Tests if an element is in the domain of the IntMap.
-    [<CompiledName("ContainsKey")>]
-    let inline containsKey (key : int) (map : IntMap<'T>) : bool =
-        // Preconditions
-        checkNonNull "map" map
-
-        map.ContainsKey key
 
     /// Returns a new IntMap created by merging the two specified IntMaps.
     [<CompiledName("Union")>]
@@ -1051,7 +1064,47 @@ module IntMap =
         map.ToMap ()
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("TryPick")>]
+    let inline tryPick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U option =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryPick picker
+
+    //
+    [<CompiledName("Pick")>]
+    let inline pick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Pick picker
+
+    //
+    [<CompiledName("Map")>]
+    let inline map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Map mapping
+
+    //
+    [<CompiledName("Filter")>]
+    let inline filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Filter predicate
+
+    //
+    [<CompiledName("Choose")>]
+    let inline choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Choose chooser
+
+    //
+    [<CompiledName("Iter")>]
     let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) =
         // Preconditions
         checkNonNull "map" map
@@ -1059,7 +1112,7 @@ module IntMap =
         map.Iterate action
 
     //
-    [<CompiledName("IterateBack")>]
+    [<CompiledName("IterBack")>]
     let inline iterBack (action : int -> 'T -> unit) (map : IntMap<'T>) =
         // Preconditions
         checkNonNull "map" map
@@ -1083,54 +1136,6 @@ module IntMap =
         map.FoldBack (folder, state)
 
     //
-    [<CompiledName("Choose")>]
-    let inline choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Choose chooser
-
-    //
-    [<CompiledName("Filter")>]
-    let inline filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Filter predicate
-
-    //
-    [<CompiledName("Map")>]
-    let inline map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Map mapping
-
-    //
-    [<CompiledName("Partition")>]
-    let inline partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Partition predicate
-
-    //
-    [<CompiledName("MapPartition")>]
-    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
-        // Preconditions
-        checkNonNull "map" map
-
-        map.MapPartition partitioner
-
-    //
-    [<CompiledName("TryFindKey")>]
-    let inline tryFindKey (predicate : int -> 'T -> bool) (map : IntMap<'T>) : int option =
-        // Preconditions
-        checkNonNull "map" map
-
-        map.TryFindKey predicate
-
-    //
     [<CompiledName("Exists")>]
     let inline exists (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
         // Preconditions
@@ -1147,20 +1152,20 @@ module IntMap =
         map.Forall predicate
 
     //
-    [<CompiledName("TryPick")>]
-    let inline tryPick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U option =
+    [<CompiledName("Partition")>]
+    let inline partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
         // Preconditions
         checkNonNull "map" map
 
-        map.TryPick picker
+        map.Partition predicate
 
     //
-    [<CompiledName("Pick")>]
-    let inline pick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U =
+    [<CompiledName("MapPartition")>]
+    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
         // Preconditions
         checkNonNull "map" map
 
-        map.Pick picker
+        map.MapPartition partitioner
 
 
 #if PROTO_COMPILER
@@ -1363,7 +1368,7 @@ module TagMap =
         |> retype
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let inline iter (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
         // Retype as IntMap.
         let map : IntMap<'T> = retype map
@@ -1374,7 +1379,7 @@ module TagMap =
         map.Iterate (retype action)
 
     //
-    [<CompiledName("IterateBack")>]
+    [<CompiledName("IterBack")>]
     let inline iterBack (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
         // Retype as IntMap.
         let map : IntMap<'T> = retype map
