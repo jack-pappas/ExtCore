@@ -31,7 +31,7 @@ open ExtCore.Collections
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'Env -> unit) (array : 'T[]) (env : 'Env) : unit =
         // Preconditions
         checkNonNull "array" array
@@ -45,7 +45,7 @@ module Array =
             results.[i] <- action.Invoke (array.[i], env)
 
     //
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> 'Env -> unit) (array : 'T[]) (env : 'Env) : unit =
         // Preconditions
         checkNonNull "array" array

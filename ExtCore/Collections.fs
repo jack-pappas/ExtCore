@@ -45,7 +45,7 @@ module Range =
                 are *inclusive*, just like the F# 'for' loop. *)
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let inline iter (action : ^T -> unit) start finish : unit =
         let mutable index = start
         while index <= finish do

@@ -889,7 +889,7 @@ module IntSet =
         set.ToSet ()
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let inline iter (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -897,7 +897,7 @@ module IntSet =
         set.Iterate action
 
     //
-    [<CompiledName("IterateBack")>]
+    [<CompiledName("IterBack")>]
     let inline iterBack (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -1156,7 +1156,7 @@ module TagSet =
         set.ToSet ()
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let inline iter (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1167,7 +1167,7 @@ module TagSet =
         set.Iterate (retype action)
 
     //
-    [<CompiledName("IterateBack")>]
+    [<CompiledName("IterBack")>]
     let inline iterBack (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set

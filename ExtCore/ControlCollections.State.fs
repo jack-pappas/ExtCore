@@ -32,7 +32,7 @@ open ExtCore.Collections
 module Array =
     /// A specialization of Array.iter which threads an accumulator through the computation;
     /// this allows the use of actions requiring a (possibly mutable) state variable.
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'State -> unit * 'State) (array : 'T[]) (state : 'State) : unit * 'State =
         // Preconditions
         checkNonNull "array" array
@@ -48,7 +48,7 @@ module Array =
 
     /// A specialization of Array.iteri which threads an accumulator through the computation;
     /// this allows the use of actions requiring a (possibly mutable) state variable.
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> 'State -> unit * 'State) (array : 'T[]) (state : 'State) : unit * 'State =
         // Preconditions
         checkNonNull "array" array
@@ -237,7 +237,7 @@ module Array =
 module List =
     /// A specialization of List.iter which threads an accumulator through the computation;
     /// this allows the use of actions requiring a (possibly mutable) state variable.
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'State -> unit * 'State) (list : 'T list) (state : 'State) : unit * 'State =
         // Preconditions
         checkNonNull "list" list
@@ -254,7 +254,7 @@ module List =
 
     /// A specialization of List.iteri which threads an accumulator through the computation;
     /// this allows the use of actions requiring a (possibly mutable) state variable.
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> 'State -> unit * 'State) (list : 'T list) (state : 'State) : unit * 'State =
         // Preconditions
         checkNonNull "list" list
@@ -410,7 +410,7 @@ module TaggedArray =
 module ArrayView =
     /// A specialization of ArrayView.iter which threads an accumulator through the computation; this allows
     /// the use of actions requiring a (possibly mutable) state variable.
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'State -> unit * 'State)
             (view : ArrayView<'T>) (state : 'State) : unit * 'State =
         let action = FSharpFunc<_,_,_>.Adapt action
@@ -426,7 +426,7 @@ module ArrayView =
 
     /// A specialization of ArrayView.iteri which threads an accumulator through the computation; this allows
     /// the use of actions requiring a (possibly mutable) state variable.
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> 'State -> unit * 'State)
             (view : ArrayView<'T>) (state : 'State) : unit * 'State =
         let action = FSharpFunc<_,_,_,_>.Adapt action
@@ -489,7 +489,7 @@ module ArrayView =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Set =
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'State -> unit * 'State) (set : Set<'T>) (state : 'State) : unit * 'State =
         // Preconditions
         checkNonNull "set" set
@@ -505,7 +505,7 @@ module Set =
         (), state
 
     //
-    [<CompiledName("IterateBack")>]
+    [<CompiledName("IterBack")>]
     let iterBack (action : 'T -> 'State -> unit * 'State) (set : Set<'T>) (state : 'State) : unit * 'State =
         // Preconditions
         checkNonNull "set" set

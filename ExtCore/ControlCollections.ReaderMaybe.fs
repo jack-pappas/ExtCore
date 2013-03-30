@@ -163,7 +163,7 @@ module Array =
         else Some state
 
     //
-    [<CompiledName("Initialize")>]
+    [<CompiledName("Init")>]
     let init (count : int) (initializer : int -> 'Env -> 'T option) (env : 'Env) : 'T[] option =
         // Preconditions
         if count < 0 then
@@ -187,7 +187,7 @@ module Array =
         else Some results
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'Env -> unit option) (array : 'T[]) (env : 'Env) : unit option =
         // Preconditions
         checkNonNull "array" array
@@ -209,7 +209,7 @@ module Array =
         else Some ()
 
     //
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> 'Env -> unit option) (array : 'T[]) (env : 'Env) : unit option =
         // Preconditions
         checkNonNull "array" array
@@ -357,7 +357,7 @@ module List =
         mapRec (List.empty, 0, list1, list2)
 
     //
-    [<CompiledName("Iterate2")>]
+    [<CompiledName("Iter2")>]
     let iter2 (action : 'T1 -> 'T2 -> 'Env -> unit option)
             (list1 : 'T1 list) (list2 : 'T2 list) (env : 'Env) : unit option =
         // Preconditions
@@ -393,7 +393,7 @@ module List =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'Env -> unit option)
             (sequence : seq<'T>) (env : 'Env) : unit option =
         // Preconditions

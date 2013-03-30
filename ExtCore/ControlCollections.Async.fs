@@ -38,7 +38,7 @@ module Array =
                     the next element. *)
 
     //
-    [<CompiledName("Initialize")>]
+    [<CompiledName("Init")>]
     let init (count : int) (initializer : int -> Async<'T>) : Async<'T[]> =
         // Preconditions
         if count < 0 then
@@ -189,7 +189,7 @@ module Array =
             })
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
         // Preconditions
         checkNonNull "array" array
@@ -205,7 +205,7 @@ module Array =
             })
 
     //
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
         // Preconditions
         checkNonNull "array" array
@@ -344,7 +344,7 @@ module Seq =
             })
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> Async<unit>) (sequence : 'T[]) : Async<unit> =
         // Preconditions
         checkNonNull "sequence" sequence
@@ -360,7 +360,7 @@ module Seq =
             })
 
     //
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> Async<unit>) (sequence : 'T[]) : Async<unit> =
         // Preconditions
         checkNonNull "sequence" sequence

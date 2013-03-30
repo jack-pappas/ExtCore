@@ -61,7 +61,7 @@ let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) : 'U[] =
     results
 
 /// Creates a set given a number of items in the set and a generator function.
-[<CompiledName("Initialize")>]
+[<CompiledName("Init")>]
 let init count (initializer : int -> 'T) : Set<'T> =
     // Preconditions
     if count < 0 then
@@ -393,7 +393,7 @@ module Cartesian =
                 folder.Invoke (x, y, state)))
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'U -> unit) set1 set2 : unit =
         // Preconditions
         checkNonNull "set1" set1

@@ -218,7 +218,7 @@ let findIndex predicate (view : ArrayView<'T>) =
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
 //
-[<CompiledName("Iterate")>]
+[<CompiledName("Iter")>]
 let iter action (view : ArrayView<'T>) =
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
     let array = view.Array

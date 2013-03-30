@@ -257,7 +257,7 @@ let toSeq (dictionary : IDictionary<'Key, 'T>) =
         kvp.Key, kvp.Value)
 
 /// Applies the given function to each entry in the Dictionary.
-[<CompiledName("Iterate")>]
+[<CompiledName("Iter")>]
 let iter (action : 'Key -> 'T -> unit) (dictionary : IDictionary<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary

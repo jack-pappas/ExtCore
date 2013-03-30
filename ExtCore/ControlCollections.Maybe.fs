@@ -159,7 +159,7 @@ module Array =
         else Some state
 
     //
-    [<CompiledName("Initialize")>]
+    [<CompiledName("Init")>]
     let init (count : int) (initializer : int -> 'T option) : 'T[] option =
         // Preconditions
         if count < 0 then invalidArg "count" "The count cannot be negative."
@@ -181,7 +181,7 @@ module Array =
         else Some results
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> unit option) (array : 'T[]) : unit option =
         // Preconditions
         checkNonNull "array" array
@@ -202,7 +202,7 @@ module Array =
         else Some ()
 
     //
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> unit option) (array : 'T[]) : unit option =
         // Preconditions
         checkNonNull "array" array
@@ -345,7 +345,7 @@ module List =
         mapRec (List.empty, 0, list1, list2)
 
     //
-    [<CompiledName("Iterate2")>]
+    [<CompiledName("Iter2")>]
     let iter2 (action : 'T1 -> 'T2 -> unit option)
             (list1 : 'T1 list) (list2 : 'T2 list) : unit option =
         // Preconditions
@@ -382,7 +382,7 @@ module List =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> unit option) (sequence : seq<'T>) : unit option =
         // Preconditions
         checkNonNull "seq" seq

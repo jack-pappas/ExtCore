@@ -33,7 +33,7 @@ module Array =
     /// A specialization of Array.iter which threads an accumulator through the computation
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
             (array : 'T[]) (env : 'Env) (state : 'State) : Choice<unit * 'State, 'Error> =
         // Preconditions
@@ -65,7 +65,7 @@ module Array =
     /// A specialization of Array.iteri which threads an accumulator through the computation
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
             (array : 'T[]) (env : 'Env) (state : 'State) : Choice<unit * 'State, 'Error> =
         // Preconditions
@@ -202,7 +202,7 @@ module ArrayView =
     /// A specialization of ArrayView.iter which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
             (view : ArrayView<'T>) (env : 'Env) (state : 'State)
             : Choice<unit * 'State, 'Error> =
@@ -233,7 +233,7 @@ module ArrayView =
     /// A specialization of ArrayView.iteri which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
             (view : ArrayView<'T>) (env : 'Env) (state : 'State)
             : Choice<unit * 'State, 'Error> =

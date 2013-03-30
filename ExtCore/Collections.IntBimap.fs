@@ -362,7 +362,7 @@ module IntBimap =
         bimap.TryAdd (x, y)
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let inline iter (action : int -> 'T -> unit) (bimap : IntBimap<'T>) : unit =
         // Preconditions
         checkNonNull "bimap" bimap
@@ -616,7 +616,7 @@ module TagBimap =
         |> retype
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let inline iter (action : int<'Tag> -> 'T -> unit) (bimap : TagBimap<'Tag, 'T>) : unit =
         // Retype as IntBimap.
         let bimap : IntBimap<'T> = retype bimap
