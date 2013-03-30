@@ -82,8 +82,8 @@
     <Compile Include="Collections.ResizeArray.fs" />
     <Compile Include="Collections.Dict.fs" />
     <Compile Include="Collections.Bimap.fs" />
-    <Compile Include="Collections.IntMap.fs" />
     <Compile Include="Collections.IntSet.fs" />
+    <Compile Include="Collections.IntMap.fs" />
     <Compile Include="Collections.IntBimap.fs" />
     <Compile Include="Collections.LazyList.fs" />
     <Compile Include="Collections.Queue.fs" />

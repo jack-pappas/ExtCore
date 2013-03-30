@@ -24,6 +24,57 @@ open System.Diagnostics
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
+
+
+/// Bitwise operations necessary for implementing IntMap.
+module internal BitOps =
+    /// <summary>Determines if all specified bits are cleared (not set) in a value.</summary>
+    /// <param name="value">The value to test.</param>
+    /// <param name="bitValue">The bits to test in 'value'.</param>
+    /// <returns>true if all bits which are set in 'bitValue' are *not* set in 'value'.</returns>
+    let inline zeroBit (value : ^T, bitValue) : bool =
+        value &&& bitValue = GenericZero
+
+    //
+    let inline mask (value : ^T, bitValue) =
+        (value ||| (bitValue - GenericOne)) &&& ~~~bitValue
+
+    //
+    let inline matchPrefix (k : ^T, p, m) =
+        mask (k, m) = p
+
+//    //
+//    let inline leastSignificantSetBit (x : uint32) : uint32 =
+//        x &&& (uint32 -(int x))
+
+    // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
+    // OPTIMIZE : This could be even faster if we could take advantage of a built-in
+    // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
+    // Could we expose these instructions through Mono?
+    let inline private mostSignificantSetBit (x : uint32) =
+        let x = x ||| (x >>> 1)
+        let x = x ||| (x >>> 2)
+        let x = x ||| (x >>> 4)
+        let x = x ||| (x >>> 8)
+        let x = x ||| (x >>> 16)
+        //x &&& ~~~(x >>> 1)
+        // OPTIMIZATION : p AND (NOT q) <-> p XOR q
+        x ^^^ (x >>> 1)
+
+    /// Finds the first bit at which p0 and p1 disagree.
+    /// Returns a power-of-two value containing this (and only this) bit.
+    let inline branchingBit (p0, p1) : uint32 =
+        mostSignificantSetBit (p0 ^^^ p1)
+
+
+/// Constants used to tune certain operations on Patricia tries.
+module internal PatriciaTrieConstants =
+    /// The default capacity used to when creating mutable stacks
+    /// within the optimized traversal methods for Patricia tries.
+    // TODO : Run some experiments to determine if this is a good initial capacity,
+    // or if some other value would provide better average-case performance.
+    let [<Literal>] defaultTraversalStackSize = 64
+
 open BitOps
 open PatriciaTrieConstants
 
