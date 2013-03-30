@@ -147,7 +147,7 @@ let add () : unit =
     |> IntMap.ofArray
     |> IntMap.add 13 'x'
     |> should equal (IntMap.ofArray
-       [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
+       [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (13, 'x'); |])
 
     IntMap.empty
@@ -172,7 +172,7 @@ let remove () : unit =
     |> IntMap.ofArray
     |> IntMap.remove 4
     |> should equal (IntMap.ofArray
-       [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
+       [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (12, 'b'); (14, 'c'); |])
 
 [<TestCase>]
