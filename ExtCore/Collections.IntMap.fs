@@ -140,7 +140,7 @@ type internal PatriciaMap<'T> =
         match map with
         | Empty ->
             Lf (key, value)
-        | (Lf (j, _) as t) ->
+        | (Lf (j, y) as t) ->
             if j = key then
                 Lf (key, value)
             else
@@ -152,6 +152,27 @@ type internal PatriciaMap<'T> =
                     Br (p, m, left, t1)
                 else
                     let right = PatriciaMap.Insert (key, value, t1)
+                    Br (p, m, t0, right)
+            else
+                PatriciaMap.Join (key, Lf (key, value), p, t)
+
+    /// Insert a binding (key-value pair) into a map, returning a new, updated map.
+    static member private InsertOverwrite (key, value : 'T, map) =
+        match map with
+        | Empty ->
+            Lf (key, value)
+        | (Lf (j, y) as t) ->
+            if j = key then
+                Lf (key, y)
+            else
+                PatriciaMap.Join (key, Lf (key, value), j, t)
+        | Br (p, m, t0, t1) as t ->
+            if matchPrefix (key, p, m) then
+                if zeroBit (key, m) then
+                    let left = PatriciaMap.InsertOverwrite (key, value, t0)
+                    Br (p, m, left, t1)
+                else
+                    let right = PatriciaMap.InsertOverwrite (key, value, t1)
                     Br (p, m, t0, right)
             else
                 PatriciaMap.Join (key, Lf (key, value), p, t)
@@ -198,10 +219,10 @@ type internal PatriciaMap<'T> =
         | (Br (p, m, s0, s1) as s), Lf (k, x) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    let left = PatriciaMap.Insert (k, x, s0)
+                    let left = PatriciaMap.InsertOverwrite (k, x, s0)
                     Br (p, m, left, s1)
                 else
-                    let right = PatriciaMap.Insert (k, x, s1)
+                    let right = PatriciaMap.InsertOverwrite (k, x, s1)
                     Br (p, m, s0, right)
             else
                 PatriciaMap.Join (k, Lf (k, x), p, s)
@@ -209,7 +230,7 @@ type internal PatriciaMap<'T> =
         | (Br (_,_,_,_) as s), Empty ->
             s
         | Lf (k, x), t ->
-            PatriciaMap.Insert (k, x, t)
+            PatriciaMap.InsertOverwrite (k, x, t)
         | Empty, t -> t
 
     //

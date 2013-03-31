@@ -139,10 +139,12 @@ let tryFindKey () : unit =
 
 [<TestCase>]
 let add () : unit =
-    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
-        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
-    |> IntMap.ofArray
-    |> IntMap.add 5 'x'
+    let foo =
+        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+            (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+        |> IntMap.ofArray
+        |> IntMap.add 5 'x'
+    foo
     |> should equal (IntMap.ofArray
        [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |])
@@ -182,26 +184,6 @@ let remove () : unit =
 
 [<TestCase>]
 let union () : unit =
-    let x = IntMap.ofArray [| (4, 'g'); (5, 'a'); (11, 'f'); (14, 'c'); (17, 'a'); |]
-    let y = IntMap.ofArray [| (2, 'd'); (3, 'b'); (4, 'G'); (11, 'F'); (12, 'b'); |]
-    let z = IntMap.ofArray [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
-    let result_xy = IntMap.union x y
-    let result_yx = IntMap.union y x
-
-    let qq =
-        x
-        |> IntMap.add 2 'd'
-        |> IntMap.add 3 'b'
-        |> IntMap.add 4 'G'
-        |> IntMap.add 11 'F'
-        |> IntMap.add 12 'b'
-
-
-//    let x = IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |]
-//    let y = IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |]
-//    let z = IntMap.union y x
-//    let w = IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
-
     IntMap.union
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
         (IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |])
