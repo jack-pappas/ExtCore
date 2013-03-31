@@ -68,6 +68,11 @@ let singleton () : unit =
 
 [<TestCase>]
 let containsKey () : unit =
+    [(5, 'a'); (3, 'b')]
+    |> IntMap.ofList
+    |> IntMap.containsKey 5
+    |> should be True
+
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
@@ -177,16 +182,31 @@ let remove () : unit =
 
 [<TestCase>]
 let union () : unit =
-//    let a = IntMap.ofList [(5, "a"); (3, "b")]
-//    let b = IntMap.ofList [(5, "A"); (7, "C")]
-//    let c = IntMap.union a b
-//    let d = IntMap.ofList [(3, "b"); (5, "a"); (7, "C")]
+    let x = IntMap.ofArray [| (4, 'g'); (5, 'a'); (11, 'f'); (14, 'c'); (17, 'a'); |]
+    let y = IntMap.ofArray [| (2, 'd'); (3, 'b'); (4, 'G'); (11, 'F'); (12, 'b'); |]
+    let z = IntMap.ofArray [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
+    let result_xy = IntMap.union x y
+    let result_yx = IntMap.union y x
+
+    let qq =
+        x
+        |> IntMap.add 2 'd'
+        |> IntMap.add 3 'b'
+        |> IntMap.add 4 'G'
+        |> IntMap.add 11 'F'
+        |> IntMap.add 12 'b'
+
+
+//    let x = IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |]
+//    let y = IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |]
+//    let z = IntMap.union y x
+//    let w = IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
 
     IntMap.union
-        (IntMap.ofList [(5, "a"); (3, "b")])
-        (IntMap.ofList [(5, "A"); (7, "C")])
+        (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
+        (IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |])
     |> should equal (
-        IntMap.ofList [(3, "b"); (5, "a"); (7, "C")])
+        IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<TestCase>]
 let ofSeq () : unit =
@@ -235,11 +255,13 @@ let ofSeq () : unit =
 
 [<TestCase>]
 let map () : unit =
-    [(5, "a"); (3, "b")]
-    |> IntMap.ofList
-    |> IntMap.map (sprintf "%i:%s")
-    |> should equal (
-        IntMap.ofList [(5, "5:a"); (3, "3:b")])
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.map (sprintf "%i:%c")
+    |> should equal (IntMap.ofArray
+        [| (5, "5:a"); (3, "3:b"); (11, "11:f"); (2, "2:d");
+            (17, "17:a"); (4, "4:g"); (12, "12:b"); (14, "14:c"); |])
 
 //[<TestCase>]
 //let filter () : unit =
