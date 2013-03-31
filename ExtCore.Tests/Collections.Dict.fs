@@ -19,6 +19,8 @@ limitations under the License.
 /// Unit tests for the ExtCore.Collections.Dict module.
 module ExtCore.Collections.Dict.Tests
 
+open System
+open System.Collections.Generic
 open NUnit.Framework
 open FsUnit
 //open FsCheck

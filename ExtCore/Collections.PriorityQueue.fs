@@ -264,10 +264,14 @@ module Bootstrap =
                 NonEmpty (Root (y, Q.meld (q1, q2)))
 
 
+type Rank = uint32
+
 //
-type Tree2<'T when 'T : comparison> = {
+type Tree<'T when 'T : comparison> = {
     //
     Value : 'T;
+//    //
+//    Forest : Tree<'T> list;
     //
     Children : Tree<'T> list;
     //

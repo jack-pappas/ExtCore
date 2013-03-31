@@ -20,6 +20,16 @@ limitations under the License.
 namespace ExtCore
 
 
+////
+//[<Struct>]
+//type Substring = struct end
+//
+////
+//[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+//module Substring =
+//    //
+//    let dummy () = ()
+
 /// Additional functional operators on strings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module String =
@@ -198,7 +208,7 @@ module String =
         state
 
     /// Applies the given function to each character of the string.
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let iter (action : char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str
@@ -212,7 +222,7 @@ module String =
 
     /// Applies the given function to each character of the string.
     /// The integer passed to the function indicates the index of the character.
-    [<CompiledName("IterateIndexed")>]
+    [<CompiledName("IterIndexed")>]
     let iteri (action : int -> char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str

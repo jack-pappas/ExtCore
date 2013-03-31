@@ -35,22 +35,22 @@ open ExtCore
 [<NoEquality; NoComparison>]
 [<DebuggerTypeProxy(typedefof<BimapDebuggerProxy<int,int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
-type Bimap<'T1, 'T2
-    when 'T1 : comparison
-    and 'T2 : comparison> private (left : Map<'T1, 'T2>, right : Map<'T2, 'T1>) =
+type Bimap<'T1, 'T2 when 'T1 : comparison and 'T2 : comparison>
+    private (left : Map<'T1, 'T2>, right : Map<'T2, 'T1>) =
+    
     /// The empty Bimap instance.
     static let empty = Bimap (Map.empty, Map.empty)
     
-    //
+    /// The empty Bimap.
     static member Empty
         with get () = empty
 
-    //
+    /// The number of items in the Bimap.
     member __.Count
         with get () =
             Map.count left
 
-    //
+    /// Is the Bimap empty?
     member __.IsEmpty
         with get () =
             Map.isEmpty left
@@ -233,7 +233,7 @@ type Bimap<'T1, 'T2
 
         elements.ToArray ()
 
-//
+/// Internal. Debugger proxy type for Bimap.
 and [<Sealed>]
     internal BimapDebuggerProxy<'T1, 'T2
         when 'T1 : comparison and 'T2 : comparison> (bimap : Bimap<'T1, 'T2>) =
@@ -369,7 +369,7 @@ module Bimap =
         bimap.TryAdd (x, y)
 
     //
-    [<CompiledName("Iterate")>]
+    [<CompiledName("Iter")>]
     let inline iter (action : 'T1 -> 'T2 -> unit) (bimap : Bimap<'T1, 'T2>) : unit =
         // Preconditions
         checkNonNull "bimap" bimap
