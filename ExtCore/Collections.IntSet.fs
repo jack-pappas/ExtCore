@@ -32,39 +32,44 @@ module internal BitOps =
     /// <param name="value">The value to test.</param>
     /// <param name="bitValue">The bits to test in 'value'.</param>
     /// <returns>true if all bits which are set in 'bitValue' are *not* set in 'value'.</returns>
-    let inline zeroBit (value : ^T, bitValue) : bool =
-        value &&& bitValue = GenericZero
+    let inline zeroBit (p : uint32, m : uint32) : bool =
+        p &&& m = 0u
 
     /// Clears the indicated bit and sets all lower bits.
-    let inline mask (key : ^T, mask) =
-        (key ||| (mask - GenericOne)) &&& ~~~mask
+    let inline mask (prefix : uint32, mask : uint32) : uint32 =
+        prefix &&& (mask - 1u)
 
     //
-    let inline matchPrefix (key : ^T, prefix, mask') =
+    let inline matchPrefix (key : uint32, prefix : uint32, mask' : uint32) : bool =
         mask (key, mask') = prefix
 
-//    //
-//    let inline leastSignificantSetBit (x : uint32) : uint32 =
-//        x &&& (uint32 -(int x))
+    //
+    let inline leastSignificantSetBit (x : uint32) : uint32 =
+        x &&& (uint32 -(int x))
 
-    // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
-    // OPTIMIZE : This could be even faster if we could take advantage of a built-in
-    // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
-    // Could we expose these instructions through Mono?
-    let inline private mostSignificantSetBit (x : uint32) =
-        let x = x ||| (x >>> 1)
-        let x = x ||| (x >>> 2)
-        let x = x ||| (x >>> 4)
-        let x = x ||| (x >>> 8)
-        let x = x ||| (x >>> 16)
-        //x &&& ~~~(x >>> 1)
-        // OPTIMIZATION : p AND (NOT q) <-> p XOR q
-        x ^^^ (x >>> 1)
-
-    /// Finds the first bit at which p0 and p1 disagree.
+    /// Finds the last (least-significant) bit at which p0 and p1 disagree.
     /// Returns a power-of-two value containing this (and only this) bit.
     let inline branchingBit (p0, p1) : uint32 =
-        mostSignificantSetBit (p0 ^^^ p1)
+        leastSignificantSetBit (p0 ^^^ p1)
+
+//    // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
+//    // OPTIMIZE : This could be even faster if we could take advantage of a built-in
+//    // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
+//    // Could we expose these instructions through Mono?
+//    let inline private mostSignificantSetBit (x : uint32) =
+//        let x = x ||| (x >>> 1)
+//        let x = x ||| (x >>> 2)
+//        let x = x ||| (x >>> 4)
+//        let x = x ||| (x >>> 8)
+//        let x = x ||| (x >>> 16)
+//        //x &&& ~~~(x >>> 1)
+//        // OPTIMIZATION : p AND (NOT q) <-> p XOR q
+//        x ^^^ (x >>> 1)
+
+//    /// Finds the first (most-significant) bit at which p0 and p1 disagree.
+//    /// Returns a power-of-two value containing this (and only this) bit.
+//    let inline branchingBit (p0, p1) : uint32 =
+//        mostSignificantSetBit (p0 ^^^ p1)
 
 
 /// Constants used to tune certain operations on Patricia tries.

@@ -50,7 +50,7 @@ type internal PatriciaMap<'T> =
             else None
         | Br (p, m, t0, t1) ->
             PatriciaMap.TryFind (
-                key, (if key <= p then t0 else t1))
+                key, (if zeroBit (key, m) then t0 else t1))
 
     //
     static member ContainsKey (key, map : PatriciaMap<'T>) =
@@ -60,8 +60,8 @@ type internal PatriciaMap<'T> =
         | Lf (j, _) ->
             key = j
         | Br (_, m, t0, t1) ->
-            PatriciaMap.ContainsKey
-                (key, (if zeroBit (key, m) then t0 else t1))
+            PatriciaMap.ContainsKey (
+                key, (if zeroBit (key, m) then t0 else t1))
 
     //
     static member Count (map : PatriciaMap<'T>) : int =
@@ -135,110 +135,82 @@ type internal PatriciaMap<'T> =
         else
             Br (p, m, t1, t0)
 
-    /// Resolves a collision between two values. Used by the 'Insert' and 'Merge' methods
-    /// to handle the case where a binding is inserted into a map which already contains
-    /// a binding with the same key.
-    // TODO : Rename to something like 'ResolveCollision' for clarity.
-    static member (*inline*) private Combine (x : 'T, y : 'T) : 'T =
-        x   // fst
-        //y   // snd
-
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
     static member Insert (key, value : 'T, map) =
-        // TODO : There's no need to have a separate function here (which gets lifted out
-        // by the compiler); instead, we can make some small modifications to the code within
-        // it then recurse on the InsertRec method here.
-        let rec ins = function
-            | Empty ->
+        match map with
+        | Empty ->
+            Lf (key, value)
+        | (Lf (j, _) as t) ->
+            if j = key then
                 Lf (key, value)
-            | Lf (j, y) as t ->
-                if j = key then
-                    Lf (key, PatriciaMap.Combine (value, y))
+            else
+                PatriciaMap.Join (key, Lf (key, value), j, t)
+        | Br (p, m, t0, t1) as t ->
+            if matchPrefix (key, p, m) then
+                if zeroBit (key, m) then
+                    let left = PatriciaMap.Insert (key, value, t0)
+                    Br (p, m, left, t1)
                 else
-                    PatriciaMap.Join (key, Lf (key, value), j, t)
-
-            | Br (p, m, t0, t1) as t ->
-                if matchPrefix (key, p, m) then
-                    if zeroBit (key, m) then
-                        let left = ins t0
-                        Br (p, m, left, t1)
-                    else
-                        let right = ins t1
-                        Br (p, m, t0, right)
-                else
-                    PatriciaMap.Join (key, Lf (key, value), p, t)
-
-        // Call the implementation function.
-        ins map
-
-    // TEMP : A special version of Insert which swaps the order of the arguments
-    // when calling 'Combine'.
-    // TODO : Figure out a better way to handle this -- we shouldn't need to duplicate the method.
-    static member private InsertFlipped (key, value : 'T, map) =
-        // TODO : There's no need to have a separate function here (which gets lifted out
-        // by the compiler); instead, we can make some small modifications to the code within
-        // it then recurse on the InsertRec method here.
-        let rec ins = function
-            | Empty ->
-                Lf (key, value)
-            | Lf (j, y) as t ->
-                if j = key then
-                    Lf (key, PatriciaMap.Combine (y, value))
-                else
-                    PatriciaMap.Join (key, Lf (key, value), j, t)
-
-            | Br (p, m, t0, t1) as t ->
-                if matchPrefix (key, p, m) then
-                    if zeroBit (key, m) then
-                        let left = ins t0
-                        Br (p, m, left, t1)
-                    else
-                        let right = ins t1
-                        Br (p, m, t0, right)
-                else
-                    PatriciaMap.Join (key, Lf (key, value), p, t)
-
-        // Call the implementation function.
-        ins map
+                    let right = PatriciaMap.Insert (key, value, t1)
+                    Br (p, m, t0, right)
+            else
+                PatriciaMap.Join (key, Lf (key, value), p, t)
 
     /// Computes the union of two PatriciaMaps.
     static member Union (s, t) : PatriciaMap<'T> =
         match s, t with
-        | Empty, t
-        | t, Empty ->
-            t
-        | Lf (k, x), t ->
-            PatriciaMap.Insert (k, x, t)
-        | t, Lf (k, x) ->
-            PatriciaMap.InsertFlipped (k, x, t)
+        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+            if m < n then
+                if matchPrefix (q, p, m) then
+                    // q contains p. Merge t with a subtree of s.
+                    if zeroBit (q, m) then
+                        let left = PatriciaMap.Union (s0, t)
+                        Br (p, m, left, s1)
+                    else
+                        let right = PatriciaMap.Union (s1, t)
+                        Br (p, m, s0, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaMap.Join (p, s, q, t)
 
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as r) ->
-            if m = n && p = q then
+            elif m > n then
+                if matchPrefix (p, q, n) then
+                    // p contains q. Merge s with a subtree of t.
+                    if zeroBit (p, n) then
+                        let left = PatriciaMap.Union (s, t0)
+                        Br (q, n, left, t1)
+                    else
+                        let right = PatriciaMap.Union (s, t1)
+                        Br (q, n, t0, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaMap.Join (p, s, q, t)
+
+            elif p = q then
                 // The trees have the same prefix. Merge the subtrees.
                 let left = PatriciaMap.Union (s0, t0)
                 let right = PatriciaMap.Union (s1, t1)
                 Br (p, m, left, right)
-                
-            elif m < n && matchPrefix (q, p, m) then
-                // q contains p. Merge t with a subtree of s.
-                if zeroBit (q, m) then
-                    let left = PatriciaMap.Union (s0, t)
-                    Br (p, m, left, s1)
-                else
-                    let right = PatriciaMap.Union (s1, t)
-                    Br (p, m, s0, right)
-
-            elif m > n && matchPrefix (p, q, n) then
-                // p contains q. Merge s with a subtree of t.
-                if zeroBit (p, n) then
-                    let left = PatriciaMap.Union (s, t0)
-                    Br (q, n, left, t1)
-                else
-                    let right = PatriciaMap.Union (s, t1)
-                    Br (q, n, t0, right)
             else
                 // The prefixes disagree.
                 PatriciaMap.Join (p, s, q, t)
+
+        | (Br (p, m, s0, s1) as s), Lf (k, x) ->
+            if matchPrefix (k, p, m) then
+                if zeroBit (k, m) then
+                    let left = PatriciaMap.Insert (k, x, s0)
+                    Br (p, m, left, s1)
+                else
+                    let right = PatriciaMap.Insert (k, x, s1)
+                    Br (p, m, s0, right)
+            else
+                PatriciaMap.Join (k, Lf (k, x), p, s)
+
+        | (Br (_,_,_,_) as s), Empty ->
+            s
+        | Lf (k, x), t ->
+            PatriciaMap.Insert (k, x, t)
+        | Empty, t -> t
 
     //
     static member OfSeq (source : seq<int * 'T>) : PatriciaMap<'T> =
