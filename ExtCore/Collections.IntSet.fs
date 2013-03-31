@@ -35,13 +35,13 @@ module internal BitOps =
     let inline zeroBit (value : ^T, bitValue) : bool =
         value &&& bitValue = GenericZero
 
-    //
-    let inline mask (value : ^T, bitValue) =
-        (value ||| (bitValue - GenericOne)) &&& ~~~bitValue
+    /// Clears the indicated bit and sets all lower bits.
+    let inline mask (key : ^T, mask) =
+        (key ||| (mask - GenericOne)) &&& ~~~mask
 
     //
-    let inline matchPrefix (k : ^T, p, m) =
-        mask (k, m) = p
+    let inline matchPrefix (key : ^T, prefix, mask') =
+        mask (key, mask') = prefix
 
 //    //
 //    let inline leastSignificantSetBit (x : uint32) : uint32 =
