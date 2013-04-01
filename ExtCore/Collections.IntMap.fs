@@ -33,7 +33,7 @@ open BitOps.LE
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntMap (and TagMap).
-//[<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
+[<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
 type internal PatriciaMap<'T> =
     | Empty
     // Key * Value
@@ -279,9 +279,8 @@ type internal PatriciaMap<'T> =
             PatriciaMap.Add (uint32 key, value, trie))
 
     //
-    //static member Iterate (action : int -> 'T -> unit, map) : unit =
-    member this.Iterate (action : int -> 'T -> unit) : unit =
-        match this with
+    static member Iterate (action : int -> 'T -> unit, map) : unit =
+        match map with
         | Empty -> ()
         | Lf (k, x) ->
             action (int k) x
@@ -320,9 +319,8 @@ type internal PatriciaMap<'T> =
                     stack.Push left
 
     //
-    //static member IterateBack (action : int -> 'T -> unit, map) : unit =
-    member this.IterateBack (action : int -> 'T -> unit) : unit =
-        match this with
+    static member IterateBack (action : int -> 'T -> unit, map) : unit =
+        match map with
         | Empty -> ()
         | Lf (k, x) ->
             action (int k) x
@@ -361,8 +359,8 @@ type internal PatriciaMap<'T> =
                     stack.Push right
 
     //
-    member this.Fold (folder : 'State -> int -> 'T -> 'State, state : 'State) : 'State =
-        match this with
+    static member Fold (folder : 'State -> int -> 'T -> 'State, state : 'State, map) : 'State =
+        match map with
         | Empty ->
             state
         | Lf (k, x) ->
@@ -406,8 +404,8 @@ type internal PatriciaMap<'T> =
             state
 
     //
-    member this.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
-        match this with
+    static member FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State, map) : 'State =
+        match map with
         | Empty ->
             state
         | Lf (k, x) ->
@@ -451,8 +449,8 @@ type internal PatriciaMap<'T> =
             state
 
     //
-    member this.TryFindKey (predicate : int -> 'T -> bool) : int option =
-        match this with
+    static member TryFindKey (predicate : int -> 'T -> bool, map) : int option =
+        match map with
         | Empty ->
             None
         | Lf (k, x) ->
@@ -505,8 +503,8 @@ type internal PatriciaMap<'T> =
             matchingKey
 
     //
-    member this.TryPick (picker : int -> 'T -> 'U option) : 'U option =
-        match this with
+    static member TryPick (picker : int -> 'T -> 'U option, map) : 'U option =
+        match map with
         | Empty ->
             None
         | Lf (k, x) ->
@@ -711,47 +709,47 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
 
     //
     member __.ToList () : (int * 'T) list =
-        trie.FoldBack ((fun k v list -> (k, v) :: list), [])
+        PatriciaMap.FoldBack ((fun k v list -> (k, v) :: list), [], trie)
 
     //
     member __.ToArray () : (int * 'T)[] =
         let elements = ResizeArray ()
-        trie.Iterate (FuncConvert.FuncFromTupled<_,_,_> elements.Add)
+        PatriciaMap.Iterate (FuncConvert.FuncFromTupled<_,_,_> elements.Add, trie)
         elements.ToArray ()
 
     //
     member __.ToMap () : Map<int, 'T> =
-        trie.FoldBack (Map.add, Map.empty)
+        PatriciaMap.FoldBack (Map.add, Map.empty, trie)
 
     //
     member internal __.ToKvpArray () : KeyValuePair<int, 'T>[] =
         let elements = ResizeArray (1024)
 
-        trie.Iterate <| fun key value ->
+        PatriciaMap.Iterate ((fun key value ->
             elements.Add (
-                KeyValuePair (key, value))
+                KeyValuePair (key, value))), trie)
 
         elements.ToArray ()
 
     //
     member __.Iterate (action : int -> 'T -> unit) : unit =
-        trie.Iterate action
+        PatriciaMap.Iterate (action, trie)
 
     //
     member __.IterateBack (action : int -> 'T -> unit) : unit =
-        trie.IterateBack action
+        PatriciaMap.IterateBack (action, trie)
 
     //
     member __.Fold (folder : 'State -> int -> 'T -> 'State, state : 'State) : 'State =
-        trie.Fold (folder, state)
+        PatriciaMap.Fold (folder, state, trie)
 
     //
     member __.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
-        trie.FoldBack (folder, state)
+        PatriciaMap.FoldBack (folder, state, trie)
 
     //
     member __.TryFindKey (predicate : int -> 'T -> bool) : int option =
-        trie.TryFindKey predicate
+        PatriciaMap.TryFindKey (predicate, trie)
 
     //
     member this.FindKey (predicate : int -> 'T -> bool) : int =
@@ -776,7 +774,7 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
 
     //
     member __.TryPick (picker : int -> 'T -> 'U option) : 'U option =
-        trie.TryPick picker
+        PatriciaMap.TryPick (picker, trie)
 
     //
     member this.Pick (picker : int -> 'T -> 'U option) : 'U =

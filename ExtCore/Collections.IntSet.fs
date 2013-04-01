@@ -94,6 +94,7 @@ open BitOps.LE
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntSet (and TagSet).
+[<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
 type internal PatriciaSet =
     | Empty
     // Key
@@ -191,7 +192,9 @@ type internal PatriciaSet =
             Lf key
         | (Lf j) as t ->
             if j = key then
-                Lf key
+                // The value already exists in the set, so return the
+                // existing set without modifying it.
+                t
             else
                 PatriciaSet.Join (key, Lf key, j, t)
 
@@ -287,8 +290,8 @@ type internal PatriciaSet =
             PatriciaSet.Add (uint32 el, trie))
 
     //
-    member this.Iterate (action : int -> unit) : unit =
-        match this with
+    static member Iterate (action : int -> unit, set) : unit =
+        match set with
         | Empty -> ()
         | Lf k ->
             action (int k)
@@ -325,8 +328,8 @@ type internal PatriciaSet =
                     stack.Push left
 
     //
-    member this.IterateBack (action : int -> unit) : unit =
-        match this with
+    static member IterateBack (action : int -> unit, set) : unit =
+        match set with
         | Empty -> ()
         | Lf k ->
             action (int k)
@@ -363,8 +366,8 @@ type internal PatriciaSet =
                     stack.Push right
 
     //
-    member this.Fold (folder : 'State -> int -> 'State, state : 'State) : 'State =
-        match this with
+    static member Fold (folder : 'State -> int -> 'State, state : 'State, set) : 'State =
+        match set with
         | Empty ->
             state
         | Lf k ->
@@ -408,8 +411,8 @@ type internal PatriciaSet =
             state
 
     //
-    member this.FoldBack (folder : int -> 'State -> 'State, state : 'State) : 'State =
-        match this with
+    static member FoldBack (folder : int -> 'State -> 'State, state : 'State, set) : 'State =
+        match set with
         | Empty ->
             state
         | Lf k ->
@@ -453,8 +456,8 @@ type internal PatriciaSet =
             state
 
     //
-    member this.TryPick (picker : int -> 'T option) : 'T option =
-        match this with
+    static member TryPick (picker : int -> 'T option, set) : 'T option =
+        match set with
         | Empty ->
             None
         | Lf k ->
@@ -501,9 +504,9 @@ type internal PatriciaSet =
             pickedValue
 
     //
-    member this.ToSeq () =
+    static member ToSeq set =
         seq {
-        match this with
+        match set with
         | Empty -> ()
         | Lf k ->
             yield int k
@@ -518,12 +521,12 @@ type internal PatriciaSet =
             // Only handle the case where the left child is a leaf
             // -- otherwise the traversal order would be altered.
             yield int k
-            yield! right.ToSeq ()
+            yield! PatriciaSet.ToSeq right
 
         | Br (_, _, left, right) ->
             // Recursively visit the children.
-            yield! left.ToSeq ()
-            yield! right.ToSeq ()
+            yield! PatriciaSet.ToSeq left
+            yield! PatriciaSet.ToSeq right
         }
 
 //
@@ -629,36 +632,36 @@ type IntSet private (trie : PatriciaSet) =
     //
     member __.ToArray () : int[] =
         let elements = ResizeArray ()
-        trie.Iterate elements.Add
+        PatriciaSet.Iterate (elements.Add, trie)
         elements.ToArray ()
 
     //
     member __.ToList () : int list =
-        trie.FoldBack ((fun el list -> el :: list), [])
+        PatriciaSet.FoldBack ((fun el list -> el :: list), [], trie)
 
     //
     member __.ToSet () : Set<int> =
-        trie.FoldBack (Set.add, Set.empty)
+        PatriciaSet.FoldBack (Set.add, Set.empty, trie)
 
     //
     member __.Iterate (action : int -> unit) : unit =
-        trie.Iterate action
+        PatriciaSet.Iterate (action, trie)
 
     //
     member __.IterateBack (action : int -> unit) : unit =
-        trie.IterateBack action
+        PatriciaSet.IterateBack (action, trie)
 
     //
     member __.Fold (folder : 'State -> int -> 'State, state : 'State) : 'State =
-        trie.Fold (folder, state)
+        PatriciaSet.Fold (folder, state, trie)
 
     //
     member __.FoldBack (folder : int -> 'State -> 'State, state : 'State) : 'State =
-        trie.FoldBack (folder, state)
+        PatriciaSet.FoldBack (folder, state, trie)
 
     //
     member __.TryPick (picker : int -> 'T option) : 'T option =
-        trie.TryPick picker
+        PatriciaSet.TryPick (picker, trie)
 
     //
     member this.Pick (picker : int -> 'T option) : 'T =
@@ -682,7 +685,7 @@ type IntSet private (trie : PatriciaSet) =
 
     //
     member __.ToSeq () =
-        trie.ToSeq ()
+        PatriciaSet.ToSeq trie
 
     //
     member this.Choose (chooser : int -> int option) : IntSet =
@@ -721,13 +724,13 @@ type IntSet private (trie : PatriciaSet) =
     interface System.Collections.IEnumerable with
         /// <inherit />
         member __.GetEnumerator () =
-            (trie.ToSeq ()).GetEnumerator ()
+            (PatriciaSet.ToSeq trie).GetEnumerator ()
             :> System.Collections.IEnumerator
 
     interface IEnumerable<int> with
         /// <inherit />
         member __.GetEnumerator () =
-            (trie.ToSeq ()).GetEnumerator ()
+            (PatriciaSet.ToSeq trie).GetEnumerator ()
 
     interface ICollection<int> with
         /// <inherit />
