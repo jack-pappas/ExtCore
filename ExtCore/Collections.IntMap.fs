@@ -136,7 +136,7 @@ type internal PatriciaMap<'T> =
             Br (p, m, t1, t0)
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
-    static member Insert (key, value : 'T, map) =
+    static member TryAdd (key, value : 'T, map) =
         match map with
         | Empty ->
             Lf (key, value)
@@ -148,16 +148,16 @@ type internal PatriciaMap<'T> =
         | Br (p, m, t0, t1) as t ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
-                    let left = PatriciaMap.Insert (key, value, t0)
+                    let left = PatriciaMap.TryAdd (key, value, t0)
                     Br (p, m, left, t1)
                 else
-                    let right = PatriciaMap.Insert (key, value, t1)
+                    let right = PatriciaMap.TryAdd (key, value, t1)
                     Br (p, m, t0, right)
             else
                 PatriciaMap.Join (key, Lf (key, value), p, t)
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
-    static member private InsertOverwrite (key, value : 'T, map) =
+    static member Add (key, value : 'T, map) =
         match map with
         | Empty ->
             Lf (key, value)
@@ -169,10 +169,10 @@ type internal PatriciaMap<'T> =
         | Br (p, m, t0, t1) as t ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
-                    let left = PatriciaMap.InsertOverwrite (key, value, t0)
+                    let left = PatriciaMap.Add (key, value, t0)
                     Br (p, m, left, t1)
                 else
-                    let right = PatriciaMap.InsertOverwrite (key, value, t1)
+                    let right = PatriciaMap.Add (key, value, t1)
                     Br (p, m, t0, right)
             else
                 PatriciaMap.Join (key, Lf (key, value), p, t)
@@ -219,10 +219,10 @@ type internal PatriciaMap<'T> =
         | (Br (p, m, s0, s1) as s), Lf (k, x) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    let left = PatriciaMap.InsertOverwrite (k, x, s0)
+                    let left = PatriciaMap.Add (k, x, s0)
                     Br (p, m, left, s1)
                 else
-                    let right = PatriciaMap.InsertOverwrite (k, x, s1)
+                    let right = PatriciaMap.Add (k, x, s1)
                     Br (p, m, s0, right)
             else
                 PatriciaMap.Join (k, Lf (k, x), p, s)
@@ -230,14 +230,14 @@ type internal PatriciaMap<'T> =
         | (Br (_,_,_,_) as s), Empty ->
             s
         | Lf (k, x), t ->
-            PatriciaMap.InsertOverwrite (k, x, t)
+            PatriciaMap.Add (k, x, t)
         | Empty, t -> t
 
     //
     static member OfSeq (source : seq<int * 'T>) : PatriciaMap<'T> =
         (Empty, source)
         ||> Seq.fold (fun trie (key, value) ->
-            PatriciaMap.Insert (uint32 key, value, trie))
+            PatriciaMap.Add (uint32 key, value, trie))
 
     //
     static member OfList (source : (int * 'T) list) : PatriciaMap<'T> =
@@ -246,7 +246,7 @@ type internal PatriciaMap<'T> =
 
         (Empty, source)
         ||> List.fold (fun trie (key, value) ->
-            PatriciaMap.Insert (uint32 key, value, trie))
+            PatriciaMap.Add (uint32 key, value, trie))
 
     //
     static member OfArray (source : (int * 'T)[]) : PatriciaMap<'T> =
@@ -255,7 +255,7 @@ type internal PatriciaMap<'T> =
 
         (Empty, source)
         ||> Array.fold (fun trie (key, value) ->
-            PatriciaMap.Insert (uint32 key, value, trie))
+            PatriciaMap.Add (uint32 key, value, trie))
 
     //
     static member OfMap (source : Map<int, 'T>) : PatriciaMap<'T> =
@@ -264,7 +264,7 @@ type internal PatriciaMap<'T> =
 
         (Empty, source)
         ||> Map.fold (fun trie key value ->
-            PatriciaMap.Insert (uint32 key, value, trie))
+            PatriciaMap.Add (uint32 key, value, trie))
 
     //
     member this.Iterate (action : int -> 'T -> unit) : unit =
@@ -611,7 +611,17 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
     /// Returns a new IntMap with the binding added to this IntMap.
     member __.Add (key : int, value : 'T) : IntMap<'T> =
         IntMap (
-            PatriciaMap.Insert (uint32 key, value, trie))
+            PatriciaMap.Add (uint32 key, value, trie))
+
+    /// Returns a new IntMap with the binding added to this IntMap.
+    member this.TryAdd (key : int, value : 'T) : IntMap<'T> =
+        // If the tree wasn't modified, return the reference to this IntMap
+        // instead of creating a new one.
+        let trie' = PatriciaMap.TryAdd (uint32 key, value, trie)
+        if trie === trie' then
+            this
+        else
+            IntMap (trie')
 
     /// Removes an element from the domain of the IntMap.
     /// No exception is raised if the element is not present.
