@@ -68,11 +68,6 @@ let singleton () : unit =
 
 [<TestCase>]
 let containsKey () : unit =
-    [(5, 'a'); (3, 'b')]
-    |> IntMap.ofList
-    |> IntMap.containsKey 5
-    |> should be True
-
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
@@ -139,12 +134,10 @@ let tryFindKey () : unit =
 
 [<TestCase>]
 let add () : unit =
-    let foo =
-        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
-            (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
-        |> IntMap.ofArray
-        |> IntMap.add 5 'x'
-    foo
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
+        (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
+    |> IntMap.ofArray
+    |> IntMap.add 5 'x'
     |> should equal (IntMap.ofArray
        [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |])
