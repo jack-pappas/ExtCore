@@ -139,9 +139,24 @@ let ofList () : unit =
     |> should equal (
         IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
-//[<TestCase>]
-//let ofArray () : unit =
-//    Assert.Fail ()
+[<TestCase>]
+let ofArray () : unit =
+    Array.empty
+    |> IntSet.ofArray
+    |> should equal IntSet.empty
+
+    [| 5; 3; 11; 2; 17; 4; 12; 14 |]
+    |> IntSet.ofArray
+    |> should equal (
+        IntSet.empty
+        |> IntSet.add 2
+        |> IntSet.add 3
+        |> IntSet.add 4
+        |> IntSet.add 5
+        |> IntSet.add 11
+        |> IntSet.add 12
+        |> IntSet.add 14
+        |> IntSet.add 17)
 
 [<TestCase>]
 let ofSet () : unit =
@@ -220,6 +235,6 @@ let ofSet () : unit =
 //    Assert.Fail ()
 
 
-//open FsCheck
+open FsCheck
 
 (* TODO : Implement FsCheck tests. *)
