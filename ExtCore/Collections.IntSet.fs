@@ -26,8 +26,51 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Bitwise operations necessary for implementing IntMap.
+/// Constants used to tune certain operations on Patricia tries.
+module internal PatriciaTrieConstants =
+    /// The default capacity used to when creating mutable stacks
+    /// within the optimized traversal methods for Patricia tries.
+    // TODO : Run some experiments to determine if this is a good initial capacity,
+    // or if some other value would provide better average-case performance.
+    let [<Literal>] defaultTraversalStackSize = 32
+
+
+/// Bitwise operations necessary for implementing Patricia tries.
 module internal BitOps =
+    /// Little-endian operations for Patricia tries.
+    module LE =
+        //
+        let inline (*private*) leastSignificantSetBit (x : uint32) : uint32 =
+            x &&& (uint32 -(int x))
+
+        /// Finds the last (least-significant) bit at which p0 and p1 disagree.
+        /// Returns a power-of-two value containing this (and only this) bit.
+        let inline branchingBit (p0, p1) : uint32 =
+            leastSignificantSetBit (p0 ^^^ p1)
+
+
+    /// Big-endian operations for Patricia tries.
+    module BE =
+        // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
+        // OPTIMIZE : This could be even faster if we could take advantage of a built-in
+        // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
+        // Could we expose these instructions through Mono?
+        let inline (*private*) mostSignificantSetBit (x : uint32) =
+            let x = x ||| (x >>> 1)
+            let x = x ||| (x >>> 2)
+            let x = x ||| (x >>> 4)
+            let x = x ||| (x >>> 8)
+            let x = x ||| (x >>> 16)
+            //x &&& ~~~(x >>> 1)
+            // OPTIMIZATION : p AND (NOT q) <-> p XOR q
+            x ^^^ (x >>> 1)
+
+        /// Finds the first (most-significant) bit at which p0 and p1 disagree.
+        /// Returns a power-of-two value containing this (and only this) bit.
+        let inline branchingBit (p0, p1) : uint32 =
+            mostSignificantSetBit (p0 ^^^ p1)
+
+
     /// <summary>Determines if all specified bits are cleared (not set) in a value.</summary>
     /// <param name="value">The value to test.</param>
     /// <param name="bitValue">The bits to test in 'value'.</param>
@@ -43,45 +86,10 @@ module internal BitOps =
     let inline matchPrefix (key : uint32, prefix : uint32, mask' : uint32) : bool =
         mask (key, mask') = prefix
 
-    //
-    let inline leastSignificantSetBit (x : uint32) : uint32 =
-        x &&& (uint32 -(int x))
 
-    /// Finds the last (least-significant) bit at which p0 and p1 disagree.
-    /// Returns a power-of-two value containing this (and only this) bit.
-    let inline branchingBit (p0, p1) : uint32 =
-        leastSignificantSetBit (p0 ^^^ p1)
-
-//    // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
-//    // OPTIMIZE : This could be even faster if we could take advantage of a built-in
-//    // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
-//    // Could we expose these instructions through Mono?
-//    let inline private mostSignificantSetBit (x : uint32) =
-//        let x = x ||| (x >>> 1)
-//        let x = x ||| (x >>> 2)
-//        let x = x ||| (x >>> 4)
-//        let x = x ||| (x >>> 8)
-//        let x = x ||| (x >>> 16)
-//        //x &&& ~~~(x >>> 1)
-//        // OPTIMIZATION : p AND (NOT q) <-> p XOR q
-//        x ^^^ (x >>> 1)
-
-//    /// Finds the first (most-significant) bit at which p0 and p1 disagree.
-//    /// Returns a power-of-two value containing this (and only this) bit.
-//    let inline branchingBit (p0, p1) : uint32 =
-//        mostSignificantSetBit (p0 ^^^ p1)
-
-
-/// Constants used to tune certain operations on Patricia tries.
-module internal PatriciaTrieConstants =
-    /// The default capacity used to when creating mutable stacks
-    /// within the optimized traversal methods for Patricia tries.
-    // TODO : Run some experiments to determine if this is a good initial capacity,
-    // or if some other value would provide better average-case performance.
-    let [<Literal>] defaultTraversalStackSize = 64
-
-open BitOps
 open PatriciaTrieConstants
+open BitOps
+open BitOps.LE
 
 
 /// A Patricia trie implementation.
@@ -93,7 +101,7 @@ type internal PatriciaSet =
     // Prefix * Mask * Left-Child * Right-Child
     | Br of uint32 * uint32 * PatriciaSet * PatriciaSet
 
-    //
+    /// Determines if the set contains the given value.
     static member Contains (key, set : PatriciaSet) =
         match set with
         | Empty ->
@@ -104,7 +112,7 @@ type internal PatriciaSet =
             PatriciaSet.Contains
                 (key, (if zeroBit (key, m) then t0 else t1))
 
-    //
+    /// The number of items (i.e., the cardinality) of the set.
     static member Count (set : PatriciaSet) : int =
         match set with
         | Empty -> 0
@@ -144,7 +152,7 @@ type internal PatriciaSet =
             // Return the computed element count.
             int count
 
-    //
+    /// Remove an item from the set.
     static member Remove (key, set : PatriciaSet) =
         match set with
         | Empty ->
@@ -177,48 +185,42 @@ type internal PatriciaSet =
             Br (p, m, t1, t0)
 
     //
-    static member Insert (key, set) =
-        // TODO : Lift this recursive function out into a private member
-        // Or, better yet -- with a few tweaks, we could just re-use this member and call it recursively.
-        let rec ins = function
-            | Empty ->
+    static member Add (key, set) =
+        match set with
+        | Empty ->
+            Lf key
+        | (Lf j) as t ->
+            if j = key then
                 Lf key
-            | (Lf j) as t ->
-                let newLeaf = Lf key
-                if j = key then
-                    newLeaf
-                else
-                    PatriciaSet.Join (key, newLeaf, j, t)
+            else
+                PatriciaSet.Join (key, Lf key, j, t)
 
-            | Br (p, m, t0, t1) as t ->
-                if matchPrefix (key, p, m) then
-                    if zeroBit (key, m) then
-                        let left = ins t0
-                        Br (p, m, left, t1)
-                    else
-                        let right = ins t1
-                        Br (p, m, t0, right)
+        | Br (p, m, t0, t1) as t ->
+            if matchPrefix (key, p, m) then
+                if zeroBit (key, m) then
+                    let left = PatriciaSet.Add (key, t0)
+                    Br (p, m, left, t1)
                 else
-                    PatriciaSet.Join (key, Lf key, p, t)
-
-        // Call the implementation function.
-        ins set
+                    let right = PatriciaSet.Add (key, t1)
+                    Br (p, m, t0, right)
+            else
+                PatriciaSet.Join (key, Lf key, p, t)
 
     //
-    static member Merge (s, t) : PatriciaSet =
+    static member Union (s, t) : PatriciaSet =
         match s, t with
         | Empty, t
         | t, Empty ->
             t
         | Lf k, t ->
-            PatriciaSet.Insert (k, t)
+            PatriciaSet.Add (k, t)
         | (Br (p, m, s0, s1) as s), Lf k ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    let left = PatriciaSet.Insert (k, s0)
+                    let left = PatriciaSet.Add (k, s0)
                     Br (p, m, left, s1)
                 else
-                    let right = PatriciaSet.Insert (k, s1)
+                    let right = PatriciaSet.Add (k, s1)
                     Br (p, m, s0, right)
             else
                 PatriciaSet.Join (k, Lf k, p, s)
@@ -226,26 +228,26 @@ type internal PatriciaSet =
         | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as r) ->
             if m = n && p = q then
                 // The trees have the same prefix. Merge the subtrees.
-                let left = PatriciaSet.Merge (s0, t0)
-                let right = PatriciaSet.Merge (s1, t1)
+                let left = PatriciaSet.Union (s0, t0)
+                let right = PatriciaSet.Union (s1, t1)
                 Br (p, m, left, right)
                 
             elif m < n && matchPrefix (q, p, m) then
                 // q contains p. Merge t with a subtree of s.
                 if zeroBit (q, m) then
-                    let left = PatriciaSet.Merge (s0, t)
+                    let left = PatriciaSet.Union (s0, t)
                     Br (p, m, left, s1)
                 else
-                    let right = PatriciaSet.Merge (s1, t)
+                    let right = PatriciaSet.Union (s1, t)
                     Br (p, m, s0, right)
 
             elif m > n && matchPrefix (p, q, n) then
                 // p contains q. Merge s with a subtree of t.
                 if zeroBit (p, n) then
-                    let left = PatriciaSet.Merge (s, t0)
+                    let left = PatriciaSet.Union (s, t0)
                     Br (q, n, left, t1)
                 else
-                    let right = PatriciaSet.Merge (s, t1)
+                    let right = PatriciaSet.Union (s, t1)
                     Br (q, n, t0, right)
             else
                 // The prefixes disagree.
@@ -255,7 +257,7 @@ type internal PatriciaSet =
     static member OfSeq (source : seq<int>) : PatriciaSet =
         (Empty, source)
         ||> Seq.fold (fun trie el ->
-            PatriciaSet.Insert (uint32 el, trie))
+            PatriciaSet.Add (uint32 el, trie))
 
     //
     static member OfList (source : int list) : PatriciaSet =
@@ -264,7 +266,7 @@ type internal PatriciaSet =
 
         (Empty, source)
         ||> List.fold (fun trie el ->
-            PatriciaSet.Insert (uint32 el, trie))
+            PatriciaSet.Add (uint32 el, trie))
 
     //
     static member OfArray (source : int[]) : PatriciaSet =
@@ -273,7 +275,7 @@ type internal PatriciaSet =
 
         (Empty, source)
         ||> Array.fold (fun trie el ->
-            PatriciaSet.Insert (uint32 el, trie))
+            PatriciaSet.Add (uint32 el, trie))
 
     //
     static member OfSet (source : Set<int>) : PatriciaSet =
@@ -282,7 +284,7 @@ type internal PatriciaSet =
 
         (Empty, source)
         ||> Set.fold (fun trie el ->
-            PatriciaSet.Insert (uint32 el, trie))
+            PatriciaSet.Add (uint32 el, trie))
 
     //
     member this.Iterate (action : int -> unit) : unit =
@@ -529,10 +531,12 @@ type internal PatriciaSet =
 [<DebuggerTypeProxy(typedefof<IntSetDebuggerProxy>)>]
 [<DebuggerDisplay("Count = {Count}")>]
 type IntSet private (trie : PatriciaSet) =
+    /// The empty IntSet instance.
+    static let empty = IntSet Empty
+
     /// The empty IntSet.
     static member Empty
-        with get () : IntSet =
-            IntSet Empty
+        with get () = empty
 
     //
     member private __.Trie
@@ -554,25 +558,33 @@ type IntSet private (trie : PatriciaSet) =
     member __.Contains (key : int) : bool =
         PatriciaSet.Contains (uint32 key, trie)
 
-    /// Returns a new IntSet with the element added to this IntSet.
-    member __.Add (key : int) : IntSet =
-        IntSet (
-            PatriciaSet.Insert (uint32 key, trie))
-
-    /// Removes an element from the domain of the IntSet.
-    /// No exception is raised if the element is not present.
-    member __.Remove (key : int) : IntSet =
-        IntSet (
-            PatriciaSet.Remove (uint32 key, trie))
-
-    /// Computes the union of two IntSets.
-    member __.Union (otherSet : IntSet) : IntSet =
-        IntSet (
-            PatriciaSet.Merge (trie, otherSet.Trie))
-
     /// The IntSet containing the given element.
     static member Singleton (element : int) : IntSet =
         IntSet (Lf <| uint32 element)
+
+    /// Returns a new IntSet with the element added to this IntSet.
+    member this.Add (key : int) : IntSet =
+        // If the trie isn't modified, just return this IntSet instead of creating a new one.
+        let trie' = PatriciaSet.Add (uint32 key, trie)
+        if trie === trie' then this
+        else IntSet (trie')
+
+    /// Removes an element from the domain of the IntSet.
+    /// No exception is raised if the element is not present.
+    member this.Remove (key : int) : IntSet =
+        // If the trie isn't modified, just return this IntSet instead of creating a new one.
+        let trie' = PatriciaSet.Remove (uint32 key, trie)
+        if trie === trie' then this
+        else IntSet (trie')
+
+    /// Computes the union of two IntSets.
+    member this.Union (otherSet : IntSet) : IntSet =
+        // If the result is the same (physical equality) to one of the inputs,
+        // return that input instead of creating a new IntSet.
+        let trie' = PatriciaSet.Union (trie, otherSet.Trie)
+        if trie === trie' then this
+        elif otherSet.Trie === trie' then otherSet
+        else IntSet (trie')
 
     /// Returns a new IntSet made from the given elements.
     static member OfSeq (source : seq<int>) : IntSet =

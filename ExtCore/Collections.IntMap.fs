@@ -23,8 +23,9 @@ open System.Diagnostics
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
-open BitOps
 open PatriciaTrieConstants
+open BitOps
+open BitOps.LE
 
 
 (* OPTIMIZE :   Some of the functional-style operations on IntMap use direct non-tail-recursion;
@@ -103,7 +104,8 @@ type internal PatriciaMap<'T> =
             // Return the computed element count.
             int count
 
-    //
+    /// Remove the binding with the specified key from the map.
+    /// No exception is thrown if the map does not contain a binding for the key.
     static member Remove (key, map : PatriciaMap<'T>) =
         match map with
         | Empty ->
@@ -136,34 +138,19 @@ type internal PatriciaMap<'T> =
             Br (p, m, t1, t0)
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
-    static member TryAdd (key, value : 'T, map) =
-        match map with
-        | Empty ->
-            Lf (key, value)
-        | (Lf (j, y) as t) ->
-            if j = key then
-                Lf (key, value)
-            else
-                PatriciaMap.Join (key, Lf (key, value), j, t)
-        | Br (p, m, t0, t1) as t ->
-            if matchPrefix (key, p, m) then
-                if zeroBit (key, m) then
-                    let left = PatriciaMap.TryAdd (key, value, t0)
-                    Br (p, m, left, t1)
-                else
-                    let right = PatriciaMap.TryAdd (key, value, t1)
-                    Br (p, m, t0, right)
-            else
-                PatriciaMap.Join (key, Lf (key, value), p, t)
-
-    /// Insert a binding (key-value pair) into a map, returning a new, updated map.
     static member Add (key, value : 'T, map) =
         match map with
         | Empty ->
             Lf (key, value)
-        | (Lf (j, y) as t) ->
+        | Lf (j, y) as t ->
             if j = key then
-                Lf (key, y)
+                // A binding already exists with the given key.
+                // This method 'overwrites' the existing value, by returning
+                // a new node with the inserted value.
+                // OPTIMIZE : Try calling Object.Equals or similar -- if the existing
+                // value is the same as the new value, we can return this node instead
+                // of creating a new one.
+                Lf (key, value)
             else
                 PatriciaMap.Join (key, Lf (key, value), j, t)
         | Br (p, m, t0, t1) as t ->
@@ -173,6 +160,31 @@ type internal PatriciaMap<'T> =
                     Br (p, m, left, t1)
                 else
                     let right = PatriciaMap.Add (key, value, t1)
+                    Br (p, m, t0, right)
+            else
+                PatriciaMap.Join (key, Lf (key, value), p, t)
+
+    /// Insert a binding (key-value pair) into a map, returning a new, updated map.
+    /// If a binding already exists for the same key, the map is not altered.
+    static member TryAdd (key, value : 'T, map) =
+        match map with
+        | Empty ->
+            Lf (key, value)
+        | Lf (j, y) as t ->
+            if j = key then
+                // A binding already exists with the given key.
+                // This method does not overwrite the existing value, so we can
+                // just return the existing map instead of creating an identical new one.
+                t
+            else
+                PatriciaMap.Join (key, Lf (key, value), j, t)
+        | Br (p, m, t0, t1) as t ->
+            if matchPrefix (key, p, m) then
+                if zeroBit (key, m) then
+                    let left = PatriciaMap.TryAdd (key, value, t0)
+                    Br (p, m, left, t1)
+                else
+                    let right = PatriciaMap.TryAdd (key, value, t1)
                     Br (p, m, t0, right)
             else
                 PatriciaMap.Join (key, Lf (key, value), p, t)
@@ -219,10 +231,10 @@ type internal PatriciaMap<'T> =
         | (Br (p, m, s0, s1) as s), Lf (k, x) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    let left = PatriciaMap.Add (k, x, s0)
+                    let left = PatriciaMap.TryAdd (k, x, s0)
                     Br (p, m, left, s1)
                 else
-                    let right = PatriciaMap.Add (k, x, s1)
+                    let right = PatriciaMap.TryAdd (k, x, s1)
                     Br (p, m, s0, right)
             else
                 PatriciaMap.Join (k, Lf (k, x), p, s)
@@ -267,6 +279,7 @@ type internal PatriciaMap<'T> =
             PatriciaMap.Add (uint32 key, value, trie))
 
     //
+    //static member Iterate (action : int -> 'T -> unit, map) : unit =
     member this.Iterate (action : int -> 'T -> unit) : unit =
         match this with
         | Empty -> ()
@@ -307,6 +320,7 @@ type internal PatriciaMap<'T> =
                     stack.Push left
 
     //
+    //static member IterateBack (action : int -> 'T -> unit, map) : unit =
     member this.IterateBack (action : int -> 'T -> unit) : unit =
         match this with
         | Empty -> ()
@@ -541,9 +555,9 @@ type internal PatriciaMap<'T> =
             pickedValue
 
     //
-    member this.ToSeq () =
+    static member ToSeq (map : PatriciaMap<'T>) =
         seq {
-        match this with
+        match map with
         | Empty -> ()
         | Lf (k, x) ->
             yield (int k, x)
@@ -558,12 +572,12 @@ type internal PatriciaMap<'T> =
             // Only handle the case where the left child is a leaf
             // -- otherwise the traversal order would be altered.
             yield (int k, x)
-            yield! right.ToSeq ()
+            yield! PatriciaMap.ToSeq right
 
         | Br (_, _, left, right) ->
             // Recursively visit the children.
-            yield! left.ToSeq ()
-            yield! right.ToSeq ()
+            yield! PatriciaMap.ToSeq left
+            yield! PatriciaMap.ToSeq right
         }
 
 /// <summary>Immutable maps with integer keys.</summary>
@@ -572,10 +586,13 @@ type internal PatriciaMap<'T> =
 [<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
 type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
+    /// The empty IntMap instance.
+    static let empty : IntMap<'T> =
+        IntMap Empty
+
     /// The empty IntMap.
     static member Empty
-        with get () : IntMap<'T> =
-            IntMap Empty
+        with get () = empty
 
     /// The internal representation of the IntMap.
     member private __.Trie
@@ -608,35 +625,40 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    /// Returns a new IntMap with the binding added to this IntMap.
-    member __.Add (key : int, value : 'T) : IntMap<'T> =
-        IntMap (
-            PatriciaMap.Add (uint32 key, value, trie))
-
-    /// Returns a new IntMap with the binding added to this IntMap.
-    member this.TryAdd (key : int, value : 'T) : IntMap<'T> =
-        // If the tree wasn't modified, return the reference to this IntMap
-        // instead of creating a new one.
-        let trie' = PatriciaMap.TryAdd (uint32 key, value, trie)
-        if trie === trie' then
-            this
-        else
-            IntMap (trie')
-
-    /// Removes an element from the domain of the IntMap.
-    /// No exception is raised if the element is not present.
-    member __.Remove (key : int) : IntMap<'T> =
-        IntMap (
-            PatriciaMap.Remove (uint32 key, trie))
-
     /// Tests if an element is in the domain of the IntMap.
     member __.ContainsKey (key : int) : bool =
         PatriciaMap.ContainsKey (uint32 key, trie)
 
+    /// Returns a new IntMap with the binding added to this IntMap.
+    member this.Add (key : int, value : 'T) : IntMap<'T> =
+        // If the trie isn't modified, just return this IntMap instead of creating a new one.
+        let trie' = PatriciaMap.Add (uint32 key, value, trie)
+        if trie === trie' then this
+        else IntMap (trie')
+
+    /// Returns a new IntMap with the binding added to this IntMap.
+    member this.TryAdd (key : int, value : 'T) : IntMap<'T> =
+        // If the trie isn't modified, just return this IntMap instead of creating a new one.
+        let trie' = PatriciaMap.TryAdd (uint32 key, value, trie)
+        if trie === trie' then this
+        else IntMap (trie')
+
+    /// Removes an element from the domain of the IntMap.
+    /// No exception is raised if the element is not present.
+    member this.Remove (key : int) : IntMap<'T> =
+        // If the trie isn't modified, just return this IntMap instead of creating a new one.
+        let trie' = PatriciaMap.Remove (uint32 key, trie)
+        if trie === trie' then this
+        else IntMap (trie')
+
     /// Returns a new IntMap created by merging the two specified IntMaps.
-    member __.Union (otherMap : IntMap<'T>) : IntMap<'T> =
-        IntMap (
-            PatriciaMap.Union (trie, otherMap.Trie))
+    member this.Union (otherMap : IntMap<'T>) : IntMap<'T> =
+        // If the result is the same (physical equality) to one of the inputs,
+        // return that input instead of creating a new IntMap.
+        let trie' = PatriciaMap.Union (trie, otherMap.Trie)
+        if trie === trie' then this
+        elif otherMap.Trie === trie' then otherMap
+        else IntMap (trie')
 
     /// The IntMap containing the given binding.
     static member Singleton (key : int, value : 'T) : IntMap<'T> =
@@ -685,7 +707,7 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
 
     //
     member __.ToSeq () =
-        trie.ToSeq ()
+        PatriciaMap.ToSeq trie
 
     //
     member __.ToList () : (int * 'T) list =
@@ -828,14 +850,14 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
     interface System.Collections.IEnumerable with
         /// <inherit />
         member __.GetEnumerator () =
-            (trie.ToSeq () |> Seq.map (fun (k, v) ->
+            (PatriciaMap.ToSeq trie |> Seq.map (fun (k, v) ->
                 System.Collections.DictionaryEntry (k, v))).GetEnumerator ()
             :> System.Collections.IEnumerator
 
     interface IEnumerable<KeyValuePair<int, 'T>> with
         /// <inherit />
         member __.GetEnumerator () =
-            (trie.ToSeq () |> Seq.map (fun (k, v) ->
+            (PatriciaMap.ToSeq trie |> Seq.map (fun (k, v) ->
                 KeyValuePair (k, v))).GetEnumerator ()
 
     interface ICollection<KeyValuePair<int, 'T>> with
@@ -1020,6 +1042,14 @@ module IntMap =
         checkNonNull "map" map
 
         map.Add (key, value)
+
+    //
+    [<CompiledName("TryAdd")>]
+    let inline tryAdd (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryAdd (key, value)
 
     /// Removes an element from the domain of the IntMap.
     /// No exception is raised if the element is not present.
