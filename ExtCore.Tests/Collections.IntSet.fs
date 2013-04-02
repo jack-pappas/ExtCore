@@ -109,8 +109,35 @@ let union () : unit =
     IntSet.union
         (IntSet.ofArray [| 3; 11; 2; 4; 12 |])
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
-    |> should equal (
-        IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should equal
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+
+[<TestCase>]
+let intersect () : unit =
+    IntSet.intersect
+        (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
+        IntSet.empty
+    |> should equal IntSet.empty
+
+    IntSet.intersect
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
+    |> should equal
+        (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
+
+[<TestCase>]
+let difference () : unit =
+    IntSet.difference
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        IntSet.empty
+    |> should equal
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+
+    IntSet.difference
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
+    |> should equal
+        (IntSet.ofArray [| 3; 2; 12 |])
 
 [<TestCase>]
 let ofSeq () : unit =

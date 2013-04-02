@@ -245,6 +245,138 @@ type internal PatriciaMap<'T> =
             PatriciaMap.Add (k, x, t)
         | Empty, t -> t
 
+    /// Compute the intersection of two PatriciaMaps.
+    /// If both maps contain a binding with the same key, the binding from
+    /// the first map will be used.
+    static member Intersect (s, t) : PatriciaMap<'T> =
+        match s, t with
+        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+            if m = n then
+                if p <> q then Empty
+                else
+                    let left = PatriciaMap.Intersect (s0, t0)
+                    let right = PatriciaMap.Intersect (s1, t1)
+                    match left, right with
+                    | Empty, t
+                    | t, Empty -> t
+                    | left, right ->
+                        Br (p, m, left, right)
+            elif m < n then
+                if matchPrefix (q, p, m) then
+                    if zeroBit (q, m) then
+                        PatriciaMap.Intersect (s0, t)
+                    else
+                        PatriciaMap.Intersect (s1, t)
+                else
+                    Empty
+            else
+                if matchPrefix (p, q, n) then
+                    if zeroBit (p, n) then
+                        PatriciaMap.Intersect (s, t0)
+                    else
+                        PatriciaMap.Intersect (s, t1)
+                else
+                    Empty
+
+        | Br (_, m, s0, s1), Lf (k, y) ->
+            let s' = if zeroBit (k, m) then s0 else s1
+            match PatriciaMap.TryFind (k, s') with
+            | Some x ->
+                Lf (k, x)
+            | None ->
+                Empty
+            
+        | Br (_,_,_,_), Empty ->
+            Empty
+            
+        | (Lf (k, x) as s), t ->
+            // Here, we always use the value from the left tree, so as long as the
+            // right tree contains a binding with the same key, we just return the left tree.
+            if PatriciaMap.ContainsKey (k, t) then s
+            else Empty
+
+        | Empty, _ ->
+            Empty
+
+    //
+    static member private Delete (key, map) : PatriciaMap<'T> =
+        match map with
+        | Empty ->
+            Empty
+        | Lf (j, _) as t ->
+            if key = j then Empty
+            else t
+        | Br (p, m, t0, t1) as t ->
+            if matchPrefix (key, p, m) then
+                if zeroBit (key, m) then
+                    match PatriciaMap.Delete (key, t0) with
+                    | Empty -> t1
+                    | left ->
+                        Br (p, m, left, t1)
+                else
+                    match PatriciaMap.Delete (key, t1) with
+                    | Empty -> t0
+                    | right ->
+                        Br (p, m, t0, right)
+            else t
+
+    /// Compute the difference of two PatriciaMaps.
+    static member Difference (s, t) : PatriciaMap<'T> =
+        match s, t with
+        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+            if m = n then
+                if p <> q then s
+                else
+                    let left = PatriciaMap.Difference (s0, t0)
+                    let right = PatriciaMap.Difference (s1, t1)
+                    match left, right with
+                    | Empty, t
+                    | t, Empty -> t
+                    | left, right ->
+                        Br (p, m, left, right)
+            elif m < n then
+                if matchPrefix (q, p, m) then
+                    if zeroBit (q, m) then
+                        match PatriciaMap.Difference (s0, t) with
+                        | Empty -> s1
+                        | left ->
+                            Br (p, m, left, s1)
+                    else
+                        match PatriciaMap.Difference (s1, t) with
+                        | Empty -> s0
+                        | right ->
+                            Br (p, m, s0, right)
+                else s
+            else
+                if matchPrefix (p, q, n) then
+                    if zeroBit (p, n) then
+                        PatriciaMap.Difference (s, t0)
+                    else
+                        PatriciaMap.Difference (s, t1)
+                else s
+
+        | Br (p, m, s0, s1), Lf (k, y) ->
+            if matchPrefix (k, p, m) then
+                if zeroBit (k, m) then
+                    match PatriciaMap.Delete (k, s0) with
+                    | Empty -> s1
+                    | left ->
+                        Br (p, m, left, s1)
+                else
+                    match PatriciaMap.Delete (k, s1) with
+                    | Empty -> s0
+                    | right ->
+                        Br (p, m, s0, right)
+            else s
+            
+        | Br (_,_,_,_) as s, Empty ->
+            s
+        | (Lf (k, x) as s), t ->
+            if PatriciaMap.ContainsKey (k, t) then Empty
+            else s
+        | Empty, _ ->
+            Empty
+
     //
     static member OfSeq (source : seq<int * 'T>) : PatriciaMap<'T> =
         (Empty, source)
@@ -658,6 +790,24 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         elif otherMap.Trie === trie' then otherMap
         else IntMap (trie')
 
+    /// Returns the intersection of two IntMaps.
+    member this.Intersect (otherMap : IntMap<'T>) : IntMap<'T> =
+        // If the result is the same (physical equality) to one of the inputs,
+        // return that input instead of creating a new IntMap.
+        let trie' = PatriciaMap.Intersect (trie, otherMap.Trie)
+        if trie === trie' then this
+        elif otherMap.Trie === trie' then otherMap
+        else IntMap (trie')
+
+    /// Returns a new IntMap created by removing the second IntMap from the first.
+    member this.Difference (otherMap : IntMap<'T>) : IntMap<'T> =
+        // If the result is the same (physical equality) to one of the inputs,
+        // return that input instead of creating a new IntMap.
+        let trie' = PatriciaMap.Difference (trie, otherMap.Trie)
+        if trie === trie' then this
+        elif otherMap.Trie === trie' then otherMap
+        else IntMap (trie')
+
     /// The IntMap containing the given binding.
     static member Singleton (key : int, value : 'T) : IntMap<'T> =
         IntMap (
@@ -1067,6 +1217,24 @@ module IntMap =
 
         map1.Union map2
 
+    /// Returns the intersection of two IntMaps.
+    [<CompiledName("Intersect")>]
+    let inline intersect (map1 : IntMap<'T>) (map2 : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+
+        map1.Intersect map2
+
+    /// Returns a new IntMap created by removing the second IntMap from the first.
+    [<CompiledName("Difference")>]
+    let inline difference (map1 : IntMap<'T>) (map2 : IntMap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+
+        map1.Difference map2
+
     /// Returns a new IntMap made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntMap<'T> =
@@ -1349,6 +1517,34 @@ module TagMap =
         checkNonNull "map2" map2
 
         map1.Union map2
+        |> retype
+
+    //
+    [<CompiledName("Intersect")>]
+    let inline intersect (map1 : TagMap<'Tag, 'T>) (map2 : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
+        // Retype as IntMap.
+        let map1 : IntMap<'T> = retype map1
+        let map2 : IntMap<'T> = retype map2
+
+        // Preconditions
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+
+        map1.Intersect map2
+        |> retype
+
+    //
+    [<CompiledName("Difference")>]
+    let inline difference (map1 : TagMap<'Tag, 'T>) (map2 : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
+        // Retype as IntMap.
+        let map1 : IntMap<'T> = retype map1
+        let map2 : IntMap<'T> = retype map2
+
+        // Preconditions
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+
+        map1.Difference map2
         |> retype
 
     //

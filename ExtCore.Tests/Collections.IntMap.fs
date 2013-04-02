@@ -159,7 +159,8 @@ let add () : unit =
 let remove () : unit =
     (IntMap.empty : IntMap<string>)
     |> IntMap.remove 5
-    |> should equal (IntMap.empty : IntMap<string>)
+    |> IntMap.isEmpty
+    |> should be True
 
     [(5, "a"); (3, "b")]
     |> IntMap.ofList
@@ -180,8 +181,36 @@ let union () : unit =
     IntMap.union
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
         (IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |])
-    |> should equal (
-        IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
+    |> should equal
+        (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
+
+[<TestCase>]
+let intersect () : unit =
+    IntMap.intersect
+        (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
+        IntMap.empty
+    |> IntMap.isEmpty
+    |> should be True
+
+    IntMap.intersect
+        (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
+        (IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |])
+    |> should equal
+        (IntMap.ofArray [| (11, 'F'); (4, 'G'); |])
+
+[<TestCase>]
+let difference () : unit =
+    IntMap.difference
+        (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
+        IntMap.empty
+    |> should equal
+        (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
+
+    IntMap.difference
+        (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
+        (IntMap.ofArray [| (3, 'b'); (11, 'f'); (2, 'd'); (4, 'g'); (12, 'b'); |])
+    |> should equal
+        (IntMap.ofArray [| (5, 'a'); (17, 'a'); (14, 'c'); |])
 
 [<TestCase>]
 let ofSeq () : unit =

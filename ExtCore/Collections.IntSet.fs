@@ -256,6 +256,133 @@ type internal PatriciaSet =
                 // The prefixes disagree.
                 PatriciaSet.Join (p, s, q, t)
 
+    /// Compute the intersection of two PatriciaMaps.
+    /// If both maps contain a binding with the same key, the binding from
+    /// the first map will be used.
+    static member Intersect (s, t) : PatriciaSet =
+        match s, t with
+        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+            if m = n then
+                if p <> q then Empty
+                else
+                    let left = PatriciaSet.Intersect (s0, t0)
+                    let right = PatriciaSet.Intersect (s1, t1)
+                    match left, right with
+                    | Empty, t
+                    | t, Empty -> t
+                    | left, right ->
+                        Br (p, m, left, right)
+            elif m < n then
+                if matchPrefix (q, p, m) then
+                    if zeroBit (q, m) then
+                        PatriciaSet.Intersect (s0, t)
+                    else
+                        PatriciaSet.Intersect (s1, t)
+                else
+                    Empty
+            else
+                if matchPrefix (p, q, n) then
+                    if zeroBit (p, n) then
+                        PatriciaSet.Intersect (s, t0)
+                    else
+                        PatriciaSet.Intersect (s, t1)
+                else
+                    Empty
+
+        | Br (_, m, s0, s1), (Lf k as t) ->
+            let s' = if zeroBit (k, m) then s0 else s1
+            if PatriciaSet.Contains (k, s') then t
+            else Empty
+            
+        | Br (_,_,_,_), Empty ->
+            Empty
+            
+        | (Lf k as s), t ->
+            if PatriciaSet.Contains (k, t) then s
+            else Empty
+
+        | Empty, _ ->
+            Empty
+
+    //
+    static member private Delete (key, map) : PatriciaSet =
+        match map with
+        | Empty ->
+            Empty
+        | Lf j as t ->
+            if key = j then Empty
+            else t
+        | Br (p, m, t0, t1) as t ->
+            if matchPrefix (key, p, m) then
+                if zeroBit (key, m) then
+                    match PatriciaSet.Delete (key, t0) with
+                    | Empty -> t1
+                    | left ->
+                        Br (p, m, left, t1)
+                else
+                    match PatriciaSet.Delete (key, t1) with
+                    | Empty -> t0
+                    | right ->
+                        Br (p, m, t0, right)
+            else t
+
+    /// Compute the difference of two PatriciaMaps.
+    static member Difference (s, t) : PatriciaSet =
+        match s, t with
+        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+            if m = n then
+                if p <> q then s
+                else
+                    let left = PatriciaSet.Difference (s0, t0)
+                    let right = PatriciaSet.Difference (s1, t1)
+                    match left, right with
+                    | Empty, t
+                    | t, Empty -> t
+                    | left, right ->
+                        Br (p, m, left, right)
+            elif m < n then
+                if matchPrefix (q, p, m) then
+                    if zeroBit (q, m) then
+                        match PatriciaSet.Difference (s0, t) with
+                        | Empty -> s1
+                        | left ->
+                            Br (p, m, left, s1)
+                    else
+                        match PatriciaSet.Difference (s1, t) with
+                        | Empty -> s0
+                        | right ->
+                            Br (p, m, s0, right)
+                else s
+            else
+                if matchPrefix (p, q, n) then
+                    if zeroBit (p, n) then
+                        PatriciaSet.Difference (s, t0)
+                    else
+                        PatriciaSet.Difference (s, t1)
+                else s
+
+        | Br (p, m, s0, s1), Lf k ->
+            if matchPrefix (k, p, m) then
+                if zeroBit (k, m) then
+                    match PatriciaSet.Delete (k, s0) with
+                    | Empty -> s1
+                    | left ->
+                        Br (p, m, left, s1)
+                else
+                    match PatriciaSet.Delete (k, s1) with
+                    | Empty -> s0
+                    | right ->
+                        Br (p, m, s0, right)
+            else s
+            
+        | Br (_,_,_,_) as s, Empty ->
+            s
+        | (Lf k as s), t ->
+            if PatriciaSet.Contains (k, t) then Empty
+            else s
+        | Empty, _ ->
+            Empty
+
     //
     static member OfSeq (source : seq<int>) : PatriciaSet =
         (Empty, source)
@@ -589,6 +716,24 @@ type IntSet private (trie : PatriciaSet) =
         elif otherSet.Trie === trie' then otherSet
         else IntSet (trie')
 
+    /// Computes the intersection of two IntSets.
+    member this.Intersect (otherSet : IntSet) : IntSet =
+        // If the result is the same (physical equality) to one of the inputs,
+        // return that input instead of creating a new IntSet.
+        let trie' = PatriciaSet.Intersect (trie, otherSet.Trie)
+        if trie === trie' then this
+        elif otherSet.Trie === trie' then otherSet
+        else IntSet (trie')
+
+    /// Removes the elements of the specified IntSet from this IntSet.
+    member this.Difference (otherSet : IntSet) : IntSet =
+        // If the result is the same (physical equality) to one of the inputs,
+        // return that input instead of creating a new IntSet.
+        let trie' = PatriciaSet.Difference (trie, otherSet.Trie)
+        if trie === trie' then this
+        elif otherSet.Trie === trie' then otherSet
+        else IntSet (trie')
+
     /// Returns a new IntSet made from the given elements.
     static member OfSeq (source : seq<int>) : IntSet =
         // Preconditions
@@ -853,6 +998,24 @@ module IntSet =
         set1.Union set2
 
     //
+    [<CompiledName("Intersect")>]
+    let inline intersect (set1 : IntSet) (set2 : IntSet) : IntSet =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.Intersect set2
+
+    //
+    [<CompiledName("Difference")>]
+    let inline difference (set1 : IntSet) (set2 : IntSet) : IntSet =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.Difference set2
+
+    //
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntSet =
         // Preconditions are checked by the member.
@@ -1100,6 +1263,34 @@ module TagSet =
         checkNonNull "set2" set2
 
         set1.Union set2
+        |> retype
+
+    //
+    [<CompiledName("Intersect")>]
+    let inline intersect (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : TagSet<'Tag> =
+        // Retype as IntSet
+        let set1 : IntSet = retype set1
+        let set2 : IntSet = retype set2
+
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.Intersect set2
+        |> retype
+
+    //
+    [<CompiledName("Difference")>]
+    let inline difference (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : TagSet<'Tag> =
+        // Retype as IntSet
+        let set1 : IntSet = retype set1
+        let set2 : IntSet = retype set2
+
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.Difference set2
         |> retype
 
     //
