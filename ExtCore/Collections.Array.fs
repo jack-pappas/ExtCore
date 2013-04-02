@@ -65,7 +65,8 @@ let projectValues (projection : 'Key -> 'U) (array : 'Key[]) =
 
     array |> Array.map (fun x -> x, projection x)
 
-//
+/// Applies a function to each element of the array, returning a new array whose elements are
+/// tuples of the original element and the function result for that element.
 [<CompiledName("ProjectKeys")>]
 let projectKeys (projection : 'T -> 'Key) (array : 'T[]) =
     // Preconditions
@@ -104,6 +105,100 @@ let contains value (array : 'T[]) : bool =
         array,
         System.Predicate ((=) value)) <> -1
 
+/// Expands an array by creating a copy of it which has
+/// the specified number of empty elements appended to it.
+[<CompiledName("ExpandRight")>]
+let expandRight count (array : 'T[]) : 'T[] =
+    // Preconditions
+    checkNonNull "array" array
+    if count < 0 then
+        invalidArg "count" "The number of elements to expand the array by is negative."
+
+    // Create the new "expanded" array. Copy the elements from the original array
+    // into the "left" side of the new array, then return the expanded array.
+    let expandedArr = Array.zeroCreate (array.Length + count)        
+    Array.blit array 0 expandedArr 0 array.Length
+    expandedArr
+
+/// Expands an array by creating a copy of it which has
+/// the specified number of empty elements prepended to it.
+[<CompiledName("ExpandLeft")>]
+let expandLeft count (array : 'T[]) : 'T[] =
+    // Preconditions
+    checkNonNull "array" array
+    if count < 0 then
+        invalidArg "count" "The number of elements to expand the array by is negative."
+
+    // Create the new "expanded" array. Copy the elements from the original array
+    // into the "right" side of the new array, then return the expanded array.
+    let expandedArr = Array.zeroCreate (array.Length + count)
+    Array.blit array 0 expandedArr count array.Length
+    expandedArr
+
+/// <summary>
+/// Returns a new collection containing the indices of the elements for which
+/// the given predicate returns &quot;true&quot;.
+/// </summary>
+[<CompiledName("FindIndices")>]
+let findIndices (predicate : 'T -> bool) array : int[] =
+    // Preconditions
+    checkNonNull "array" array
+
+    let indices = ResizeArray ()
+    array |> Array.iteri (fun idx el ->
+        if predicate el then indices.Add idx)
+    indices.ToArray ()
+
+/// <summary>
+/// Applies the given function to each element of the array.
+/// Returns the array comprised of the results <c>x</c> for each element where the function
+/// returns <c>Some(x)</c>. The integer index passed to the function indicates the index
+/// of the element being transformed.
+/// </summary>
+[<CompiledName("ChooseIndexed")>]
+let choosei (chooser : int -> 'T -> 'U option) array : 'U[] =
+    // Preconditions
+    checkNonNull "array" array
+
+    let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+    let chosen = ResizeArray ()
+    let len = Array.length array
+
+    for i = 0 to len - 1 do
+        match chooser.Invoke (i, array.[i]) with
+        | None -> ()
+        | Some value ->
+            chosen.Add value
+
+    chosen.ToArray ()
+
+/// <summary>
+/// Applies the given function pairwise to the two arrays.
+/// Returns the array comprised of the results <c>x</c> for each element where the function
+/// returns <c>Some(x)</c>.
+/// </summary>
+[<CompiledName("Choose2")>]
+let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
+    // Preconditions
+    checkNonNull "array1" array1
+    checkNonNull "array2" array2
+    if Array.length array1 <> Array.length array2 then
+        invalidArg "array2" "The arrays have different lengths."
+
+    let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+    let chosen = ResizeArray ()
+    let len = Array.length array1
+
+    for i = 0 to len - 1 do
+        match chooser.Invoke (array1.[i], array2.[i]) with
+        | None -> ()
+        | Some value ->
+            chosen.Add value
+
+    chosen.ToArray ()
+
 /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
 /// The integer index passed to the function indicates the array index of the element being transformed.
 [<CompiledName("FoldIndexed")>]
@@ -118,7 +213,8 @@ let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (array : 'T[
         state <- folder.Invoke (state, i, array.[i])
     state
 
-//
+/// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+/// The integer index passed to the function indicates the array index of the element being transformed.
 [<CompiledName("FoldBackIndexed")>]
 let foldiBack (folder : int -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
     // Preconditions
@@ -237,42 +333,14 @@ let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[])
 
     segments1.ToArray(), segments2.ToArray()
 
-/// Expands an array by creating a copy of it which has
-/// the specified number of empty elements appended to it.
-[<CompiledName("ExpandRight")>]
-let expandRight count (array : 'T[]) =
-    // Preconditions
-    checkNonNull "array" array
-    if count < 0 then
-        invalidArg "count" "The number of elements to expand the array by is negative."
-
-    // Create the new "expanded" array. Copy the elements from the original array
-    // into the "left" side of the new array, then return the expanded array.
-    let expandedArr = Array.zeroCreate (array.Length + count)        
-    Array.blit array 0 expandedArr 0 array.Length
-    expandedArr
-
-/// Expands an array by creating a copy of it which has
-/// the specified number of empty elements prepended to it.
-[<CompiledName("ExpandLeft")>]
-let expandLeft count (array : 'T[]) =
-    // Preconditions
-    checkNonNull "array" array
-    if count < 0 then
-        invalidArg "count" "The number of elements to expand the array by is negative."
-
-    // Create the new "expanded" array. Copy the elements from the original array
-    // into the "right" side of the new array, then return the expanded array.
-    let expandedArr = Array.zeroCreate (array.Length + count)
-    Array.blit array 0 expandedArr count array.Length
-    expandedArr
-
-//
+/// Splits the collection into two (2) collections, containing the elements for which the given
+/// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
+/// Array.partition, but it allows the returned collections to have different types.
 [<CompiledName("MapPartition")>]
 let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
     // Preconditions
     checkNonNull "array" array
-
+    
     // OPTIMIZATION : If the input array is empty, immediately return empty results.
     if Array.isEmpty array then
         Array.empty, Array.empty
@@ -295,7 +363,9 @@ let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
         resultList1.ToArray (),
         resultList2.ToArray ()
 
-//
+/// Splits the collection into two (3) collections, containing the elements for which the given
+/// function returns Choice1Of3, Choice2Of3, or Choice3Of3, respectively. This function is similar
+/// to Array.partition, but it allows the returned collections to have different types.
 [<CompiledName("MapPartition")>]
 let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U2[] * 'U3[] =
     // Preconditions
@@ -327,10 +397,12 @@ let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U
         resultList2.ToArray (),
         resultList3.ToArray ()
 
-//
+/// Applies a mapping function to each element of the array, then repeatedly applies
+/// a reduction function to each pair of results until one (1) result value remains.
 [<CompiledName("MapReduce")>]
 let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
     // Preconditions
+    checkNonNull "mapReduction" mapReduction
     checkNonNull "array" array
     if Array.isEmpty array then
         invalidArg "array" "The array is empty."
@@ -348,55 +420,3 @@ let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
 
     // Return the final state.
     state
-
-//
-[<CompiledName("FindIndices")>]
-let findIndices (predicate : 'T -> bool) array =
-    // Preconditions
-    checkNonNull "array" array
-
-    let indices = ResizeArray ()
-    array |> Array.iteri (fun idx el ->
-        if predicate el then indices.Add idx)
-    indices.ToArray ()
-
-//
-[<CompiledName("ChooseIndexed")>]
-let choosei (chooser : int -> 'T -> 'U option) array =
-    // Preconditions
-    checkNonNull "array" array
-
-    let chooser = FSharpFunc<_,_,_>.Adapt chooser
-
-    let chosen = ResizeArray ()
-    let len = Array.length array
-
-    for i = 0 to len - 1 do
-        match chooser.Invoke (i, array.[i]) with
-        | None -> ()
-        | Some value ->
-            chosen.Add value
-
-    chosen.ToArray ()
-
-//
-[<CompiledName("Choose2")>]
-let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
-    // Preconditions
-    checkNonNull "array1" array1
-    checkNonNull "array2" array2
-    if Array.length array1 <> Array.length array2 then
-        invalidArg "array2" "The arrays have different lengths."
-
-    let chooser = FSharpFunc<_,_,_>.Adapt chooser
-
-    let chosen = ResizeArray ()
-    let len = Array.length array1
-
-    for i = 0 to len - 1 do
-        match chooser.Invoke (array1.[i], array2.[i]) with
-        | None -> ()
-        | Some value ->
-            chosen.Add value
-
-    chosen.ToArray ()
