@@ -48,6 +48,14 @@ module internal BitOps =
         let inline branchingBit (p0, p1) : uint32 =
             leastSignificantSetBit (p0 ^^^ p1)
 
+        /// Clears the indicated bit and sets all lower bits.
+        let inline mask (prefix : uint32, mask : uint32) : uint32 =
+            prefix &&& (mask - 1u)
+
+        //
+        let inline matchPrefix (key : uint32, prefix : uint32, mask' : uint32) : bool =
+            mask (key, mask') = prefix
+
 
     /// Big-endian operations for Patricia tries.
     module BE =
@@ -70,6 +78,14 @@ module internal BitOps =
         let inline branchingBit (p0, p1) : uint32 =
             mostSignificantSetBit (p0 ^^^ p1)
 
+        /// Clears the indicated bit and sets all lower bits.
+        let inline mask (prefix : uint32, mask : uint32) : uint32 =
+            (prefix ||| (mask - 1u)) &&& ~~~mask
+
+        //
+        let inline matchPrefix (key : uint32, prefix : uint32, mask' : uint32) : bool =
+            mask (key, mask') = prefix
+
 
     /// <summary>Determines if all specified bits are cleared (not set) in a value.</summary>
     /// <param name="value">The value to test.</param>
@@ -77,14 +93,6 @@ module internal BitOps =
     /// <returns>true if all bits which are set in 'bitValue' are *not* set in 'value'.</returns>
     let inline zeroBit (p : uint32, m : uint32) : bool =
         p &&& m = 0u
-
-    /// Clears the indicated bit and sets all lower bits.
-    let inline mask (prefix : uint32, mask : uint32) : uint32 =
-        prefix &&& (mask - 1u)
-
-    //
-    let inline matchPrefix (key : uint32, prefix : uint32, mask' : uint32) : bool =
-        mask (key, mask') = prefix
 
 
 open PatriciaTrieConstants
