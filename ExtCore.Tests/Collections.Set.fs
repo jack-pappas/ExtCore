@@ -227,7 +227,7 @@ let xor () : unit =
     |> should equal Set.empty
 
     Set.xor (Set.ofArray [| 0..2..20 |]) (Set.ofArray [| 0..3..20 |])
-    |> should equal (Set.ofArray [| 0; 2; 3; 4; 8; 9; 10; 14; 15; 16; 20 |])
+    |> should equal (Set.ofArray [| 2; 3; 4; 8; 9; 10; 14; 15; 16; 20 |])
 
 [<TestCase>]
 let cartesian () : unit =

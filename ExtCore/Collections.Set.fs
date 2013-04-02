@@ -285,20 +285,12 @@ let xor (set1 : Set<'T>) (set2 : Set<'T>) : Set<'T> =
     elif Set.isEmpty set2 then
         set1
     else
-        // OPTIMIZE : Check to see which set is larger and take
-        // an optimized code path depending on the result.
-        // For now, we assume 'set1' is the larger of the two sets.
+        // OPTIMIZE : Re-implement this in a way which traverses both
+        // sets linearly to avoid using multiple slower operations.
 
-        // Remove the elements in set2 from set1.
-        let set1' = Set.difference set1 set2
-
-        // Remove the elements in set1 from set2.
-        // We use set1' instead of set1' because it is a subset of set1
-        // and having fewer elements makes this operation faster.
-        let set2' = Set.difference set2 set1'
-
-        // The XOR is the union of the two results.
-        Set.union set1' set2'
+        // Union the sets, then remove the common elements to compute the XOR.
+        Set.intersect set1 set2
+        |> Set.difference (Set.union set1 set2)
 
 /// The Cartesian product of two sets.
 [<CompiledName("Cartesian")>]
