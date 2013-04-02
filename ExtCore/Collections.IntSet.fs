@@ -35,69 +35,69 @@ module internal PatriciaTrieConstants =
     let [<Literal>] defaultTraversalStackSize = 32
 
 
+type internal Mask = uint32
+type internal Key = uint32
+type internal Prefix = uint32
+
 /// Bitwise operations necessary for implementing Patricia tries.
 module internal BitOps =
-    /// Little-endian operations for Patricia tries.
-    module LE =
-        //
-        let inline (*private*) leastSignificantSetBit (x : uint32) : uint32 =
-            x &&& (uint32 -(int x))
+    #if LITTLE_ENDIAN_TRIES
+    
+    //
+    let inline (*private*) leastSignificantSetBit (x : uint32) : uint32 =
+        x &&& (uint32 -(int x))
 
-        /// Finds the last (least-significant) bit at which p0 and p1 disagree.
-        /// Returns a power-of-two value containing this (and only this) bit.
-        let inline branchingBit (p0, p1) : uint32 =
-            leastSignificantSetBit (p0 ^^^ p1)
+    /// Finds the last (least-significant) bit at which p0 and p1 disagree.
+    /// Returns a power-of-two value containing this (and only this) bit.
+    let inline branchingBit (p0 : Prefix, p1 : Prefix) : Mask =
+        leastSignificantSetBit (p0 ^^^ p1)
 
-        /// Clears the indicated bit and sets all lower bits.
-        let inline mask (prefix : uint32, mask : uint32) : uint32 =
-            prefix &&& (mask - 1u)
+    /// Clears the indicated bit and sets all lower bits.
+    let inline mask (key : Key, mask : Mask) : Prefix =
+        key &&& (mask - 1u)
 
-        //
-        let inline matchPrefix (key : uint32, prefix : uint32, mask' : uint32) : bool =
-            mask (key, mask') = prefix
+    #else
+    
+    // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
+    // OPTIMIZE : This could be even faster if we could take advantage of a built-in
+    // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
+    // Could we expose these instructions through Mono?
+    let inline (*private*) mostSignificantSetBit (x1 : uint32) =
+        let x2 = x1 ||| (x1 >>> 1)
+        let x3 = x2 ||| (x2 >>> 2)
+        let x4 = x3 ||| (x3 >>> 4)
+        let x5 = x4 ||| (x4 >>> 8)
+        let x6 = x5 ||| (x5 >>> 16)
+        //x &&& ~~~(x >>> 1)
+        // OPTIMIZATION : p AND (NOT q) <-> p XOR q
+        x6 ^^^ (x6 >>> 1)
 
+    /// Finds the first (most-significant) bit at which p0 and p1 disagree.
+    /// Returns a power-of-two value containing this (and only this) bit.
+    let inline branchingBit (p0 : Prefix, p1 : Prefix) : Mask =
+        mostSignificantSetBit (p0 ^^^ p1)
 
-    /// Big-endian operations for Patricia tries.
-    module BE =
-        // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
-        // OPTIMIZE : This could be even faster if we could take advantage of a built-in
-        // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
-        // Could we expose these instructions through Mono?
-        let inline (*private*) mostSignificantSetBit (x : uint32) =
-            let x = x ||| (x >>> 1)
-            let x = x ||| (x >>> 2)
-            let x = x ||| (x >>> 4)
-            let x = x ||| (x >>> 8)
-            let x = x ||| (x >>> 16)
-            //x &&& ~~~(x >>> 1)
-            // OPTIMIZATION : p AND (NOT q) <-> p XOR q
-            x ^^^ (x >>> 1)
+    /// Clears the indicated bit and sets all lower bits.
+    let inline mask (key : Key, mask : Mask) : Prefix =
+        //(key ||| (mask - 1u)) &&& ~~~mask
+        key &&& (~~~(mask - 1u) ^^^ mask)
 
-        /// Finds the first (most-significant) bit at which p0 and p1 disagree.
-        /// Returns a power-of-two value containing this (and only this) bit.
-        let inline branchingBit (p0, p1) : uint32 =
-            mostSignificantSetBit (p0 ^^^ p1)
+    #endif
 
-        /// Clears the indicated bit and sets all lower bits.
-        let inline mask (prefix : uint32, mask : uint32) : uint32 =
-            (prefix ||| (mask - 1u)) &&& ~~~mask
-
-        //
-        let inline matchPrefix (key : uint32, prefix : uint32, mask' : uint32) : bool =
-            mask (key, mask') = prefix
-
+    //
+    let inline matchPrefix (key : Key, prefix : Prefix, mask' : Mask) : bool =
+        mask (key, mask') = prefix
 
     /// <summary>Determines if all specified bits are cleared (not set) in a value.</summary>
     /// <param name="value">The value to test.</param>
     /// <param name="bitValue">The bits to test in 'value'.</param>
     /// <returns>true if all bits which are set in 'bitValue' are *not* set in 'value'.</returns>
-    let inline zeroBit (p : uint32, m : uint32) : bool =
-        p &&& m = 0u
+    let inline zeroBit (key : Key, mask : Mask) : bool =
+        key &&& mask = 0u
 
 
 open PatriciaTrieConstants
 open BitOps
-open BitOps.LE
 
 
 /// A Patricia trie implementation.
@@ -220,12 +220,48 @@ type internal PatriciaSet =
     //
     static member Union (s, t) : PatriciaSet =
         match s, t with
-        | Empty, t
-        | t, Empty ->
-            t
-        | Lf k, t ->
-            PatriciaSet.Add (k, t)
-        | (Br (p, m, s0, s1) as s), Lf k ->
+        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+            if m = n then
+                if p = q then
+                    // The trees have the same prefix. Merge the subtrees.
+                    let left = PatriciaSet.Union (s0, t0)
+                    let right = PatriciaSet.Union (s1, t1)
+                    Br (p, m, left, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaSet.Join (p, s, q, t)
+            
+            #if LITTLE_ENDIAN_TRIES
+            elif m < n then
+            #else
+            elif m > n then
+            #endif
+                if matchPrefix (q, p, m) then
+                    // q contains p. Merge t with a subtree of s.
+                    if zeroBit (q, m) then
+                        let left = PatriciaSet.Union (s0, t)
+                        Br (p, m, left, s1)
+                    else
+                        let right = PatriciaSet.Union (s1, t)
+                        Br (p, m, s0, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaSet.Join (p, s, q, t)
+
+            else
+                if matchPrefix (p, q, n) then
+                    // p contains q. Merge s with a subtree of t.
+                    if zeroBit (p, n) then
+                        let left = PatriciaSet.Union (s, t0)
+                        Br (q, n, left, t1)
+                    else
+                        let right = PatriciaSet.Union (s, t1)
+                        Br (q, n, t0, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaSet.Join (p, s, q, t)
+
+        | (Br (p, m, s0, s1) as s), (Lf k as t) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
                     let left = PatriciaSet.Add (k, s0)
@@ -234,35 +270,14 @@ type internal PatriciaSet =
                     let right = PatriciaSet.Add (k, s1)
                     Br (p, m, s0, right)
             else
-                PatriciaSet.Join (k, Lf k, p, s)
+                PatriciaSet.Join (k, t, p, s)
 
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as r) ->
-            if m = n && p = q then
-                // The trees have the same prefix. Merge the subtrees.
-                let left = PatriciaSet.Union (s0, t0)
-                let right = PatriciaSet.Union (s1, t1)
-                Br (p, m, left, right)
-                
-            elif m < n && matchPrefix (q, p, m) then
-                // q contains p. Merge t with a subtree of s.
-                if zeroBit (q, m) then
-                    let left = PatriciaSet.Union (s0, t)
-                    Br (p, m, left, s1)
-                else
-                    let right = PatriciaSet.Union (s1, t)
-                    Br (p, m, s0, right)
-
-            elif m > n && matchPrefix (p, q, n) then
-                // p contains q. Merge s with a subtree of t.
-                if zeroBit (p, n) then
-                    let left = PatriciaSet.Union (s, t0)
-                    Br (q, n, left, t1)
-                else
-                    let right = PatriciaSet.Union (s, t1)
-                    Br (q, n, t0, right)
-            else
-                // The prefixes disagree.
-                PatriciaSet.Join (p, s, q, t)
+        | (Br (_,_,_,_) as s), Empty ->
+            s
+        | Lf k, t ->
+            PatriciaSet.Add (k, t)
+        | Empty, t ->
+            t
 
     /// Compute the intersection of two PatriciaMaps.
     /// If both maps contain a binding with the same key, the binding from
@@ -280,7 +295,12 @@ type internal PatriciaSet =
                     | t, Empty -> t
                     | left, right ->
                         Br (p, m, left, right)
+
+            #if LITTLE_ENDIAN_TRIES
             elif m < n then
+            #else
+            elif m > n then
+            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         PatriciaSet.Intersect (s0, t)
@@ -288,6 +308,7 @@ type internal PatriciaSet =
                         PatriciaSet.Intersect (s1, t)
                 else
                     Empty
+
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then
@@ -348,7 +369,12 @@ type internal PatriciaSet =
                     | t, Empty -> t
                     | left, right ->
                         Br (p, m, left, right)
+
+            #if LITTLE_ENDIAN_TRIES
             elif m < n then
+            #else
+            elif m > n then
+            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         match PatriciaSet.Difference (s0, t) with
@@ -361,6 +387,7 @@ type internal PatriciaSet =
                         | right ->
                             Br (p, m, s0, right)
                 else s
+
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then

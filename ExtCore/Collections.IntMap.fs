@@ -25,7 +25,6 @@ open OptimizedClosures
 open ExtCore
 open PatriciaTrieConstants
 open BitOps
-open BitOps.LE
 
 
 (* OPTIMIZE :   Some of the functional-style operations on IntMap use direct non-tail-recursion;
@@ -193,7 +192,21 @@ type internal PatriciaMap<'T> =
     static member Union (s, t) : PatriciaMap<'T> =
         match s, t with
         | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
-            if m < n then
+            if m = n then
+                if p = q then
+                    // The trees have the same prefix. Merge the subtrees.
+                    let left = PatriciaMap.Union (s0, t0)
+                    let right = PatriciaMap.Union (s1, t1)
+                    Br (p, m, left, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaMap.Join (p, s, q, t)
+
+            #if LITTLE_ENDIAN_TRIES
+            elif m < n then
+            #else
+            elif m > n then
+            #endif
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
@@ -206,7 +219,7 @@ type internal PatriciaMap<'T> =
                     // The prefixes disagree.
                     PatriciaMap.Join (p, s, q, t)
 
-            elif m > n then
+            else
                 if matchPrefix (p, q, n) then
                     // p contains q. Merge s with a subtree of t.
                     if zeroBit (p, n) then
@@ -218,15 +231,6 @@ type internal PatriciaMap<'T> =
                 else
                     // The prefixes disagree.
                     PatriciaMap.Join (p, s, q, t)
-
-            elif p = q then
-                // The trees have the same prefix. Merge the subtrees.
-                let left = PatriciaMap.Union (s0, t0)
-                let right = PatriciaMap.Union (s1, t1)
-                Br (p, m, left, right)
-            else
-                // The prefixes disagree.
-                PatriciaMap.Join (p, s, q, t)
 
         | (Br (p, m, s0, s1) as s), Lf (k, x) ->
             if matchPrefix (k, p, m) then
@@ -261,7 +265,12 @@ type internal PatriciaMap<'T> =
                     | t, Empty -> t
                     | left, right ->
                         Br (p, m, left, right)
+
+            #if LITTLE_ENDIAN_TRIES
             elif m < n then
+            #else
+            elif m > n then
+            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         PatriciaMap.Intersect (s0, t)
@@ -269,6 +278,7 @@ type internal PatriciaMap<'T> =
                         PatriciaMap.Intersect (s1, t)
                 else
                     Empty
+
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then
@@ -334,7 +344,12 @@ type internal PatriciaMap<'T> =
                     | t, Empty -> t
                     | left, right ->
                         Br (p, m, left, right)
+
+            #if LITTLE_ENDIAN_TRIES
             elif m < n then
+            #else
+            elif m > n then
+            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         match PatriciaMap.Difference (s0, t) with
@@ -347,6 +362,7 @@ type internal PatriciaMap<'T> =
                         | right ->
                             Br (p, m, s0, right)
                 else s
+
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then
