@@ -52,7 +52,6 @@
     <Compile Include="Collections.ResizeArray.fs" />
     <Compile Include="Collections.Dict.fs" />
     <Compile Include="Collections.Bimap.fs" />
-    <Compile Include="BitOps.fs" />
     <Compile Include="Collections.IntSet.fs" />
     <Compile Include="Collections.IntMap.fs" />
     <Compile Include="Collections.IntBimap.fs" />
