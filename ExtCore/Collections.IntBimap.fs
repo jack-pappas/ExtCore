@@ -27,12 +27,13 @@ open ExtCore
 
 
 /// <summary>A bi-directional IntMap.</summary>
+/// <typeparam name="Value">The type of the values.</typeparam>
 [<Sealed>]
 [<NoEquality; NoComparison>]
 [<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
-type IntBimap<'T when 'T : comparison>
-    private (left : IntMap<'T>, right : Map<'T, int>) =
+type IntBimap<'Value when 'Value : comparison>
+    private (left : IntMap<'Value>, right : Map<'Value, int>) =
     //
     static let empty = IntBimap (IntMap.Empty, Map.empty)
 
@@ -111,7 +112,7 @@ type IntBimap<'T when 'T : comparison>
         Map.tryFind key right
 
     //
-    static member Singleton (x, y) : IntBimap<'T> =
+    static member Singleton (x, y) : IntBimap<'Value> =
         IntBimap (
             IntMap.singleton x y,
             Map.singleton y x)
@@ -147,19 +148,19 @@ type IntBimap<'T when 'T : comparison>
             this
 
     //
-    member __.Iterate (action : int -> 'T -> unit) : unit =
+    member __.Iterate (action : int -> 'Value -> unit) : unit =
         IntMap.iter action left
 
     //
-    member __.Fold (folder : 'State -> int -> 'T -> 'State, state : 'State) : 'State =
+    member __.Fold (folder : 'State -> int -> 'Value -> 'State, state : 'State) : 'State =
         IntMap.fold folder state left
 
     //
-    member __.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
+    member __.FoldBack (folder : int -> 'Value -> 'State -> 'State, state : 'State) : 'State =
         IntMap.foldBack folder left state
 
     //
-    member this.Filter (predicate : int -> 'T -> bool) =
+    member this.Filter (predicate : int -> 'Value -> bool) =
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
         this.Fold ((fun (bimap : IntBimap<_>) x y ->
@@ -169,7 +170,7 @@ type IntBimap<'T when 'T : comparison>
                 bimap.Remove x), this)
 
     //
-    member this.Partition (predicate : int -> 'T -> bool) =
+    member this.Partition (predicate : int -> 'Value -> bool) =
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
         // Partition efficiently by removing elements from the original map
@@ -209,7 +210,7 @@ type IntBimap<'T when 'T : comparison>
         ResizeArray.toArray elements
 
     //
-    member internal this.LeftKvpArray () : KeyValuePair<int, 'T>[] =
+    member internal this.LeftKvpArray () : KeyValuePair<int, 'Value>[] =
         let elements = ResizeArray (1024)
 
         this.Iterate <| fun x y ->
@@ -219,7 +220,7 @@ type IntBimap<'T when 'T : comparison>
         elements.ToArray ()
 
     //
-    member internal this.RightKvpArray () : KeyValuePair<'T, int>[] =
+    member internal this.RightKvpArray () : KeyValuePair<'Value, int>[] =
         let elements = ResizeArray (1024)
 
         this.Iterate <| fun x y ->
@@ -230,16 +231,16 @@ type IntBimap<'T when 'T : comparison>
 
 //
 and [<Sealed>]
-    internal IntBimapDebuggerProxy<'T when 'T : comparison> (bimap : IntBimap<'T>) =
+    internal IntBimapDebuggerProxy<'Value when 'Value : comparison> (bimap : IntBimap<'Value>) =
 
     [<DebuggerBrowsable(DebuggerBrowsableState.Collapsed)>]
     member __.Left
-        with get () : KeyValuePair<int, 'T>[] =
+        with get () : KeyValuePair<int, 'Value>[] =
             bimap.LeftKvpArray ()
 
     [<DebuggerBrowsable(DebuggerBrowsableState.Collapsed)>]
     member __.Right
-        with get () : KeyValuePair<'T, int>[] =
+        with get () : KeyValuePair<'Value, int>[] =
             bimap.RightKvpArray ()
 
 
@@ -440,10 +441,10 @@ module IntBimap =
 #if PROTO_COMPILER
 
 /// <summary>A bi-directional TagMap.</summary>
-/// <typeparam name="Tag">The tag (measure) type for the first set of values.</typeparam>
-/// <typeparam name="T">The type of the second set of values.</typeparam>
+/// <typeparam name="Tag">The tag (measure) type of the keys.</typeparam>
+/// <typeparam name="Value">The type of the values.</typeparam>
 [<MeasureAnnotatedAbbreviation>]
-type TagBimap< [<Measure>] 'Tag, 'T when 'T : comparison > = IntBimap<'T>
+type TagBimap< [<Measure>] 'Tag, 'Value when 'Value : comparison > = IntBimap<'Value>
 
 /// Functional programming operators related to the TagBimap<_,_> type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
