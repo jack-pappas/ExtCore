@@ -33,7 +33,9 @@ let ofArrayView (view : ArrayView<'T>) : Set<'T> =
     ||> ArrayView.fold (fun set el ->
         Set.add el set)
 
-//
+/// Applies a function to each element of the set, threading an accumulator argument
+/// through the computation. The integer index passed to the function indicates the
+/// index of the element within the set.
 [<CompiledName("FoldIndexed")>]
 let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (set : Set<'T>) : 'State =
     // Preconditions
@@ -47,7 +49,7 @@ let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (set : Set<'
         idx <- idx + 1
     state
 
-//
+/// Applies a function to each element of the set, returning the results in an array.
 [<CompiledName("MapToArray")>]
 let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) : 'U[] =
     // Preconditions
@@ -154,7 +156,11 @@ let reduceBack (reduction : 'T -> 'T -> 'T) (set : Set<'T>) : 'T =
     let maxElement, set = extractMax set
     Set.foldBack reduction set maxElement
 
-//
+/// <summary>
+/// Applies the given function to each element of the set.
+/// Returns the set comprised of the results <c>x</c> for each element where the
+/// function returns <c>Some(x)</c>.
+/// </summary>
 [<CompiledName("Choose")>]
 let choose (chooser : 'T -> 'U option) (set : Set<'T>) : Set<'U> =
     // Preconditions
@@ -172,7 +178,9 @@ let choose (chooser : 'T -> 'U option) (set : Set<'T>) : Set<'U> =
             | Some result ->
                 Set.add result chosen)
 
-//
+/// Applies the given function to each element of the set, returning the first result
+/// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
+/// then None is returned.
 [<CompiledName("TryPick")>]
 let tryPick (picker : 'T -> 'U option) (set : Set<'T>) : 'U option =
     // Preconditions
@@ -186,7 +194,9 @@ let tryPick (picker : 'T -> 'U option) (set : Set<'T>) : 'U option =
         Set.toSeq set
         |> Seq.tryPick picker
 
-//
+/// Applies the given function to each element of the set, returning the first result
+/// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
+/// then a KeyNotFoundException is raised.
 [<CompiledName("Pick")>]
 let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
     // Preconditions
@@ -202,7 +212,8 @@ let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
-//
+/// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
+/// Returns None if no such element exists.
 [<CompiledName("TryFind")>]
 let tryFind (predicate : 'T -> bool) (set : Set<'T>) : 'T option =
     // Preconditions
@@ -216,7 +227,8 @@ let tryFind (predicate : 'T -> bool) (set : Set<'T>) : 'T option =
         Set.toSeq set
         |> Seq.tryFind predicate
 
-//
+/// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
+/// Raise KeyNotFoundException if no such element exists.
 [<CompiledName("Find")>]
 let find (predicate : 'T -> bool) (set : Set<'T>) : 'T =
     // Preconditions
@@ -232,7 +244,9 @@ let find (predicate : 'T -> bool) (set : Set<'T>) : 'T =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
-//
+/// Splits the collection into two (2) collections, containing the elements for which the given
+/// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
+/// Set.partition, but it allows the returned collections to have different types.
 [<CompiledName("MapPartition")>]
 let mapPartition (partitioner : 'T -> Choice<'U, 'V>) set : Set<'U> * Set<'V> =
     // Preconditions
@@ -358,11 +372,11 @@ let disjoint (set1 : Set<'T>) set2 : bool =
 
 
 /// Functions operating over the Cartesian product of two sets.
-/// These functions can offer a large memory savings since they avoid
-/// creating the product set.
+/// These functions can offer a large memory savings since they avoid creating the product set.
 [<RequireQualifiedAccess>]
 module Cartesian =
-    //
+    /// Applies a function to each element in the Cartesian product of two sets,
+    /// threading an accumulator argument through the computation.
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> 'T -> 'U -> 'State) state set1 set2 : 'State =
         // Preconditions
@@ -377,7 +391,8 @@ module Cartesian =
             ||> Set.fold (fun state y ->
                 folder.Invoke (state, x, y)))
 
-    //
+    /// Applies a function to each element in the Cartesian product of two sets,
+    /// threading an accumulator argument through the computation.
     [<CompiledName("FoldBack")>]
     let foldBack (folder : 'T -> 'U -> 'State -> 'State) set1 set2 state : 'State =
         // Preconditions
@@ -392,7 +407,7 @@ module Cartesian =
             ||> Set.foldBack (fun y state ->
                 folder.Invoke (x, y, state)))
 
-    //
+    /// Applies the given function to each element in the Cartesian product of two sets.
     [<CompiledName("Iter")>]
     let iter (action : 'T -> 'U -> unit) set1 set2 : unit =
         // Preconditions
@@ -407,7 +422,8 @@ module Cartesian =
             |> Set.iter (fun y ->
                 action.Invoke (x, y)))
 
-    //
+    /// Builds a new collection whose elements are the results of applying the given function
+    /// to the elements in the Cartesian product of two sets.
     [<CompiledName("Map")>]
     let map (mapping : 'T1 -> 'T2 -> 'U) set1 set2 : Set<'U> =
         // Preconditions
@@ -423,7 +439,11 @@ module Cartesian =
                 let mapped = mapping.Invoke (x, y)
                 Set.add mapped mappedSet))
 
-    //
+    /// <summary>
+    /// Applies the given function to each element in the Cartesian product of two sets. 
+    /// Returns the set comprised of the results <c>x</c> for each element where the
+    /// function returns <c>Some(x)</c>.
+    /// </summary>
     [<CompiledName("Choose")>]
     let choose (chooser : 'T1 -> 'T2 -> 'U option) set1 set2 : Set<'U> =
         // Preconditions
