@@ -31,22 +31,22 @@ open ExtCore
 
 /// Return the length of the collection.
 [<CompiledName("Length")>]
-let inline length (resizeArray : ResizeArray<'T>) =
+let inline length (resizeArray : ResizeArray<'T>) : int =
     resizeArray.Count
 
 /// Return true if the given array is empty, otherwise false.
 [<CompiledName("IsEmpty")>]
-let inline isEmpty (resizeArray : ResizeArray<'T>) =
+let inline isEmpty (resizeArray : ResizeArray<'T>) : bool =
     resizeArray.Count = 0
 
 /// Fetch an element from the collection.
 [<CompiledName("Get")>]
-let inline get (resizeArray : ResizeArray<'T>) index =
+let inline get (resizeArray : ResizeArray<'T>) index : 'T =
     resizeArray.[index]
 
 /// Set the value of an element in the collection.
 [<CompiledName("Set")>]
-let inline set (resizeArray : ResizeArray<'T>) index value =
+let inline set (resizeArray : ResizeArray<'T>) index value : unit =
     resizeArray.[index] <- value
 
 /// Create a ResizeArray whose elements are all initially the given value.
@@ -73,14 +73,14 @@ let init count initializer : ResizeArray<'T> =
         resizeArray.Add <| initializer count
     resizeArray
 
-//
+/// Adds an object to the end of the ResizeArray.
 [<CompiledName("Add")>]
-let inline add item (resizeArray : ResizeArray<'T>) =
+let inline add item (resizeArray : ResizeArray<'T>) : unit =
     resizeArray.Add item
 
-//
+/// Determines whether an element is in the ResizeArray.
 [<CompiledName("Contains")>]
-let inline contains (value : 'T) (resizeArray : ResizeArray<'T>) =
+let inline contains (value : 'T) (resizeArray : ResizeArray<'T>) : bool =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -131,12 +131,13 @@ let inline ofArray (arr : 'T[]) : ResizeArray<'T> =
 
 /// Return a fixed-length array containing the elements of the input ResizeArray.
 [<CompiledName("ToArray")>]
-let inline toArray (resizeArray : ResizeArray<'T>) =
+let inline toArray (resizeArray : ResizeArray<'T>) : 'T[] =
     resizeArray.ToArray ()
 
-//
+/// Sorts the elements of the ResizeArray by mutating the ResizeArray in-place.
+/// Elements are compared using Operators.compare.
 [<CompiledName("SortInPlace")>]
-let inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) =
+let inline sortInPlace<'T when 'T : comparison> (resizeArray : ResizeArray<'T>) : unit =
     resizeArray.Sort ()
         
 /// Sort the elements using the key extractor and generic comparison on the keys.
@@ -148,7 +149,7 @@ let inline sortInPlaceBy<'T, 'Key when 'Key : comparison>
 
 /// Sort the elements using the given comparison function.
 [<CompiledName("SortInPlaceWith")>]
-let inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) =
+let inline sortInPlaceWith (comparer : 'T -> 'T -> int) (resizeArray : ResizeArray<'T>) : unit =
     resizeArray.Sort (comparer)
 
 /// Build a new ResizeArray that contains the elements of the given ResizeArray.
@@ -482,8 +483,9 @@ let findIndexi predicate (resizeArray : ResizeArray<'T>) : int =
         keyNotFound "An element satisfying the predicate was not found in the collection."
 
 /// <summary>
-/// Apply the given function to successive elements, returning the first
-/// result where function returns <c>Some(x)</c> for some x.
+/// Applies the given function to successive elements, returning the first
+/// result where function returns <c>Some(x)</c> for some x. If the function
+/// never returns <c>Some(x)</c>, returns <c>None</c>.
 /// </summary>
 [<CompiledName("TryPick")>]
 let tryPick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U option =
@@ -499,7 +501,11 @@ let tryPick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U opti
         index <- index + 1
     result
 
-//
+/// <summary>
+/// Applies the given function to successive elements, returning the first
+/// result where function returns <c>Some(x)</c> for some x. If the function
+/// never returns <c>Some(x)</c>, raises KeyNotFoundException.
+/// </summary>
 [<CompiledName("Pick")>]
 let pick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U =
     // Preconditions
@@ -523,7 +529,7 @@ let pick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U =
 
 /// Apply the given function to each element of the array.
 [<CompiledName("Iter")>]
-let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) =
+let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) : unit =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -534,7 +540,7 @@ let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) =
 /// Apply the given function to each element of the array. The integer passed to the
 /// function indicates the index of element.
 [<CompiledName("IterIndexed")>]
-let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) =
+let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) : unit =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -586,7 +592,7 @@ let iteri2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<
 /// Build a new array whose elements are the results of applying the given function
 /// to each of the elements of the array.
 [<CompiledName("Map")>]
-let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) =
+let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArray<'U> =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -596,7 +602,7 @@ let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) =
 /// to each of the elements of the array. The integer index passed to the
 /// function indicates the index of element being transformed.
 [<CompiledName("MapIndexed")>]
-let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) =
+let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArray<'U> =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -660,7 +666,7 @@ let mapi2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<
 /// then computes <c>f (... (f s i0)...) iN</c>.
 /// </summary>
 [<CompiledName("Fold")>]
-let fold (folder : 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) =
+let fold (folder : 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) : 'State =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -696,9 +702,11 @@ let foldSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex e
         state <- folder.Invoke (state, resizeArray.[i])
     state
 
-//
+/// Applies a function to each element of the collection, threading an accumulator argument
+/// through the computation. The integer index passed to the function indicates the
+/// index of the element within the collection.
 [<CompiledName("FoldIndexed")>]
-let foldi (folder : int -> 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) =
+let foldi (folder : 'State -> int -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) : 'State =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -707,7 +715,7 @@ let foldi (folder : int -> 'State -> 'T -> 'State) state (resizeArray : ResizeAr
     let mutable state = state
     let count = resizeArray.Count
     for i = 0 to count - 1 do
-        state <- folder.Invoke (i, state, resizeArray.[i])
+        state <- folder.Invoke (state, i, resizeArray.[i])
     state
 
 /// <summary>
@@ -738,7 +746,7 @@ let fold2 folder (state : 'State)
 /// <c>i0...iN</c> then computes <c>f i0 (...(f iN s))</c>.
 /// </summary>
 [<CompiledName("FoldBack")>]
-let foldBack (folder : 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state =
+let foldBack (folder : 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state : 'State =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -775,7 +783,7 @@ let foldBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (stat
 
 //
 [<CompiledName("FoldBackIndexed")>]
-let foldiBack (folder : int -> 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state =
+let foldiBack (folder : int -> 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state : 'State =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
@@ -951,7 +959,9 @@ let partition predicate (resizeArray : ResizeArray<'T>) : ResizeArray<'T> * Resi
 
     trueResults, falseResults
 
-//
+/// Splits the collection into two (2) collections, containing the elements for which the given
+/// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
+/// ResizeArray.partition, but it allows the returned collections to have different types.
 [<CompiledName("MapPartition")>]
 let mapPartition partitioner (resizeArray : ResizeArray<'T>) : ResizeArray<'U1> * ResizeArray<'U2> =
     // Preconditions
