@@ -25,8 +25,9 @@ namespace ExtCore
 module AdditionalOperators =
     (* Type abbreviations *)
 
-    /// Type abbreviation for System.NotImplementedException.
-    type notImplExn = System.NotImplementedException
+    /// <summary>Immutable array type with constant-time access to elements.</summary>
+    /// <remarks>Type abbreviation for System.Collections.ObjectModel.ReadOnlyCollection&lt;T&gt;.</remarks>
+    type Vector<'T> = System.Collections.ObjectModel.ReadOnlyCollection<'T>
 
     /// Type abbreviation for System.Collections.Generic.Queue.
     type ResizeQueue<'T> = System.Collections.Generic.Queue<'T>

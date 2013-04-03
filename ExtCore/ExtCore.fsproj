@@ -74,6 +74,7 @@
     <Compile Include="Collections.fs" />
     <Compile Include="Collections.Seq.fs" />
     <Compile Include="Collections.List.fs" />
+    <Compile Include="Collections.Vector.fs" />
     <Compile Include="Collections.Array.fs" />
     <Compile Include="Collections.TaggedArray.fs" />
     <Compile Include="Collections.ArrayView.fs" />

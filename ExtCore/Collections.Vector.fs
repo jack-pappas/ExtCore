@@ -17,43 +17,38 @@ limitations under the License.
 
 *)
 
-/// Additional functional operators on arrays.
+/// Additional functional operators on vectors (immutable arrays).
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ExtCore.Collections.Array
+module ExtCore.Collections.Vector
 
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
 
 
-#if PROTO_COMPILER
-// TODO : Re-implement this using inline IL; it should simply provide a way
-// to emit an 'ldlen' instruction given an array.
-/// Returns the length of the array as an unsigned integer.
-[<CompiledName("RawLength")>]
-let inline rawLength (arr : 'T[]) : unativeint =
-    unativeint arr.Length
-#endif
-
 /// Given an element, creates an array containing just that element.
 [<CompiledName("Singleton")>]
-let inline singleton (value : 'T) =
-    [| value |]
+let inline singleton (value : 'T) : Vector<'T> =
+    Vector [| value |]
 
-/// Builds an array that contains the elements of the set in order.
+/// Builds a vector that contains the elements of the set in order.
 [<CompiledName("OfSet")>]
-let inline ofSet (set : Set<'T>) : 'T[] =
-    Set.toArray set
+let inline ofSet (set : Set<'T>) : Vector<'T> =
+    Vector (Set.toArray set)
 
-/// Builds a set that contains the same elements as the given array.
+/// Builds a set that contains the same elements as the given vector.
 [<CompiledName("ToSet")>]
-let inline toSet (array : 'T[]) : Set<'T> =
-    Set.ofArray array
+let toSet (vector : Vector<'T>) : Set<'T> =
+    // Preconditions
+    checkNonNull "vector" vector
 
-/// Builds a vector from the given array.
-[<CompiledName("Readonly")>]
-let inline toVector (arr : 'T[]) : Vector<'T> =
-    System.Array.AsReadOnly arr
+    notImpl "Vector.toSet"
+    //Set.ofArray array
+
+//
+[<CompiledName("OfArray")>]
+let inline ofArray (array : 'T[]) : Vector<'T> =
+    System.Array.AsReadOnly array
 
 /// Applies a function to each element of the array, returning a new array whose elements are
 /// tuples of the original element and the function result for that element.
