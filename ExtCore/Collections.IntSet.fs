@@ -810,14 +810,18 @@ type IntSet private (trie : PatriciaSet) =
             IntSet (PatriciaSet.OfSet source)
 
     //
-    member __.ToArray () : int[] =
-        let elements = ResizeArray ()
-        PatriciaSet.Iterate (elements.Add, trie)
-        elements.ToArray ()
+    member __.ToSeq () =
+        PatriciaSet.ToSeq trie
 
     //
     member __.ToList () : int list =
         PatriciaSet.FoldBack ((fun el list -> el :: list), [], trie)
+
+    //
+    member __.ToArray () : int[] =
+        let elements = ResizeArray ()
+        PatriciaSet.Iterate (elements.Add, trie)
+        elements.ToArray ()
 
     //
     member __.ToSet () : Set<int> =
@@ -849,6 +853,8 @@ type IntSet private (trie : PatriciaSet) =
         | Some value ->
             value
         | None ->
+            // TODO : Provide a better error message
+            //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
     //
@@ -860,12 +866,8 @@ type IntSet private (trie : PatriciaSet) =
     //
     member this.Forall (predicate : int -> bool) : bool =
         this.TryPick (fun el ->
-            if predicate el then Some () else None)
+            if not (predicate el) then Some () else None)
         |> Option.isNone
-
-    //
-    member __.ToSeq () =
-        PatriciaSet.ToSeq trie
 
     //
     member this.Choose (chooser : int -> int option) : IntSet =
