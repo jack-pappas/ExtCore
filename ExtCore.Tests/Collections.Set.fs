@@ -222,11 +222,11 @@ let mapPartition () : unit =
     |> should equal (Set.ofArray [| "red"; "green" |])
 
 [<TestCase>]
-let xor () : unit =
-    Set.xor Set.empty Set.empty
+let symmetricDifference () : unit =
+    Set.symmetricDifference Set.empty Set.empty
     |> should equal Set.empty
 
-    Set.xor (Set.ofArray [| 0..2..20 |]) (Set.ofArray [| 0..3..20 |])
+    Set.symmetricDifference (Set.ofArray [| 0..2..20 |]) (Set.ofArray [| 0..3..20 |])
     |> should equal (Set.ofArray [| 2; 3; 4; 8; 9; 10; 14; 15; 16; 20 |])
 
 [<TestCase>]

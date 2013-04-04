@@ -268,13 +268,16 @@ let mapPartition (partitioner : 'T -> Choice<'U, 'V>) set : Set<'U> * Set<'V> =
 
         resultSet1, resultSet2
 
-/// <summary>Computes the exclusive disjunction ("exclusive-or") of two sets.</summary>
+/// <summary>Computes the symmetric difference of two sets; that is, the set of elements
+/// which are in either of the sets and not in their intersection.</summary>
 /// <remarks>
-/// The exclusive disjunction ("exclusive-or") operation creates
-/// a new set whose elements belong to exactly one (1) of the input sets.
+/// The symmetric difference is similar to the XOR ("exclusive-or") operation, except that
+/// XOR returns 'true' when an element is not in both sets. This requires the "universe"
+/// (set of all possible domain elements) to be known. The symmetric difference operation
+/// does not have this requirement and so can be used when the universe is not known or infinite.
 /// </remarks>
-[<CompiledName("ExclusiveOr")>]
-let xor (set1 : Set<'T>) (set2 : Set<'T>) : Set<'T> =
+[<CompiledName("SymmetricDifference")>]
+let symmetricDifference (set1 : Set<'T>) (set2 : Set<'T>) : Set<'T> =
     // Preconditions
     checkNonNull "set1" set1
     checkNonNull "set2" set2
@@ -288,7 +291,7 @@ let xor (set1 : Set<'T>) (set2 : Set<'T>) : Set<'T> =
         // OPTIMIZE : Re-implement this in a way which traverses both
         // sets linearly to avoid using multiple slower operations.
 
-        // Union the sets, then remove the common elements to compute the XOR.
+        // Union the sets, then remove the common elements to compute the symmetric difference.
         Set.intersect set1 set2
         |> Set.difference (Set.union set1 set2)
 
