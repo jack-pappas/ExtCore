@@ -31,7 +31,8 @@ open ExtCore
 let inline appendSingleton (value : 'T) sequence =
     Seq.append sequence (Seq.singleton value)
 
-//
+/// Applies a function to each element of the sequence, returning a new sequence whose elements are
+/// tuples of the original element and the function result for that element.
 [<CompiledName("ProjectValues")>]
 let projectValues (mapping : 'Key -> 'T) (source : seq<'Key>) =
     // Preconditions
@@ -41,7 +42,8 @@ let projectValues (mapping : 'Key -> 'T) (source : seq<'Key>) =
     |> Seq.map (fun x ->
         x, mapping x)
 
-//
+/// Applies a function to each element of the sequence, returning a new sequence whose elements are
+/// tuples of the original element and the function result for that element.
 [<CompiledName("ProjectKeys")>]
 let projectKeys (mapping : 'T -> 'Key) (source : seq<'T>) =
     // Preconditions
