@@ -511,7 +511,7 @@ let pick () : unit =
     |> should equal 3
 
 [<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
-let ``Pick raises exn on empty input`` () : unit =
+let ``pick raises exn on empty input`` () : unit =
     IntSet.empty
     |> IntSet.pick (fun el ->
         if el % 3 = 2 then
