@@ -19,16 +19,161 @@ limitations under the License.
 
 namespace ExtCore
 
+//open System.Diagnostics.Contracts
 
-////
-//[<Struct>]
-//type Substring = struct end
+
+/// A substring.
+[<Struct>]
+type Substring =
+    //
+    val String : string
+    //
+    val Offset : int
+    //
+    val Length : int
+    
+    /// <summary>Create a new Substring value.</summary>
+    /// <param name="string"></param>
+    /// <param name="offset"></param>
+    /// <param name="length"></param>
+    new (str : string, offset : int, length : int) =
+        // Preconditions
+        checkNonNull "str" str
+        if offset < 0 then
+            argOutOfRange "offset" "The offset must be greater than or equal to zero."
+        
+        /// The length of the underlying string.
+        let strLen = String.length str
+
+        // More preconditions
+        if offset >= strLen then
+            argOutOfRange "offset" "The offset must be less than the length of the string."
+        elif length < 0 then
+            argOutOfRange "length" "The substring length must be greater than or equal to zero."
+        elif offset + length > strLen then
+            argOutOfRange "length" "The specified length is greater than the number of characters \
+                                    in the string from the given offset."
+
+        { String = str;
+          Offset = offset;
+          Length = length; }
+
+    /// Is this an empty substring?
+    member this.IsEmpty
+        with get () =
+            this.Length = 0
+
+    //
+    member this.Item
+        with get index =
+            // Preconditions
+            if index < 0 || index >= this.Length then
+                // TODO : Provide a better error message here.
+                raise <| System.IndexOutOfRangeException ()
+            
+            // Return the specified character from the underlying string.
+            this.String.[this.Offset + index]
+
+    /// <inherit />
+    override this.ToString () =
+        // OPTIMIZATION : Immediately return if this is an empty substring.
+        if this.Length = 0 then
+            System.String.Empty
+        else
+            this.String.Substring (this.Offset, this.Length)
+
+    /// Copies the characters in this substring into a Unicode character array.
+    member this.ToArray () : char[] =
+        this.String.ToCharArray (this.Offset, this.Length)
+
 //
-////
-//[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-//module Substring =
-//    //
-//    let dummy () = ()
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Substring =
+    open OptimizedClosures
+
+    //
+    [<CompiledName("IsEmpty")>]
+    let inline isEmpty (substring : Substring) : bool =
+        substring.IsEmpty
+
+    //
+    [<CompiledName("ToString")>]
+    let inline toString (substring : Substring) : string =
+        substring.ToString ()
+
+    //
+    [<CompiledName("ToArray")>]
+    let inline toArray (substring : Substring) : char[] =
+        substring.ToArray ()
+
+    //
+    [<CompiledName("Iter")>]
+    let iter action (substring : Substring) : unit =
+        let len = substring.Length
+        for i = 0 to len - 1 do
+            action substring.[i]
+
+    //
+    [<CompiledName("IterIndexed")>]
+    let iteri action (substring : Substring) : unit =
+        // OPTIMIZATION : Immediately return if the substring is empty.
+        let len = substring.Length
+        if len > 0 then
+            let action = FSharpFunc<_,_,_>.Adapt action
+
+            for i = 0 to len - 1 do
+                action.Invoke (i, substring.[i])
+
+    //
+    [<CompiledName("IterBack")>]
+    let iterBack action (substring : Substring) : unit =
+        let len = substring.Length
+        for i = len - 1 downto 0 do
+            action substring.[i]
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> char -> 'State) state (substring : Substring) : 'State =
+        // OPTIMIZATION : Immediately return if the substring is empty.
+        let len = substring.Length
+        if len = 0 then state
+        else
+            let folder = FSharpFunc<_,_,_>.Adapt folder
+            
+            let mutable state = state
+            for i = 0 to len - 1 do
+                state <- folder.Invoke (state, substring.[i])
+            state
+
+    //
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : 'State -> int -> char -> 'State) state (substring : Substring) : 'State =
+        // OPTIMIZATION : Immediately return if the substring is empty.
+        let len = substring.Length
+        if len = 0 then state
+        else
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            
+            let mutable state = state
+            for i = 0 to len - 1 do
+                state <- folder.Invoke (state, i, substring.[i])
+            state
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : char -> 'State -> 'State) (substring : Substring) state : 'State =
+        // OPTIMIZATION : Immediately return if the substring is empty.
+        let len = substring.Length
+        if len = 0 then state
+        else
+            let folder = FSharpFunc<_,_,_>.Adapt folder
+            
+            let mutable state = state
+            for i = len - 1 downto 0 do
+                state <- folder.Invoke (substring.[i], state)
+            state
+
+
 
 /// Additional functional operators on strings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
