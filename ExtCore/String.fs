@@ -86,36 +86,59 @@ type Substring =
     member this.ToArray () : char[] =
         this.String.ToCharArray (this.Offset, this.Length)
 
+/// Represents a segment of a string.
+type substring = Substring
+
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Substring =
     open OptimizedClosures
 
     //
+    [<CompiledName("String")>]
+    let inline string (substring : substring) : string =
+        substring.String
+
+    //
+    [<CompiledName("Offset")>]
+    let inline offset (substring : substring) : int =
+        substring.Offset
+
+    //
+    [<CompiledName("Length")>]
+    let inline length (substring : substring) : int =
+        substring.Length
+
+    //
+    [<CompiledName("Get")>]
+    let inline get (substring : substring) index =
+        substring.[index]
+
+    //
     [<CompiledName("IsEmpty")>]
-    let inline isEmpty (substring : Substring) : bool =
+    let inline isEmpty (substring : substring) : bool =
         substring.IsEmpty
 
     //
     [<CompiledName("ToString")>]
-    let inline toString (substring : Substring) : string =
+    let inline toString (substring : substring) : string =
         substring.ToString ()
 
     //
     [<CompiledName("ToArray")>]
-    let inline toArray (substring : Substring) : char[] =
+    let inline toArray (substring : substring) : char[] =
         substring.ToArray ()
 
     //
     [<CompiledName("Iter")>]
-    let iter action (substring : Substring) : unit =
+    let iter action (substring : substring) : unit =
         let len = substring.Length
         for i = 0 to len - 1 do
             action substring.[i]
 
     //
     [<CompiledName("IterIndexed")>]
-    let iteri action (substring : Substring) : unit =
+    let iteri action (substring : substring) : unit =
         // OPTIMIZATION : Immediately return if the substring is empty.
         let len = substring.Length
         if len > 0 then
@@ -126,14 +149,14 @@ module Substring =
 
     //
     [<CompiledName("IterBack")>]
-    let iterBack action (substring : Substring) : unit =
+    let iterBack action (substring : substring) : unit =
         let len = substring.Length
         for i = len - 1 downto 0 do
             action substring.[i]
 
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> char -> 'State) state (substring : Substring) : 'State =
+    let fold (folder : 'State -> char -> 'State) state (substring : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
         let len = substring.Length
         if len = 0 then state
@@ -147,7 +170,7 @@ module Substring =
 
     //
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : 'State -> int -> char -> 'State) state (substring : Substring) : 'State =
+    let foldi (folder : 'State -> int -> char -> 'State) state (substring : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
         let len = substring.Length
         if len = 0 then state
@@ -161,7 +184,7 @@ module Substring =
 
     //
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : char -> 'State -> 'State) (substring : Substring) state : 'State =
+    let foldBack (folder : char -> 'State -> 'State) (substring : substring) state : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
         let len = substring.Length
         if len = 0 then state
@@ -255,6 +278,11 @@ module String =
     [<CompiledName("OfArray")>]
     let inline ofArray (chars : char[]) =
         System.String (chars)
+
+    /// Gets a substring of a string.
+    [<CompiledName("Sub")>]
+    let inline sub (str : string) offset count : substring =
+        Substring (str, offset, count)
 
     /// Returns the index of the first occurrence of a specified character within a string.
     [<CompiledName("TryFindIndexOf")>]
@@ -628,7 +656,7 @@ module String =
             else
                 empty
 
-    (*
+    
     /// String-splitting functions.
     /// These work like String.Split but without creating the intermediate array.
     [<RequireQualifiedAccess>]
@@ -636,8 +664,21 @@ module String =
         // OPTIMIZE : The functions below could be modified to include an optimized case
         // for when the separator array contains just a single character.
 
+        (*
+        - String.Split.filter
+        - String.Split.choose
+          - These functions should work like .Split(...) |> Array.iter (or Array.fold, etc.),
+            except that they won't actually need to traverse the entire string first and split
+            it into an array of substrings. Instead, they'll improve performance by allowing us
+            to execute a function on each of the substrings in a single forward pass.
+          - Performance is improved with these functions because they'll be applied to Substring
+            values instead of creating the substrings as separate objects.
+          - This could be implemented by using the regular vector type / functions from fsharplex.
+        *)
+
         //
-        let iter (separator : char[]) (action : string -> unit) (str : string) : unit =
+        [<CompiledName("Iter")>]
+        let iter (separator : char[]) (action : substring -> unit) (str : string) : unit =
             // Preconditions
             checkNonNull "separator" separator
             checkNonNull "str" str
@@ -646,7 +687,8 @@ module String =
             notImpl "String.Split.iter"
 
         //
-        let iteri (separator : char[]) (action : int -> string -> unit) (str : string) : unit =
+        [<CompiledName("IterIndexed")>]
+        let iteri (separator : char[]) (action : int -> substring -> unit) (str : string) : unit =
             // Preconditions
             checkNonNull "separator" separator
             checkNonNull "str" str
@@ -659,7 +701,8 @@ module String =
             notImpl "String.Split.iteri"
 
         //
-        let fold (separator : char[]) (folder : 'State -> string -> 'State) (state : 'State) (str : string) : 'State =
+        [<CompiledName("Fold")>]
+        let fold (separator : char[]) (folder : 'State -> substring -> 'State) (state : 'State) (str : string) : 'State =
             // Preconditions
             checkNonNull "separator" separator
             checkNonNull "str" str
@@ -668,28 +711,19 @@ module String =
             notImpl "String.Split.fold"
 
         //
-        let foldi (separator : char[]) (folder : int -> 'State -> string -> 'State) (state : 'State) (str : string) : 'State =
+        [<CompiledName("FoldIndexed")>]
+        let foldi (separator : char[]) (folder : 'State -> int -> substring -> 'State) (state : 'State) (str : string) : 'State =
             // Preconditions
             checkNonNull "separator" separator
             checkNonNull "str" str
             // TODO : What if separator is empty?
 
             notImpl "String.Split.foldi"
-    *)
-    (*
-    - String.Split.filter
-    - String.Split.choose
-      - These functions should work like .Split(...) |> Array.iter (or Array.fold, etc.),
-        except that they won't actually need to traverse the entire string first and split
-        it into an array of substrings. Instead, they'll improve performance by allowing us
-        to execute a function on each of the substrings in a single forward pass.
-      - We might be able to further improve performance by not actually applying the given
-        function to the substrings themselves, but instead to some struct representing the
-        initial position and length of the substring; this may be enough information for some
-        functions (e.g., to filter out strings less than 10 characters), but then we'd easily
-        be able to create the substring from that information if necessary.
-            - Perhaps create some type that has a field containing a Lazy<string> which could
-              create the string value if the user wants it.
-      - This could be implemented by using the regular vector type / functions from fsharplex.
-    *)
+
+
+////
+//module StringOperators =
+//    //
+//    type System.String with
+//        // TODO : Re-implement the slice operator on strings so it returns a substring instead of a new string.
 
