@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>ExtCore</id>
-        <version>0.8.13</version>
+        <version>0.8.14</version>
         <dependencies>
         </dependencies>
         <title>Core library extensions for F#.</title>
