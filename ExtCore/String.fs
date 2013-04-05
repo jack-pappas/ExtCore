@@ -89,54 +89,74 @@ type Substring =
 /// Represents a segment of a string.
 type substring = Substring
 
-//
+/// Functional operators related to Substrings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Substring =
     open OptimizedClosures
 
-    //
+    /// Returns the string underlying the given substring.
     [<CompiledName("String")>]
     let inline string (substring : substring) : string =
         substring.String
 
-    //
+    /// The starting offset of the substring within it's underlying string.
     [<CompiledName("Offset")>]
     let inline offset (substring : substring) : int =
         substring.Offset
 
-    //
+    /// Returns the length of the substring.
     [<CompiledName("Length")>]
     let inline length (substring : substring) : int =
         substring.Length
 
-    //
+    /// Gets a character from the substring.
     [<CompiledName("Get")>]
     let inline get (substring : substring) index =
         substring.[index]
 
-    //
+    /// Is the substring empty?
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (substring : substring) : bool =
         substring.IsEmpty
 
-    //
+    /// Instantiates the substring as a string.
     [<CompiledName("ToString")>]
     let inline toString (substring : substring) : string =
         substring.ToString ()
 
-    //
+    /// Returns the characters in the given substring as a Unicode character array. 
     [<CompiledName("ToArray")>]
     let inline toArray (substring : substring) : char[] =
         substring.ToArray ()
 
-    //
+    /// Gets a substring of a substring.
+    [<CompiledName("Sub")>]
+    let sub (substring : substring) offset count : substring =
+        // Preconditions
+        if offset < 0 then
+            argOutOfRange "offset" "The offset cannot be negative."
+        elif count < 0 then
+            argOutOfRange "count" "The length of the substring cannot be negative."
+        elif offset >= substring.Length then
+            argOutOfRange "offset" "The offset must be less than the length of the input substring."
+        elif (offset + count) >= substring.Length then
+            argOutOfRange "count" "There are fewer than 'count' elements in the \
+                                   input substring when starting at the given offset."
+
+        // Create a new substring based on the input substring.
+        Substring (substring.String, substring.Offset + offset, count)
+
+    /// Applies the given function to each character in the substring,
+    /// in order from lowest to highest indices.
     [<CompiledName("Iter")>]
     let iter action (substring : substring) : unit =
         let len = substring.Length
         for i = 0 to len - 1 do
             action substring.[i]
 
-    //
+    /// Applies the given function to each character in the substring,
+    /// in order from lowest to highest indices.
+    /// The integer index applied to the function is the character's index within the substring.
     [<CompiledName("IterIndexed")>]
     let iteri action (substring : substring) : unit =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -147,14 +167,17 @@ module Substring =
             for i = 0 to len - 1 do
                 action.Invoke (i, substring.[i])
 
-    //
+    /// Applies the given function to each character in the substring,
+    /// in order from highest to lowest indices.
     [<CompiledName("IterBack")>]
     let iterBack action (substring : substring) : unit =
         let len = substring.Length
         for i = len - 1 downto 0 do
             action substring.[i]
 
-    //
+    /// Applies a function to each character of the substring, threading an accumulator
+    /// argument through the computation.
+    /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> char -> 'State) state (substring : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -168,7 +191,10 @@ module Substring =
                 state <- folder.Invoke (state, substring.[i])
             state
 
-    //
+    /// Applies a function to each character of the substring, threading an accumulator
+    /// argument through the computation.
+    /// The integer index applied to the function is the character's index within the substring.
+    /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
     [<CompiledName("FoldIndexed")>]
     let foldi (folder : 'State -> int -> char -> 'State) state (substring : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -182,7 +208,9 @@ module Substring =
                 state <- folder.Invoke (state, i, substring.[i])
             state
 
-    //
+    /// Applies a function to each character of the string, threading an accumulator
+    /// argument through the computation.
+    /// If the input function is f and the characters are c0...cN then computes f c0 (...(f cN s)).
     [<CompiledName("FoldBack")>]
     let foldBack (folder : char -> 'State -> 'State) (substring : substring) state : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -195,7 +223,6 @@ module Substring =
             for i = len - 1 downto 0 do
                 state <- folder.Invoke (substring.[i], state)
             state
-
 
 
 /// Additional functional operators on strings.
@@ -678,17 +705,30 @@ module String =
 
         //
         [<CompiledName("Iter")>]
-        let iter (separator : char[]) (action : substring -> unit) (str : string) : unit =
+        let iter (separator : char[], options : System.StringSplitOptions) (action : substring -> unit) (str : string) : unit =
             // Preconditions
-            checkNonNull "separator" separator
+            //checkNonNull "separator" separator
             checkNonNull "str" str
-            // TODO : What if separator is empty?
 
-            notImpl "String.Split.iter"
+            // The string-splitting functionality must be implemented specially for
+            // the case where the separator array is null or empty.
+            match separator with
+            | null
+            | [| |] ->
+                // System.Char.IsWhiteSpace
+                notImpl "String.Split.iter"
+            | separator ->
+                /// A sorted copy of the separator array. Used to quickly determine if
+                /// a given character is a separator.
+                let sortedSeperators = Array.sort separator
+
+                //System.Array.BinarySearch
+
+                notImpl "String.Split.iter"
 
         //
         [<CompiledName("IterIndexed")>]
-        let iteri (separator : char[]) (action : int -> substring -> unit) (str : string) : unit =
+        let iteri (separator : char[], options : System.StringSplitOptions) (action : int -> substring -> unit) (str : string) : unit =
             // Preconditions
             checkNonNull "separator" separator
             checkNonNull "str" str
@@ -702,7 +742,7 @@ module String =
 
         //
         [<CompiledName("Fold")>]
-        let fold (separator : char[]) (folder : 'State -> substring -> 'State) (state : 'State) (str : string) : 'State =
+        let fold (separator : char[], options : System.StringSplitOptions) (folder : 'State -> substring -> 'State) (state : 'State) (str : string) : 'State =
             // Preconditions
             checkNonNull "separator" separator
             checkNonNull "str" str
@@ -712,7 +752,7 @@ module String =
 
         //
         [<CompiledName("FoldIndexed")>]
-        let foldi (separator : char[]) (folder : 'State -> int -> substring -> 'State) (state : 'State) (str : string) : 'State =
+        let foldi (separator : char[], options : System.StringSplitOptions) (folder : 'State -> int -> substring -> 'State) (state : 'State) (str : string) : 'State =
             // Preconditions
             checkNonNull "separator" separator
             checkNonNull "str" str
@@ -721,9 +761,28 @@ module String =
             notImpl "String.Split.foldi"
 
 
-////
-//module StringOperators =
-//    //
-//    type System.String with
-//        // TODO : Re-implement the slice operator on strings so it returns a substring instead of a new string.
+//
+module StringOperators =
+    type System.String with
+        member this.GetSlice (startIndex, finishIndex) : substring =
+            let startIndex = defaultArg startIndex 0 
+            let finishIndex = defaultArg finishIndex this.Length
+            Substring (this, startIndex, finishIndex - startIndex + 1)
 
+    type System.Text.StringBuilder with
+        /// Appends a copy of the specified substring to this instance.
+        member this.Append (value : substring) : System.Text.StringBuilder =
+            // OPTIMIZATION : If the substring is null, return immediately.
+            let len = value.Length
+            if len = 0 then this
+            else
+                this.EnsureCapacity (this.Capacity + value.Length) |> ignore
+
+                for i = 0 to len - 1 do
+                    this.Append value.[i] |> ignore
+                this
+            
+        /// Appends a copy of the specified substring to this instance, appending a newline.
+        member this.AppendLine (value : substring) : System.Text.StringBuilder =
+            let this = this.Append value
+            this.AppendLine ()
