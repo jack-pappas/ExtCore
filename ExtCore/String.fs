@@ -76,9 +76,12 @@ type Substring =
 
     /// <inherit />
     override this.ToString () =
-        // OPTIMIZATION : Immediately return if this is an empty substring.
+        // OPTIMIZATION : Immediately return if this is an empty substring;
+        // or, if the substring covers the entire string, just return the string.
         if this.Length = 0 then
             System.String.Empty
+        elif this.Offset = 0 && this.Length = this.String.Length then
+            this.String
         else
             this.String.Substring (this.Offset, this.Length)
 
@@ -111,13 +114,18 @@ module Substring =
 
     /// Gets a character from the substring.
     [<CompiledName("Get")>]
-    let inline get (substring : substring) index =
+    let inline get (substring : substring) index : char =
         substring.[index]
 
     /// Is the substring empty?
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (substring : substring) : bool =
         substring.IsEmpty
+
+    /// Returns a substring which covers the entire length of the given string.
+    [<CompiledName("OfString")>]
+    let inline ofString (str : string) : substring =
+        Substring (str, 0, str.Length)
 
     /// Instantiates the substring as a string.
     [<CompiledName("ToString")>]
