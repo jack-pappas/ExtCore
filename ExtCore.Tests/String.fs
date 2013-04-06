@@ -16,12 +16,34 @@ limitations under the License.
 
 *)
 
-//
+/// Tests for the ExtCore.String module.
 namespace ExtCore.String.Tests
 
 open NUnit.Framework
-open FsCheck
+open FsUnit
+//open FsCheck
 
+(* TODO : Implement tests for the ExtCore.String module. *)
 
-(* TODO : Implement tests ExtCore.String module. *)
+// tryFindIndexOf
+// findIndexOf
+// tryFindIndex
+// findIndex
+// fold
+// foldBack
+// iter
+// iteri
+// map
+// mapi
+// choose
+// choosei
+// trimStart
+// trimEnd
+// trimStartWith
+// trimEndWith
+// trimWith
+// Split.iter
+// Split.iteri
+// Split.fold
+// Split.foldi
 
