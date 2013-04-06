@@ -686,7 +686,8 @@ module String =
 
     
     /// String-splitting functions.
-    /// These work like String.Split but without creating the intermediate array.
+    /// These work like String.Split but are faster because they avoid creating
+    /// the intermediate array of strings.
     [<RequireQualifiedAccess>]
     module Split =
         open System
@@ -864,15 +865,10 @@ module StringOperators =
     type System.Text.StringBuilder with
         /// Appends a copy of the specified substring to this instance.
         member this.Append (value : substring) : System.Text.StringBuilder =
-            // OPTIMIZATION : If the substring is null, return immediately.
-            let len = value.Length
-            if len = 0 then this
+            // OPTIMIZATION : If the substring is empty, return immediately.
+            if value.IsEmpty then this
             else
-                this.EnsureCapacity (this.Capacity + value.Length) |> ignore
-
-                for i = 0 to len - 1 do
-                    this.Append value.[i] |> ignore
-                this
+                this.Append (value.String, value.Offset, value.Length)
             
         /// Appends a copy of the specified substring to this instance, appending a newline.
         member this.AppendLine (value : substring) : System.Text.StringBuilder =
