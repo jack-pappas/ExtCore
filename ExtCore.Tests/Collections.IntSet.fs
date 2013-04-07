@@ -141,6 +141,22 @@ let difference () : unit =
         (IntSet.ofArray [| 3; 2; 12 |])
 
 [<TestCase>]
+let isSubset () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let isProperSubset () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let isSuperset () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let isProperSuperset () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
 let ofSeq () : unit =
     Seq.empty
     |> IntSet.ofSeq

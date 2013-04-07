@@ -24,5 +24,110 @@ open FsUnit
 //open FsCheck
 
 
-(* TODO : Implement tests for functions in the ExtCore.Collections.ArrayView module. *)
+[<TestCase>]
+let isEmpty () : unit =
+    Assert.Fail ()
 
+[<TestCase>]
+let ofArray () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let create () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let get () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let set () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let first () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let lastIndex () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let last () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let toArray () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let mapToArray () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let tryPick () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let pick () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let tryFind () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let find () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let tryFindIndex () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let findIndex () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let iter () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let exists () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let forall () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let fold () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let foldBack () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let reduce () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let reduceBack () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let toList () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let min () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let max () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let sum () : unit =
+    Assert.Fail ()
