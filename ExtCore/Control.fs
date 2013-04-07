@@ -1044,7 +1044,6 @@ module WorkflowBuilders =
 //    /// </summary>
 //    /// <typeparam name="Writer"></typeparam>
 //    [<CompiledName("Writer")>]
-//    [<GeneralizableValue>]
 //    let writer<'Writer
 //        when 'Writer :> IWriter<'Writer>
 //        and 'Writer : (new : unit -> 'Writer)> =

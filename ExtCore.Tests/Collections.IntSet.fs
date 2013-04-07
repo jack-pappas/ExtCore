@@ -141,6 +141,170 @@ let difference () : unit =
         (IntSet.ofArray [| 3; 2; 12 |])
 
 [<TestCase>]
+let isSubset () : unit =
+    // The empty set is always a subset of any other set.
+    IntSet.isSubset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        IntSet.empty
+    |> should be True
+
+    IntSet.isSubset
+        IntSet.empty IntSet.empty
+    |> should be True
+
+    // A set is a subset of itself (this distinguishes isSubset from isProperSubset).
+    IntSet.isSubset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be True
+
+    // Basic tests.
+    IntSet.isSubset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+    |> should be True
+
+    IntSet.isSubset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be False
+
+    // Partially-overlapping sets.
+    IntSet.isSubset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
+    |> should be False
+
+    // Disjoint sets.
+    IntSet.isSubset
+        (IntSet.ofArray [| 1..5 |])
+        (IntSet.ofArray [| 6..10 |])
+    |> should be False
+
+[<TestCase>]
+let isProperSubset () : unit =
+    // The empty set is a proper subset of any set except itself.
+    IntSet.isProperSubset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        IntSet.empty
+    |> should be True
+
+    IntSet.isProperSubset
+        IntSet.empty IntSet.empty
+    |> should be False
+
+    // A set is a subset of itself (this distinguishes isSubset from isProperSubset).
+    IntSet.isProperSubset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be False
+
+    // Basic tests.
+    IntSet.isProperSubset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+    |> should be True
+
+    IntSet.isProperSubset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be False
+
+    // Partially-overlapping sets.
+    IntSet.isProperSubset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
+    |> should be False
+
+    // Disjoint sets.
+    IntSet.isProperSubset
+        (IntSet.ofArray [| 1..5 |])
+        (IntSet.ofArray [| 6..10 |])
+    |> should be False
+
+[<TestCase>]
+let isSuperset () : unit =
+    // The empty set is never a superset of any other set except itself.
+    IntSet.isSuperset
+        IntSet.empty
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be False
+
+    IntSet.isSuperset
+        IntSet.empty IntSet.empty
+    |> should be True
+
+    // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
+    IntSet.isSuperset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be True
+
+    // Basic tests.
+    IntSet.isSuperset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+    |> should be False
+
+    IntSet.isSuperset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be True
+
+    // Partially-overlapping sets.
+    IntSet.isSuperset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
+    |> should be False
+
+    // Disjoint sets.
+    IntSet.isSuperset
+        (IntSet.ofArray [| 1..5 |])
+        (IntSet.ofArray [| 6..10 |])
+    |> should be False
+
+[<TestCase>]
+let isProperSuperset () : unit =
+    // The empty set is never a proper superset of any set.
+    IntSet.isProperSuperset
+        IntSet.empty
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be False
+
+    IntSet.isProperSuperset
+        IntSet.empty IntSet.empty
+    |> should be False
+
+    // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
+    IntSet.isProperSuperset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be False
+
+    // Basic tests.
+    IntSet.isProperSuperset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> should be False
+
+    IntSet.isProperSuperset
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+    |> should be True
+
+    // Partially-overlapping sets.
+    IntSet.isProperSuperset
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
+    |> should be False
+
+    // Disjoint sets.
+    IntSet.isProperSuperset
+        (IntSet.ofArray [| 1..5 |])
+        (IntSet.ofArray [| 6..10 |])
+    |> should be False
+
+[<TestCase>]
 let ofSeq () : unit =
     Seq.empty
     |> IntSet.ofSeq

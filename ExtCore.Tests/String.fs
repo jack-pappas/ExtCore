@@ -16,12 +16,164 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.String.Tests
 
 open NUnit.Framework
-open FsCheck
+open FsUnit
+//open FsCheck
 
 
-(* TODO : Implement tests ExtCore.String module. *)
+/// Tests for the ExtCore.Substring module.
+module Substring =
+    [<TestCase>]
+    let string () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let offset () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let length () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let get () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let isEmpty () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let ofString () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let toString () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let toArray () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let sub () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let iterBack () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let foldi () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let foldBack () : unit =
+        Assert.Fail ()
+
+
+/// Tests for the ExtCore.String module.
+module String =
+    [<TestCase>]
+    let sub () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let tryFindIndexOf () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let findIndexOf () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let tryFindIndex () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let findIndex () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let foldBack () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let choose () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let choosei () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let trimStart () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let trimEnd () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let trimStartWith () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let trimEndWith () : unit =
+        Assert.Fail ()
+
+    [<TestCase>]
+    let trimWith () : unit =
+        Assert.Fail ()
+
+    module Split =
+        [<TestCase>]
+        let iter () : unit =
+            Assert.Fail ()
+
+        [<TestCase>]
+        let iteri () : unit =
+            Assert.Fail ()
+
+        [<TestCase>]
+        let fold () : unit =
+            Assert.Fail ()
+
+        [<TestCase>]
+        let foldi () : unit =
+            Assert.Fail ()
 

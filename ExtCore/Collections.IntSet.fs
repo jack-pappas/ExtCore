@@ -16,7 +16,6 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.Collections
 
 open System.Collections.Generic
@@ -44,7 +43,7 @@ module internal BitOps =
     #if LITTLE_ENDIAN_TRIES
     
     //
-    let inline (*private*) leastSignificantSetBit (x : uint32) : uint32 =
+    let inline private leastSignificantSetBit (x : uint32) : uint32 =
         x &&& (uint32 -(int x))
 
     /// Finds the last (least-significant) bit at which p0 and p1 disagree.
@@ -56,13 +55,17 @@ module internal BitOps =
     let inline mask (key : Key, mask : Mask) : Prefix =
         key &&& (mask - 1u)
 
+    //
+    let (*inline*) shorter (m1 : Mask, m2 : Mask) : bool =
+        notImpl "BitOps.shorter (Little-Endian)"
+
     #else
     
     // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
     // OPTIMIZE : This could be even faster if we could take advantage of a built-in
     // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
     // Could we expose these instructions through Mono?
-    let inline (*private*) mostSignificantSetBit (x1 : uint32) =
+    let inline private mostSignificantSetBit (x1 : uint32) =
         let x2 = x1 ||| (x1 >>> 1)
         let x3 = x2 ||| (x2 >>> 2)
         let x4 = x3 ||| (x3 >>> 4)
@@ -79,8 +82,12 @@ module internal BitOps =
 
     /// Clears the indicated bit and sets all lower bits.
     let inline mask (key : Key, mask : Mask) : Prefix =
-        //(key ||| (mask - 1u)) &&& ~~~mask
         key &&& (~~~(mask - 1u) ^^^ mask)
+
+    //
+    let (*inline*) shorter (m1 : Mask, m2 : Mask) : bool =
+        // NOTE : This must be an *unsigned* comparison for the results to be correct.
+        m1 > m2
 
     #endif
 
@@ -103,7 +110,7 @@ open BitOps
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntSet (and TagSet).
 [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
-type internal PatriciaSet =
+type private PatriciaSet =
     | Empty
     // Key
     | Lf of uint32
@@ -417,6 +424,90 @@ type internal PatriciaSet =
             else s
         | Empty, _ ->
             Empty
+
+    /// Is 'set1' a subset of 'set2'?
+    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
+    static member IsSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+        match set1, set2 with
+        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+            if shorter (m1, m2) then
+                false
+            elif shorter (m2, m1) then
+                matchPrefix (p1, p2, m2) && (
+                    if zeroBit (p1, m2) then
+                        PatriciaSet.IsSubset (t1, l2)
+                    else
+                        PatriciaSet.IsSubset (t1, r2))
+            else
+                p1 = p2
+                && PatriciaSet.IsSubset (l1, l2)
+                && PatriciaSet.IsSubset (r1, r2)
+                
+        | Br (_,_,_,_), _ ->
+            false
+        | Lf k1, Lf k2 ->
+            k1 = k2
+        | (Lf k as t1), Br (p, m, l, r) ->
+            if not <| matchPrefix (k, p, m) then
+                false
+            elif zeroBit (k, m) then
+                PatriciaSet.IsSubset (t1, l)
+            else
+                PatriciaSet.IsSubset (t1, r)
+        | Lf _, Empty ->
+            false
+        | Empty, _ ->
+            true
+
+    /// Is 'set1' a superset of 'set2'?
+    static member IsSuperset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+        PatriciaSet.IsSubset (set2, set1)
+
+    //
+    static member private SubmapCmp (t1 : PatriciaSet, t2 : PatriciaSet) : int =
+        match t1, t2 with
+        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+            if shorter (m1, m2) then 1
+            elif shorter (m2, m1) then
+                if not <| matchPrefix (p1, p2, m2) then 1
+                elif zeroBit (p1, m2) then
+                    PatriciaSet.SubmapCmp (t1, l2)
+                else
+                    PatriciaSet.SubmapCmp (t1, r2)
+            elif p1 = p2 then
+                let left = PatriciaSet.SubmapCmp (l1, l2)
+                let right = PatriciaSet.SubmapCmp (r1, r2)
+                match left, right with
+                | 1, _
+                | _, 1 -> 1
+                | 0, 0 -> 0
+                | _ -> -1
+            else
+                // The maps are disjoint.
+                1
+
+        | Br (_,_,_,_), _ -> 1
+        | Lf x, Lf y ->
+            if x = y then 0
+            else 1  // The maps are disjoint.
+        | Lf x, t ->
+            if PatriciaSet.Contains (x, t) then -1
+            else 1  // The maps are disjoint.
+
+        | Empty, Empty -> 0
+        | Empty, _ -> -1
+
+    /// Is 'set1' a proper subset of 'set2'?
+    static member IsProperSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+        match PatriciaSet.SubmapCmp (set1, set2) with
+        | -1 -> true
+        | _ -> false
+
+    /// Is 'set1' a proper superset of 'set2'?
+    static member IsProperSuperset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+        match PatriciaSet.SubmapCmp (set2, set1) with
+        | 1 -> true
+        | _ -> false
 
     //
     static member OfSeq (source : seq<int>) : PatriciaSet =
@@ -769,6 +860,22 @@ type IntSet private (trie : PatriciaSet) =
         elif otherSet.Trie === trie' then otherSet
         else IntSet (trie')
 
+    /// Determines if the given set is a subset of this set.
+    member this.IsSubset (otherSet : IntSet) : bool =
+        PatriciaSet.IsSubset (otherSet.Trie, trie)
+
+    /// Determines if the given set is a proper subset of this set.
+    member this.IsProperSubset (otherSet : IntSet) : bool =
+        PatriciaSet.IsProperSubset (otherSet.Trie, trie)
+
+    /// Determines if the given set is a superset of this set.
+    member this.IsSuperset (otherSet : IntSet) : bool =
+        PatriciaSet.IsSuperset (otherSet.Trie, trie)
+
+    /// Determines if the given set is a proper superset of this set.
+    member this.IsProperSuperset (otherSet : IntSet) : bool =
+        PatriciaSet.IsProperSuperset (otherSet.Trie, trie)
+
     /// Returns a new IntSet made from the given elements.
     static member OfSeq (source : seq<int>) : IntSet =
         // Preconditions
@@ -1053,6 +1160,42 @@ module IntSet =
         set1.Difference set2
 
     //
+    [<CompiledName("IsSubset")>]
+    let inline isSubset (set1 : IntSet) (set2 : IntSet) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsSubset set2
+
+    //
+    [<CompiledName("IsProperSubset")>]
+    let inline isProperSubset (set1 : IntSet) (set2 : IntSet) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsProperSubset set2
+
+    //
+    [<CompiledName("IsSuperset")>]
+    let inline isSuperset (set1 : IntSet) (set2 : IntSet) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsSuperset set2
+
+    //
+    [<CompiledName("IsProperSuperset")>]
+    let inline isProperSuperset (set1 : IntSet) (set2 : IntSet) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsProperSuperset set2
+
+    //
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntSet =
         // Preconditions are checked by the member.
@@ -1329,6 +1472,58 @@ module TagSet =
 
         set1.Difference set2
         |> retype
+
+    //
+    [<CompiledName("IsSubset")>]
+    let inline isSubset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set1 : IntSet = retype set1
+        let set2 : IntSet = retype set2
+
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsSubset set2
+
+    //
+    [<CompiledName("IsProperSubset")>]
+    let inline isProperSubset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set1 : IntSet = retype set1
+        let set2 : IntSet = retype set2
+
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsProperSubset set2
+
+    //
+    [<CompiledName("IsSuperset")>]
+    let inline isSuperset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set1 : IntSet = retype set1
+        let set2 : IntSet = retype set2
+
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsSuperset set2
+
+    //
+    [<CompiledName("IsProperSuperset")>]
+    let inline isProperSuperset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
+        // Retype as IntSet
+        let set1 : IntSet = retype set1
+        let set2 : IntSet = retype set2
+
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        set1.IsProperSuperset set2
 
     //
     [<CompiledName("OfSeq")>]

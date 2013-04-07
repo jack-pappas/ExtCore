@@ -24,5 +24,95 @@ open FsUnit
 //open FsCheck
 
 
-(* TODO : Implement tests for IntBimap. *)
+[<TestCase>]
+let singleton () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let isEmpty () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let count () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let containsKey () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let containsValue () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let paired () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let tryFind () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let tryFindValue () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let find () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let findValue () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let remove () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let removeValue () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let add () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let tryAdd () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let iter () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let fold () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let foldBack () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let filter () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let partition () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let ofList () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let toList () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let ofArray () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let toArray () : unit =
+    Assert.Fail ()
 

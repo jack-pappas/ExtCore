@@ -230,26 +230,22 @@ module AdditionalOperators =
 /// Functional operators on enumerations.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Enum =
-    /// Returns an array of the values defined by an enumeration type.
-    [<CompiledName("GetValuesImpl")>]
-    let inline private valuesImpl<'Enum, 'T when 'Enum : enum<'T>> (enumType : System.Type) =
-        System.Enum.GetValues enumType
-        :?> 'Enum[]
+    /// Determines whether one or more bit fields are set in the specified enum value.
+    [<CompiledName("HasFlag")>]
+    let inline hasFlag<'Enum when 'Enum : struct and 'Enum : unmanaged and 'Enum :> System.Enum>
+            (flag : 'Enum) (value : 'Enum) : bool =
+        value.HasFlag flag
 
     /// Returns an array of the values defined by an enumeration type.
-    [<CompiledName("GetValues")>]
-    let inline values () : ^Enum[] =
-        valuesImpl< ^Enum, _> typeof<'Enum>
-
-    /// Alias for System.Enum.IsDefined.
-    [<CompiledName("IsDefinedImpl")>]
-    let inline private isDefinedImpl<'Enum, 'T when 'Enum : enum<'T>> (value : 'Enum) =
-        System.Enum.IsDefined (typeof<'Enum>, value)
+    [<CompiledName("Values")>]
+    let values<'Enum when 'Enum : struct and 'Enum : unmanaged and 'Enum :> System.Enum> =
+        System.Enum.GetValues typeof<'Enum> :?> 'Enum[]
 
     /// Indicates whether a constant with the specified value exists in the given enumeration type.
     [<CompiledName("IsDefined")>]
-    let inline isDefined value =
-        isDefinedImpl< ^Enum, _> value
+    let inline isDefined<'Enum when 'Enum : struct and 'Enum : unmanaged and 'Enum :> System.Enum>
+            (value : 'Enum) : bool =
+        System.Enum.IsDefined (typeof<'Enum>, value)
 
 
 /// Functional operators on lazily-initialized values.

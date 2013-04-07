@@ -24,5 +24,42 @@ open FsUnit
 //open FsCheck
 
 
-(* TODO : Implement tests for ExtCore.Collections.Queue. *)
+[<TestCase>]
+let isEmpty () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let length () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let enqueue () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let enqueueFront () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let dequeue () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let toList () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let toArray () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let toResizeQueue () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let ofResizeQueue () : unit =
+    Assert.Fail ()
+
+
+
 
