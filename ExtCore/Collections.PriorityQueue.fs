@@ -160,7 +160,6 @@ module AddRoot =
 
     //
     [<CompiledName("Empty")>]
-    [<GeneralizableValue>]
     let empty<'T when 'T : comparison> : T<'T> =
         Empty
 
@@ -222,7 +221,6 @@ module Bootstrap =
 
     //
     [<CompiledName("Empty")>]
-    [<GeneralizableValue>]
     let empty<'T when 'T : comparison> : T<'T> =
         Empty
 

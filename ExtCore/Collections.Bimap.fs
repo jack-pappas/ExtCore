@@ -252,7 +252,6 @@ and [<Sealed>]
 module Bimap =
     /// The empty Bimap.
     [<CompiledName("Empty")>]
-    [<GeneralizableValue>]
     let empty<'Key, 'T
         when 'Key : comparison
         and 'T : comparison> : Bimap<'Key, 'T> =

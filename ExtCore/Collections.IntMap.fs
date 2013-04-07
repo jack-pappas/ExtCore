@@ -1134,7 +1134,6 @@ and [<Sealed>]
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module IntMap =
     /// The empty IntMap.
-    [<GeneralizableValue>]
     [<CompiledName("Empty")>]
     let empty<'T> =
         IntMap<'T>.Empty
@@ -1429,7 +1428,6 @@ module TagMap =
     let inline private retype<'T,'U> (x:'T) : 'U = (# "" x : 'U #)
 
     /// The empty TagMap.
-    [<GeneralizableValue>]
     [<CompiledName("Empty")>]
     let empty<[<Measure>] 'Tag, 'T> : TagMap<'Tag, 'T> =
         retype IntMap<'T>.Empty

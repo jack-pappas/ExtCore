@@ -455,7 +455,6 @@ module TagBimap =
 
     /// The empty TagBimap.
     [<CompiledName("Empty")>]
-    [<GeneralizableValue>]
     let empty<[<Measure>]'Tag, 'T when 'T : comparison> : TagBimap<'Tag, 'T> =
         retype IntBimap<'T>.Empty
 

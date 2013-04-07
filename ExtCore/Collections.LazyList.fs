@@ -185,7 +185,6 @@ module LazyList =
     //open OptimizedClosures
 
     /// The empty LazyList.
-    [<GeneralizableValue>]
     [<CompiledName("Empty")>]
     let empty<'T> : LazyList<'T> =
         LazyList<'T>.Empty

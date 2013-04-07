@@ -196,7 +196,6 @@ module Queue =
 
     /// Returns an empty queue of the given type.
     [<CompiledName("Empty")>]
-    [<GeneralizableValue>]
     let empty<'T> : Queue<'T> =
         Queue<'T>.Empty
 

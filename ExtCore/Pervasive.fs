@@ -230,12 +230,13 @@ module AdditionalOperators =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Enum =
     /// Determines whether one or more bit fields are set in the specified enum value.
+    [<CompiledName("HasFlag")>]
     let inline hasFlag<'Enum when 'Enum : struct and 'Enum : unmanaged and 'Enum :> System.Enum>
             (flag : 'Enum) (value : 'Enum) : bool =
         value.HasFlag flag
 
     /// Returns an array of the values defined by an enumeration type.
-    [<CompiledName("Values"); GeneralizableValue>]
+    [<CompiledName("Values")>]
     let values<'Enum when 'Enum : struct and 'Enum : unmanaged and 'Enum :> System.Enum> =
         System.Enum.GetValues typeof<'Enum> :?> 'Enum[]
 
