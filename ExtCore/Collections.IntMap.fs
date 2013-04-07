@@ -33,7 +33,7 @@ open BitOps
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntMap (and TagMap).
 [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
-type internal PatriciaMap<'T> =
+type private PatriciaMap<'T> =
     | Empty
     // Key * Value
     | Lf of uint32 * 'T
@@ -392,6 +392,70 @@ type internal PatriciaMap<'T> =
             else s
         | Empty, _ ->
             Empty
+
+    /// <c>IsSubmapOfBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
+    /// and when 'f' returns <c>true</c> when applied to their respective values.
+    static member IsSubmapOfBy (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap<'T>) (t2 : PatriciaMap<'T>) : bool =
+        match t1, t2 with
+        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+            if shorter (m1, m2) then
+                false
+            elif shorter (m2, m1) then
+                matchPrefix (p1, p2, m2) && (
+                    if zeroBit (p1, m2) then
+                        PatriciaMap.IsSubmapOfBy predicate t1 l2
+                    else
+                        PatriciaMap.IsSubmapOfBy predicate t1 r2)
+            else
+                p1 = p2
+                && PatriciaMap.IsSubmapOfBy predicate l1 l2
+                && PatriciaMap.IsSubmapOfBy predicate r1 r2
+                
+        | Br (_,_,_,_), _ ->
+            false
+        | Lf (k, x), t ->
+            match PatriciaMap.TryFind (k, t) with
+            | None ->
+                false
+            | Some y ->
+                predicate x y
+        | Empty, _ ->
+            true
+
+    //
+    static member private SubmapCmp (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap<'T>) (t2 : PatriciaMap<'T>) : int =
+        match t1, t2 with
+        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+            if shorter (m1, m2) then 1
+            elif shorter (m2, m1) then
+                if not <| matchPrefix (p1, p2, m2) then 1
+                elif zeroBit (p1, m2) then
+                    PatriciaMap.SubmapCmp predicate t1 l2
+                else
+                    PatriciaMap.SubmapCmp predicate t1 r2
+            elif p1 = p2 then
+                let left = PatriciaMap.SubmapCmp predicate l1 l2
+                let right = PatriciaMap.SubmapCmp predicate r1 r2
+                match left, right with
+                | 1, _
+                | _, 1 -> 1
+                | 0, 0 -> 0
+                | _ -> -1
+            else
+                // The maps are disjoint.
+                1
+
+        | Br (_,_,_,_), _ -> 1
+        | Lf (kx, x), Lf (ky, y) ->
+            if kx = ky && predicate x y then 0
+            else 1  // The maps are disjoint.
+        | Lf (k, x), t ->
+            match PatriciaMap.TryFind (k, t) with
+            | Some y when predicate x y -> -1
+            | _ -> 1    // The maps are disjoint.
+
+        | Empty, Empty -> 0
+        | Empty, _ -> -1
 
     //
     static member OfSeq (source : seq<int * 'T>) : PatriciaMap<'T> =
@@ -823,6 +887,10 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
         if trie === trie' then this
         elif otherMap.Trie === trie' then otherMap
         else IntMap (trie')
+
+    /// Returns true if 'other' is a submap of this map.
+    member this.IsSubmapOfBy (predicate, other : IntMap<'T>) : bool =
+        PatriciaMap.IsSubmapOfBy predicate other.Trie trie
 
     /// The IntMap containing the given binding.
     static member Singleton (key : int, value : 'T) : IntMap<'T> =

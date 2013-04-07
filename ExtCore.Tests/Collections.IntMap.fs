@@ -214,6 +214,37 @@ let difference () : unit =
         (IntMap.ofArray [| (5, 'a'); (17, 'a'); (14, 'c'); |])
 
 [<TestCase>]
+let isSubmapOfBy () : unit =
+    let map1 = IntMap.ofList [(1,1);(2,2)]
+        
+    map1.IsSubmapOfBy ((=),
+        IntMap.ofList [(1,1)])
+    |> should be True
+
+    map1.IsSubmapOfBy ((<=),
+        IntMap.ofList [(1,1)])
+    |> should be True
+
+    map1.IsSubmapOfBy ((=),
+        IntMap.ofList [(1,1);(2,2)])
+    |> should be True
+
+    map1.IsSubmapOfBy ((=),
+        IntMap.ofList [(1,2)])
+    |> should be False
+
+    map1.IsSubmapOfBy ((<),
+        IntMap.ofList [(1,1)])
+    |> should be False
+
+    let map2 = IntMap.ofList [(1,1)]
+
+    map2.IsSubmapOfBy ((=),
+        IntMap.ofList [(1,1);(2,2)])
+    |> should be False
+
+
+[<TestCase>]
 let ofSeq () : unit =
     (Seq.empty : seq<int * string>)
     |> IntMap.ofSeq
