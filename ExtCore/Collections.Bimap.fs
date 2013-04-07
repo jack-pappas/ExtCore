@@ -130,9 +130,8 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         // unnecessary or duplicated checks while still maintaining the invariant.
         // It'd also be nice if we could do this in a way that detects if the values
         // are already present and bound to each other, so we don't need to alter the Bimap at all...
-        let bimap = this.Remove x
-        let bimap = this.RemoveValue y
-        bimap.TryAdd (x, y)    // TODO : Create a private "AddUnsafe" method to avoid the lookups in TryAdd
+        // TODO : Create a private "AddUnsafe" method to avoid the lookups in TryAdd
+        this.Remove(x).RemoveValue(y).TryAdd (x, y)
 
     //
     member this.TryAdd (x, y) =

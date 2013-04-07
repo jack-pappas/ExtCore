@@ -56,15 +56,15 @@ type IntBimap<'Value when 'Value : comparison>
         IntMap.containsKey key left
 
     //
-    member __.ContainsKeyBack key =
-        Map.containsKey key right
+    member __.ContainsValue value =
+        Map.containsKey value right
 
     //
     member __.Find key =
         IntMap.find key left
 
     //
-    member __.FindBack key =
+    member __.FindValue key =
         Map.find key right
 
     //
@@ -91,7 +91,7 @@ type IntBimap<'Value when 'Value : comparison>
                 Map.remove value right)
 
     //
-    member this.RemoveBack key =
+    member this.RemoveValue key =
         // Use the key to find its corresponding value.
         match Map.tryFind key right with
         | None ->
@@ -108,7 +108,7 @@ type IntBimap<'Value when 'Value : comparison>
         IntMap.tryFind key left
 
     //
-    member __.TryFindBack key =
+    member __.TryFindValue key =
         Map.tryFind key right
 
     //
@@ -126,9 +126,8 @@ type IntBimap<'Value when 'Value : comparison>
         // unnecessary or duplicated checks while still maintaining the invariant.
         // It'd also be nice if we could do this in a way that detects if the values
         // are already present and bound to each other, so we don't need to alter the Bimap at all...
-        let bimap = this.Remove x
-        let bimap = this.RemoveBack y
-        bimap.TryAdd (x, y)    // TODO : Create a private "AddUnsafe" method to avoid the lookups in TryAdd
+        // TODO : Create a private "AddUnsafe" method to avoid the lookups in TryAdd
+        this.Remove(x).RemoveValue(y).TryAdd (x, y)
 
     //
     member this.TryAdd (x, y) =
@@ -249,7 +248,6 @@ and [<Sealed>]
 module IntBimap =
     /// The empty IntBimap.
     [<CompiledName("Empty")>]
-    [<GeneralizableValue>]
     let empty<'T when 'T : comparison> : IntBimap<'T> =
         IntBimap<'T>.Empty
 
@@ -283,12 +281,12 @@ module IntBimap =
         bimap.ContainsKey key
 
     //
-    [<CompiledName("ContainsKeyBack")>]
-    let inline containsKeyBack key (bimap : IntBimap<'T>) : bool =
+    [<CompiledName("ContainsValue")>]
+    let inline containsValue value (bimap : IntBimap<'T>) : bool =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.ContainsKeyBack key
+        bimap.ContainsValue value
 
     //
     [<CompiledName("Paired")>]
@@ -307,12 +305,12 @@ module IntBimap =
         bimap.TryFind key
 
     //
-    [<CompiledName("TryFindBack")>]
-    let inline tryFindBack key (bimap : IntBimap<'T>) : int option =
+    [<CompiledName("TryFindValue")>]
+    let inline tryFindValue value (bimap : IntBimap<'T>) : int option =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.TryFindBack key
+        bimap.TryFindValue value
 
     //
     [<CompiledName("Find")>]
@@ -323,12 +321,12 @@ module IntBimap =
         bimap.Find key
 
     //
-    [<CompiledName("FindBack")>]
-    let inline findBack key (bimap : IntBimap<'T>) : int =
+    [<CompiledName("FindValue")>]
+    let inline findValue value (bimap : IntBimap<'T>) : int =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.FindBack key
+        bimap.FindValue value
 
     //
     [<CompiledName("Remove")>]
@@ -339,12 +337,12 @@ module IntBimap =
         bimap.Remove key
 
     //
-    [<CompiledName("RemoveBack")>]
-    let inline removeBack key (bimap : IntBimap<'T>) : IntBimap<'T> =
+    [<CompiledName("RemoveValue")>]
+    let inline removeValue key (bimap : IntBimap<'T>) : IntBimap<'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.RemoveBack key
+        bimap.RemoveValue key
 
     //
     [<CompiledName("Add")>]
@@ -501,15 +499,15 @@ module TagBimap =
         bimap.ContainsKey (retype key)
 
     //
-    [<CompiledName("ContainsKeyBack")>]
-    let inline containsKeyBack key (bimap : TagBimap<'Tag, 'T>) : bool =
+    [<CompiledName("ContainsValue")>]
+    let inline containsValue key (bimap : TagBimap<'Tag, 'T>) : bool =
         // Retype as IntBimap.
         let bimap : IntBimap<'T> = retype bimap
 
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.ContainsKeyBack key
+        bimap.ContainsValue key
 
     //
     [<CompiledName("Paired")>]
@@ -534,15 +532,15 @@ module TagBimap =
         bimap.TryFind (retype key)
 
     //
-    [<CompiledName("TryFindBack")>]
-    let inline tryFindBack key (bimap : TagBimap<'Tag, 'T>) : int<'Tag> option =
+    [<CompiledName("TryFindValue")>]
+    let inline tryFindValue key (bimap : TagBimap<'Tag, 'T>) : int<'Tag> option =
         // Retype as IntBimap.
         let bimap : IntBimap<'T> = retype bimap
 
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.TryFindBack key
+        bimap.TryFindValue key
         |> retype
 
     //
@@ -557,15 +555,15 @@ module TagBimap =
         bimap.Find (retype key)
 
     //
-    [<CompiledName("FindBack")>]
-    let inline findBack key (bimap : TagBimap<'Tag, 'T>) : int<'Tag> =
+    [<CompiledName("FindValue")>]
+    let inline findValue key (bimap : TagBimap<'Tag, 'T>) : int<'Tag> =
         // Retype as IntBimap.
         let bimap : IntBimap<'T> = retype bimap
 
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.FindBack key
+        bimap.FindValue key
         |> retype
 
     //
@@ -581,15 +579,15 @@ module TagBimap =
         |> retype
 
     //
-    [<CompiledName("RemoveBack")>]
-    let inline removeBack key (bimap : TagBimap<'Tag, 'T>) : TagBimap<'Tag, 'T> =
+    [<CompiledName("RemoveValue")>]
+    let inline removeValue key (bimap : TagBimap<'Tag, 'T>) : TagBimap<'Tag, 'T> =
         // Retype as IntBimap.
         let bimap : IntBimap<'T> = retype bimap
 
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.RemoveBack key
+        bimap.RemoveValue key
         |> retype
 
     //
