@@ -703,17 +703,6 @@ module String =
         // OPTIMIZE : The functions below could be modified to include an optimized case
         // for when the separator array contains just a single character.
 
-        (*
-        - String.Split.filter
-        - String.Split.choose
-          - These functions should work like .Split(...) |> Array.iter (or Array.fold, etc.),
-            except that they won't actually need to traverse the entire string first and split
-            it into an array of substrings. Instead, they'll improve performance by allowing us
-            to execute a function on each of the substrings in a single forward pass.
-          - Performance is improved with these functions because they'll be applied to Substring
-            values instead of creating the substrings as separate objects.
-        *)
-
         /// Determines if the StringSplitOptions.RemoveEmptyEntries flag is set in the given value.
         let inline private skipEmptyStrings (options : System.StringSplitOptions) =
             Enum.hasFlag StringSplitOptions.RemoveEmptyEntries options
@@ -721,7 +710,8 @@ module String =
         /// Applies the given function to each of the substrings in the input string that are
         /// delimited by elements of a specified Unicode character array.
         [<CompiledName("Iter")>]
-        let iter (separator : char[], options : StringSplitOptions) (action : substring -> unit) (str : string) : unit =
+        let iter (separator : char[], options : StringSplitOptions)
+                (action : substring -> unit) (str : string) : unit =
             // Preconditions
             checkNonNull "str" str
 
@@ -836,30 +826,387 @@ module String =
         /// substrings in the input string. For example, if the newline character (\n) is used
         /// as the separator, the index of each substring would be the line number.
         [<CompiledName("IterIndexed")>]
-        let iteri (separator : char[], options : System.StringSplitOptions) (action : int -> substring -> unit) (str : string) : unit =
+        let iteri (separator : char[], options : System.StringSplitOptions)
+                (action : int -> substring -> unit) (str : string) : unit =
             // Preconditions
             checkNonNull "str" str
 
-            // TODO
-            notImpl "String.Split.iteri"
+            // OPTIMIZATION : If the input string is empty, return immediately.
+            if not <| isEmpty str then
+                /// The length of the input string.
+                let len = String.length str
+
+                let action = FSharpFunc<_,_,_>.Adapt action
+
+                // The string-splitting functionality must be implemented specially for
+                // the case where the separator array is null or empty.
+                match separator with
+                | null
+                | [| |] ->
+                    // The offset and length of the current substring.
+                    let mutable offset = 0
+                    let mutable length = 0
+
+                    /// The current substring index (amongst the delimited substrings in the input string).
+                    let mutable substringIndex = 0
+
+                    // OPTIMIZATION : The check for the RemoveEmptyEntries option is moved
+                    // out of the loop to avoid checking it repeatedly.
+                    if skipEmptyStrings options then
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Char.IsWhiteSpace str.[i] then
+                                // Apply the function to the current substring unless it's empty.
+                                if length > 0 then
+                                    action.Invoke (substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+                    else
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Char.IsWhiteSpace str.[i] then
+                                // Apply the function to the current substring.
+                                action.Invoke (substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+
+                    // If the length is nonzero, then the last substring is still "in-progress"
+                    // so apply the function to it.
+                    if length > 0 || not <| skipEmptyStrings options then
+                        action.Invoke (substringIndex, Substring (str, offset, length))
+
+                | separator ->
+                    /// A sorted copy of the separator array. Used with Array.BinarySearch
+                    /// to quickly determine if a given character is a separator.
+                    let sortedSeperators = Array.sort separator
+
+                    // The offset and length of the current substring.
+                    let mutable offset = 0
+                    let mutable length = 0
+
+                    /// The current substring index (amongst the delimited substrings in the input string).
+                    let mutable substringIndex = 0
+
+                    // OPTIMIZATION : The check for the RemoveEmptyEntries option is moved
+                    // out of the loop to avoid checking it repeatedly.
+                    if skipEmptyStrings options then
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                                // Apply the function to the current substring unless it's empty.
+                                if length > 0 then
+                                    action.Invoke (substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+                    else
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                                // Apply the function to the current substring.
+                                action.Invoke (substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+
+                    // If the length is nonzero, then the last substring is still "in-progress"
+                    // so apply the function to it.
+                    if length > 0 || not <| skipEmptyStrings options then
+                        action.Invoke (substringIndex, Substring (str, offset, length))
 
         //
         [<CompiledName("Fold")>]
-        let fold (separator : char[], options : System.StringSplitOptions) (folder : 'State -> substring -> 'State) (state : 'State) (str : string) : 'State =
+        let fold (separator : char[], options : System.StringSplitOptions)
+                (folder : 'State -> substring -> 'State) (state : 'State) (str : string) : 'State =
             // Preconditions
             checkNonNull "str" str
 
-            // TODO
-            notImpl "String.Split.fold"
+            // OPTIMIZATION : If the input string is empty, return immediately.
+            if isEmpty str then state
+            else
+                /// The length of the input string.
+                let len = String.length str
+
+                let folder = FSharpFunc<_,_,_>.Adapt folder
+
+                // The string-splitting functionality must be implemented specially for
+                // the case where the separator array is null or empty.
+                match separator with
+                | null
+                | [| |] ->
+                    // The offset and length of the current substring.
+                    let mutable offset = 0
+                    let mutable length = 0
+
+                    /// The current state value.
+                    let mutable state = state
+
+                    // OPTIMIZATION : The check for the RemoveEmptyEntries option is moved
+                    // out of the loop to avoid checking it repeatedly.
+                    if skipEmptyStrings options then
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Char.IsWhiteSpace str.[i] then
+                                // Apply the function to the current substring unless it's empty.
+                                if length > 0 then
+                                    state <- folder.Invoke (state, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+                    else
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Char.IsWhiteSpace str.[i] then
+                                // Apply the function to the current substring.
+                                state <- folder.Invoke (state, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+
+                    // If the length is nonzero, then the last substring is still "in-progress"
+                    // so apply the function to it.
+                    if length > 0 || not <| skipEmptyStrings options then
+                        state <- folder.Invoke (state, Substring (str, offset, length))
+                    state
+
+                | separator ->
+                    /// A sorted copy of the separator array. Used with Array.BinarySearch
+                    /// to quickly determine if a given character is a separator.
+                    let sortedSeperators = Array.sort separator
+
+                    // The offset and length of the current substring.
+                    let mutable offset = 0
+                    let mutable length = 0
+
+                    /// The current state value.
+                    let mutable state = state
+
+                    // OPTIMIZATION : The check for the RemoveEmptyEntries option is moved
+                    // out of the loop to avoid checking it repeatedly.
+                    if skipEmptyStrings options then
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                                // Apply the function to the current substring unless it's empty.
+                                if length > 0 then
+                                    state <- folder.Invoke (state, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+                    else
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                                // Apply the function to the current substring.
+                                state <- folder.Invoke (state, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+
+                    // If the length is nonzero, then the last substring is still "in-progress"
+                    // so apply the function to it.
+                    if length > 0 || not <| skipEmptyStrings options then
+                        state <- folder.Invoke (state, Substring (str, offset, length))
+                    state
 
         //
         [<CompiledName("FoldIndexed")>]
-        let foldi (separator : char[], options : System.StringSplitOptions) (folder : 'State -> int -> substring -> 'State) (state : 'State) (str : string) : 'State =
+        let foldi (separator : char[], options : System.StringSplitOptions)
+                (folder : 'State -> int -> substring -> 'State) (state : 'State) (str : string) : 'State =
             // Preconditions
             checkNonNull "str" str
 
-            // TODO
-            notImpl "String.Split.foldi"
+            // OPTIMIZATION : If the input string is empty, return immediately.
+            if isEmpty str then state
+            else
+                /// The length of the input string.
+                let len = String.length str
+
+                let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+                // The string-splitting functionality must be implemented specially for
+                // the case where the separator array is null or empty.
+                match separator with
+                | null
+                | [| |] ->
+                    // The offset and length of the current substring.
+                    let mutable offset = 0
+                    let mutable length = 0
+
+                    /// The current substring index (amongst the delimited substrings in the input string).
+                    let mutable substringIndex = 0
+
+                    /// The current state value.
+                    let mutable state = state
+
+                    // OPTIMIZATION : The check for the RemoveEmptyEntries option is moved
+                    // out of the loop to avoid checking it repeatedly.
+                    if skipEmptyStrings options then
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Char.IsWhiteSpace str.[i] then
+                                // Apply the function to the current substring unless it's empty.
+                                if length > 0 then
+                                    state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+                    else
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Char.IsWhiteSpace str.[i] then
+                                // Apply the function to the current substring.
+                                state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+
+                    // If the length is nonzero, then the last substring is still "in-progress"
+                    // so apply the function to it.
+                    if length > 0 || not <| skipEmptyStrings options then
+                        state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                    state
+
+                | separator ->
+                    /// A sorted copy of the separator array. Used with Array.BinarySearch
+                    /// to quickly determine if a given character is a separator.
+                    let sortedSeperators = Array.sort separator
+
+                    // The offset and length of the current substring.
+                    let mutable offset = 0
+                    let mutable length = 0
+
+                    /// The current substring index (amongst the delimited substrings in the input string).
+                    let mutable substringIndex = 0
+
+                    /// The current state value.
+                    let mutable state = state
+
+                    // OPTIMIZATION : The check for the RemoveEmptyEntries option is moved
+                    // out of the loop to avoid checking it repeatedly.
+                    if skipEmptyStrings options then
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                                // Apply the function to the current substring unless it's empty.
+                                if length > 0 then
+                                    state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+                    else
+                        for i = 0 to len - 1 do
+                            // Is the current character a separator?
+                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                                // Apply the function to the current substring.
+                                state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+
+                                // Update the offset to just past the end of this substring
+                                // and reset the length to zero to begin a new substring.
+                                offset <- i + 1
+                                length <- 0
+
+                            else
+                                // "Add" this character to the current substring by
+                                // incrementing the substring length.
+                                length <- length + 1
+
+                    // If the length is nonzero, then the last substring is still "in-progress"
+                    // so apply the function to it.
+                    if length > 0 || not <| skipEmptyStrings options then
+                        state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                    state
 
 
 //
