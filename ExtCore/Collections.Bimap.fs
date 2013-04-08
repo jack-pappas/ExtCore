@@ -31,9 +31,10 @@ open ExtCore
 /// </summary>
 /// <typeparam name="Key">The type of the keys.</typeparam>
 /// <typeparam name="Value">The type of the values.</typeparam>
-[<Sealed>]
-[<DebuggerTypeProxy(typedefof<BimapDebuggerProxy<int,int>>)>]
+[<Sealed; CompiledName("FSharpBimap`2")>]
+//[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
+[<DebuggerTypeProxy(typedefof<BimapDebuggerProxy<int,int>>)>]
 type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
     private (map : Map<'Key, 'Value>, inverseMap : Map<'Value, 'Key>) =
     
@@ -250,6 +251,20 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
     static member OfMap map : Bimap<'Key, 'Value> =
         // Preconditions
         checkNonNull "map" map
+
+        /// The inverse map.
+        let inverseMap = Map.inverse map
+
+        // Remove any bindings from the original map which don't exist in the inverse map.
+        let map =
+            (map, map)
+            ||> Map.fold (fun map k v ->
+                match Map.tryFind v inverseMap with
+                | None ->
+                    Map.remove k map
+                | Some k' ->
+                    if k = k' then map
+                    else Map.remove k map)
 
         Bimap (map, Map.inverse map)
 

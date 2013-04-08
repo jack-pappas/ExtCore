@@ -455,7 +455,28 @@ let ofArray () : unit =
 
 [<TestCase>]
 let ofMap () : unit =
-    Assert.Fail ()
+    Map.empty
+    |> Bimap.ofMap
+    |> Bimap.isEmpty
+    |> should be True
+
+    Map.singleton "foo" 5
+    |> Bimap.ofMap
+    |> should equal
+        (Bimap.singleton "foo" 5)
+
+    [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7); |]
+    |> Map.ofArray
+    |> Bimap.ofMap
+    |> should equal
+        (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7); |])
+
+    // Test case for when the map contains multiple keys with the same value.
+    [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("let", 9); |]
+    |> Map.ofArray
+    |> Bimap.ofMap
+    |> should equal
+        (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("car", 6); ("let", 9); |])
 
 [<TestCase>]
 let toSeq () : unit =
@@ -527,26 +548,157 @@ let toArray () : unit =
 
 [<TestCase>]
 let toMap () : unit =
-    Assert.Fail ()
+    Bimap.empty
+    |> Bimap.toMap
+    |> Map.isEmpty
+    |> should be True
+
+    Bimap.singleton "foo" 5
+    |> Bimap.toMap
+    |> should equal
+        (Map.singleton "foo" 5)
+
+    Bimap.empty
+    |> Bimap.add "foo" 5
+    |> Bimap.add "bar" 8
+    |> Bimap.add "baz" 2
+    |> Bimap.add "cdr" 9
+    |> Bimap.add "car" 6
+    |> Bimap.add "bar" 7
+    |> Bimap.toMap
+    |> should equal
+        (Map.ofArray [| ("bar", 8); ("baz", 2); ("car", 6); ("cdr", 9); ("foo", 5); ("bar", 7); |])
 
 [<TestCase>]
 let iter () : unit =
-    Assert.Fail ()
+    do
+        let elements = ResizeArray ()
+
+        Bimap.empty
+        |> Bimap.iter (fun _ v ->
+            elements.Add (System.Char.ToUpper v))
+
+        elements
+        |> ResizeArray.isEmpty
+        |> should be True
+
+    do
+        let elements = ResizeArray ()
+
+        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
+        |> Bimap.ofArray
+        |> Bimap.iter (fun _ v ->
+            elements.Add (System.Char.ToUpper v))
+
+        elements
+        |> ResizeArray.toArray
+        |> should equal
+            [|'D'; 'G'; 'F'; 'B'; 'C'; 'A'|]
 
 [<TestCase>]
 let fold () : unit =
-    Assert.Fail ()
+    do
+        let elements = ResizeArray ()
+
+        (0, Bimap.empty)
+        ||> Bimap.fold (fun counter k v ->
+            elements.Add (counter + k + int v)
+            counter + 1)
+        |> should equal 0
+
+        elements
+        |> ResizeArray.isEmpty
+        |> should be True
+
+    do
+        let elements = ResizeArray ()
+
+        let testMap =
+            [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
+            |> Bimap.ofArray
+
+        (0, testMap)
+        ||> Bimap.fold (fun counter k v ->
+            elements.Add (counter + k + int v)
+            counter + 1)
+        |> should equal (Bimap.count testMap)
+
+        elements
+        |> ResizeArray.toArray
+        |> should equal
+            [| 102; 76; 83; 113; 117; 119; |]
 
 [<TestCase>]
 let foldBack () : unit =
-    Assert.Fail ()
+    do
+        let elements = ResizeArray ()
+
+        (Bimap.empty, 0)
+        ||> Bimap.foldBack (fun counter k v ->
+            elements.Add (counter + k + int v)
+            counter + 1)
+        |> should equal 0
+
+        elements
+        |> ResizeArray.isEmpty
+        |> should be True
+
+    do
+        let elements = ResizeArray ()
+
+        let testMap =
+            [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
+            |> Bimap.ofArray
+
+        (testMap, 0)
+        ||> Bimap.foldBack (fun k v counter ->
+            elements.Add (counter + k + int v)
+            counter + 1)
+        |> should equal (Bimap.count testMap)
+
+        elements
+        |> ResizeArray.toArray
+        |> should equal
+            [| 114; 114; 112; 84; 79; 107; |]
 
 [<TestCase>]
 let filter () : unit =
-    Assert.Fail ()
+    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
+    |> Bimap.ofArray
+    |> Bimap.filter (fun k v ->
+        (k % 2 = 0) && System.Char.IsLower v)
+    |> should equal
+        (Bimap.ofArray [| (2, 'd'); (12, 'b'); (14, 'c'); |])
 
 [<TestCase>]
 let partition () : unit =
-    Assert.Fail ()
+    do
+        let evens, odds =
+            Bimap.empty
+            |> Bimap.partition (fun k v ->
+                (k + int v) % 2 = 0)
+
+        evens
+        |> Bimap.isEmpty
+        |> should be True
+
+        odds
+        |> Bimap.isEmpty
+        |> should be True
+
+    do
+        let evens, odds =
+            [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
+            |> Bimap.ofArray
+            |> Bimap.partition (fun k v ->
+                (k + int v) % 2 = 0)
+
+        evens
+        |> should equal
+            (Bimap.ofArray [| (2, 'd'); (12, 'b'); (17, 'a'); |])
+
+        odds
+        |> should equal
+            (Bimap.ofArray [| (4, 'G'); (11, 'F'); (14, 'c'); |])
 
 
