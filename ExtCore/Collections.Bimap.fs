@@ -220,30 +220,54 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
                 falseBimap.Add (x, y)), (this, empty))
 
     //
-    static member OfList list =
+    static member OfSeq sequence : Bimap<'Key, 'Value> =
+        // Preconditions
+        //checkNonNull "sequence" sequence
+
+        (empty, sequence)
+        ||> Seq.fold (fun bimap (x, y) ->
+            bimap.Add (x, y))
+
+    //
+    static member OfList list : Bimap<'Key, 'Value> =
+        // Preconditions
+        checkNonNull "list" list
+
         (empty, list)
         ||> List.fold (fun bimap (x, y) ->
             bimap.Add (x, y))
 
     //
-    member this.ToList () =
-        this.FoldBack ((fun x y list ->
-            (x, y) :: list), [])
+    static member OfArray array : Bimap<'Key, 'Value> =
+        // Preconditions
+        checkNonNull "array" array
 
-    //
-    static member OfArray array =
         (empty, array)
         ||> Array.fold (fun bimap (x, y) ->
             bimap.Add (x, y))
 
     //
-    member this.ToArray () =
-        let elements = ResizeArray ()
+    static member OfMap map : Bimap<'Key, 'Value> =
+        // Preconditions
+        checkNonNull "map" map
 
-        this.Iterate <| fun x y ->
-            elements.Add (x, y)
+        Bimap (map, Map.inverse map)
 
-        ResizeArray.toArray elements
+    //
+    member this.ToSeq () : seq<'Key * 'Value> =
+        Map.toSeq map
+
+    //
+    member this.ToList () : ('Key * 'Value) list =
+        Map.toList map
+
+    //
+    member this.ToArray () : ('Key * 'Value)[] =
+        Map.toArray map
+
+    //
+    member this.ToMap () : Map<'Key, 'Value> =
+        map
 
     //
     member internal this.LeftKvpArray () : KeyValuePair<'Key, 'Value>[] =
@@ -409,6 +433,62 @@ module Bimap =
         bimap.TryAdd (x, y)
 
     //
+    [<CompiledName("OfSeq")>]
+    let inline ofSeq sequence : Bimap<'Key, 'T> =
+        // Preconditions checked by the member.
+        Bimap<_,_>.OfSeq sequence
+
+    //
+    [<CompiledName("OfList")>]
+    let inline ofList list : Bimap<'Key, 'T> =
+        // Preconditions checked by the member.
+        Bimap<_,_>.OfList list
+
+    //
+    [<CompiledName("OfArray")>]
+    let inline ofArray array : Bimap<'Key, 'T> =
+        // Preconditions checked by the member.
+        Bimap<_,_>.OfArray array
+
+    //
+    [<CompiledName("OfMap")>]
+    let inline ofMap map : Bimap<'Key, 'T> =
+        // Preconditions checked by the member.
+        Bimap<_,_>.OfMap map
+
+    //
+    [<CompiledName("ToSeq")>]
+    let inline toSeq (bimap : Bimap<'Key, 'T>) : seq<'Key * 'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToSeq ()
+
+    //
+    [<CompiledName("ToList")>]
+    let inline toList (bimap : Bimap<'Key, 'T>) : ('Key * 'T) list =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToList ()
+
+    //
+    [<CompiledName("ToArray")>]
+    let inline toArray (bimap : Bimap<'Key, 'T>) : ('Key * 'T)[] =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToArray ()
+
+    //
+    [<CompiledName("ToMap")>]
+    let inline toMap (bimap : Bimap<'Key, 'T>) : Map<'Key, 'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToMap ()
+
+    //
     [<CompiledName("Iter")>]
     let inline iter (action : 'Key -> 'T -> unit) (bimap : Bimap<'Key, 'T>) : unit =
         // Preconditions
@@ -451,34 +531,3 @@ module Bimap =
 
         bimap.Partition predicate
 
-    //
-    [<CompiledName("OfList")>]
-    let inline ofList list : Bimap<'Key, 'T> =
-        // Preconditions
-        checkNonNull "list" list
-
-        Bimap<_,_>.OfList list
-
-    //
-    [<CompiledName("ToList")>]
-    let inline toList (bimap : Bimap<'Key, 'T>) : _ list =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        bimap.ToList ()
-
-    //
-    [<CompiledName("OfArray")>]
-    let inline ofArray array : Bimap<'Key, 'T> =
-        // Preconditions
-        checkNonNull "array" array
-
-        Bimap<_,_>.OfArray array
-
-    //
-    [<CompiledName("ToArray")>]
-    let inline toArray (bimap : Bimap<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "bimap" bimap
-
-        bimap.ToArray ()

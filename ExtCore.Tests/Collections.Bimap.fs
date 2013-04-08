@@ -384,7 +384,28 @@ let tryAdd () : unit =
 
 [<TestCase>]
 let ofSeq () : unit =
-    Assert.Fail ()
+    Seq.empty
+    |> Bimap.ofSeq
+    |> Bimap.isEmpty
+    |> should be True
+
+    [| ("foo", 5) |]
+    |> Seq.ofArray
+    |> Bimap.ofSeq
+    |> should equal
+        (Bimap.singleton "foo" 5)
+
+    [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7); |]
+    |> Seq.ofArray
+    |> Bimap.ofSeq
+    |> should equal (
+        Bimap.empty
+        |> Bimap.add "foo" 5
+        |> Bimap.add "bar" 8
+        |> Bimap.add "baz" 2
+        |> Bimap.add "cdr" 9
+        |> Bimap.add "car" 6
+        |> Bimap.add "bar" 7)
 
 [<TestCase>]
 let ofList () : unit =
@@ -438,7 +459,27 @@ let ofMap () : unit =
 
 [<TestCase>]
 let toSeq () : unit =
-    Assert.Fail ()
+    Bimap.empty
+    |> Bimap.toSeq
+    |> Seq.isEmpty
+    |> should be True
+
+    Bimap.singleton "foo" 5
+    |> Bimap.toSeq
+    |> Seq.toArray
+    |> should equal [| ("foo", 5) |]
+
+    Bimap.empty
+    |> Bimap.add "foo" 5
+    |> Bimap.add "bar" 8
+    |> Bimap.add "baz" 2
+    |> Bimap.add "cdr" 9
+    |> Bimap.add "car" 6
+    |> Bimap.add "bar" 7
+    |> Bimap.toSeq
+    |> Seq.toArray
+    |> should equal
+        [| ("bar", 7); ("baz", 2); ("car", 6); ("cdr", 9); ("foo", 5); |]
 
 [<TestCase>]
 let toList () : unit =
