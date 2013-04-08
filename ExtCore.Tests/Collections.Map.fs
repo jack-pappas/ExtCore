@@ -307,6 +307,10 @@ let join () : unit =
     |> should equal expected
 
 [<TestCase>]
+let inverse () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
 let pivot () : unit =
     let expected =
         Map.empty
