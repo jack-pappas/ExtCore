@@ -792,9 +792,10 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
 
 /// <summary>Immutable maps with integer keys.</summary>
 /// <typeparam name="T">The type of the values stored in the IntMap.</typeparam>
-[<Sealed>]
-[<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
+[<Sealed; CompiledName("FSharpIntMap`1")>]
+//[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
+[<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
 type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
     /// The empty IntMap instance.
     static let empty : IntMap<'T> =

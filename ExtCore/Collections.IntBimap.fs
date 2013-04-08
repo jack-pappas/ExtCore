@@ -28,9 +28,10 @@ open ExtCore
 
 /// <summary>A bi-directional IntMap.</summary>
 /// <typeparam name="Value">The type of the values.</typeparam>
-[<Sealed>]
-[<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
+[<Sealed; CompiledName("FSharpIntBimap`1")>]
+//[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
+[<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
 type IntBimap<'Value when 'Value : comparison>
     private (map : IntMap<'Value>, inverseMap : Map<'Value, int>) =
     //

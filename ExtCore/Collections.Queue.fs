@@ -32,6 +32,9 @@ open ExtCore
 (*   3. (in the absence of insertf's)                *)
 (*      pending = nthtail (front, length rear)       *)
 /// An immutable queue representing a first-in, first-out (FIFO) collection of objects.
+[<Sealed>]
+[<CompiledName("FSharpQueue`1")>]
+//[<StructuredFormatDisplay("")>]
 type Queue<'T> private
     (front : LazyList<'T>, rear : 'T list, pending : LazyList<'T>) =
     /// The empty queue instance.
