@@ -29,11 +29,10 @@ open ExtCore
 /// <summary>A bi-directional IntMap.</summary>
 /// <typeparam name="Value">The type of the values.</typeparam>
 [<Sealed>]
-[<NoEquality; NoComparison>]
 [<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
 type IntBimap<'Value when 'Value : comparison>
-    private (left : IntMap<'Value>, right : Map<'Value, int>) =
+    private (map : IntMap<'Value>, inverseMap : Map<'Value, int>) =
     //
     static let empty = IntBimap (IntMap.Empty, Map.empty)
 
@@ -42,36 +41,68 @@ type IntBimap<'Value when 'Value : comparison>
         with get () = empty
 
     //
+    member private __.ForwardMap
+        with get () = map
+
+    //
+    member private __.InverseMap
+        with get () = inverseMap
+
+    //
+    static member private Equals (left : IntBimap<'Value>, right : IntBimap<'Value>) =
+        left.ForwardMap = right.ForwardMap
+        && left.InverseMap = right.InverseMap
+
+    //
+    static member private Compare (left : IntBimap<'Value>, right : IntBimap<'Value>) =
+        match Unchecked.compare left.ForwardMap right.ForwardMap with
+        | 0 ->
+            compare left.InverseMap right.InverseMap
+        | x -> x
+
+    /// <inherit />
+    override this.Equals other =
+        match other with
+        | :? IntBimap<'Value> as other ->
+            IntBimap<_>.Equals (this, other)
+        | _ ->
+            false
+
+    /// <inherit />
+    override __.GetHashCode () =
+        map.GetHashCode ()
+
+    //
     member __.Count
         with get () =
-            IntMap.count left
+            IntMap.count map
 
     //
     member __.IsEmpty
         with get () =
-            IntMap.isEmpty left
+            IntMap.isEmpty map
 
     //
     member __.ContainsKey key =
-        IntMap.containsKey key left
+        IntMap.containsKey key map
 
     //
     member __.ContainsValue value =
-        Map.containsKey value right
+        Map.containsKey value inverseMap
 
     //
     member __.Find key =
-        IntMap.find key left
+        IntMap.find key map
 
     //
     member __.FindValue key =
-        Map.find key right
+        Map.find key inverseMap
 
     //
     member __.Paired (x, y) =
         // NOTE : We only need to check one of the maps, because all
         // Bimap functions maintain the invariant.
-        match IntMap.tryFind x left with
+        match IntMap.tryFind x map with
         | None ->
             false
         | Some value ->
@@ -80,36 +111,36 @@ type IntBimap<'Value when 'Value : comparison>
     //
     member this.Remove key =
         // Use the key to find its corresponding value.
-        match IntMap.tryFind key left with
+        match IntMap.tryFind key map with
         | None ->
             // The key doesn't exist. No changes are needed, so return this Bimap.
             this
         | Some value ->
             // Remove the values from both maps.
             IntBimap (
-                IntMap.remove key left,
-                Map.remove value right)
+                IntMap.remove key map,
+                Map.remove value inverseMap)
 
     //
     member this.RemoveValue key =
         // Use the key to find its corresponding value.
-        match Map.tryFind key right with
+        match Map.tryFind key inverseMap with
         | None ->
             // The key doesn't exist. No changes are needed, so return this Bimap.
             this
         | Some value ->
             // Remove the values from both maps.
             IntBimap (
-                IntMap.remove value left,
-                Map.remove key right)
+                IntMap.remove value map,
+                Map.remove key inverseMap)
 
     //
     member __.TryFind key =
-        IntMap.tryFind key left
+        IntMap.tryFind key map
 
     //
     member __.TryFindValue key =
-        Map.tryFind key right
+        Map.tryFind key inverseMap
 
     //
     static member Singleton (x, y) : IntBimap<'Value> =
@@ -134,11 +165,11 @@ type IntBimap<'Value when 'Value : comparison>
         // Check that neither value is already bound in the Bimap
         // before adding them; if either already belongs to the map
         // return the original Bimap.
-        match IntMap.tryFind x left, Map.tryFind y right with
+        match IntMap.tryFind x map, Map.tryFind y inverseMap with
         | None, None ->
             IntBimap (
-                IntMap.add x y left,
-                Map.add y x right)
+                IntMap.add x y map,
+                Map.add y x inverseMap)
 
         | _, _ ->
             // NOTE : We also return the original map when *both* values already
@@ -148,15 +179,15 @@ type IntBimap<'Value when 'Value : comparison>
 
     //
     member __.Iterate (action : int -> 'Value -> unit) : unit =
-        IntMap.iter action left
+        IntMap.iter action map
 
     //
     member __.Fold (folder : 'State -> int -> 'Value -> 'State, state : 'State) : 'State =
-        IntMap.fold folder state left
+        IntMap.fold folder state map
 
     //
     member __.FoldBack (folder : int -> 'Value -> 'State -> 'State, state : 'State) : 'State =
-        IntMap.foldBack folder left state
+        IntMap.foldBack folder map state
 
     //
     member this.Filter (predicate : int -> 'Value -> bool) =
@@ -227,6 +258,22 @@ type IntBimap<'Value when 'Value : comparison>
                 KeyValuePair (y, x))
 
         elements.ToArray ()
+
+    interface System.IComparable with
+        member this.CompareTo other =
+            match other with
+            | :? IntBimap<'Value> as other ->
+                IntBimap<_>.Compare (this, other)
+            | _ ->
+                invalidArg "other" "The object cannot be compared to IntBimap`1."
+
+    interface System.IEquatable<IntBimap<'Value>> with
+        member this.Equals other =
+            IntBimap<_>.Equals (this, other)
+
+    interface System.IComparable<IntBimap<'Value>> with
+        member this.CompareTo other =
+            IntBimap<_>.Compare (this, other)
 
 //
 and [<Sealed>]

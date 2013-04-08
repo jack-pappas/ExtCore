@@ -33,7 +33,7 @@ open BitOps
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntMap (and TagMap).
 [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
-type private PatriciaMap<'T> =
+type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> =
     | Empty
     // Key * Value
     | Lf of uint32 * 'T
@@ -795,7 +795,7 @@ type private PatriciaMap<'T> =
 [<Sealed>]
 [<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
-type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
+type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
     /// The empty IntMap instance.
     static let empty : IntMap<'T> =
         IntMap Empty
@@ -807,6 +807,34 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
     /// The internal representation of the IntMap.
     member private __.Trie
         with get () = trie
+
+    //
+    static member private Equals (left : IntMap<'T>, right : IntMap<'T>) =
+        Unchecked.equals left.Trie right.Trie
+
+    //
+    static member private Compare (left : IntMap<'T>, right : IntMap<'T>) =
+        Unchecked.compare left.Trie right.Trie
+
+    /// <inherit />
+    override __.Equals other =
+        match other with
+        | :? IntMap<'T> as other ->
+            Unchecked.equals trie other.Trie
+        | _ ->
+            false
+
+    /// <inherit />
+    override __.GetHashCode () =
+        Unchecked.hash trie
+
+    //
+    member __.Item
+        with get key =
+            match PatriciaMap.TryFind (key, trie) with
+            | Some v -> v
+            | None ->
+                keyNotFound "The map does not contain a binding for the specified key."
 
     /// The number of bindings in the IntMap.
     member __.Count
@@ -1078,6 +1106,16 @@ type IntMap< [<EqualityConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
             | Choice2Of2 value ->
                 map1,
                 map2.Add (key, value)), (IntMap.Empty, IntMap.Empty))
+
+    interface System.IEquatable<IntMap<'T>> with
+        /// <inherit />
+        member this.Equals other =
+            IntMap<_>.Equals (this, other)
+
+    interface System.IComparable<IntMap<'T>> with
+        /// <inherit />
+        member this.CompareTo other =
+            IntMap<_>.Compare (this, other)
 
     interface System.Collections.IEnumerable with
         /// <inherit />

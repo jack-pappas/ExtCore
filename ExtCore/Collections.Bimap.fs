@@ -32,7 +32,6 @@ open ExtCore
 /// <typeparam name="Key">The type of the keys.</typeparam>
 /// <typeparam name="Value">The type of the values.</typeparam>
 [<Sealed>]
-[<NoEquality; NoComparison>]
 [<DebuggerTypeProxy(typedefof<BimapDebuggerProxy<int,int>>)>]
 [<DebuggerDisplay("Count = {Count}")>]
 type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
@@ -44,6 +43,40 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
     /// The empty Bimap.
     static member Empty
         with get () = empty
+
+    //
+    member private __.ForwardMap
+        with get () = map
+
+    //
+    member private __.InverseMap
+        with get () = inverseMap
+
+    //
+    static member private Equals
+        (left : Bimap<'Key, 'Value>, right : Bimap<'Key, 'Value>) =
+        left.ForwardMap = right.ForwardMap
+        && left.InverseMap = right.InverseMap
+
+    //
+    static member private Compare
+        (left : Bimap<'Key, 'Value>, right : Bimap<'Key, 'Value>) =
+        match compare left.ForwardMap right.ForwardMap with
+        | 0 ->
+            compare left.InverseMap right.InverseMap
+        | x -> x
+
+    /// <inherit />
+    override this.Equals other =
+        match other with
+        | :? Bimap<'Key, 'Value> as other ->
+            Bimap<_,_>.Equals (this, other)
+        | _ ->
+            false
+
+    /// <inherit />
+    override __.GetHashCode () =
+        map.GetHashCode ()
 
     /// The number of items in the Bimap.
     member __.Count
@@ -231,6 +264,15 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
                 KeyValuePair (y, x))
 
         elements.ToArray ()
+
+    interface System.IEquatable<Bimap<'Key, 'Value>> with
+        member this.Equals other =
+            Bimap<_,_>.Equals (this, other)
+
+    interface System.IComparable<Bimap<'Key, 'Value>> with
+        member this.CompareTo other =
+            Bimap<_,_>.Compare (this, other)
+
 
 /// Internal. Debugger proxy type for Bimap.
 and [<Sealed>]
