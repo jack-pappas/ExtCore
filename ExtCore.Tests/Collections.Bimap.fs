@@ -23,18 +23,43 @@ open NUnit.Framework
 open FsUnit
 //open FsCheck
 
+// TODO : Implement tests for equality/comparison.
 
 [<TestCase>]
 let singleton () : unit =
-    Assert.Fail ()
+    Bimap.singleton "Hello" "World!"
+    |> should equal (
+        Bimap.empty
+        |> Bimap.add "Hello" "World!")
 
 [<TestCase>]
 let isEmpty () : unit =
-    Assert.Fail ()
+    Bimap.empty
+    |> Bimap.isEmpty
+    |> should be True
+
+    Bimap.singleton 5 'f'
+    |> Bimap.isEmpty
+    |> should be False
 
 [<TestCase>]
 let count () : unit =
-    Assert.Fail ()
+    Bimap.empty
+    |> Bimap.count
+    |> should equal 0
+
+    Bimap.singleton 'F' 123
+    |> Bimap.count
+    |> should equal 1
+
+    Bimap.empty
+    |> Bimap.add "foo" 5
+    |> Bimap.add "bar" 8
+    |> Bimap.add "baz" 2
+    |> Bimap.add "cdr" 9
+    |> Bimap.add "car" 6
+    |> Bimap.count
+    |> should equal 5
 
 [<TestCase>]
 let containsKey () : unit =
