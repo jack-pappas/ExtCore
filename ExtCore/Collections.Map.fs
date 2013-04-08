@@ -272,6 +272,22 @@ let join (joiner : 'Key -> 'T -> 'T -> 'T) (map1 : Map<'Key, 'T>) (map2 : Map<'K
             // Add the joined value to the map.
             Map.add key joinedValue joined)
 
+/// Creates a new Map by inverting the given Map. The keys are the values of the original
+/// Map; the value associated with each key (original value) is the greatest-valued original
+/// key associated with the original value.
+[<CompiledName("Inverse")>]
+let inverse (map : Map<'Key, 'T>) : Map<'T, 'Key> =
+    // Preconditions
+    checkNonNull "map" map
+
+    // OPTIMIZATION : If the input map is empty return immediately.
+    if Map.isEmpty map then
+        Map.empty
+    else
+        (Map.empty, map)
+        ||> Map.fold (fun inverseMap key value ->
+            Map.add value key inverseMap)
+
 /// Creates a new Map by inverting the given Map. The keys are the values of the
 /// original Map; the corresponding value is a non-empty set containing the original keys
 /// which pointed to the value.
