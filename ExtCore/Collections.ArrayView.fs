@@ -26,24 +26,25 @@ open OptimizedClosures
 open ExtCore
 
 
-//
+/// Returns the underlying array for the given ArrayView.
 [<CompiledName("Array")>]
-let inline array (view : ArrayView<'T>) =
+let inline array (view : ArrayView<'T>) : 'T[] =
     view.Array
 
-//
+/// Returns the number of elements in the given ArrayView.
+/// You can also use the property view.Count.
 [<CompiledName("Count")>]
-let inline count (view : ArrayView<'T>) =
+let inline count (view : ArrayView<'T>) : int =
     view.Count
 
-//
+/// Returns the index in the underlying array at which the ArrayView begins.
 [<CompiledName("Offset")>]
-let inline offset (view : ArrayView<'T>) =
+let inline offset (view : ArrayView<'T>) : int =
     view.Offset
 
-//
+/// Is the ArrayView empty?
 [<CompiledName("IsEmpty")>]
-let inline isEmpty (view : ArrayView<'T>) =
+let inline isEmpty (view : ArrayView<'T>) : bool =
     view.Count = 0
 
 /// Creates an ArrayView spanning the entire length of an array.
@@ -57,17 +58,17 @@ let inline create (array : 'T[]) offset count : ArrayView<'T> =
 
 /// Gets an element of an ArrayView<'T>.
 [<CompiledName("Get")>]
-let inline get (view : ArrayView<'T>) index =
+let inline get (view : ArrayView<'T>) index : 'T =
     view.[index]
 
 /// Sets an element of an ArrayView<'T>.
 [<CompiledName("Set")>]
-let inline set (view : ArrayView<'T>) index value =
+let inline set (view : ArrayView<'T>) index value : unit =
     view.[index] <- value
 
 /// Gets the first element in an ArrayView<'T>.
 [<CompiledName("First")>]
-let inline first (view : ArrayView<'T>) =
+let inline first (view : ArrayView<'T>) : 'T =
     if isEmpty view then
         invalidOp "Cannot retrieve the first element of an empty ArrayView<'T>."
     else view.Array.[view.Offset]
@@ -75,26 +76,26 @@ let inline first (view : ArrayView<'T>) =
 /// Gets the index of the last element in an ArrayView<'T>, within the original array.
 /// NOTE : This implemention is meant for internal use only, and does NOT perform bounds checking.
 [<CompiledName("LastIndexUnsafe")>]
-let inline private lastIndexUnsafe (view : ArrayView<'T>) =
+let inline private lastIndexUnsafe (view : ArrayView<'T>) : int =
     view.Offset + (view.Count - 1)
 
 /// Gets the index of the last element in an ArrayView<'T>, within the original array.
 [<CompiledName("LastIndex")>]
-let inline lastIndex (view : ArrayView<'T>) =
+let inline lastIndex (view : ArrayView<'T>) : int =
     if isEmpty view then
         invalidOp "The ArrayView<'T> is empty."
     else lastIndexUnsafe view
 
 /// Gets the last element in an ArrayView<'T>.
 [<CompiledName("Last")>]
-let inline last (view : ArrayView<'T>) =
+let inline last (view : ArrayView<'T>) : 'T =
     if isEmpty view then
         invalidOp "Cannot retrieve the last element of an empty ArrayView<'T>."
     else view.Array.[lastIndexUnsafe view]
 
 /// Builds a new array from the elements within the ArrayView<'T>.
 [<CompiledName("ToArray")>]
-let toArray (view : ArrayView<'T>) =
+let toArray (view : ArrayView<'T>) : 'T[] =
     if isEmpty view then
         Array.empty
     else
@@ -102,7 +103,7 @@ let toArray (view : ArrayView<'T>) =
 
 //
 [<CompiledName("MapToArray")>]
-let mapToArray (mapping : 'T -> 'U) (view : ArrayView<'T>) =
+let mapToArray (mapping : 'T -> 'U) (view : ArrayView<'T>) : 'U[] =
     if isEmpty view then
         Array.empty
     else
@@ -154,7 +155,7 @@ let pick picker (view : ArrayView<'T>) : 'U =
 
 //
 [<CompiledName("TryFind")>]
-let tryFind predicate (view : ArrayView<'T>) =
+let tryFind predicate (view : ArrayView<'T>) : 'T option =
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
     let array = view.Array
     /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
@@ -175,7 +176,7 @@ let tryFind predicate (view : ArrayView<'T>) =
 
 //
 [<CompiledName("Find")>]
-let find predicate (view : ArrayView<'T>) =
+let find predicate (view : ArrayView<'T>) : 'T =
     // Call tryFind to find the value; if no match is found, raise an exception.
     match tryFind predicate view with
     | Some element ->
@@ -187,7 +188,7 @@ let find predicate (view : ArrayView<'T>) =
 
 //
 [<CompiledName("TryFindIndex")>]
-let tryFindIndex predicate (view : ArrayView<'T>) =
+let tryFindIndex predicate (view : ArrayView<'T>) : int option =
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
     let array = view.Array
     /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
@@ -207,7 +208,7 @@ let tryFindIndex predicate (view : ArrayView<'T>) =
 
 //
 [<CompiledName("FindIndex")>]
-let findIndex predicate (view : ArrayView<'T>) =
+let findIndex predicate (view : ArrayView<'T>) : int =
     // Call tryFindIndex to find the value; if no match is found, raise an exception.
     match tryFindIndex predicate view with
     | Some index ->
@@ -219,7 +220,7 @@ let findIndex predicate (view : ArrayView<'T>) =
 
 //
 [<CompiledName("Iter")>]
-let iter action (view : ArrayView<'T>) =
+let iter action (view : ArrayView<'T>) : unit =
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
     let array = view.Array
     /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
@@ -230,7 +231,7 @@ let iter action (view : ArrayView<'T>) =
 
 //
 [<CompiledName("Exists")>]
-let exists predicate (view : ArrayView<'T>) =
+let exists predicate (view : ArrayView<'T>) : bool =
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
     let array = view.Array
     /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
@@ -248,7 +249,7 @@ let exists predicate (view : ArrayView<'T>) =
 
 //
 [<CompiledName("Forall")>]
-let forall predicate (view : ArrayView<'T>) =
+let forall predicate (view : ArrayView<'T>) : bool =
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
     let array = view.Array
     /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
@@ -266,7 +267,7 @@ let forall predicate (view : ArrayView<'T>) =
 
 //
 [<CompiledName("Fold")>]
-let fold folder (state : 'State) (view : ArrayView<'T>) =
+let fold folder (state : 'State) (view : ArrayView<'T>) : 'State =
     let folder = FSharpFunc<_,_,_>.Adapt folder
 
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
@@ -283,7 +284,7 @@ let fold folder (state : 'State) (view : ArrayView<'T>) =
 
 //
 [<CompiledName("FoldBack")>]
-let foldBack folder (view : ArrayView<'T>) (state : 'State) =
+let foldBack folder (view : ArrayView<'T>) (state : 'State) : 'State =
     let folder = FSharpFunc<_,_,_>.Adapt folder
 
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
@@ -300,7 +301,7 @@ let foldBack folder (view : ArrayView<'T>) (state : 'State) =
 
 //
 [<CompiledName("Reduce")>]
-let reduce (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) =
+let reduce (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) : 'T =
     // Preconditions
     if isEmpty view then
         invalidArg "view" "Cannot reduce an empty ArrayView<'T>."
@@ -312,7 +313,7 @@ let reduce (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) =
 
 //
 [<CompiledName("ReduceBack")>]
-let reduceBack (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) =
+let reduceBack (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) : 'T =
     // Preconditions
     if isEmpty view then
         invalidArg "view" "Cannot reduce an empty ArrayView<'T>."
@@ -324,7 +325,7 @@ let reduceBack (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) =
 
 //
 [<CompiledName("ToList")>]
-let toList (segment : ArrayView<'T>) =
+let toList (segment : ArrayView<'T>) : 'T list =
     // OPTIMIZATION : If the segment is empty return immediately.
     if isEmpty segment then []
     else
@@ -336,7 +337,7 @@ let toList (segment : ArrayView<'T>) =
 
 //
 [<CompiledName("Minimum")>]
-let min<'T when 'T : comparison> (segment : ArrayView<'T>) =
+let min<'T when 'T : comparison> (segment : ArrayView<'T>) : 'T =
     // Preconditions
     if isEmpty segment then
         invalidArg "segment" "Cannot compute the minimum element of an empty ArrayView<'T>."
@@ -345,7 +346,7 @@ let min<'T when 'T : comparison> (segment : ArrayView<'T>) =
 
 //
 [<CompiledName("Maximum")>]
-let max<'T when 'T : comparison> (segment : ArrayView<'T>) =
+let max<'T when 'T : comparison> (segment : ArrayView<'T>) : 'T =
     // Preconditions
     if isEmpty segment then
         invalidArg "segment" "Cannot compute the maximum element of an empty ArrayView<'T>."
@@ -354,7 +355,7 @@ let max<'T when 'T : comparison> (segment : ArrayView<'T>) =
 
 //
 [<CompiledName("Sum")>]
-let inline sum (segment : ArrayView<'T>) =
+let inline sum (segment : ArrayView<'T>) : 'T =
     // Preconditions
     if isEmpty segment then
         invalidArg "segment" "Cannot compute the sum of an empty ArrayView<'T>."
