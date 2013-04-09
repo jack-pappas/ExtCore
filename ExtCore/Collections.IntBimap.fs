@@ -744,12 +744,42 @@ module TagBimap =
         (retype trueMap), (retype falseMap)
 
     //
+    [<CompiledName("OfSeq")>]
+    let inline ofSeq (sequence : seq<int<'Tag> * 'T>) : TagBimap<'Tag, 'T> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        IntBimap<_>.OfSeq (retype sequence)
+        |> retype
+
+    //
     [<CompiledName("OfList")>]
     let inline ofList (list : (int<'Tag> * 'T) list) : TagBimap<'Tag, 'T> =
         // Preconditions
         checkNonNull "list" list
 
         IntBimap<_>.OfList (retype list)
+        |> retype
+
+    //
+    [<CompiledName("OfArray")>]
+    let inline ofArray (array : (int<'Tag> * 'T)[]) : TagBimap<'Tag, 'T> =
+        // Preconditions
+        checkNonNull "array" array
+
+        IntBimap<_>.OfArray (retype array)
+        |> retype
+
+    //
+    [<CompiledName("ToSeq")>]
+    let inline toList (bimap : TagBimap<'Tag, 'T>) : seq<int<'Tag> * 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToSeq ()
         |> retype
 
     //
@@ -762,15 +792,6 @@ module TagBimap =
         checkNonNull "bimap" bimap
 
         bimap.ToList ()
-        |> retype
-
-    //
-    [<CompiledName("OfArray")>]
-    let inline ofArray (array : (int<'Tag> * 'T)[]) : TagBimap<'Tag, 'T> =
-        // Preconditions
-        checkNonNull "array" array
-
-        IntBimap<_>.OfArray (retype array)
         |> retype
 
     //
