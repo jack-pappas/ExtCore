@@ -27,7 +27,7 @@ module AdditionalOperators =
 
     /// <summary>Immutable array type with constant-time access to elements.</summary>
     /// <remarks>Type abbreviation for System.Collections.ObjectModel.ReadOnlyCollection&lt;T&gt;.</remarks>
-    type Vector<'T> = System.Collections.ObjectModel.ReadOnlyCollection<'T>
+    type vector<'T> = System.Collections.ObjectModel.ReadOnlyCollection<'T>
 
     /// Type abbreviation for System.Collections.Generic.Queue.
     type ResizeQueue<'T> = System.Collections.Generic.Queue<'T>

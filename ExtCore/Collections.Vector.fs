@@ -26,117 +26,178 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Given an element, creates an array containing just that element.
-[<CompiledName("Singleton")>]
-let inline singleton (value : 'T) : Vector<'T> =
-    Vector [| value |]
+//
+[<CompiledName("OfArray")>]
+let inline ofArray (array : 'T[]) : vector<'T> =
+    System.Array.AsReadOnly array
 
-/// Builds a vector that contains the elements of the set in order.
-[<CompiledName("OfSet")>]
-let inline ofSet (set : Set<'T>) : Vector<'T> =
-    Vector (Set.toArray set)
-
-/// Builds a set that contains the same elements as the given vector.
-[<CompiledName("ToSet")>]
-let toSet (vector : Vector<'T>) : Set<'T> =
+//
+[<CompiledName("Length")>]
+let inline length (vector : vector<'T>) : int =
     // Preconditions
     checkNonNull "vector" vector
 
-    notImpl "Vector.toSet"
-    //Set.ofArray array
+    vector.Count
 
 //
-[<CompiledName("OfArray")>]
-let inline ofArray (array : 'T[]) : Vector<'T> =
-    System.Array.AsReadOnly array
+[<CompiledName("IsEmpty")>]
+let inline isEmpty (vector : vector<'T>) : bool =
+    // Preconditions
+    checkNonNull "vector" vector
+    
+    vector.Count = 0
+
+//
+[<CompiledName("Map")>]
+let map (mapping : 'T -> 'U) (vector : vector<'T>) : vector<'U> =
+    // Preconditions
+    checkNonNull "vector" vector
+
+    let len = vector.Count
+    let results = Array.zeroCreate len
+
+    for i = 0 to len - 1 do
+        results.[i] <- mapping vector.[i]
+
+    // Return the results as a vector.
+    ofArray results
+
+// average
+// averageBy
+// blit
+// collect
+// concat
+// copy
+// create
+// tryPick
+// pick
+// choose
+// empty
+// exists
+// exists2
+// filter
+// find
+// findIndex
+// forall
+// forall2
+// fold
+// foldBack
+// fold2
+// foldBack2
+// get
+// init
+// iter
+// iter2
+// iteri
+// iteri2
+// map
+// map2
+// mapi
+// mapi2
+// max
+// maxBy
+// min
+// minBy
+// ofList
+// ofSeq
+// partition
+// permute
+// reduce
+// reduceBack
+// rev
+// scan
+// scanBack
+// sub
+// sort
+// sortBy
+// sortWith
+// sum
+// sumBy
+// toList
+// toSeq
+// tryFind
+// tryFindIndex
+// unzip
+// unzip3
+// zip
+// zip3
+
+
+/// Given an element, creates an array containing just that element.
+[<CompiledName("Singleton")>]
+let inline singleton (value : 'T) : vector<'T> =
+    vector [| value |]
+
+/// Builds a vector that contains the elements of the set in order.
+[<CompiledName("OfSet")>]
+let inline ofSet (set : Set<'T>) : vector<'T> =
+    vector (Set.toArray set)
+
+/// Builds a set that contains the same elements as the given vector.
+[<CompiledName("ToSet")>]
+let toSet (vector : vector<'T>) : Set<'T> =
+    // Preconditions
+    checkNonNull "vector" vector
+
+    notImpl "vector.toSet"
+    //Set.ofArray array
 
 /// Applies a function to each element of the array, returning a new array whose elements are
 /// tuples of the original element and the function result for that element.
 [<CompiledName("ProjectValues")>]
-let projectValues (projection : 'Key -> 'U) (array : 'Key[]) =
+let projectValues (projection : 'Key -> 'T) (vector : vector<'Key>) : vector<'Key * 'T> =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
-    array |> Array.map (fun x -> x, projection x)
+    vector |> map (fun x -> x, projection x)
 
 /// Applies a function to each element of the array, returning a new array whose elements are
 /// tuples of the original element and the function result for that element.
 [<CompiledName("ProjectKeys")>]
-let projectKeys (projection : 'T -> 'Key) (array : 'T[]) =
+let projectKeys (projection : 'T -> 'Key) (vector : vector<'T>) : vector<'Key * 'T> =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
-    array |> Array.map (fun x -> projection x, x)
+    vector |> map (fun x -> projection x, x)
 
 /// Returns the first element in the array.
 [<CompiledName("First")>]
-let inline first (array : 'T[]) =
-    if Array.isEmpty array then
-        invalidOp "Cannot retrieve the first element of an empty array."
-    else array.[0]
+let inline first (vector : vector<'T>) : 'T =
+    if isEmpty vector then
+        invalidOp "Cannot retrieve the first element of an empty vector."
+    else vector.[0]
 
 /// Returns the index of the last element in the array.
 [<CompiledName("LastIndex")>]
-let inline lastIndex (array : 'T[]) =
-    if Array.isEmpty array then
+let inline lastIndex (vector : vector<'T>) : int =
+    if isEmpty vector then
         invalidOp "The array is empty."
-    else array.Length - 1
+    else vector.Count - 1
 
 /// Returns the last element in the array.
 [<CompiledName("Last")>]
-let inline last (array : 'T[]) =
-    if Array.isEmpty array then
-        invalidOp "Cannot retrieve the last element of an empty array."
-    else array.[array.Length - 1]
+let inline last (vector : vector<'T>) : 'T =
+    if isEmpty vector then
+        invalidOp "Cannot retrieve the last element of an empty vector."
+    else vector.[vector.Count - 1]
 
 /// Determines if an array contains a specified value.
 [<CompiledName("Contains")>]
-let contains value (array : 'T[]) : bool =
+let contains value (vector : vector<'T>) : bool =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
-    System.Array.FindIndex (
-        array,
-        System.Predicate ((=) value)) <> -1
+    vector.IndexOf value <> -1
 
-/// Expands an array by creating a copy of it which has
-/// the specified number of empty elements appended to it.
-[<CompiledName("ExpandRight")>]
-let expandRight count (array : 'T[]) : 'T[] =
-    // Preconditions
-    checkNonNull "array" array
-    if count < 0 then
-        invalidArg "count" "The number of elements to expand the array by is negative."
-
-    // Create the new "expanded" array. Copy the elements from the original array
-    // into the "left" side of the new array, then return the expanded array.
-    let expandedArr = Array.zeroCreate (array.Length + count)        
-    Array.blit array 0 expandedArr 0 array.Length
-    expandedArr
-
-/// Expands an array by creating a copy of it which has
-/// the specified number of empty elements prepended to it.
-[<CompiledName("ExpandLeft")>]
-let expandLeft count (array : 'T[]) : 'T[] =
-    // Preconditions
-    checkNonNull "array" array
-    if count < 0 then
-        invalidArg "count" "The number of elements to expand the array by is negative."
-
-    // Create the new "expanded" array. Copy the elements from the original array
-    // into the "right" side of the new array, then return the expanded array.
-    let expandedArr = Array.zeroCreate (array.Length + count)
-    Array.blit array 0 expandedArr count array.Length
-    expandedArr
-
+(*
 /// <summary>
 /// Returns a new collection containing the indices of the elements for which
 /// the given predicate returns &quot;true&quot;.
 /// </summary>
 [<CompiledName("FindIndices")>]
-let findIndices (predicate : 'T -> bool) array : int[] =
+let findIndices (predicate : 'T -> bool) (vector : vector<'T>) : int[] =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
     let indices = ResizeArray ()
     array |> Array.iteri (fun idx el ->
@@ -150,9 +211,9 @@ let findIndices (predicate : 'T -> bool) array : int[] =
 /// of the element being transformed.
 /// </summary>
 [<CompiledName("ChooseIndexed")>]
-let choosei (chooser : int -> 'T -> 'U option) array : 'U[] =
+let choosei (chooser : int -> 'T -> 'U option) (vector : vector<'T>) : vector<'U> =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
     let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
@@ -173,7 +234,7 @@ let choosei (chooser : int -> 'T -> 'U option) array : 'U[] =
 /// returns <c>Some(x)</c>.
 /// </summary>
 [<CompiledName("Choose2")>]
-let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
+let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : vector<'U> =
     // Preconditions
     checkNonNull "array1" array1
     checkNonNull "array2" array2
@@ -196,9 +257,9 @@ let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
 /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
 /// The integer index passed to the function indicates the array index of the element being transformed.
 [<CompiledName("FoldIndexed")>]
-let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (array : 'T[]) =
+let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (vector : vector<'T>) =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
     let folder = FSharpFunc<_,_,_,_>.Adapt folder
     let mutable state = state
@@ -210,9 +271,9 @@ let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (array : 'T[
 /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
 /// The integer index passed to the function indicates the array index of the element being transformed.
 [<CompiledName("FoldBackIndexed")>]
-let foldiBack (folder : int -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
+let foldiBack (folder : int -> 'T -> 'State -> 'State) (vector : vector<'T>) (state : 'State) : 'State =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
     let folder = FSharpFunc<_,_,_,_>.Adapt folder
         
@@ -225,9 +286,9 @@ let foldiBack (folder : int -> 'T -> 'State -> 'State) (array : 'T[]) (state : '
 /// to each element in the array, and whenever it returns true, that element will
 /// be the first element in one of the "subarrays".
 [<CompiledName("Split")>]
-let split (predicate : 'T -> bool) (array : 'T[]) =
+let split (predicate : 'T -> bool) (vector : vector<'T>) =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
     let segments = ResizeArray<_> ()
     let mutable currentSegment = ResizeArray<_> ()
@@ -250,9 +311,9 @@ let split (predicate : 'T -> bool) (array : 'T[]) =
 /// to each element of the array and starting a new view at each element where
 /// the predicate returns true.
 [<CompiledName("Segment")>]
-let segment (predicate : 'T -> bool) (array : 'T[]) : ArrayView<'T>[] =
+let segment (predicate : 'T -> bool) (vector : vector<'T>) : ArrayView<'T>[] =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
         
     let segments = ResizeArray<_> ()
 
@@ -285,7 +346,7 @@ let segment (predicate : 'T -> bool) (array : 'T[]) : ArrayView<'T>[] =
 /// to the each pair of array elements and starting a new view whenever the
 /// predicate returns true.
 [<CompiledName("Segment2")>]
-let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[])
+let segment2 (predicate : 'T -> 'U -> bool) (array1 : vector<'T>) (array2 : vector<'U>)
     : ArrayView<'T>[] * ArrayView<'U>[] =
     // Preconditions
     checkNonNull "array1" array1
@@ -331,9 +392,9 @@ let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[])
 /// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
 /// Array.partition, but it allows the returned collections to have different types.
 [<CompiledName("MapPartition")>]
-let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
+let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) vector : 'U1[] * 'U2[] =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
     
     // OPTIMIZATION : If the input array is empty, immediately return empty results.
     if Array.isEmpty array then
@@ -361,9 +422,9 @@ let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
 /// function returns Choice1Of3, Choice2Of3, or Choice3Of3, respectively. This function is similar
 /// to Array.partition, but it allows the returned collections to have different types.
 [<CompiledName("MapPartition")>]
-let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U2[] * 'U3[] =
+let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) vector : 'U1[] * 'U2[] * 'U3[] =
     // Preconditions
-    checkNonNull "array" array
+    checkNonNull "vector" vector
 
     // OPTIMIZATION : If the input array is empty, immediately return empty results.
     if Array.isEmpty array then
@@ -394,10 +455,10 @@ let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U
 /// Applies a mapping function to each element of the array, then repeatedly applies
 /// a reduction function to each pair of results until one (1) result value remains.
 [<CompiledName("MapReduce")>]
-let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
+let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (vector : 'Key[]) : 'T =
     // Preconditions
     checkNonNull "mapReduction" mapReduction
-    checkNonNull "array" array
+    checkNonNull "vector" vector
     if Array.isEmpty array then
         invalidArg "array" "The array is empty."
 
@@ -414,3 +475,4 @@ let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
 
     // Return the final state.
     state
+*)
