@@ -130,27 +130,135 @@ module Substring =
 
     [<TestCase>]
     let iter () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for empty substring.
+        do
+            let elements = ResizeArray ()
+
+            Substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
+            |> Substring.iter (System.Char.ToUpper >> elements.Add)
+
+            elements.ToArray ()
+            |> Array.isEmpty
+            |> should be True
+
+        // Test case for "normal" usage of this function.
+        do
+            let elements = ResizeArray ()
+
+            Substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
+            |> Substring.iter (System.Char.ToUpper >> elements.Add)
+
+            elements.ToArray ()
+            |> should equal
+                [| 'Q'; 'U'; 'I'; 'C'; 'K'; ' '; 'B'; 'R'; 'O'; 'W'; 'N'; ' '; 'F'; 'O'; 'X'; |]
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for empty substring.
+        do
+            let elements = ResizeArray ()
+
+            Substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
+            |> Substring.iteri (fun idx c ->
+                elements.Add (
+                    if idx % 2 = 0 then System.Char.ToUpper c else c))
+
+            elements.ToArray ()
+            |> Array.isEmpty
+            |> should be True
+
+        // Test case for "normal" usage of this function.
+        do
+            let elements = ResizeArray ()
+
+            Substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
+            |> Substring.iteri (fun idx c ->
+                elements.Add (
+                    if idx % 2 = 0 then System.Char.ToUpper c else c))
+
+            elements.ToArray ()
+            |> should equal
+                [| 'Q'; 'u'; 'I'; 'c'; 'K'; ' '; 'B'; 'r'; 'O'; 'w'; 'N'; ' '; 'F'; 'o'; 'X'; |]
 
     [<TestCase>]
     let iterBack () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for empty substring.
+        do
+            let elements = ResizeArray ()
+
+            Substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
+            |> Substring.iterBack (System.Char.ToUpper >> elements.Add)
+
+            elements.ToArray ()
+            |> Array.isEmpty
+            |> should be True
+
+        // Test case for "normal" usage of this function.
+        do
+            let elements = ResizeArray ()
+
+            Substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
+            |> Substring.iterBack (System.Char.ToUpper >> elements.Add)
+
+            elements.ToArray ()
+            |> should equal
+                [| 'X'; 'O'; 'F'; ' '; 'N'; 'W'; 'O'; 'R'; 'B'; ' '; 'K'; 'C'; 'I'; 'U'; 'Q'; |]
 
     [<TestCase>]
     let fold () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for empty substring.
+        do
+            ((0L, 0), Substring ("The quick brown fox jumps over the lazy dog.", 4, 0))
+            ||> Substring.fold (fun (checksum, index) c ->
+                (checksum + int64 index) * int64 c,
+                index + 1)
+            |> fst  // Discard the index
+            |> should equal 0L
+
+        // Test case for "normal" usage of this function.
+        do
+            ((0L, 0), Substring ("The quick brown fox jumps over the lazy dog.", 4, 15))
+            ||> Substring.fold (fun (checksum, index) c ->
+                (checksum + int64 index) * int64 c,
+                index + 1)
+            |> fst  // Discard the index
+            |> should equal 8117010307721961272L
 
     [<TestCase>]
     let foldi () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for empty substring.
+        do
+            (0L, Substring ("The quick brown fox jumps over the lazy dog.", 4, 0))
+            ||> Substring.foldi (fun checksum index c ->
+                (checksum + int64 index) * int64 c)
+            |> should equal 0L
+
+        // Test case for "normal" usage of this function.
+        do
+            (0L, Substring ("The quick brown fox jumps over the lazy dog.", 4, 15))
+            ||> Substring.foldi (fun checksum index c ->
+                (checksum + int64 index) * int64 c)
+            |> should equal 8117010307721961272L
 
     [<TestCase>]
     let foldBack () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for empty substring.
+        do
+            (Substring ("The quick brown fox jumps over the lazy dog.", 4, 0), (0L, 0))
+            ||> Substring.foldBack (fun c (checksum, index) ->
+                (checksum + int64 index) * int64 c,
+                index + 1)
+            |> fst  // Discard the index
+            |> should equal 0L
+
+        // Test case for "normal" usage of this function.
+        do
+            (Substring ("The quick brown fox jumps over the lazy dog.", 4, 15), (0L, 0))
+            ||> Substring.foldBack (fun c (checksum, index) ->
+                (checksum + int64 index) * int64 c,
+                index + 1)
+            |> fst  // Discard the index
+            |> should equal -8792059055315210054L
 
 
 /// Tests for the ExtCore.String module.
