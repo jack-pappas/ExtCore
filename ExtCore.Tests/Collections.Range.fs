@@ -16,13 +16,29 @@ limitations under the License.
 
 *)
 
-//
+/// Tests for the ExtCore.Collections.Range module.
 module ExtCore.Collections.Range.Tests
 
 open NUnit.Framework
 open FsUnit
-//open FsCheck
 
 
-(* TODO : Implement tests for functions in the ExtCore.Collections.Range module. *)
+[<TestCase>]
+let iter () : unit =
+    Assert.Fail ()
 
+[<TestCase>]
+let fold () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let foldBack () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let exists () : unit =
+    Assert.Fail ()
+
+[<TestCase>]
+let forall () : unit =
+    Assert.Fail ()
