@@ -67,6 +67,24 @@ let enqueue () : unit =
     |> should equal
         [| "foo"; "bar"; "baz"; "cdr"; "car"; "bar"; "bar"; |]
 
+    // Test case for checking that the Queue is persistent as expected.
+    do
+        let queue = Queue.ofArray [| "foo"; "bar"; "baz"; |]
+
+        queue
+        |> Queue.enqueue "Hello"
+        |> Queue.enqueue "World"
+        |> Queue.toArray
+        |> should equal
+            [| "foo"; "bar"; "baz"; "Hello"; "World"; |]
+
+        queue
+        |> Queue.enqueue "cdr"
+        |> Queue.enqueue "car"
+        |> Queue.toArray
+        |> should equal
+            [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
+
 [<TestCase>]
 let enqueueFront () : unit =
     Queue.empty
@@ -85,6 +103,24 @@ let enqueueFront () : unit =
     |> should equal
         [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
 
+    // Test case for checking that the Queue is persistent as expected.
+    do
+        let queue = Queue.ofArray [| "foo"; "bar"; "baz"; |]
+
+        queue
+        |> Queue.enqueueFront "Hello"
+        |> Queue.enqueueFront "World"
+        |> Queue.toArray
+        |> should equal
+            [| "World"; "Hello"; "foo"; "bar"; "baz"; |]
+
+        queue
+        |> Queue.enqueueFront "cdr"
+        |> Queue.enqueueFront "car"
+        |> Queue.toArray
+        |> should equal
+            [| "car"; "cdr"; "foo"; "bar"; "baz"; |]
+
 [<TestCase>]
 let dequeue () : unit =
     do
@@ -98,6 +134,45 @@ let dequeue () : unit =
         result |> should equal "baz"
         Queue.length queue |> should equal 3
 
+        let result, queue = Queue.dequeue queue
+        result |> should equal "foo"
+        Queue.length queue |> should equal 2
+
+        let result, queue = Queue.dequeue queue
+        result |> should equal "bar"
+        Queue.length queue |> should equal 1
+
+        let result, queue = Queue.dequeue queue
+        result |> should equal "cdr"
+        Queue.length queue |> should equal 0
+
+    // Test case for checking that the Queue is persistent as expected.
+    do
+        let queue = Queue.ofArray [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
+
+        // Run a simple dequeue test.
+        let result, queue = Queue.dequeue queue
+        result |> should equal "car"
+        Queue.length queue |> should equal 4
+
+        let result, queue = Queue.dequeue queue
+        result |> should equal "baz"
+        Queue.length queue |> should equal 3
+
+        // Change to queue' here, so we can use the "partial" queue later.
+        let result, queue' = Queue.dequeue queue
+        result |> should equal "foo"
+        Queue.length queue' |> should equal 2
+
+        let result, queue' = Queue.dequeue queue'
+        result |> should equal "bar"
+        Queue.length queue' |> should equal 1
+
+        let result, queue' = Queue.dequeue queue'
+        result |> should equal "cdr"
+        Queue.length queue' |> should equal 0
+
+        // Now re-run the test for the last few elements using the partial queue.
         let result, queue = Queue.dequeue queue
         result |> should equal "foo"
         Queue.length queue |> should equal 2
