@@ -783,9 +783,10 @@ type private PatriciaSet =
         }
 
 //
-[<Sealed>]
-[<DebuggerTypeProxy(typedefof<IntSetDebuggerProxy>)>]
+[<Sealed; CompiledName("FSharpIntSet")>]
+//[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
+[<DebuggerTypeProxy(typedefof<IntSetDebuggerProxy>)>]
 type IntSet private (trie : PatriciaSet) =
     /// The empty IntSet instance.
     static let empty = IntSet Empty

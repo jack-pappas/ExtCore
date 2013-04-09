@@ -100,6 +100,13 @@ let find () : unit =
     |> IntMap.find 5
     |> should equal 'a'
 
+[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+let ``find raises exn when key is not found`` () : unit =
+    [(5, 'a'); (3, 'b')]
+    |> IntMap.ofList
+    |> IntMap.find 9
+    |> ignore
+
 [<TestCase>]
 let findOrDefault () : unit =
     [(5, 'a'); (3, 'b')]

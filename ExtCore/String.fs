@@ -89,8 +89,18 @@ type Substring =
     member this.ToArray () : char[] =
         this.String.ToCharArray (this.Offset, this.Length)
 
+    /// Implements F# slicing syntax for substrings.
+    member this.GetSlice (startIndex, finishIndex) : substring =
+        let startIndex = defaultArg startIndex 0
+        let finishIndex = defaultArg finishIndex this.Length
+
+        Substring (
+            this.String,
+            this.Offset + startIndex,
+            finishIndex - startIndex + 1)
+
 /// Represents a segment of a string.
-type substring = Substring
+and substring = Substring
 
 /// Functional operators related to Substrings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -153,6 +163,20 @@ module Substring =
 
         // Create a new substring based on the input substring.
         Substring (substring.String, substring.Offset + offset, count)
+
+    /// Builds a new string by concatenating the given sequence of substrings.
+    [<CompiledName("Concat")>]
+    let concat (substrings : seq<substring>) : string =
+        // Preconditions
+        checkNonNull "substrings" substrings
+
+        // If the sequence is empty, return immediately.
+        if Seq.isEmpty substrings then
+            System.String.Empty
+        else
+            let sb = System.Text.StringBuilder ()
+            substrings |> Seq.iter (sb.Append >> ignore)
+            sb.ToString ()
 
     /// Applies the given function to each character in the substring,
     /// in order from lowest to highest indices.

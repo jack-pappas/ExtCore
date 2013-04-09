@@ -16,7 +16,6 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.Collections
 
 open System.Collections.Generic
@@ -28,12 +27,12 @@ open ExtCore
 
 /// <summary>A bi-directional IntMap.</summary>
 /// <typeparam name="Value">The type of the values.</typeparam>
-[<Sealed>]
-[<NoEquality; NoComparison>]
-[<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
+[<Sealed; CompiledName("FSharpIntBimap`1")>]
+//[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
+[<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
 type IntBimap<'Value when 'Value : comparison>
-    private (left : IntMap<'Value>, right : Map<'Value, int>) =
+    private (map : IntMap<'Value>, inverseMap : Map<'Value, int>) =
     //
     static let empty = IntBimap (IntMap.Empty, Map.empty)
 
@@ -42,36 +41,68 @@ type IntBimap<'Value when 'Value : comparison>
         with get () = empty
 
     //
+    member private __.ForwardMap
+        with get () = map
+
+    //
+    member private __.InverseMap
+        with get () = inverseMap
+
+    //
+    static member private Equals (left : IntBimap<'Value>, right : IntBimap<'Value>) =
+        left.ForwardMap = right.ForwardMap
+        && left.InverseMap = right.InverseMap
+
+    //
+    static member private Compare (left : IntBimap<'Value>, right : IntBimap<'Value>) =
+        match Unchecked.compare left.ForwardMap right.ForwardMap with
+        | 0 ->
+            compare left.InverseMap right.InverseMap
+        | x -> x
+
+    /// <inherit />
+    override this.Equals other =
+        match other with
+        | :? IntBimap<'Value> as other ->
+            IntBimap<_>.Equals (this, other)
+        | _ ->
+            false
+
+    /// <inherit />
+    override __.GetHashCode () =
+        map.GetHashCode ()
+
+    //
     member __.Count
         with get () =
-            IntMap.count left
+            IntMap.count map
 
     //
     member __.IsEmpty
         with get () =
-            IntMap.isEmpty left
+            IntMap.isEmpty map
 
     //
     member __.ContainsKey key =
-        IntMap.containsKey key left
+        IntMap.containsKey key map
 
     //
     member __.ContainsValue value =
-        Map.containsKey value right
+        Map.containsKey value inverseMap
 
     //
     member __.Find key =
-        IntMap.find key left
+        IntMap.find key map
 
     //
     member __.FindValue key =
-        Map.find key right
+        Map.find key inverseMap
 
     //
     member __.Paired (x, y) =
         // NOTE : We only need to check one of the maps, because all
         // Bimap functions maintain the invariant.
-        match IntMap.tryFind x left with
+        match IntMap.tryFind x map with
         | None ->
             false
         | Some value ->
@@ -80,36 +111,36 @@ type IntBimap<'Value when 'Value : comparison>
     //
     member this.Remove key =
         // Use the key to find its corresponding value.
-        match IntMap.tryFind key left with
+        match IntMap.tryFind key map with
         | None ->
             // The key doesn't exist. No changes are needed, so return this Bimap.
             this
         | Some value ->
             // Remove the values from both maps.
             IntBimap (
-                IntMap.remove key left,
-                Map.remove value right)
+                IntMap.remove key map,
+                Map.remove value inverseMap)
 
     //
     member this.RemoveValue key =
         // Use the key to find its corresponding value.
-        match Map.tryFind key right with
+        match Map.tryFind key inverseMap with
         | None ->
             // The key doesn't exist. No changes are needed, so return this Bimap.
             this
         | Some value ->
             // Remove the values from both maps.
             IntBimap (
-                IntMap.remove value left,
-                Map.remove key right)
+                IntMap.remove value map,
+                Map.remove key inverseMap)
 
     //
     member __.TryFind key =
-        IntMap.tryFind key left
+        IntMap.tryFind key map
 
     //
     member __.TryFindValue key =
-        Map.tryFind key right
+        Map.tryFind key inverseMap
 
     //
     static member Singleton (x, y) : IntBimap<'Value> =
@@ -134,11 +165,11 @@ type IntBimap<'Value when 'Value : comparison>
         // Check that neither value is already bound in the Bimap
         // before adding them; if either already belongs to the map
         // return the original Bimap.
-        match IntMap.tryFind x left, Map.tryFind y right with
+        match IntMap.tryFind x map, Map.tryFind y inverseMap with
         | None, None ->
             IntBimap (
-                IntMap.add x y left,
-                Map.add y x right)
+                IntMap.add x y map,
+                Map.add y x inverseMap)
 
         | _, _ ->
             // NOTE : We also return the original map when *both* values already
@@ -148,15 +179,15 @@ type IntBimap<'Value when 'Value : comparison>
 
     //
     member __.Iterate (action : int -> 'Value -> unit) : unit =
-        IntMap.iter action left
+        IntMap.iter action map
 
     //
     member __.Fold (folder : 'State -> int -> 'Value -> 'State, state : 'State) : 'State =
-        IntMap.fold folder state left
+        IntMap.fold folder state map
 
     //
     member __.FoldBack (folder : int -> 'Value -> 'State -> 'State, state : 'State) : 'State =
-        IntMap.foldBack folder left state
+        IntMap.foldBack folder map state
 
     //
     member this.Filter (predicate : int -> 'Value -> bool) =
@@ -183,30 +214,43 @@ type IntBimap<'Value when 'Value : comparison>
                 falseBimap.Add (x, y)), (this, empty))
 
     //
-    static member OfList list =
+    static member OfSeq (sequence : seq<int * 'Value>) : IntBimap<'Value> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        (empty, sequence)
+        ||> Seq.fold (fun bimap (x, y) ->
+            bimap.Add (x, y))
+
+    //
+    static member OfList list : IntBimap<'Value> =
+        // Preconditions
+        checkNonNull "list" list
+
         (empty, list)
         ||> List.fold (fun bimap (x, y) ->
             bimap.Add (x, y))
 
     //
-    member this.ToList () =
-        this.FoldBack ((fun x y list ->
-            (x, y) :: list), [])
+    static member OfArray array : IntBimap<'Value> =
+        // Preconditions
+        checkNonNull "array" array
 
-    //
-    static member OfArray array =
         (empty, array)
         ||> Array.fold (fun bimap (x, y) ->
             bimap.Add (x, y))
 
     //
+    member this.ToSeq () =
+        map.ToSeq ()
+
+    //
+    member this.ToList () =
+        map.ToList ()
+
+    //
     member this.ToArray () =
-        let elements = ResizeArray ()
-
-        this.Iterate <| fun x y ->
-            elements.Add (x, y)
-
-        ResizeArray.toArray elements
+        map.ToArray ()
 
     //
     member internal this.LeftKvpArray () : KeyValuePair<int, 'Value>[] =
@@ -227,6 +271,22 @@ type IntBimap<'Value when 'Value : comparison>
                 KeyValuePair (y, x))
 
         elements.ToArray ()
+
+    interface System.IComparable with
+        member this.CompareTo other =
+            match other with
+            | :? IntBimap<'Value> as other ->
+                IntBimap<_>.Compare (this, other)
+            | _ ->
+                invalidArg "other" "The object cannot be compared to FSharpIntBimap`1."
+
+    interface System.IEquatable<IntBimap<'Value>> with
+        member this.Equals other =
+            IntBimap<_>.Equals (this, other)
+
+    interface System.IComparable<IntBimap<'Value>> with
+        member this.CompareTo other =
+            IntBimap<_>.Compare (this, other)
 
 //
 and [<Sealed>]
@@ -404,32 +464,42 @@ module IntBimap =
         bimap.Partition predicate
 
     //
+    [<CompiledName("OfSeq")>]
+    let inline ofSeq (sequence : seq<int * 'T>) : IntBimap<'T> =
+        // Preconditions checked by the member.
+        IntBimap<'T>.OfSeq sequence
+
+    //
     [<CompiledName("OfList")>]
     let inline ofList list : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "list" list
-
+        // Preconditions checked by the member.
         IntBimap<_>.OfList list
 
     //
+    [<CompiledName("OfArray")>]
+    let inline ofArray array : IntBimap<'T> =
+        // Preconditions checked by the member.
+        IntBimap<_>.OfArray array
+
+    //
+    [<CompiledName("ToSeq")>]
+    let inline toSeq (bimap : IntBimap<'T>) : seq<int * 'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToSeq ()
+
+    //
     [<CompiledName("ToList")>]
-    let inline toList (bimap : IntBimap<'T>) : _ list =
+    let inline toList (bimap : IntBimap<'T>) : (int * 'T) list =
         // Preconditions
         checkNonNull "bimap" bimap
 
         bimap.ToList ()
 
     //
-    [<CompiledName("OfArray")>]
-    let inline ofArray array : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "array" array
-
-        IntBimap<_>.OfArray array
-
-    //
     [<CompiledName("ToArray")>]
-    let inline toArray (bimap : IntBimap<'T>) =
+    let inline toArray (bimap : IntBimap<'T>) : (int * 'T)[] =
         // Preconditions
         checkNonNull "bimap" bimap
 
@@ -674,12 +744,42 @@ module TagBimap =
         (retype trueMap), (retype falseMap)
 
     //
+    [<CompiledName("OfSeq")>]
+    let inline ofSeq (sequence : seq<int<'Tag> * 'T>) : TagBimap<'Tag, 'T> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        IntBimap<_>.OfSeq (retype sequence)
+        |> retype
+
+    //
     [<CompiledName("OfList")>]
     let inline ofList (list : (int<'Tag> * 'T) list) : TagBimap<'Tag, 'T> =
         // Preconditions
         checkNonNull "list" list
 
         IntBimap<_>.OfList (retype list)
+        |> retype
+
+    //
+    [<CompiledName("OfArray")>]
+    let inline ofArray (array : (int<'Tag> * 'T)[]) : TagBimap<'Tag, 'T> =
+        // Preconditions
+        checkNonNull "array" array
+
+        IntBimap<_>.OfArray (retype array)
+        |> retype
+
+    //
+    [<CompiledName("ToSeq")>]
+    let inline toList (bimap : TagBimap<'Tag, 'T>) : seq<int<'Tag> * 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToSeq ()
         |> retype
 
     //
@@ -692,15 +792,6 @@ module TagBimap =
         checkNonNull "bimap" bimap
 
         bimap.ToList ()
-        |> retype
-
-    //
-    [<CompiledName("OfArray")>]
-    let inline ofArray (array : (int<'Tag> * 'T)[]) : TagBimap<'Tag, 'T> =
-        // Preconditions
-        checkNonNull "array" array
-
-        IntBimap<_>.OfArray (retype array)
         |> retype
 
     //
