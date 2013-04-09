@@ -16,7 +16,6 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.Collections
 
 open System.Collections.Generic
@@ -215,30 +214,43 @@ type IntBimap<'Value when 'Value : comparison>
                 falseBimap.Add (x, y)), (this, empty))
 
     //
-    static member OfList list =
+    static member OfSeq (sequence : seq<int * 'Value>) : IntBimap<'Value> =
+        // Preconditions
+        checkNonNull "sequence" sequence
+
+        (empty, sequence)
+        ||> Seq.fold (fun bimap (x, y) ->
+            bimap.Add (x, y))
+
+    //
+    static member OfList list : IntBimap<'Value> =
+        // Preconditions
+        checkNonNull "list" list
+
         (empty, list)
         ||> List.fold (fun bimap (x, y) ->
             bimap.Add (x, y))
 
     //
-    member this.ToList () =
-        this.FoldBack ((fun x y list ->
-            (x, y) :: list), [])
+    static member OfArray array : IntBimap<'Value> =
+        // Preconditions
+        checkNonNull "array" array
 
-    //
-    static member OfArray array =
         (empty, array)
         ||> Array.fold (fun bimap (x, y) ->
             bimap.Add (x, y))
 
     //
+    member this.ToSeq () =
+        map.ToSeq ()
+
+    //
+    member this.ToList () =
+        map.ToList ()
+
+    //
     member this.ToArray () =
-        let elements = ResizeArray ()
-
-        this.Iterate <| fun x y ->
-            elements.Add (x, y)
-
-        ResizeArray.toArray elements
+        map.ToArray ()
 
     //
     member internal this.LeftKvpArray () : KeyValuePair<int, 'Value>[] =
@@ -266,7 +278,7 @@ type IntBimap<'Value when 'Value : comparison>
             | :? IntBimap<'Value> as other ->
                 IntBimap<_>.Compare (this, other)
             | _ ->
-                invalidArg "other" "The object cannot be compared to IntBimap`1."
+                invalidArg "other" "The object cannot be compared to FSharpIntBimap`1."
 
     interface System.IEquatable<IntBimap<'Value>> with
         member this.Equals other =
@@ -452,32 +464,42 @@ module IntBimap =
         bimap.Partition predicate
 
     //
+    [<CompiledName("OfSeq")>]
+    let inline ofSeq (sequence : seq<int * 'T>) : IntBimap<'T> =
+        // Preconditions checked by the member.
+        IntBimap<'T>.OfSeq sequence
+
+    //
     [<CompiledName("OfList")>]
     let inline ofList list : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "list" list
-
+        // Preconditions checked by the member.
         IntBimap<_>.OfList list
 
     //
+    [<CompiledName("OfArray")>]
+    let inline ofArray array : IntBimap<'T> =
+        // Preconditions checked by the member.
+        IntBimap<_>.OfArray array
+
+    //
+    [<CompiledName("ToSeq")>]
+    let inline toSeq (bimap : IntBimap<'T>) : seq<int * 'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToSeq ()
+
+    //
     [<CompiledName("ToList")>]
-    let inline toList (bimap : IntBimap<'T>) : _ list =
+    let inline toList (bimap : IntBimap<'T>) : (int * 'T) list =
         // Preconditions
         checkNonNull "bimap" bimap
 
         bimap.ToList ()
 
     //
-    [<CompiledName("OfArray")>]
-    let inline ofArray array : IntBimap<'T> =
-        // Preconditions
-        checkNonNull "array" array
-
-        IntBimap<_>.OfArray array
-
-    //
     [<CompiledName("ToArray")>]
-    let inline toArray (bimap : IntBimap<'T>) =
+    let inline toArray (bimap : IntBimap<'T>) : (int * 'T)[] =
         // Preconditions
         checkNonNull "bimap" bimap
 
