@@ -25,20 +25,20 @@ open FsUnit
 
 [<TestCase>]
 let iter () : unit =
-    Assert.Fail ()
+    Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
 let fold () : unit =
-    Assert.Fail ()
+    Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
 let foldBack () : unit =
-    Assert.Fail ()
+    Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
 let exists () : unit =
-    Assert.Fail ()
+    Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
 let forall () : unit =
-    Assert.Fail ()
+    Assert.Inconclusive "Test not yet implemented."

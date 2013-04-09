@@ -308,7 +308,7 @@ let join () : unit =
 
 [<TestCase>]
 let inverse () : unit =
-    Assert.Fail ()
+    Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
 let pivot () : unit =

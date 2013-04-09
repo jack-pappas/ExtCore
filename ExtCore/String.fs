@@ -46,7 +46,7 @@ type Substring =
         let strLen = String.length str
 
         // More preconditions
-        if offset >= strLen then
+        if offset > strLen then
             argOutOfRange "offset" "The offset must be less than the length of the string."
         elif length < 0 then
             argOutOfRange "length" "The substring length must be greater than or equal to zero."

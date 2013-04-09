@@ -25,155 +25,222 @@ open FsUnit
 
 /// Tests for the ExtCore.Substring module.
 module Substring =
-    [<TestCase>]
-    let string () : unit =
-        Assert.Fail ()
-
-    [<TestCase>]
-    let offset () : unit =
-        Assert.Fail ()
-
-    [<TestCase>]
-    let length () : unit =
-        Assert.Fail ()
+    // TODO : Implement equality/comparison tests for substring.
 
     [<TestCase>]
     let get () : unit =
-        Assert.Fail ()
+        do
+            let substr = Substring ("Hello World!", 3, 5)
+            
+            Substring.get substr 1
+            |> should equal 'o'
+
+            Substring.get substr 3
+            |> should equal 'W'
 
     [<TestCase>]
     let isEmpty () : unit =
-        Assert.Fail ()
+        Substring ("Hello World!", 4, 0)
+        |> Substring.isEmpty
+        |> should be True
+
+        Substring ("Hello World!", 3, 4)
+        |> Substring.isEmpty
+        |> should be False
 
     [<TestCase>]
     let ofString () : unit =
-        Assert.Fail ()
+        do
+            let substr = Substring.ofString ""
+
+            substr
+            |> Substring.string
+            |> should equal ""
+
+            substr
+            |> Substring.offset
+            |> should equal 0
+
+            substr
+            |> Substring.length
+            |> should equal 0
+
+        do
+            let substr = Substring.ofString "Hello World!"
+
+            substr
+            |> Substring.string
+            |> should equal "Hello World!"
+
+            substr
+            |> Substring.offset
+            |> should equal 0
+
+            substr
+            |> Substring.length
+            |> should equal 12
 
     [<TestCase>]
     let toString () : unit =
-        Assert.Fail ()
+        // Test for empty substring.
+        Substring ("Hello World!", 3, 0)
+        |> Substring.toString
+        |> should equal String.empty
+
+        Substring ("Hello World!", 3, 6)
+        |> Substring.toString
+        |> should equal "lo Wor"
 
     [<TestCase>]
     let toArray () : unit =
-        Assert.Fail ()
+        // Test for empty substring.
+        Substring ("Hello World!", 3, 0)
+        |> Substring.toArray
+        |> should equal Array.empty
+
+        Substring ("Hello World!", 3, 6)
+        |> Substring.toArray
+        |> should equal [| 'l'; 'o'; ' '; 'W'; 'o'; 'r'; |]
 
     [<TestCase>]
     let sub () : unit =
-        Assert.Fail ()
+        do
+            let str = "The quick brown fox jumps over the lazy dog."
+
+            let substr = Substring (str, 4, 15)  // "quick brown fox"
+            
+            Substring.sub substr 6 5
+            |> Substring.toString
+            |> should equal "brown"
+
+    [<TestCase>]
+    let concat () : unit =
+        do
+            let str1 = "The quick brown fox jumps over the lazy dog."
+            let str2 = "Hello World!"
+
+            seq {
+            yield Substring (str1, 0, 35)
+            yield Substring (str2, 6, 6)
+            yield Substring (str1, 3, 1)
+            yield Substring (str2, 0, 6)
+            yield Substring (str1, 35, 9) }
+            |> Substring.concat
+            |> should equal "The quick brown fox jumps over the World! Hello lazy dog."
 
     [<TestCase>]
     let iter () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let iterBack () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let fold () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let foldi () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let foldBack () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
 
 /// Tests for the ExtCore.String module.
 module String =
     [<TestCase>]
     let sub () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let tryFindIndexOf () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let findIndexOf () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let tryFindIndex () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let findIndex () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let fold () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let foldBack () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let iter () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let map () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let mapi () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let choose () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let choosei () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let trimStart () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let trimEnd () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let trimStartWith () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let trimEndWith () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let trimWith () : unit =
-        Assert.Fail ()
+        Assert.Inconclusive "Test not yet implemented."
 
     module Split =
         [<TestCase>]
         let iter () : unit =
-            Assert.Fail ()
+            Assert.Inconclusive "Test not yet implemented."
 
         [<TestCase>]
         let iteri () : unit =
-            Assert.Fail ()
+            Assert.Inconclusive "Test not yet implemented."
 
         [<TestCase>]
         let fold () : unit =
-            Assert.Fail ()
+            Assert.Inconclusive "Test not yet implemented."
 
         [<TestCase>]
         let foldi () : unit =
-            Assert.Fail ()
+            Assert.Inconclusive "Test not yet implemented."
 
