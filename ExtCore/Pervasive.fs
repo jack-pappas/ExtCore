@@ -28,6 +28,9 @@ module AdditionalOperators =
     /// Type abbreviation for System.NotImplementedException.
     type notImplExn = System.NotImplementedException
 
+    /// Type abbreviation for System.Collections.Generic.IDictionary`2.
+    type dict<'Key, 'Value> = System.Collections.Generic.IDictionary<'Key, 'Value>
+
     /// <summary>
     /// Array views are similar to array slices, but instead of creating a copy of the
     /// 'sliced' elements they simply provide convienient access to some section of the
