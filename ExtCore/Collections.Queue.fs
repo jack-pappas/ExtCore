@@ -39,7 +39,7 @@ type Queue<'T> private
     (front : LazyList<'T>, rear : 'T list, pending : LazyList<'T>) =
     /// The empty queue instance.
     /// This avoids creating unnecessary instances, since all empty queues are equivalent.
-    static let emptyQueue : Queue<'T> =
+    static let empty : Queue<'T> =
         Queue (
             LazyList.empty,
             [],
@@ -47,7 +47,7 @@ type Queue<'T> private
 
     /// The empty queue.
     static member Empty
-        with get () = emptyQueue
+        with get () = empty
 
     /// Returns true if the given Queue is empty; otherwise, false.
     member __.IsEmpty
@@ -86,6 +86,51 @@ type Queue<'T> private
             rear,
             LazyList.cons value pending)
 
+    /// Creates a Queue from the elements of a list.
+    static member OfList list : Queue<'T> =
+        // Preconditions
+        checkNonNull "list" list
+
+        (empty, list)
+        ||> List.fold (fun queue el ->
+            queue.Enqueue el)
+
+    /// Creates a Queue from the elements of an array.
+    static member OfArray array : Queue<'T> =
+        // Preconditions
+        checkNonNull "array" array
+
+        (empty, array)
+        ||> Array.fold (fun queue el ->
+            queue.Enqueue el)
+
+    /// Create a sequence containing the elements of the Queue in order.
+    member this.ToSeq () : seq<'T> =
+        // OPTIMIZATION : If the queue is empty return immediately.
+        if this.IsEmpty then
+            Seq.empty
+        else
+            this
+            |> Seq.unfold (fun queue ->
+                if queue.IsEmpty then None
+                else
+                    Some (queue.Dequeue ()))
+
+    /// Create a list containing the elements of the Queue in order.
+    member this.ToList () : 'T list =
+        // OPTIMIZATION : If the queue is empty return immediately.
+        if this.IsEmpty then
+            List.empty
+        else
+            let mutable resultList = []
+            let mutable queue = this
+            while not <| queue.IsEmpty do
+                let item, queue' = queue.Dequeue ()
+                resultList <- item :: resultList
+                queue <- queue'
+
+            List.rev resultList
+
     /// Create an array containing the elements of the Queue in order.
     member this.ToArray () : 'T[] =
         // OPTIMIZATION : If the queue is empty return immediately.
@@ -104,52 +149,6 @@ type Queue<'T> private
                 queue <- queue'
 
             ResizeArray.toArray result
-
-    /// Create a list containing the elements of the Queue in order.
-    member this.ToList () : 'T list =
-        // OPTIMIZATION : If the queue is empty return immediately.
-        if this.IsEmpty then
-            List.empty
-        else
-            let mutable resultList = []
-            let mutable queue = this
-            while not <| queue.IsEmpty do
-                let item, queue' = queue.Dequeue ()
-                resultList <- item :: resultList
-                queue <- queue'
-
-            List.rev resultList
-
-    /// Creates a Queue from the elements of a ResizeQueue.
-    static member OfResizeQueue (resizeQueue : ResizeQueue<'T>) : Queue<'T> =
-        // Preconditions
-        checkNonNull "resizeQueue" resizeQueue
-
-        /// A LazyList containing the elements copied from the queue.
-        let queueElements =
-            // Lock the ResizeQueue while copying to ensure it doesn't change.
-            lock ((resizeQueue :> System.Collections.ICollection).SyncRoot) <| fun () ->
-                (LazyList.empty, resizeQueue)
-                ||> Seq.fold (fun lazyList el ->
-                    LazyList.cons el lazyList)
-
-        // Create a new Queue from the copied elements.
-        Queue (queueElements, [], LazyList.empty)
-
-    /// Creates a ResizeQueue from the elements of the Queue.
-    member this.ToResizeQueue () : ResizeQueue<'T> =
-        // OPTIMIZATION : If the queue is empty return immediately.
-        if this.IsEmpty then
-            ResizeQueue ()
-        else
-            let resizeQueue = ResizeQueue ()
-            let mutable queue = this
-            while not <| queue.IsEmpty do
-                let item, queue' = queue.Dequeue ()
-                resizeQueue.Enqueue item
-                queue <- queue'
-
-            resizeQueue
 
 //    /// Used by Code Contracts to check that invariant contracts are met.
 //    [<ContractInvariantMethod>]
@@ -242,6 +241,26 @@ module Queue =
 
         queue.Dequeue ()
 
+    /// Creates a Queue from the elements of a list.
+    [<CompiledName("OfList")>]
+    let inline ofList list : Queue<'T> =
+        // Preconditions are checked within the method being called.
+        Queue.OfList list
+
+    /// Creates a Queue from the elements of an array.
+    [<CompiledName("OfArray")>]
+    let inline ofArray array : Queue<'T> =
+        // Preconditions are checked within the method being called.
+        Queue.OfArray array
+
+    /// Create a sequence containing the elements of the Queue in order.
+    [<CompiledName("ToSeq")>]
+    let inline toSeq (queue : Queue<'T>) : seq<'T> =
+        // Preconditions
+        checkNonNull "queue" queue
+        
+        queue.ToSeq ()
+
     /// Create a list containing the elements of the Queue in order.
     [<CompiledName("ToList")>]
     let inline toList (queue : Queue<'T>) : 'T list =
@@ -257,18 +276,3 @@ module Queue =
         checkNonNull "queue" queue
         
         queue.ToArray ()
-
-    /// Creates a Queue from the elements of a ResizeQueue.
-    [<CompiledName("OfResizeQueue")>]
-    let inline ofResizeQueue (resizeQueue : ResizeQueue<'T>) : Queue<'T> =
-        // Preconditions are checked within the method being called.
-        Queue.OfResizeQueue resizeQueue
-
-    /// Creates a ResizeQueue from the elements of the Queue.
-    [<CompiledName("ToResizeQueue")>]
-    let inline toResizeQueue (queue : Queue<'T>) : ResizeQueue<'T> =
-        // Preconditions
-        checkNonNull "queue" queue
-
-        queue.ToResizeQueue ()
-
