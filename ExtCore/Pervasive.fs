@@ -138,6 +138,21 @@ module AdditionalOperators =
     let inline notlazy (value : 'T) =
         Lazy.CreateFromValue value
 
+    /// Combines two predicates using a short-circuiting OR operator.
+    [<CompiledName("Orf")>]
+    let inline orf f g (x : 'T) =
+        f x || g x
+
+    /// Combines two predicates using a short-circuiting AND operator.
+    [<CompiledName("Andf")>]
+    let inline andf f g (x : 'T) =
+        f x && g x
+
+    /// Combines two predicates using the XOR (exclusive-or) operator.
+    [<CompiledName("Xorf")>]
+    let inline xorf f g (x : 'T) =
+        xor (f x) (g x)
+
 
     (* General functions *)
 
