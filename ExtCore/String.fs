@@ -796,7 +796,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -807,7 +807,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     action <| Substring (str, offset, length)
@@ -824,7 +824,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 action <| Substring (str, offset, length)
 
@@ -923,7 +923,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -937,7 +937,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     action.Invoke (substringIndex, Substring (str, offset, length))
@@ -954,7 +954,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 action.Invoke (substringIndex, Substring (str, offset, length))
 
@@ -1045,7 +1045,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -1059,7 +1059,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     state <- folder.Invoke (state, Substring (str, offset, length))
@@ -1076,7 +1076,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 state <- folder.Invoke (state, Substring (str, offset, length))
 
@@ -1177,7 +1177,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -1194,7 +1194,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
@@ -1211,7 +1211,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
 
