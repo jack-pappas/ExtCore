@@ -787,13 +787,138 @@ amet"
         |> should equal "Hello World!1"
 
     module Split =
+        open System
+
         [<TestCase>]
         let iter () : unit =
-            Assert.Inconclusive "Test not yet implemented."
+            do
+                // Test case for the empty string.
+                let elements = ResizeArray ()
+
+                String.empty
+                |> String.Split.iter
+                    ([| ','; |], StringSplitOptions.None)
+                    (Substring.length >> elements.Add)
+
+                ResizeArray.isEmpty elements
+                |> should be True
+
+            do
+                // Test cases for a string which does contain the specified characters.
+                let elements = ResizeArray ()
+
+                "Id,Title,First,MI,Last,DOB"
+                |> String.Split.iter ([| ','; |], StringSplitOptions.None)
+                    (Substring.length >> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 2; 5; 5; 2; 4; 3; |]
+
+                // Re-test using the option to remove empty strings.
+                let elements = ResizeArray ()
+                
+                "Id,Title,First,MI,Last,DOB"
+                |> String.Split.iter ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (Substring.length >> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 2; 5; 5; 2; 4; 3; |]
+
+            do
+                // Test case for a string which does contain the specified characters,
+                // and where there are adjacent occurrences of the characters.
+                let elements = ResizeArray ()
+
+                "3262,,John,Q,Doe,1970-Jan-01"
+                |> String.Split.iter ([| ','; |], StringSplitOptions.None)
+                    (Substring.length >> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 4; 0; 4; 1; 3; 11; |]
+
+                // Re-test using the option to remove empty strings.
+                let elements = ResizeArray ()
+                
+                "3262,,John,Q,Doe,1970-Jan-01"
+                |> String.Split.iter ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (Substring.length >> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 4; 4; 1; 3; 11; |]
 
         [<TestCase>]
         let iteri () : unit =
-            Assert.Inconclusive "Test not yet implemented."
+            do
+                // Test case for the empty string.
+                let elements = ResizeArray ()
+
+                String.empty
+                |> String.Split.iteri ([| ','; |], StringSplitOptions.None)
+                    (fun index substr ->
+                        index + Substring.length substr
+                        |> elements.Add)
+
+                ResizeArray.isEmpty elements
+                |> should be True
+
+            do
+                // Test cases for a string which does contain the specified characters.
+                let elements = ResizeArray ()
+
+                "Id,Title,First,MI,Last,DOB"
+                |> String.Split.iteri ([| ','; |], StringSplitOptions.None)
+                    (fun index substr ->
+                        index + Substring.length substr
+                        |> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 2; 6; 7; 5; 8; 8; |]
+
+                // Re-test using the option to remove empty strings.
+                let elements = ResizeArray ()
+                
+                "Id,Title,First,MI,Last,DOB"
+                |> String.Split.iteri ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (fun index substr ->
+                        index + Substring.length substr
+                        |> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 2; 6; 7; 5; 8; 8; |]
+
+            do
+                // Test case for a string which does contain the specified characters,
+                // and where there are adjacent occurrences of the characters.
+                let elements = ResizeArray ()
+
+                "3262,,John,Q,Doe,1970-Jan-01"
+                |> String.Split.iteri ([| ','; |], StringSplitOptions.None)
+                    (fun index substr ->
+                        index + Substring.length substr
+                        |> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 4; 1; 6; 4; 7; 16; |]
+
+                // Re-test using the option to remove empty strings.
+                let elements = ResizeArray ()
+                
+                "3262,,John,Q,Doe,1970-Jan-01"
+                |> String.Split.iteri ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (fun index substr ->
+                        index + Substring.length substr
+                        |> elements.Add)
+
+                ResizeArray.toArray elements
+                |> should equal
+                    [| 4; 6; 4; 7; 16; |]
 
         [<TestCase>]
         let fold () : unit =
