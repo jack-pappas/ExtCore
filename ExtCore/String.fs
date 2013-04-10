@@ -947,6 +947,9 @@ module String =
                                 offset <- i + 1
                                 length <- 0
 
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
                             else
                                 // "Add" this character to the current substring by
                                 // incrementing the substring length.
@@ -962,6 +965,9 @@ module String =
                                 // and reset the length to zero to begin a new substring.
                                 offset <- i + 1
                                 length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
 
                             else
                                 // "Add" this character to the current substring by
@@ -1204,6 +1210,9 @@ module String =
                                 offset <- i + 1
                                 length <- 0
 
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
                             else
                                 // "Add" this character to the current substring by
                                 // incrementing the substring length.
@@ -1219,6 +1228,9 @@ module String =
                                 // and reset the length to zero to begin a new substring.
                                 offset <- i + 1
                                 length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
 
                             else
                                 // "Add" this character to the current substring by
