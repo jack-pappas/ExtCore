@@ -922,9 +922,99 @@ amet"
 
         [<TestCase>]
         let fold () : unit =
-            Assert.Inconclusive "Test not yet implemented."
+            do
+                // Test case for the empty string.
+                (String.empty, String.empty)
+                ||> String.Split.fold
+                    ([| ','; |], StringSplitOptions.None)
+                    (fun state substr ->
+                        state + ExtCore.Substring.toString substr)
+                |> String.isEmpty
+                |> should be True
+
+            do
+                // Test cases for a string which does contain the specified characters.
+                (String.empty, "Id,Title,First,MI,Last,DOB")
+                ||> String.Split.fold ([| ','; |], StringSplitOptions.None)
+                    (fun state substr ->
+                        state + ExtCore.Substring.toString substr)
+                |> should equal "IdTitleFirstMILastDOB"
+
+                // Re-test using the option to remove empty strings.
+                (String.empty, "Id,Title,First,MI,Last,DOB")
+                ||> String.Split.fold ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (fun state substr ->
+                        state + ExtCore.Substring.toString substr)
+                |> should equal "IdTitleFirstMILastDOB"
+
+            do
+                // Test case for a string which does contain the specified characters,
+                // and where there are adjacent occurrences of the characters.
+                (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
+                ||> String.Split.fold ([| ','; |], StringSplitOptions.None)
+                    (fun state substr ->
+                        state + (
+                            if ExtCore.Substring.isEmpty substr then "(NULL)"
+                            else ExtCore.Substring.toString substr))
+                |> should equal "3262(NULL)JohnQDoe1970-Jan-01"
+
+                // Re-test using the option to remove empty strings.
+                (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
+                ||> String.Split.fold ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (fun state substr ->
+                        state + (
+                            if ExtCore.Substring.isEmpty substr then "(NULL)"
+                            else ExtCore.Substring.toString substr))
+                |> should equal "3262JohnQDoe1970-Jan-01"
 
         [<TestCase>]
         let foldi () : unit =
-            Assert.Inconclusive "Test not yet implemented."
+            do
+                // Test case for the empty string.
+                (String.empty, String.empty)
+                ||> String.Split.foldi
+                    ([| ','; |], StringSplitOptions.None)
+                    (fun state index substr ->
+                        state + ExtCore.Substring.toString substr)
+                |> String.isEmpty
+                |> should be True
+
+            do
+                // Test cases for a string which does contain the specified characters.
+                (String.empty, "Id,Title,First,MI,Last,DOB")
+                ||> String.Split.foldi ([| ','; |], StringSplitOptions.None)
+                    (fun state index substr ->
+                        state + (
+                            index.ToString() + ExtCore.Substring.toString substr))
+                |> should equal "0Id1Title2First3MI4Last5DOB"
+
+                // Re-test using the option to remove empty strings.
+                (String.empty, "Id,Title,First,MI,Last,DOB")
+                ||> String.Split.foldi ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (fun state index substr ->
+                        state + (
+                            index.ToString() + ExtCore.Substring.toString substr))
+                |> should equal "0Id1Title2First3MI4Last5DOB"
+
+            do
+                // Test case for a string which does contain the specified characters,
+                // and where there are adjacent occurrences of the characters.
+                (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
+                ||> String.Split.foldi ([| ','; |], StringSplitOptions.None)
+                    (fun state index substr ->
+                        state + (
+                            index.ToString() + (
+                                if ExtCore.Substring.isEmpty substr then "(NULL)"
+                                else ExtCore.Substring.toString substr)))
+                |> should equal "032621(NULL)2John3Q4Doe51970-Jan-01"
+
+                // Re-test using the option to remove empty strings.
+                (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
+                ||> String.Split.foldi ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+                    (fun state index substr ->
+                        state + (
+                            index.ToString() + (
+                                if ExtCore.Substring.isEmpty substr then "(NULL)"
+                                else ExtCore.Substring.toString substr)))
+                |> should equal "032622John3Q4Doe51970-Jan-01"
 
