@@ -303,10 +303,12 @@ module String =
         str.ToCharArray ()
 
     /// Returns a string array that contains the substrings in a string that are delimited
-    /// by elements of the given Unicode character array.
+    /// by elements of the given Unicode character array. The returned array will be empty
+    /// if and only if the input string is empty.
     [<CompiledName("Split")>]
-    let inline split (chars : char[]) (str : string) =
-        str.Split chars
+    let split (chars : char[]) (str : string) =
+        if isEmpty str then Array.empty
+        else str.Split chars
 
     /// <summary>Returns a new string created by concatenating the strings in the specified string array.</summary>
     /// <remarks>
@@ -373,7 +375,9 @@ module String =
 
         // Return the index of the matching character, if any.
         if foundMatch then
-            Some index
+            // Subtract one from the index since it was incremented after finding
+            // the match but before the loop terminated.
+            Some (index - 1)
         else None
 
     /// Returns the index of the first character in the string which satisfies the given predicate.
@@ -578,16 +582,10 @@ module String =
             // Create a new string from the chosen characters.
             ofArray chosenChars.[..chosenCount-1]
 
-    /// Creates a new string by removing all leading and
-    /// trailing white-space characters from a string.
-    [<CompiledName("Trim")>]
-    let inline trim (str : string) =
-        str.Trim ()
-
     /// Removes all leading and trailing occurrences of
     /// the specified characters from a string.
-    [<CompiledName("TrimChars")>]
-    let inline trimChars (chars : char[]) (str : string) =
+    [<CompiledName("Trim")>]
+    let inline trim (chars : char[]) (str : string) =
         str.Trim chars
 
     /// Removes all leading occurrences of the specified set of characters from a string.
