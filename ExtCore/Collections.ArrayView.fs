@@ -108,21 +108,22 @@ let mapToArray (mapping : 'T -> 'U) (view : ArrayView<'T>) : 'U[] =
         Array.empty
     else
         //
-        let lastIndex = lastIndexUnsafe view
+        let len = count view
         //
-        let results = Array.zeroCreate (count view)
+        let results = Array.zeroCreate len
 
         //
         let arr = array view
-        for i = (offset view) to lastIndex do
-            results.[i] <- mapping arr.[i]
+        let offset = offset view
+        for i = 0 to len - 1 do
+            results.[i] <- mapping arr.[offset + i]
 
         // Return the mapped results.
         results
 
 //
 [<CompiledName("TryPick")>]
-let tryPick picker (view : ArrayView<'T>) : 'U option =
+let tryPick (picker : 'T -> 'U option) (view : ArrayView<'T>) : 'U option =
     // OPTIMIZATION : Use imperative/mutable style for maximum performance.
     let array = view.Array
     /// The last index (inclusive) in the underlying array which belongs to this ArrayView.
@@ -132,18 +133,15 @@ let tryPick picker (view : ArrayView<'T>) : 'U option =
     let mutable index = view.Offset
 
     while Option.isNone matchResult && index <= endIndex do
-        match picker array.[index] with
-        | Some result ->
-            matchResult <- result
-        | None ->
-            index <- index + 1
+        matchResult <- picker array.[index]
+        index <- index + 1
 
     // Return the result (if a match was found) or None.
     matchResult
 
 //
 [<CompiledName("Pick")>]
-let pick picker (view : ArrayView<'T>) : 'U =
+let pick (picker : 'T -> 'U option) (view : ArrayView<'T>) : 'U =
     // Call tryPick to find the value; if no match is found, raise an exception.
     match tryPick picker view with
     | Some result ->
@@ -168,8 +166,7 @@ let tryFind predicate (view : ArrayView<'T>) : 'T option =
         let el = array.[index]
         if predicate el then
             matchedElement <- Some el
-        else
-            index <- index + 1
+        index <- index + 1
 
     // Return the result (if a match was found) or None.
     matchedElement
@@ -200,8 +197,7 @@ let tryFindIndex predicate (view : ArrayView<'T>) : int option =
     while Option.isNone matchedIndex && index <= endIndex do
         if predicate array.[index] then
             matchedIndex <- Some index
-        else
-            index <- index + 1
+        index <- index + 1
 
     // Return the result (if a match was found) or None.
     matchedIndex
@@ -321,7 +317,7 @@ let reduceBack (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) : 'T =
     // Create a new array segment which excludes the last element
     // of the input segment, then call 'foldBack' with it.
     let segment' = ArrayView (view.Array, view.Offset, view.Count - 1)
-    foldBack reduction segment' view.[view.Count - 1]
+    foldBack reduction segment' (last view)
 
 //
 [<CompiledName("ToList")>]
