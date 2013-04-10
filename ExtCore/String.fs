@@ -271,15 +271,42 @@ module String =
     let inline get (str : string) (index : int) =
         str.[index]
 
-    /// Indicates whether the specified string is null or empty.
-    [<CompiledName("IsNullOrEmpty")>]
-    let inline isNullOrEmpty str =
-        System.String.IsNullOrEmpty str
-
     /// Indicates whether the specified string is empty.
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (str : string) =
         str.Length < 1
+
+    /// Creates a string from an F# option value.
+    /// If the option value is <c>None</c>, returns an empty string;
+    /// returns <c>s</c> when the option value is <c>Some s</c>
+    [<CompiledName("OfOption")>]
+    let inline ofOption value =
+        match value with
+        | None -> empty
+        | Some str -> str
+
+    /// Builds a string from the given character array.
+    [<CompiledName("OfArray")>]
+    let inline ofArray (chars : char[]) =
+        System.String (chars)
+
+    /// Creates an F# option value from the specified string.
+    /// If the string 's' is null or empty, returns None; otherwise, returns Some s.
+    [<CompiledName("ToOption")>]
+    let inline toOption str =
+        if System.String.IsNullOrEmpty str then None
+        else Some str
+
+    /// Builds a character array from the given string.
+    [<CompiledName("ToArray")>]
+    let inline toArray (str : string) =
+        str.ToCharArray ()
+
+    /// Returns a string array that contains the substrings in a string that are delimited
+    /// by elements of the given Unicode character array.
+    [<CompiledName("Split")>]
+    let inline split (chars : char[]) (str : string) =
+        str.Split chars
 
     /// <summary>Returns a new string created by concatenating the strings in the specified string array.</summary>
     /// <remarks>
@@ -300,44 +327,6 @@ module String =
     [<CompiledName("ToLines")>]
     let inline toLines (str : string) =
         str.Split ([| '\r'; '\n' |], System.StringSplitOptions.RemoveEmptyEntries)
-
-    /// Creates a string from an F# option value.
-    /// If the option value is <c>None</c>, returns an empty string;
-    /// returns <c>s</c> when the option value is <c>Some s</c>
-    [<CompiledName("OfOption")>]
-    let inline ofOption value =
-        match value with
-        | None -> empty
-        | Some str -> str
-
-    /// Creates an F# option value from the specified string.
-    /// If the string 's' is null or empty, returns None; otherwise, returns Some s.
-    [<CompiledName("ToOption")>]
-    let inline toOption str =
-        if System.String.IsNullOrEmpty str then None
-        else Some str
-
-    /// Creates a new string by removing all leading and
-    /// trailing white-space characters from a string.
-    [<CompiledName("Trim")>]
-    let inline trim (str : string) =
-        str.Trim ()
-
-    /// Removes all leading and trailing occurrences of
-    /// the specified characters from a string.
-    [<CompiledName("TrimChars")>]
-    let inline trimChars (chars : char[]) (str : string) =
-        str.Trim chars
-
-    /// Builds a character array from the given string.
-    [<CompiledName("ToArray")>]
-    let inline toArray (str : string) =
-        str.ToCharArray ()
-
-    /// Builds a string from the given character array.
-    [<CompiledName("OfArray")>]
-    let inline ofArray (chars : char[]) =
-        System.String (chars)
 
     /// Gets a substring of a string.
     [<CompiledName("Sub")>]
@@ -552,7 +541,7 @@ module String =
                     chosenCount <- chosenCount + 1
 
             // Create a new string from the chosen characters.
-            ofArray chosenChars.[..chosenCount]
+            ofArray chosenChars.[..chosenCount-1]
 
     /// Applies the given function to each character in the string.
     /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
@@ -587,7 +576,19 @@ module String =
                     chosenCount <- chosenCount + 1
 
             // Create a new string from the chosen characters.
-            ofArray chosenChars.[..chosenCount]
+            ofArray chosenChars.[..chosenCount-1]
+
+    /// Creates a new string by removing all leading and
+    /// trailing white-space characters from a string.
+    [<CompiledName("Trim")>]
+    let inline trim (str : string) =
+        str.Trim ()
+
+    /// Removes all leading and trailing occurrences of
+    /// the specified characters from a string.
+    [<CompiledName("TrimChars")>]
+    let inline trimChars (chars : char[]) (str : string) =
+        str.Trim chars
 
     /// Removes all leading occurrences of the specified set of characters from a string.
     [<CompiledName("TrimStart")>]
