@@ -772,7 +772,7 @@ module TagBimap =
 
     //
     [<CompiledName("ToSeq")>]
-    let inline toList (bimap : TagBimap<'Tag, 'T>) : seq<int<'Tag> * 'T> =
+    let inline toSeq (bimap : TagBimap<'Tag, 'T>) : seq<int<'Tag> * 'T> =
         // Retype as IntBimap.
         let bimap : IntBimap<'T> = retype bimap
 
