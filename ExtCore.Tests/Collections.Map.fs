@@ -308,34 +308,67 @@ let join () : unit =
 
 [<TestCase>]
 let inverse () : unit =
-    Assert.Fail ()
+    // Test case for an empty map.
+    Map.empty
+    |> Map.inverse
+    |> Map.isEmpty
+    |> should be True
+
+    do
+        // Sample usage test case.
+        let expected =
+            Map.empty
+            |> Map.add "Black" ConsoleColor.Black
+            |> Map.add "Gray" ConsoleColor.Gray
+            |> Map.add "Green" ConsoleColor.Green
+            |> Map.add "Blue" ConsoleColor.Cyan
+
+        Map.ofArray [|
+            ConsoleColor.Black, "Black";
+            ConsoleColor.Blue, "Blue";
+            ConsoleColor.Cyan, "Blue";
+            ConsoleColor.DarkBlue, "Blue";
+            ConsoleColor.DarkCyan, "Blue";
+            ConsoleColor.DarkGreen, "Green";
+            ConsoleColor.Gray, "Gray";
+            ConsoleColor.Green, "Green" |]
+        |> Map.inverse
+        |> should equal expected
 
 [<TestCase>]
 let pivot () : unit =
-    let expected =
-        Map.empty
-        |> Map.add "Black"
-            (Set.singleton ConsoleColor.Black)
-        |> Map.add "Gray"
-            (Set.singleton ConsoleColor.Gray)
-        |> Map.add "Green"
-            (Set.ofArray [|
-                ConsoleColor.Green; ConsoleColor.DarkGreen; |])
-        |> Map.add "Blue"
-            (Set.ofArray [|
-                ConsoleColor.Blue; ConsoleColor.Cyan; ConsoleColor.DarkBlue; ConsoleColor.DarkCyan; |])
-
-    Map.ofArray [|
-        ConsoleColor.Black, "Black";
-        ConsoleColor.Blue, "Blue";
-        ConsoleColor.Cyan, "Blue";
-        ConsoleColor.DarkBlue, "Blue";
-        ConsoleColor.DarkCyan, "Blue";
-        ConsoleColor.DarkGreen, "Green";
-        ConsoleColor.Gray, "Gray";
-        ConsoleColor.Green, "Green" |]
+    // Test case for an empty map.
+    Map.empty
     |> Map.pivot
-    |> should equal expected
+    |> Map.isEmpty
+    |> should be True
+
+    do
+        // Sample usage test case.
+        let expected =
+            Map.empty
+            |> Map.add "Black"
+                (Set.singleton ConsoleColor.Black)
+            |> Map.add "Gray"
+                (Set.singleton ConsoleColor.Gray)
+            |> Map.add "Green"
+                (Set.ofArray [|
+                    ConsoleColor.Green; ConsoleColor.DarkGreen; |])
+            |> Map.add "Blue"
+                (Set.ofArray [|
+                    ConsoleColor.Blue; ConsoleColor.Cyan; ConsoleColor.DarkBlue; ConsoleColor.DarkCyan; |])
+
+        Map.ofArray [|
+            ConsoleColor.Black, "Black";
+            ConsoleColor.Blue, "Blue";
+            ConsoleColor.Cyan, "Blue";
+            ConsoleColor.DarkBlue, "Blue";
+            ConsoleColor.DarkCyan, "Blue";
+            ConsoleColor.DarkGreen, "Green";
+            ConsoleColor.Gray, "Gray";
+            ConsoleColor.Green, "Green" |]
+        |> Map.pivot
+        |> should equal expected
         
 [<TestCase>]
 let pivotKeySet () : unit =

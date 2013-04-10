@@ -46,7 +46,7 @@ type Substring =
         let strLen = String.length str
 
         // More preconditions
-        if offset >= strLen then
+        if offset > strLen then
             argOutOfRange "offset" "The offset must be less than the length of the string."
         elif length < 0 then
             argOutOfRange "length" "The substring length must be greater than or equal to zero."
@@ -271,15 +271,44 @@ module String =
     let inline get (str : string) (index : int) =
         str.[index]
 
-    /// Indicates whether the specified string is null or empty.
-    [<CompiledName("IsNullOrEmpty")>]
-    let inline isNullOrEmpty str =
-        System.String.IsNullOrEmpty str
-
     /// Indicates whether the specified string is empty.
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (str : string) =
         str.Length < 1
+
+    /// Creates a string from an F# option value.
+    /// If the option value is <c>None</c>, returns an empty string;
+    /// returns <c>s</c> when the option value is <c>Some s</c>
+    [<CompiledName("OfOption")>]
+    let inline ofOption value =
+        match value with
+        | None -> empty
+        | Some str -> str
+
+    /// Builds a string from the given character array.
+    [<CompiledName("OfArray")>]
+    let inline ofArray (chars : char[]) =
+        System.String (chars)
+
+    /// Creates an F# option value from the specified string.
+    /// If the string 's' is null or empty, returns None; otherwise, returns Some s.
+    [<CompiledName("ToOption")>]
+    let inline toOption str =
+        if System.String.IsNullOrEmpty str then None
+        else Some str
+
+    /// Builds a character array from the given string.
+    [<CompiledName("ToArray")>]
+    let inline toArray (str : string) =
+        str.ToCharArray ()
+
+    /// Returns a string array that contains the substrings in a string that are delimited
+    /// by elements of the given Unicode character array. The returned array will be empty
+    /// if and only if the input string is empty.
+    [<CompiledName("Split")>]
+    let split (chars : char[]) (str : string) =
+        if isEmpty str then Array.empty
+        else str.Split chars
 
     /// <summary>Returns a new string created by concatenating the strings in the specified string array.</summary>
     /// <remarks>
@@ -300,44 +329,6 @@ module String =
     [<CompiledName("ToLines")>]
     let inline toLines (str : string) =
         str.Split ([| '\r'; '\n' |], System.StringSplitOptions.RemoveEmptyEntries)
-
-    /// Creates a string from an F# option value.
-    /// If the option value is <c>None</c>, returns an empty string;
-    /// returns <c>s</c> when the option value is <c>Some s</c>
-    [<CompiledName("OfOption")>]
-    let inline ofOption value =
-        match value with
-        | None -> empty
-        | Some str -> str
-
-    /// Creates an F# option value from the specified string.
-    /// If the string 's' is null or empty, returns None; otherwise, returns Some s.
-    [<CompiledName("ToOption")>]
-    let inline toOption str =
-        if System.String.IsNullOrEmpty str then None
-        else Some str
-
-    /// Creates a new string by removing all leading and
-    /// trailing white-space characters from a string.
-    [<CompiledName("Trim")>]
-    let inline trim (str : string) =
-        str.Trim ()
-
-    /// Removes all leading and trailing occurrences of
-    /// the specified characters from a string.
-    [<CompiledName("TrimChars")>]
-    let inline trimChars (chars : char[]) (str : string) =
-        str.Trim chars
-
-    /// Builds a character array from the given string.
-    [<CompiledName("ToArray")>]
-    let inline toArray (str : string) =
-        str.ToCharArray ()
-
-    /// Builds a string from the given character array.
-    [<CompiledName("OfArray")>]
-    let inline ofArray (chars : char[]) =
-        System.String (chars)
 
     /// Gets a substring of a string.
     [<CompiledName("Sub")>]
@@ -384,7 +375,9 @@ module String =
 
         // Return the index of the matching character, if any.
         if foundMatch then
-            Some index
+            // Subtract one from the index since it was incremented after finding
+            // the match but before the loop terminated.
+            Some (index - 1)
         else None
 
     /// Returns the index of the first character in the string which satisfies the given predicate.
@@ -552,7 +545,7 @@ module String =
                     chosenCount <- chosenCount + 1
 
             // Create a new string from the chosen characters.
-            ofArray chosenChars.[..chosenCount]
+            ofArray chosenChars.[..chosenCount-1]
 
     /// Applies the given function to each character in the string.
     /// Returns the string comprised of the results 'x' where the function returns <c>Some(x)</c>.
@@ -587,7 +580,13 @@ module String =
                     chosenCount <- chosenCount + 1
 
             // Create a new string from the chosen characters.
-            ofArray chosenChars.[..chosenCount]
+            ofArray chosenChars.[..chosenCount-1]
+
+    /// Removes all leading and trailing occurrences of
+    /// the specified characters from a string.
+    [<CompiledName("Trim")>]
+    let inline trim (chars : char[]) (str : string) =
+        str.Trim chars
 
     /// Removes all leading occurrences of the specified set of characters from a string.
     [<CompiledName("TrimStart")>]
@@ -797,7 +796,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -808,7 +807,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     action <| Substring (str, offset, length)
@@ -825,7 +824,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 action <| Substring (str, offset, length)
 
@@ -924,7 +923,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -938,7 +937,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     action.Invoke (substringIndex, Substring (str, offset, length))
@@ -948,6 +947,9 @@ module String =
                                 offset <- i + 1
                                 length <- 0
 
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
                             else
                                 // "Add" this character to the current substring by
                                 // incrementing the substring length.
@@ -955,7 +957,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 action.Invoke (substringIndex, Substring (str, offset, length))
 
@@ -963,6 +965,9 @@ module String =
                                 // and reset the length to zero to begin a new substring.
                                 offset <- i + 1
                                 length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
 
                             else
                                 // "Add" this character to the current substring by
@@ -1046,7 +1051,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -1060,7 +1065,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     state <- folder.Invoke (state, Substring (str, offset, length))
@@ -1077,7 +1082,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 state <- folder.Invoke (state, Substring (str, offset, length))
 
@@ -1178,7 +1183,7 @@ module String =
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
                     /// to quickly determine if a given character is a separator.
-                    let sortedSeperators = Array.sort separator
+                    let sortedSeparators = Array.sort separator
 
                     // The offset and length of the current substring.
                     let mutable offset = 0
@@ -1195,7 +1200,7 @@ module String =
                     if skipEmptyStrings options then
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
                                     state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
@@ -1205,6 +1210,9 @@ module String =
                                 offset <- i + 1
                                 length <- 0
 
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
+
                             else
                                 // "Add" this character to the current substring by
                                 // incrementing the substring length.
@@ -1212,7 +1220,7 @@ module String =
                     else
                         for i = 0 to len - 1 do
                             // Is the current character a separator?
-                            if Array.BinarySearch (sortedSeperators, str.[i]) <> -1 then
+                            if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
                                 state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
 
@@ -1220,6 +1228,9 @@ module String =
                                 // and reset the length to zero to begin a new substring.
                                 offset <- i + 1
                                 length <- 0
+
+                                // Increment the substring index.
+                                substringIndex <- substringIndex + 1
 
                             else
                                 // "Add" this character to the current substring by

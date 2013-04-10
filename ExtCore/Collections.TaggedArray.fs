@@ -33,7 +33,7 @@ module TaggedArray =
     /// Similar to Array.mapi, but 'tags' the index values with a unit-of-measure
     /// type before applying them to the mapping function.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int<'Tag> -> 'T -> 'U) (array : 'T[]) =
+    let mapi (mapping : int<'Tag> -> 'T -> 'U) (array : 'T[]) : 'U[] =
         // Preconditions
         checkNonNull "array" array
         
@@ -47,7 +47,7 @@ module TaggedArray =
     /// Similar to Array.mapi, but 'tags' the index values with a unit-of-measure
     /// type before applying them to the mapping function.
     [<CompiledName("MapIndexed")>]
-    let mapi2 (mapping : int<'Tag> -> 'T1 -> 'T2 -> 'U) (array1 : 'T1[]) (array2 : 'T2[]) =
+    let mapi2 (mapping : int<'Tag> -> 'T1 -> 'T2 -> 'U) (array1 : 'T1[]) (array2 : 'T2[]) : 'U[] =
         // Preconditions
         checkNonNull "array1" array1
         checkNonNull "array2" array2
@@ -66,7 +66,7 @@ module TaggedArray =
     /// The integer index passed to the function indicates the array index of the element being transformed.
     /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : int<'Tag> -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[]) =
+    let foldi (folder : int<'Tag> -> 'State -> 'T -> 'State) (state : 'State) (array : 'T[]) : 'State =
         // Preconditions
         checkNonNull "array" array
         
