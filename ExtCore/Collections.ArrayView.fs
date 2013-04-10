@@ -317,7 +317,7 @@ let reduceBack (reduction : 'T -> 'T -> 'T) (view : ArrayView<'T>) : 'T =
     // Create a new array segment which excludes the last element
     // of the input segment, then call 'foldBack' with it.
     let segment' = ArrayView (view.Array, view.Offset, view.Count - 1)
-    foldBack reduction segment' view.[view.Count - 1]
+    foldBack reduction segment' (last view)
 
 //
 [<CompiledName("ToList")>]

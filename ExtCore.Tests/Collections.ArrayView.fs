@@ -375,23 +375,136 @@ let forall () : unit =
 
 [<TestCase>]
 let iter () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    do
+        // Test case for an empty ArrayView.
+        let elements = ResizeArray ()
+
+        ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
+        |> ArrayView.iter (fun x ->
+            elements.Add (x * 3))
+
+        ResizeArray.isEmpty elements
+        |> should be True
+
+    do
+        // Sample usage test case.
+        let elements = ResizeArray ()
+
+        ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
+        |> ArrayView.iter (fun x ->
+            elements.Add (x * 3))
+
+        ResizeArray.toArray elements
+        |> should equal
+            [| 6; 51; 12; 36; |]
+
+    do
+        // Sample usage test case.
+        let elements = ResizeArray ()
+
+        ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
+        |> ArrayView.iter (fun x ->
+            elements.Add (x * 3))
+
+        ResizeArray.toArray elements
+        |> should equal
+            [| 33; 69; 141; |]
+
+    do
+        // Sample usage test case.
+        let elements = ResizeArray ()
+
+        ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
+        |> ArrayView.iter (fun x ->
+            elements.Add (x * 3))
+
+        ResizeArray.toArray elements
+        |> should equal
+            [| 21; 33; 54; |]
 
 [<TestCase>]
 let fold () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    // Test case for an empty ArrayView.
+    (String.empty, ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0)
+    ||> ArrayView.fold (fun state x ->
+        state + x.ToString())
+    |> should equal String.empty
+
+    // Sample usage test cases.
+    (String.empty, ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4)
+    ||> ArrayView.fold (fun state x ->
+        state + x.ToString())
+    |> should equal "217412"
+
+    (String.empty, ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3)
+    ||> ArrayView.fold (fun state x ->
+        state + x.ToString())
+    |> should equal "112347"
+
+    (String.empty, ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5)
+    ||> ArrayView.fold (fun state x ->
+        state + x.ToString())
+    |> should equal "711182948"
 
 [<TestCase>]
 let foldBack () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    // Test case for an empty ArrayView.
+    (ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0, String.empty)
+    ||> ArrayView.foldBack (fun x state ->
+        state + x.ToString())
+    |> should equal String.empty
+
+    // Sample usage test cases.
+    (ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4, String.empty)
+    ||> ArrayView.foldBack (fun x state ->
+        state + x.ToString())
+    |> should equal "124172"
+
+    (ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3, String.empty)
+    ||> ArrayView.foldBack (fun x state ->
+        state + x.ToString())
+    |> should equal "472311"
+
+    (ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5, String.empty)
+    ||> ArrayView.foldBack (fun x state ->
+        state + x.ToString())
+    |> should equal "482918117"
 
 [<TestCase>]
 let reduce () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    // Sample usage test cases.
+    ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
+    |> ArrayView.reduce (fun x y ->
+        (x - y) * y)
+    |> should equal -12576
+
+    ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
+    |> ArrayView.reduce (fun x y ->
+        (x - y) * y)
+    |> should equal -15181
+
+    ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
+    |> ArrayView.reduce (fun x y ->
+        (x - y) * y)
+    |> should equal -1596144
 
 [<TestCase>]
 let reduceBack () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    // Sample usage test cases.
+    ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
+    |> ArrayView.reduceBack (fun x y ->
+        (y - x) * x)
+    |> should equal 506
+
+    ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
+    |> ArrayView.reduceBack (fun x y ->
+        (y - x) * x)
+    |> should equal 5951
+
+    ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
+    |> ArrayView.reduceBack (fun x y ->
+        (y - x) * x)
+    |> should equal 737842
 
 [<TestCase>]
 let min () : unit =
