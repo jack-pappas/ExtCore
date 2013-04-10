@@ -26,11 +26,27 @@ open FsUnit
 
 [<TestCase>]
 let isEmpty () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    (2, 0)
+    ||> ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |]
+    |> ArrayView.isEmpty
+    |> should be True
+
+    (2, 3)
+    ||> ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |]
+    |> ArrayView.isEmpty
+    |> should be False
 
 [<TestCase>]
 let ofArray () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Array.empty
+    |> ArrayView.ofArray
+    |> ArrayView.isEmpty
+    |> should be True
+
+    [| 5; 3; 11; 2; 17; 4; 12; 14; |]
+    |> ArrayView.ofArray
+    |> ArrayView.count
+    |> should equal 8
 
 [<TestCase>]
 let create () : unit =
