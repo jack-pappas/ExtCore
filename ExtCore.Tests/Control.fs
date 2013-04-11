@@ -16,12 +16,175 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.Control.Tests
 
+open ExtCore.Control
 open NUnit.Framework
-open FsCheck
+open FsUnit
+//open FsCheck
 
 
-(* TODO : Implement tests for the workflows and modules in ExtCore.Control *)
+/// Tests for the ExtCore.Control.State module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module State =
+    [<TestCase>]
+    let run () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let evaluate () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let execute () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let getState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let bindChoice () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let readonly () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Reader module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Reader =
+    [<TestCase>]
+    let run () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let read () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.ReaderState module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ReaderState =
+    [<TestCase>]
+    let run () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let evaluate () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let execute () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let getState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Choice module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Choice =
+    [<TestCase>]
+    let bindOrRaise () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let bindOrFail () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setError () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let failwith () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.ProtectedState module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ProtectedState =
+    [<TestCase>]
+    let liftState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let liftChoice () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let liftReader () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let liftReaderChoice () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let getState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setError () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let failwith () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let discardState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.StatefulChoice module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module StatefulChoice =
+    [<TestCase>]
+    let liftState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let liftChoice () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let getState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Async module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Async =
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
 
