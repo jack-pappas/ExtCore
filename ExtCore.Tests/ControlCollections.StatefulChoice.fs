@@ -16,11 +16,19 @@ limitations under the License.
 
 *)
 
-namespace Tests.ExtCore
+/// Unit tests for the ExtCore.Control.Collections.StatefulChoice module.
+module Tests.ExtCore.Control.Collections.StatefulChoice
 
+open ExtCore.Control
+open ExtCore.Control.Collections
 open NUnit.Framework
-open FsCheck
+open FsUnit
+//open FsCheck
 
 
-(* TODO : Implement tests for the various modules in ExtCore *)
+/// Tests for the ExtCore.Control.Collections.StatefulChoice.Array module.
+module Array =
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 

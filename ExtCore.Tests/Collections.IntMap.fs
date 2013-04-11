@@ -24,7 +24,7 @@ the Haskell 'containers' package:
 *)
 
 /// Unit tests for the ExtCore.Collections.IntMap type and module.
-module ExtCore.Collections.IntMap.Tests
+module Tests.ExtCore.Collections.IntMap
 
 open System.Collections.Generic
 open NUnit.Framework
@@ -682,7 +682,7 @@ let mapPartition () : unit =
 
         let evensExpected, oddsExpected =
             [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
-            |> Array.mapPartition (fun (k, v) ->
+            |> ExtCore.Collections.Array.mapPartition (fun (k, v) ->
                 if (k + int v) % 2 = 0 then
                     Choice1Of2 (k, k + 10)
                 else

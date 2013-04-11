@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Collections.IntSet type and module.
-module ExtCore.Collections.IntSet.Tests
+module Tests.ExtCore.Collections.IntSet
 
 open System.Collections.Generic
 open NUnit.Framework
@@ -554,7 +554,7 @@ let map () : unit =
     |> should equal (
         [| 5; 3; 11; 2; 17; 4; 12; 14 |]
         |> Set.ofArray
-        |> Set.mapToArray (fun el ->
+        |> ExtCore.Collections.Set.mapToArray (fun el ->
             el * 2)
         |> IntSet.ofArray)
 

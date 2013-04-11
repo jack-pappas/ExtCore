@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Collections.Bimap type and module.
-module ExtCore.Collections.Bimap.Tests
+module Tests.ExtCore.Collections.Bimap
 
 open System.Collections.Generic
 open NUnit.Framework

@@ -18,7 +18,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Collections.LazyList type and module.
-module ExtCore.Collections.LazyList.Tests
+module Tests.ExtCore.Collections.LazyList
 
 #nowarn "40"
 

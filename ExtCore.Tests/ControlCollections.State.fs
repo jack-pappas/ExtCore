@@ -16,168 +16,123 @@ limitations under the License.
 
 *)
 
-namespace Tests.ExtCore.Control
+/// Unit tests for the ExtCore.Control.Collections.State module.
+module Tests.ExtCore.Control.Collections.State
 
 open ExtCore.Control
+open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
 //open FsCheck
 
 
-/// Tests for the ExtCore.Control.State module.
-module State =
+/// Tests for the ExtCore.Control.Collections.State.Array module.
+module Array =
     [<TestCase>]
-    let run () : unit =
+    let iter () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let evaluate () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let execute () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let getState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let setState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let bindChoice () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let readonly () : unit =
+    let iteri () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let map () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
-
-/// Tests for the ExtCore.Control.Reader module.
-module Reader =
     [<TestCase>]
-    let run () : unit =
+    let mapi () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let read () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-
-/// Tests for the ExtCore.Control.ReaderState module.
-module ReaderState =
-    [<TestCase>]
-    let run () : unit =
+    let mapBack () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let evaluate () : unit =
+    let mapiBack () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let execute () : unit =
+    let map2 () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let getState () : unit =
+    let mapi2 () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let setState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-
-/// Tests for the ExtCore.Control.Choice module.
-module Choice =
-    [<TestCase>]
-    let bindOrRaise () : unit =
+    let fold () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let bindOrFail () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let setError () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let failwith () : unit =
+    let foldi () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
 
-/// Tests for the ExtCore.Control.ProtectedState module.
-module ProtectedState =
+/// Tests for the ExtCore.Control.Collections.State.List module.
+module List =
     [<TestCase>]
-    let liftState () : unit =
+    let iter () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let liftChoice () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let liftReader () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let liftReaderChoice () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let setState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let getState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let setError () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let failwith () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let discardState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-
-/// Tests for the ExtCore.Control.StatefulChoice module.
-module StatefulChoice =
-    [<TestCase>]
-    let liftState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let liftChoice () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let setState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let getState () : unit =
+    let iteri () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let map () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 
-/// Tests for the ExtCore.Control.Async module.
-module Async =
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.State.TaggedArray module.
+module TaggedArray =
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapiBack () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let foldi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.State.ArrayView module.
+module ArrayView =
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
     [<TestCase>]
     let map () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.State.Set module.
+module Set =
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iterBack () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 

@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 //
-namespace ExtCore.Control.Cps.Tests
+namespace Tests.ExtCore.Control.Cps
 
 open NUnit.Framework
 open FsCheck
