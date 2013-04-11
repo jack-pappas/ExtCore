@@ -114,23 +114,23 @@ let takeArray () : unit =
     |> should equal [5; 8; 13; 21; 34; 55; 89; 144]
 
 [<TestCase>]
-let foldPairs () : unit =
+let foldPairwise () : unit =
     // Count the number of occurrences where adjacent characters are the same.
     (0, List.ofArray <| "mississippi".ToCharArray ())
-    ||> List.foldPairs (fun count x y ->
+    ||> List.foldPairwise (fun count x y ->
         if x = y then count + 1 else count)
     |> should equal 3
 
     (0, [0; 1; 1; 2; 3; 5; 8; 13; 21; 34; 55; 89; 144])
-    ||> List.foldPairs (fun diffSum x y ->
+    ||> List.foldPairwise (fun diffSum x y ->
         diffSum + (y - x))
     |> should equal 144
 
 [<TestCase>]
-let foldPairsBack () : unit =
+let foldBackPairwise () : unit =
     // Count the number of occurrences where adjacent characters are the same.
     (List.ofArray <| "mississippi".ToCharArray (), 0)
-    ||> List.foldPairsBack (fun x y count ->
+    ||> List.foldBackPairwise (fun x y count ->
         if x = y then count + 1 else count)
     |> should equal 3
 
