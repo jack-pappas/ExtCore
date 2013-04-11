@@ -27,7 +27,6 @@ open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.Async.Array module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     [<TestCase>]
     let init () : unit =
@@ -67,7 +66,6 @@ module Array =
 
 
 /// Tests for the ExtCore.Control.Collections.Async.Seq module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
 
     /// Tests for the ExtCore.Control.Collections.Async.Seq.Parallel module.

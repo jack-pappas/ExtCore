@@ -27,7 +27,6 @@ open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.Cps.StateCont.Array module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     [<TestCase>]
     let map () : unit =

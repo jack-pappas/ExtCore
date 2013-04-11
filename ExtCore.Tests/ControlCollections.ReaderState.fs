@@ -27,7 +27,6 @@ open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderState.Array module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     [<TestCase>]
     let iter () : unit =
@@ -71,7 +70,6 @@ module Array =
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderState.TaggedArray module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TaggedArray =
     [<TestCase>]
     let mapi () : unit =
@@ -87,7 +85,6 @@ module TaggedArray =
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderState.ArrayView module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArrayView =
     [<TestCase>]
     let iter () : unit =

@@ -25,7 +25,6 @@ open FsUnit
 
 
 /// Tests for the ExtCore.Control.State module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module State =
     [<TestCase>]
     let run () : unit =
@@ -61,7 +60,6 @@ module State =
 
 
 /// Tests for the ExtCore.Control.Reader module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Reader =
     [<TestCase>]
     let run () : unit =
@@ -73,7 +71,6 @@ module Reader =
 
 
 /// Tests for the ExtCore.Control.ReaderState module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderState =
     [<TestCase>]
     let run () : unit =
@@ -97,7 +94,6 @@ module ReaderState =
 
 
 /// Tests for the ExtCore.Control.Choice module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
     [<TestCase>]
     let bindOrRaise () : unit =
@@ -117,7 +113,6 @@ module Choice =
 
 
 /// Tests for the ExtCore.Control.ProtectedState module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ProtectedState =
     [<TestCase>]
     let liftState () : unit =
@@ -157,7 +152,6 @@ module ProtectedState =
 
 
 /// Tests for the ExtCore.Control.StatefulChoice module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module StatefulChoice =
     [<TestCase>]
     let liftState () : unit =
@@ -181,7 +175,6 @@ module StatefulChoice =
 
 
 /// Tests for the ExtCore.Control.Async module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Async =
     [<TestCase>]
     let map () : unit =

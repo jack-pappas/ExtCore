@@ -27,7 +27,6 @@ open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderMaybe.Array module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     [<TestCase>]
     let map () : unit =
@@ -67,7 +66,6 @@ module Array =
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderMaybe.List module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
     [<TestCase>]
     let fold () : unit =
@@ -87,7 +85,6 @@ module List =
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderMaybe.Seq module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     [<TestCase>]
     let iter () : unit =
@@ -95,7 +92,6 @@ module Seq =
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderMaybe.Set module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Set =
     [<TestCase>]
     let fold () : unit =
@@ -107,7 +103,6 @@ module Set =
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderMaybe.ArrayView module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArrayView =
     [<TestCase>]
     let fold () : unit =

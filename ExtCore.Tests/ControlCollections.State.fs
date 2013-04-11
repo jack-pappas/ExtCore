@@ -27,7 +27,6 @@ open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.State.Array module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     [<TestCase>]
     let iter () : unit =
@@ -71,7 +70,6 @@ module Array =
 
 
 /// Tests for the ExtCore.Control.Collections.State.List module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
     [<TestCase>]
     let iter () : unit =
@@ -95,7 +93,6 @@ module List =
 
 
 /// Tests for the ExtCore.Control.Collections.State.TaggedArray module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module TaggedArray =
     [<TestCase>]
     let mapi () : unit =
@@ -111,7 +108,6 @@ module TaggedArray =
 
 
 /// Tests for the ExtCore.Control.Collections.State.ArrayView module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArrayView =
     [<TestCase>]
     let iter () : unit =
@@ -131,7 +127,6 @@ module ArrayView =
 
 
 /// Tests for the ExtCore.Control.Collections.State.Set module.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Set =
     [<TestCase>]
     let iter () : unit =
