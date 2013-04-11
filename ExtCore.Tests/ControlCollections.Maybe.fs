@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.Maybe module.
-module ExtCore.Control.Collections.Maybe.Tests
+module Tests.ExtCore.Control.Collections.Maybe
 
 open ExtCore.Control
 open ExtCore.Control.Collections

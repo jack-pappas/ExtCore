@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Tests for the ExtCore.Collections.Range module.
-module ExtCore.Collections.Range.Tests
+module Tests.ExtCore.Collections.Range
 
 open NUnit.Framework
 open FsUnit

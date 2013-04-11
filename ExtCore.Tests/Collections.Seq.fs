@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Collections.Seq module.
-module ExtCore.Collections.Seq.Tests
+module Tests.ExtCore.Collections.Seq
 
 open NUnit.Framework
 open FsUnit

@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.Reader module.
-module ExtCore.Control.Collections.Reader.Tests
+module Tests.ExtCore.Control.Collections.Reader
 
 open ExtCore.Control
 open ExtCore.Control.Collections

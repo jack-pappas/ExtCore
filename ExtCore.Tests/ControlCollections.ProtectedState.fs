@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.ProtectedState module.
-module ExtCore.Control.Collections.ProtectedState.Tests
+module Tests.ExtCore.Control.Collections.ProtectedState
 
 open ExtCore.Control
 open ExtCore.Control.Collections

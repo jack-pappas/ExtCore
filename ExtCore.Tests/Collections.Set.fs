@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Collections.Set module.
-module ExtCore.Collections.Set.Tests
+module Tests.ExtCore.Collections.Set
 
 open System
 open NUnit.Framework

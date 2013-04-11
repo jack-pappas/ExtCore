@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.Async module.
-module ExtCore.Control.Collections.Async.Tests
+module Tests.ExtCore.Control.Collections.Async
 
 open ExtCore.Control
 open ExtCore.Control.Collections

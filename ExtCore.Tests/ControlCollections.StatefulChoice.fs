@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.StatefulChoice module.
-module ExtCore.Control.Collections.StatefulChoice.Tests
+module Tests.ExtCore.Control.Collections.StatefulChoice
 
 open ExtCore.Control
 open ExtCore.Control.Collections

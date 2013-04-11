@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Collections.Map module.
-module ExtCore.Collections.Map.Tests
+module Tests.ExtCore.Collections.Map
 
 open System
 open System.Collections.Generic

@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-namespace ExtCore.String.Tests
+namespace Tests.ExtCore
 
 open NUnit.Framework
 open FsUnit

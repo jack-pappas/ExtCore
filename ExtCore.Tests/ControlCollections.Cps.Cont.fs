@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.Cps.Cont module.
-module ExtCore.Control.Collections.Cps.Cont.Tests
+module Tests.ExtCore.Control.Collections.Cps.Cont
 
 open ExtCore.Control
 open ExtCore.Control.Collections

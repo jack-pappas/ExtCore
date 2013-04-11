@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.ReaderProtectedState module.
-module ExtCore.Control.Collections.ReaderProtectedState.Tests
+module Tests.ExtCore.Control.Collections.ReaderProtectedState
 
 open ExtCore.Control
 open ExtCore.Control.Collections

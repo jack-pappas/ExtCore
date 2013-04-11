@@ -17,7 +17,7 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Control.Collections.Choice module.
-module ExtCore.Control.Collections.Choice.Tests
+module Tests.ExtCore.Control.Collections.Choice
 
 open ExtCore.Control
 open ExtCore.Control.Collections

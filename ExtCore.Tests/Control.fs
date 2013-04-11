@@ -16,7 +16,7 @@ limitations under the License.
 
 *)
 
-namespace ExtCore.Control.Tests
+namespace Tests.ExtCore.Control
 
 open ExtCore.Control
 open NUnit.Framework
