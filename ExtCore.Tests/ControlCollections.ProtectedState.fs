@@ -19,8 +19,57 @@ limitations under the License.
 /// Unit tests for the ExtCore.Control.Collections.ProtectedState module.
 module ExtCore.Control.Collections.ProtectedState.Tests
 
+open ExtCore.Control
+open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
 //open FsCheck
 
+
+/// Tests for the ExtCore.Control.Collections.ProtectedState.Array module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Array =
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.ProtectedState.List module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module List =
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.ProtectedState.ArrayView module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ArrayView =
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 

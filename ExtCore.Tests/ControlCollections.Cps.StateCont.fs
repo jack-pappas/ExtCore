@@ -16,11 +16,24 @@ limitations under the License.
 
 *)
 
-/// Unit tests for the ExtCore.Control.Collections.Cps module.
-module ExtCore.Control.Collections.Cps.Tests
+/// Unit tests for the ExtCore.Control.Collections.Cps.StateCont module.
+module ExtCore.Control.Collections.Cps.StateCont.Tests
 
+open ExtCore.Control
+open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
 //open FsCheck
 
+
+/// Tests for the ExtCore.Control.Collections.Cps.StateCont.Array module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Array =
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 

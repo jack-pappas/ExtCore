@@ -69,7 +69,8 @@
     <Compile Include="ControlCollections.ProtectedState.fs" />
     <Compile Include="ControlCollections.ReaderProtectedState.fs" />
     <Compile Include="ControlCollections.StatefulChoice.fs" />
-    <Compile Include="ControlCollections.Cps.fs" />
+    <Compile Include="ControlCollections.Cps.Cont.fs" />
+    <Compile Include="ControlCollections.Cps.StateCont.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">

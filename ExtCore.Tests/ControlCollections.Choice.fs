@@ -19,8 +19,98 @@ limitations under the License.
 /// Unit tests for the ExtCore.Control.Collections.Choice module.
 module ExtCore.Control.Collections.Choice.Tests
 
+open ExtCore.Control
+open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
 //open FsCheck
+
+
+/// Tests for the ExtCore.Control.Collections.Choice.Array module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Array =
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let foldi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let init () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let reduce () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.Choice.List module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module List =
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iter2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.Choice.Seq module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Seq =
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.Choice.Set module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Set =
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapToArray () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.Choice.ArrayView module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ArrayView =
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 
 

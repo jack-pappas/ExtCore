@@ -19,8 +19,60 @@ limitations under the License.
 /// Unit tests for the ExtCore.Control.Collections.Async module.
 module ExtCore.Control.Collections.Async.Tests
 
+open ExtCore.Control
+open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
 //open FsCheck
 
+
+/// Tests for the ExtCore.Control.Collections.Async.Array module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Array =
+    [<TestCase>]
+    let init () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapPartition () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let foldi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.Async.Seq module.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Seq =
+
+    /// Tests for the ExtCore.Control.Collections.Async.Seq.Parallel module.
+    module Parallel =
+        [<TestCase>]
+        let batch () : unit =
+            Assert.Inconclusive "Test not yet implemented."
 

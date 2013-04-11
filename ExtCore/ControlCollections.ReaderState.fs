@@ -248,8 +248,8 @@ module TaggedArray =
     /// A specialization of Array.mapi which threads an accumulator through the computation;
     /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
     /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
-    [<CompiledName("MapIndexedByTag")>]
-    let mapti (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
             (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
         // Preconditions
         checkNonNull "array" array
@@ -270,8 +270,8 @@ module TaggedArray =
     /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
     /// This function traverses the input array from right-to-left.
     /// The index values are tagged with a unit-of-measure type before applying them to the mapping function.
-    [<CompiledName("MapIndexedByTagBack")>]
-    let maptiBack (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
+    [<CompiledName("MapIndexedBack")>]
+    let mapiBack (mapping : int<'Tag> -> 'T -> 'Env -> 'State -> 'U * 'State)
             (array : 'T[]) (env : 'Env) (state : 'State) : 'U[] * 'State =
         // Preconditions
         checkNonNull "array" array
@@ -291,8 +291,8 @@ module TaggedArray =
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
     /// The integer index passed to the function indicates the array index of the element being transformed.
     /// The index values are tagged with a unit-of-measure type before applying them to the folder function.
-    [<CompiledName("FoldIndexedByTag")>]
-    let foldti (folder : int<'Tag> -> 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : int<'Tag> -> 'InnerState -> 'T -> 'Env -> 'OuterState -> 'InnerState * 'OuterState)
             (innerState : 'InnerState) (array : 'T[]) (env : 'Env) (outerState : 'OuterState)
             : 'InnerState * 'OuterState =
         // Preconditions
