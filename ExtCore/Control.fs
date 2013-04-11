@@ -1107,7 +1107,9 @@ module State =
     let inline setState (state : 'State) =
         fun (_ : 'State) -> ((), state)
 
-    //
+    /// Adapts a ProtectedState function for use within a State workflow.
+    /// If the ProtectedState function returns an exception instance when executed,
+    /// the exception will be raised rather than being passed into the State workflow.
     [<CompiledName("BindChoice")>]
     let inline bindChoice (k : 'T -> StateFunc<'State, 'U>) (m : ProtectedStateFunc<_,_,_>) =
         fun state ->
@@ -1127,7 +1129,8 @@ module State =
             let result = reader state
             result, state
 
-    //
+    /// Applies a function to the result of a State function to transform it
+    /// without affecting the current state value.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (stateFunc : StateFunc<'State, 'T>)
         : StateFunc<'State, 'U> =
@@ -1223,7 +1226,7 @@ module Maybe =
 module Choice =
     //
     [<CompiledName("BindOrRaise")>]
-    let inline bindOrRaise (x : Choice<'T, #exn>) =
+    let inline bindOrRaise (x : Choice<'T, #exn>) : 'T =
         match x with
         | Choice2Of2 e ->
             raise e
@@ -1232,7 +1235,7 @@ module Choice =
 
     //
     [<CompiledName("BindOrFail")>]
-    let inline bindOrFail (x : Choice<'T, string>) =
+    let inline bindOrFail (x : Choice<'T, string>) : 'T =
         match x with
         | Choice1Of2 r -> r
         | Choice2Of2 msg ->
@@ -1262,24 +1265,16 @@ module ReaderChoice =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ProtectedState =
     //
-    [<CompiledName("Bind")>]
-    let inline bind k m =
-        fun state ->
-        match m state with
-        | Choice2Of2 error ->
-            Choice2Of2 error
-        | Choice1Of2 (value, state) ->
-            k value state
-
-    //
     [<CompiledName("LiftState")>]
-    let inline liftState (stateFunc : StateFunc<'State, 'T>) : ProtectedStateFunc<'State, 'T, 'Error> =
+    let inline liftState (stateFunc : StateFunc<'State, 'T>)
+        : ProtectedStateFunc<'State, 'T, 'Error> =
         stateFunc >> Choice1Of2
 
     //
-    [<CompiledName("LiftEither")>]
-    let inline liftEither (valueOrError : Choice<'T, 'Error>) =
-        match valueOrError with
+    [<CompiledName("LiftChoice")>]
+    let inline liftChoice (choice : Choice<'T, 'Error>)
+        : ProtectedStateFunc<'State, 'T, 'Error> =
+        match choice with
         | Choice2Of2 error ->
             fun _ -> Choice2Of2 error
         | Choice1Of2 value ->
@@ -1290,14 +1285,16 @@ module ProtectedState =
     /// so it can be used with the ProtectedState monad.
     /// Used for functions which only need to read from the state.
     [<CompiledName("LiftReader")>]
-    let inline liftReader (readerM : 'State -> 'T) : ProtectedStateFunc<'State, 'T, 'Error> =
-        fun state ->
-            let result = readerM state
-            Choice1Of2 (result, state)
+    let inline liftReader (readerFunc : ReaderFunc<'Env, 'T>)
+        : ProtectedStateFunc<'Env, 'T, 'Error> =
+        fun env ->
+            let result = readerFunc env
+            Choice1Of2 (result, env)
 
     //
     [<CompiledName("LiftReaderChoice")>]
-    let inline liftReaderChoice (readerChoiceFunc : 'State -> Choice<'T, 'Error>) : ProtectedStateFunc<'State, 'T, 'Error> =
+    let inline liftReaderChoice (readerChoiceFunc : 'State -> Choice<'T, 'Error>)
+        : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
             match readerChoiceFunc state with
             | Choice2Of2 error ->
@@ -1307,12 +1304,12 @@ module ProtectedState =
 
     //
     [<CompiledName("SetState")>]
-    let inline setState (state : 'State) =
+    let inline setState (state : 'State) : Choice<unit * 'State, 'Error> =
         Choice1Of2 ((), state)
 
     //
     [<CompiledName("GetState")>]
-    let inline getState (state : 'State) =
+    let inline getState (state : 'State) : Choice<'State * 'State, 'Error> =
         Choice1Of2 (state, state)
 
     /// Sets an error value in the computation. The monadic equivalent of raising an exception.
@@ -1328,11 +1325,11 @@ module ProtectedState =
     /// Discards the state value.
     /// Useful when the state value is only needed during the computation;
     /// by discarding the state when the computation is complete, the return
-    /// value can be adapted to the Either workflow.
+    /// value can be adapted to the Choice workflow.
     [<CompiledName("DiscardState")>]
-    let inline discardState (protectedStateM : 'State -> Choice<'T * 'State, 'Error>) =
+    let inline discardState (protectedStateFunc : ProtectedStateFunc<'State, 'T, 'Error>) =
         fun state ->
-            match protectedStateM state with
+            match protectedStateFunc state with
             | Choice2Of2 error ->
                 Choice2Of2 error
             | Choice1Of2 (result, _) ->
@@ -1359,10 +1356,10 @@ module StatefulChoice =
         (Choice1Of2 value), state
 
     //
-    [<CompiledName("LiftEither")>]
-    let inline liftEither (valueOrError : Choice<'T, 'Error>) : StatefulChoiceFunc<'State, 'T, 'Error> =
+    [<CompiledName("LiftChoice")>]
+    let inline liftChoice (choice : Choice<'T, 'Error>) : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
-        valueOrError, state
+        choice, state
 
     //
     [<CompiledName("SetState")>]
@@ -1380,7 +1377,6 @@ module StatefulChoice =
         (Choice1Of2 value), state
 
     //
-    [<CompiledName("Bind")>]
     let private bind k m =
         fun state ->
         match m state with
