@@ -85,7 +85,7 @@ module internal BitOps =
         key &&& (~~~(mask - 1u) ^^^ mask)
 
     //
-    let (*inline*) shorter (m1 : Mask, m2 : Mask) : bool =
+    let inline shorter (m1 : Mask, m2 : Mask) : bool =
         // NOTE : This must be an *unsigned* comparison for the results to be correct.
         m1 > m2
 
@@ -192,7 +192,7 @@ type private PatriciaSet =
             else t
 
     //
-    static member (*inline*) private Join (p0, t0 : PatriciaSet, p1, t1) =
+    static member inline private Join (p0, t0 : PatriciaSet, p1, t1) =
         let m = branchingBit (p0, p1)
         let p = mask (p0, m)
         if zeroBit (p0, m) then
