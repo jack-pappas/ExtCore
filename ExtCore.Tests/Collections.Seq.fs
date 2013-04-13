@@ -62,3 +62,15 @@ let projectKeys () : unit =
         4, "Blue";
         5, "Green";
         6, "Yellow"]
+
+[<TestCase>]
+let replicate () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let repeat () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let cycle () : unit =
+    Assert.Inconclusive "Test not yet implemented."

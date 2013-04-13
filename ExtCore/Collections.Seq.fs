@@ -53,3 +53,57 @@ let projectKeys (mapping : 'T -> 'Key) (source : seq<'T>) =
     |> Seq.map (fun x ->
         mapping x, x)
 
+/// Generates a new sequence which repeats the given sequence a specified number of times.
+[<CompiledName("Replicate")>]
+let replicate count sequence : seq<'T> =
+    // Preconditions
+    if count < 0 then
+        invalidArg "count" "The count cannot be negative."
+    // HACK : The F# compiler gives a warning about the type parameter being
+    // constrained if 'checkNonNull' is used here, even though it shouldn't.
+    // Instead, we'll use Object.ReferenceEquals directly.
+    elif System.Object.ReferenceEquals (null, sequence) then
+        nullArg "sequence"
+
+    // Cache the input sequence so it's only evaluated once.
+    let cachedSeq = Seq.cache sequence
+
+    seq {
+    for i = 0 to count - 1 do
+        yield! cachedSeq
+    }
+
+/// Generates a new sequence which returns the given value
+/// an infinite number of times.
+[<CompiledName("Repeat")>]
+let rec repeat value : seq<'T> =
+    seq {
+    while true do
+        yield value }
+
+/// Creates a cyclical sequence with the specified number of elements using the given
+/// generator function. The integer index passed to the function indicates the index
+/// of the element being generated.
+[<CompiledName("Cycle")>]
+let cycle (generator : int -> 'T) count : seq<'T> =
+    // Preconditions
+    if count < 0 then
+        invalidArg "count" "The count cannot be negative."
+    
+    // If the count is zero, return an empty sequence.
+    if count = 0 then
+        Seq.empty
+    else
+        // Create the sequence to be cycled.
+        // The sequence is cached so the generator function is
+        // only called once per element.
+        let cycledSeq =
+            Seq.init count generator
+            |> Seq.cache
+
+        // Return a sequence which loops forever and repeats the
+        // sequence to be cycled.
+        seq {
+        while true do
+            yield! cycledSeq }
+

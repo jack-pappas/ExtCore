@@ -1084,11 +1084,11 @@ and [<Sealed>]
 /// Functional programming operators related to the IntSet type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module IntSet =
-    /// The empty IntSet.
+    /// The empty set.
     [<CompiledName("Empty")>]
     let empty = IntSet.Empty
 
-    /// Is the map empty?
+    /// Is the set empty?
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (set : IntSet) : bool =
         // Preconditions
@@ -1096,7 +1096,7 @@ module IntSet =
 
         set.IsEmpty
 
-    /// Returns the number of elements in the IntSet.
+    /// Returns the number of elements in the set.
     [<CompiledName("Count")>]
     let inline count (set : IntSet) : int =
         // Preconditions
@@ -1104,90 +1104,104 @@ module IntSet =
         
         set.Count
 
-    /// The IntSet containing the given element.
+    /// The set containing the given element.
     [<CompiledName("Singleton")>]
     let inline singleton (key : int) : IntSet =
         IntSet.Singleton key
 
-    //
+    /// Returns a new set with an element added to the set.
+    /// No exception is raised if the set already contains the element.
     [<CompiledName("Add")>]
     let inline add (key : int) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Add key
 
-    //
+    /// Returns a new set with the given element removed.
+    /// No exception is raised if the set does not contain the element.
     [<CompiledName("Remove")>]
     let inline remove (key : int) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Remove key
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if the given element is in the given set.
+    /// </summary>
     [<CompiledName("Contains")>]
     let inline contains (key : int) (set : IntSet) : bool =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Contains key
 
-    //
+    /// Computes the union of the two sets.
     [<CompiledName("Union")>]
     let inline union (set1 : IntSet) (set2 : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.Union set2
 
-    //
+    /// Computes the intersection of the two sets.
     [<CompiledName("Intersect")>]
     let inline intersect (set1 : IntSet) (set2 : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.Intersect set2
 
-    //
+    /// Returns a new set with the elements of the second set removed from the first.
     [<CompiledName("Difference")>]
     let inline difference (set1 : IntSet) (set2 : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.Difference set2
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the first set are in the second.
+    /// </summary>
     [<CompiledName("IsSubset")>]
     let inline isSubset (set1 : IntSet) (set2 : IntSet) : bool =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.IsSubset set2
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
+    /// and at least one element of the second is not in the first.
+    /// </summary>
     [<CompiledName("IsProperSubset")>]
     let inline isProperSubset (set1 : IntSet) (set2 : IntSet) : bool =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.IsProperSubset set2
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
+    /// </summary>
     [<CompiledName("IsSuperset")>]
     let inline isSuperset (set1 : IntSet) (set2 : IntSet) : bool =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.IsSuperset set2
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
+    /// and at least one element of the first is not in the second.
+    /// </summary>
     [<CompiledName("IsProperSuperset")>]
     let inline isProperSuperset (set1 : IntSet) (set2 : IntSet) : bool =
         // Preconditions
@@ -1196,55 +1210,55 @@ module IntSet =
 
         set1.IsProperSuperset set2
 
-    //
+    /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfSeq source
 
-    //
+    /// Builds a set that contains the same elements as the given list.
     [<CompiledName("OfList")>]
     let inline ofList source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfList source
 
-    //
+    /// Builds a set that contains the same elements as the given array.
     [<CompiledName("OfArray")>]
     let inline ofArray source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfArray source
 
-    //
+    /// Builds an IntSet that contains the same elements as the given Set.
     [<CompiledName("OfSet")>]
     let inline ofSet source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfSet source
 
-    //
+    /// Returns an ordered view of the collection as an enumerable object.
     [<CompiledName("ToSeq")>]
     let inline toSeq (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.ToSeq ()
 
-    //
+    /// Builds a list that contains the elements of the set in order.
     [<CompiledName("ToList")>]
     let inline toList (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.ToList ()
 
-    //
+    /// Builds an array that contains the elements of the set in order.
     [<CompiledName("ToArray")>]
     let inline toArray (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.ToArray ()
 
-    //
+    /// Builds a Set that contains the same elements as the given IntSet.
     [<CompiledName("ToSet")>]
     let inline toSet (set : IntSet) =
         // Preconditions
@@ -1252,31 +1266,35 @@ module IntSet =
 
         set.ToSet ()
 
-    //
+    /// Applies the given function to each element of the set,
+    /// in order according to the comparison function.
     [<CompiledName("Iter")>]
     let inline iter (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Iterate action
 
-    //
+    /// Applies the given function to each element of the set,
+    /// in reverse order according to the comparison function.
     [<CompiledName("IterBack")>]
     let inline iterBack (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.IterateBack action
 
-    //
+    /// Applies the given accumulating function to each element of the set,
+    /// in order according to the comparison function.
     [<CompiledName("Fold")>]
     let inline fold (folder : 'State -> int -> 'State) (state : 'State) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Fold (folder, state)
 
-    //
+    /// Applies the given accumulating function to each element of the set,
+    /// in reverse order according to the comparison function.
     [<CompiledName("FoldBack")>]
     let inline foldBack (folder : int -> 'State -> 'State) (set : IntSet) (state : 'State) =
         // Preconditions
@@ -1284,47 +1302,58 @@ module IntSet =
 
         set.FoldBack (folder, state)
 
-    //
+    /// <summary>
+    /// Applies the given function to each element of the set.
+    /// Returns the set comprised of the results <c>x</c> for each element where the
+    /// function returns <c>Some(x)</c>.
+    /// </summary>
     [<CompiledName("Choose")>]
     let inline choose (chooser : int -> int option) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Choose chooser
 
-    //
+    /// <summary>
+    /// Returns a new collection containing only the elements of the collection
+    /// for which the given predicate returns &quot;true&quot;.
+    /// </summary>
     [<CompiledName("Filter")>]
     let inline filter (predicate : int -> bool) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Filter predicate
 
-    //
+    /// Returns a new collection containing the results of applying the given function
+    /// to each element of the input set.
     [<CompiledName("Map")>]
     let inline map (mapping : int -> int) (set : IntSet) : IntSet =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Map mapping
 
-    //
+    /// <summary>
+    /// Splits the set into two sets containing the elements for which the given
+    /// predicate returns &quot;true&quot; and &quot;false&quot;, respectively.
+    /// </summary>
     [<CompiledName("Partition")>]
     let inline partition (predicate : int -> bool) (set : IntSet) : IntSet * IntSet =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Partition predicate
 
-    //
+    /// Tests if any element of the collection satisfies the given predicate.
     [<CompiledName("Exists")>]
     let inline exists (predicate : int -> bool) (set : IntSet) : bool =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.Exists predicate
 
-    //
+    /// Tests if all elements of the collection satisfy the given predicate.
     [<CompiledName("Forall")>]
     let inline forall (predicate : int -> bool) (set : IntSet) : bool =
         // Preconditions
@@ -1332,15 +1361,23 @@ module IntSet =
 
         set.Forall predicate
 
-    //
+    /// <summary>
+    /// Applies the given function to each element of the set, returning the first result
+    /// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
+    /// then None is returned.
+    /// </summary>
     [<CompiledName("TryPick")>]
     let inline tryPick (picker : int -> 'T option) (set : IntSet) : 'T option =
         // Preconditions
         checkNonNull "set" set
-
+        
         set.TryPick picker
 
-    //
+    /// <summary>
+    /// Applies the given function to each element of the set, returning the first result
+    /// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
+    /// then a KeyNotFoundException is raised.
+    /// </summary>
     [<CompiledName("Pick")>]
     let inline pick (picker : int -> 'T option) (set : IntSet) : 'T =
         // Preconditions
@@ -1364,12 +1401,12 @@ module TagSet =
     [<CompiledName("RetypeInlined")>]
     let inline private retype<'T,'U> (x:'T) : 'U = (# "" x : 'U #)
 
-    /// The empty TagSet.
+    /// The empty set
     [<CompiledName("Empty")>]
     let empty<[<Measure>] 'Tag> : TagSet<'Tag> =
         retype IntSet.Empty
 
-    /// Is the map empty?
+    /// Is the set empty?
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1380,7 +1417,7 @@ module TagSet =
 
         set.IsEmpty
 
-    /// Returns the number of elements in the TagSet.
+    /// Returns the number of elements in the set
     [<CompiledName("Count")>]
     let inline count (set : TagSet<'Tag>) : int =
         // Retype as IntSet
@@ -1391,13 +1428,14 @@ module TagSet =
         
         set.Count
 
-    /// The TagSet containing the given element.
+    /// The set containing the given element.
     [<CompiledName("Singleton")>]
     let inline singleton (element : int<'Tag>) : TagSet<'Tag> =
         IntSet.Singleton (int element)
         |> retype
 
-    //
+    /// Returns a new set with an element added to the set.
+    /// No exception is raised if the set already contains the element.
     [<CompiledName("Add")>]
     let inline add (key : int<'Tag>) (set : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
@@ -1409,7 +1447,8 @@ module TagSet =
         set.Add (int key)
         |> retype
 
-    //
+    /// Returns a new set with the given element removed.
+    /// No exception is raised if the set does not contain the element.
     [<CompiledName("Remove")>]
     let inline remove (key : int<'Tag>) (set : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
@@ -1421,7 +1460,9 @@ module TagSet =
         set.Remove (int key)
         |> retype
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if the given element is in the given set.
+    /// </summary>
     [<CompiledName("Contains")>]
     let inline contains (key : int<'Tag>) (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1432,7 +1473,7 @@ module TagSet =
 
         set.Contains (int key)
 
-    //
+    /// Computes the union of the two sets.
     [<CompiledName("Union")>]
     let inline union (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
@@ -1446,7 +1487,7 @@ module TagSet =
         set1.Union set2
         |> retype
 
-    //
+    /// Computes the intersection of the two sets.
     [<CompiledName("Intersect")>]
     let inline intersect (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
@@ -1460,7 +1501,7 @@ module TagSet =
         set1.Intersect set2
         |> retype
 
-    //
+    /// Returns a new set with the elements of the second set removed from the first.
     [<CompiledName("Difference")>]
     let inline difference (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
@@ -1474,7 +1515,9 @@ module TagSet =
         set1.Difference set2
         |> retype
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the first set are in the second.
+    /// </summary>
     [<CompiledName("IsSubset")>]
     let inline isSubset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1487,7 +1530,10 @@ module TagSet =
 
         set1.IsSubset set2
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
+    /// and at least one element of the second is not in the first.
+    /// </summary>
     [<CompiledName("IsProperSubset")>]
     let inline isProperSubset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1500,7 +1546,9 @@ module TagSet =
 
         set1.IsProperSubset set2
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
+    /// </summary>
     [<CompiledName("IsSuperset")>]
     let inline isSuperset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1513,7 +1561,10 @@ module TagSet =
 
         set1.IsSuperset set2
 
-    //
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
+    /// and at least one element of the first is not in the second.
+    /// </summary>
     [<CompiledName("IsProperSuperset")>]
     let inline isProperSuperset (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1526,35 +1577,35 @@ module TagSet =
 
         set1.IsProperSuperset set2
 
-    //
+    /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfSeq source
         |> retype
 
-    //
+    /// Builds a set that contains the same elements as the given list.
     [<CompiledName("OfList")>]
     let inline ofList source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfList source
         |> retype
 
-    //
+    /// Builds a set that contains the same elements as the given array.
     [<CompiledName("OfArray")>]
     let inline ofArray source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfArray source
         |> retype
 
-    //
+    /// Builds an IntSet that contains the same elements as the given Set.
     [<CompiledName("OfSet")>]
     let inline ofSet source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfSet source
         |> retype
 
-    //
+    /// Returns an ordered view of the collection as an enumerable object.
     [<CompiledName("ToSeq")>]
     let inline toSeq (set : TagSet<'Tag>) : seq<int<'Tag>> =
         // Retype as IntSet
@@ -1566,7 +1617,7 @@ module TagSet =
         set.ToSeq ()
         |> retype
 
-    //
+    /// Builds a list that contains the elements of the set in order.
     [<CompiledName("ToList")>]
     let inline toList (set : TagSet<'Tag>) =
         // Retype as IntSet
@@ -1577,7 +1628,7 @@ module TagSet =
 
         set.ToList ()
 
-    //
+    /// Builds an array that contains the elements of the set in order.
     [<CompiledName("ToArray")>]
     let inline toArray (set : TagSet<'Tag>) =
         // Retype as IntSet
@@ -1588,7 +1639,7 @@ module TagSet =
 
         set.ToArray ()
 
-    //
+    /// Builds a Set that contains the same elements as the given IntSet.
     [<CompiledName("ToSet")>]
     let inline toSet (set : TagSet<'Tag>) =
         // Retype as IntSet
@@ -1599,7 +1650,8 @@ module TagSet =
 
         set.ToSet ()
 
-    //
+    /// Applies the given function to each element of the set,
+    /// in order according to the comparison function.
     [<CompiledName("Iter")>]
     let inline iter (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
@@ -1610,7 +1662,8 @@ module TagSet =
 
         set.Iterate (retype action)
 
-    //
+    /// Applies the given function to each element of the set,
+    /// in reverse order according to the comparison function.
     [<CompiledName("IterBack")>]
     let inline iterBack (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
@@ -1621,7 +1674,8 @@ module TagSet =
 
         set.IterateBack (retype action)
 
-    //
+    /// Applies the given accumulating function to each element of the set,
+    /// in order according to the comparison function.
     [<CompiledName("Fold")>]
     let inline fold (folder : 'State -> int<'Tag> -> 'State) (state : 'State) (set : TagSet<'Tag>) =
         // Retype as IntSet
@@ -1632,7 +1686,8 @@ module TagSet =
 
         set.Fold (retype folder, state)
 
-    //
+    /// Applies the given accumulating function to each element of the set,
+    /// in reverse order according to the comparison function.
     [<CompiledName("FoldBack")>]
     let inline foldBack (folder : int<'Tag> -> 'State -> 'State) (set : TagSet<'Tag>) (state : 'State) =
         // Retype as IntSet
@@ -1643,7 +1698,11 @@ module TagSet =
 
         set.FoldBack (retype folder, state)
 
-    //
+    /// <summary>
+    /// Applies the given function to each element of the set.
+    /// Returns the set comprised of the results <c>x</c> for each element where the
+    /// function returns <c>Some(x)</c>.
+    /// </summary>
     [<CompiledName("Choose")>]
     let inline choose (chooser : int<'Tag1> -> int<'Tag2> option) (set : TagSet<'Tag1>) : TagSet<'Tag2> =
         // Retype as IntSet
@@ -1655,7 +1714,10 @@ module TagSet =
         set.Choose (retype chooser)
         |> retype
 
-    //
+    /// <summary>
+    /// Returns a new collection containing only the elements of the collection
+    /// for which the given predicate returns &quot;true&quot;.
+    /// </summary>
     [<CompiledName("Filter")>]
     let inline filter (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : TagSet<'Tag> =
         // Retype as IntSet
@@ -1667,7 +1729,8 @@ module TagSet =
         set.Filter (retype predicate)
         |> retype
 
-    //
+    /// Returns a new collection containing the results of applying the given function
+    /// to each element of the input set.
     [<CompiledName("Map")>]
     let inline map (mapping : int<'Tag1> -> int<'Tag2>) (set : TagSet<'Tag1>) : TagSet<'Tag2> =
         // Retype as IntSet
@@ -1679,7 +1742,10 @@ module TagSet =
         set.Map (retype mapping)
         |> retype
 
-    //
+    /// <summary>
+    /// Splits the set into two sets containing the elements for which the given
+    /// predicate returns &quot;true&quot; and &quot;false&quot;, respectively.
+    /// </summary>
     [<CompiledName("Partition")>]
     let inline partition (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : TagSet<'Tag> * TagSet<'Tag> =
         // Retype as IntSet
@@ -1691,7 +1757,7 @@ module TagSet =
         let set1, set2 = set.Partition (retype predicate)
         (retype set1), (retype set2)
 
-    //
+    /// Tests if any element of the collection satisfies the given predicate.
     [<CompiledName("Exists")>]
     let inline exists (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1702,7 +1768,7 @@ module TagSet =
 
         set.Exists (retype predicate)
 
-    //
+    /// Tests if all elements of the collection satisfy the given predicate.
     [<CompiledName("Forall")>]
     let inline forall (predicate : int<'Tag> -> bool) (set : TagSet<'Tag>) : bool =
         // Retype as IntSet
@@ -1713,7 +1779,11 @@ module TagSet =
 
         set.Forall (retype predicate)
 
-    //
+    /// <summary>
+    /// Applies the given function to each element of the set, returning the first result
+    /// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
+    /// then None is returned.
+    /// </summary>
     [<CompiledName("TryPick")>]
     let inline tryPick (picker : int<'Tag> -> 'T option) (set : TagSet<'Tag>) : 'T option =
         // Retype as IntSet
@@ -1724,7 +1794,11 @@ module TagSet =
 
         set.TryPick (retype picker)
 
-    //
+    /// <summary>
+    /// Applies the given function to each element of the set, returning the first result
+    /// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
+    /// then a KeyNotFoundException is raised.
+    /// </summary>
     [<CompiledName("Pick")>]
     let inline pick (picker : int<'Tag> -> 'T option) (set : TagSet<'Tag>) : 'T =
         // Retype as IntSet
