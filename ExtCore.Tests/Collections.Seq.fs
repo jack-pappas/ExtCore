@@ -65,12 +65,88 @@ let projectKeys () : unit =
 
 [<TestCase>]
 let replicate () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    // Replicating an empty sequence should return an empty sequence.
+    Seq.replicate 4 Seq.empty
+    |> Seq.isEmpty
+    |> should be True
+
+    // Basic usage test.
+    seq {
+        yield "Red"
+        yield "Blue"
+        yield "Green"
+        yield "Yellow" }
+    |> Seq.replicate 4
+    |> Seq.toArray
+    |> should equal
+        [| "Red"; "Blue"; "Green"; "Yellow";
+           "Red"; "Blue"; "Green"; "Yellow";
+           "Red"; "Blue"; "Green"; "Yellow";
+           "Red"; "Blue"; "Green"; "Yellow"; |]
+
+    // Make sure the input sequence is only evaluated once.
+    do
+        let elementEvalCount = ref 0
+
+        seq {
+            incr elementEvalCount
+            yield "Red"
+            incr elementEvalCount
+            yield "Blue"
+            incr elementEvalCount
+            yield "Green"
+            incr elementEvalCount
+            yield "Yellow" }
+        |> Seq.replicate 4
+        |> Seq.toArray
+        |> should equal
+            [| "Red"; "Blue"; "Green"; "Yellow";
+               "Red"; "Blue"; "Green"; "Yellow";
+               "Red"; "Blue"; "Green"; "Yellow";
+               "Red"; "Blue"; "Green"; "Yellow"; |]
+
+        !elementEvalCount
+        |> should equal 4
 
 [<TestCase>]
 let repeat () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    // Basic usage test.
+    Seq.repeat "Hello World!"
+    |> Seq.take 5
+    |> Seq.toArray
+    |> should equal
+        [| "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; |]
 
 [<TestCase>]
 let cycle () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    // Basic usage test.
+    Seq.cycle 5 (fun i ->
+        4 - i)
+    |> Seq.take 23
+    |> Seq.toArray
+    |> should equal
+        [| 4; 3; 2; 1; 0;
+           4; 3; 2; 1; 0;
+           4; 3; 2; 1; 0;
+           4; 3; 2; 1; 0;
+           4; 3; 2; |]
+
+    // Make sure the generator function is only called once per element.
+    do
+        let elementEvalCount = ref 0
+
+        Seq.cycle 5 (fun i ->
+            incr elementEvalCount
+            4 - i)
+        |> Seq.take 23
+        |> Seq.toArray
+        |> should equal
+            [| 4; 3; 2; 1; 0;
+               4; 3; 2; 1; 0;
+               4; 3; 2; 1; 0;
+               4; 3; 2; 1; 0;
+               4; 3; 2; |]
+
+        !elementEvalCount
+        |> should equal 5
+

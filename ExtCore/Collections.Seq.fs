@@ -85,7 +85,7 @@ let rec repeat value : seq<'T> =
 /// generator function. The integer index passed to the function indicates the index
 /// of the element being generated.
 [<CompiledName("Cycle")>]
-let cycle (generator : int -> 'T) count : seq<'T> =
+let cycle count (generator : int -> 'T) : seq<'T> =
     // Preconditions
     if count < 0 then
         invalidArg "count" "The count cannot be negative."
