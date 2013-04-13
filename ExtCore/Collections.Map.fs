@@ -27,12 +27,12 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Determines the number of items in the Map.
+/// Determines the number of items in the map.
 [<CompiledName("Count")>]
 let inline count (map : Map<'Key, 'Value>) =
     map.Count
 
-/// Lookup a key in the Map, and if found, return it's corresponding value.
+/// Lookup a key in the map, and if found, return it's corresponding value.
 /// Otherwise, returns the given default value.
 [<CompiledName("FindOrDefault")>]
 let inline findOrDefault defaultValue key (map : Map<'Key, 'T>) =
@@ -65,7 +65,7 @@ let values (map : Map<'Key, 'T>) =
     ||> Map.fold (fun values _ value ->
         Set.add value values)
 
-/// Adds the given KeyValuePair to the Map.
+/// Adds the given KeyValuePair to the map.
 [<CompiledName("AddKvp")>]
 let inline addKvp (kvp : KeyValuePair<'Key, 'T>) map =
     // Preconditions
@@ -73,7 +73,7 @@ let inline addKvp (kvp : KeyValuePair<'Key, 'T>) map =
 
     Map.add kvp.Key kvp.Value map
 
-/// Returns a new Map created from a sequence of key-value pairs.
+/// Returns a new map created from a sequence of key-value pairs.
 [<CompiledName("FromKvpSequence")>]
 let ofKvpSeq (sequence : seq<KeyValuePair<'Key, 'T>>) =
     // Preconditions
@@ -83,7 +83,7 @@ let ofKvpSeq (sequence : seq<KeyValuePair<'Key, 'T>>) =
     ||> Seq.fold (fun map kvp ->
         addKvp kvp map)
 
-/// Creates a new Map from a set of keys by applying a mapping function to each
+/// Creates a new map from a set of keys by applying a mapping function to each
 /// key to generate it's corresponding value.
 [<CompiledName("FromKeys")>]
 let ofKeys (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'Key, 'T> =
@@ -98,9 +98,9 @@ let ofKeys (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'Key, 'T> =
         ||> Set.fold (fun map key ->
             Map.add key (mapping key) map)
 
-/// Creates a new Map from a set of values by applying a mapping function to each
+/// Creates a new map from a set of values by applying a mapping function to each
 /// value to extract a key from it. If the key-mapping function returns the same
-/// key for two or more values, the returned Map will only contain a binding for
+/// key for two or more values, the returned map will only contain a binding for
 /// the greatest of those values.
 [<CompiledName("FromValues")>]
 let ofValues (mapping : 'T -> 'Key) (set : Set<'T>) : Map<'Key, 'T> =
@@ -115,7 +115,7 @@ let ofValues (mapping : 'T -> 'Key) (set : Set<'T>) : Map<'Key, 'T> =
         ||> Set.fold (fun map value ->
             Map.add (mapping value) value map)
 
-/// Builds a new Map containing only the bindings whose keys do not
+/// Builds a new map containing only the bindings whose keys do not
 /// belong to a given set of keys.
 [<CompiledName("RemoveKeys")>]
 let removeKeys keys (map : Map<'Key, 'T>) =
@@ -133,7 +133,7 @@ let removeKeys keys (map : Map<'Key, 'T>) =
         ||> Set.fold (fun map key ->
             Map.remove key map)
 
-/// Builds a new Map containing only the bindings whose keys
+/// Builds a new map containing only the bindings whose keys
 /// belong to a given set of keys.
 [<CompiledName("FilterKeys")>]
 let filterKeys keys (map : Map<'Key, 'T>) =
@@ -150,8 +150,8 @@ let filterKeys keys (map : Map<'Key, 'T>) =
             Set.contains key keys)
 
 /// <summary>
-/// Applies the given function to each binding in the Map.
-/// Returns the Map comprised of the results "x" for each binding
+/// Applies the given function to each binding in the map.
+/// Returns the map comprised of the results "x" for each binding
 /// where the function returns <c>Some(x)</c>.
 /// </summary>
 [<CompiledName("Choose")>]
@@ -174,10 +174,10 @@ let choose (chooser : 'Key -> 'T -> 'U option) map =
                 Map.add key newValue chosenMap)
 
 /// <summary>
-/// Like <c>Map.partition</c>, a function is applied to each binding in a Map to
+/// Like <c>Map.partition</c>, a function is applied to each binding in a map to
 /// partition it into two parts. <c>mapPartition</c> differs in that it allows
-/// the values in the returned Maps to be different than the values in the input
-/// Map, and it also allows the values in the returned Maps to have different types.
+/// the values in the returned maps to be different than the values in the input
+/// map, and it also allows the values in the returned maps to have different types.
 /// </summary>
 [<CompiledName("MapPartition")>]
 let mapPartition (partitioner : 'Key -> 'T -> Choice<'U, 'V>) map =

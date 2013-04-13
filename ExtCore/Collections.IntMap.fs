@@ -1240,7 +1240,7 @@ and [<Sealed>]
 /// Functional programming operators related to the IntMap<_> type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module IntMap =
-    /// The empty IntMap.
+    /// The empty map.
     [<CompiledName("Empty")>]
     let empty<'T> =
         IntMap<'T>.Empty
@@ -1253,7 +1253,7 @@ module IntMap =
 
         map.IsEmpty
 
-    /// Returns the number of bindings in the IntMap.
+    /// Returns the number of bindings in the map.
     [<CompiledName("Count")>]
     let inline count (map : IntMap<'T>) : int =
         // Preconditions
@@ -1266,7 +1266,7 @@ module IntMap =
     let inline singleton (key : int) (value : 'T) : IntMap<'T> =
         IntMap.Singleton (key, value)
 
-    /// Tests if an element is in the domain of the IntMap.
+    /// Tests if an element is in the domain of the map.
     [<CompiledName("ContainsKey")>]
     let inline containsKey (key : int) (map : IntMap<'T>) : bool =
         // Preconditions
@@ -1274,8 +1274,8 @@ module IntMap =
 
         map.ContainsKey key
 
-    /// Look up an element in the IntMap returning a Some value if the
-    /// element is in the domain of the IntMap and None if not.
+    /// Look up an element in the map returning a Some value if the
+    /// element is in the domain of the map and None if not.
     [<CompiledName("TryFind")>]
     let inline tryFind (key : int) (map : IntMap<'T>) : 'T option =
         // Preconditions
@@ -1283,8 +1283,8 @@ module IntMap =
         
         map.TryFind key
         
-    /// Look up an element in the IntMap, raising KeyNotFoundException
-    /// if no binding exists in the IntMap.
+    /// Look up an element in the map, raising KeyNotFoundException
+    /// if the map does not contain a binding for the key.
     [<CompiledName("Find")>]
     let inline find (key : int) (map : IntMap<'T>) : 'T =
         // Preconditions
@@ -1292,20 +1292,22 @@ module IntMap =
 
         map.Find key
 
-    //
+    /// Look up an element in the map, returning the given default value
+    /// if the map does not contain a binding for the key.
     [<CompiledName("FindOrDefault")>]
     let inline findOrDefault defaultValue (key : int) (map : IntMap<'T>) =
         defaultArg (map.TryFind key) defaultValue
 
-    //
+    /// Returns the key of the first mapping in the collection which satisfies the given
+    /// predicate. Returns None if no such mapping is found.
     [<CompiledName("TryFindKey")>]
     let inline tryFindKey (predicate : int -> 'T -> bool) (map : IntMap<'T>) : int option =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.TryFindKey predicate
 
-    /// Returns a new IntMap with the binding added to this IntMap.
+    /// Returns a new map with the binding added to this map.
     [<CompiledName("Add")>]
     let inline add (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
         // Preconditions
@@ -1321,7 +1323,7 @@ module IntMap =
 
         map.TryAdd (key, value)
 
-    /// Removes an element from the domain of the IntMap.
+    /// Removes an element from the domain of the map.
     /// No exception is raised if the element is not present.
     [<CompiledName("Remove")>]
     let inline remove (key : int) (map : IntMap<'T>) : IntMap<'T> =
@@ -1330,7 +1332,7 @@ module IntMap =
 
         map.Remove key
 
-    /// Returns a new IntMap created by merging the two specified IntMaps.
+    /// Returns a new map created by merging the two specified maps.
     [<CompiledName("Union")>]
     let inline union (map1 : IntMap<'T>) (map2 : IntMap<'T>) : IntMap<'T> =
         // Preconditions
@@ -1339,7 +1341,7 @@ module IntMap =
 
         map1.Union map2
 
-    /// Returns the intersection of two IntMaps.
+    /// Returns the intersection of two maps.
     [<CompiledName("Intersect")>]
     let inline intersect (map1 : IntMap<'T>) (map2 : IntMap<'T>) : IntMap<'T> =
         // Preconditions
@@ -1348,7 +1350,7 @@ module IntMap =
 
         map1.Intersect map2
 
-    /// Returns a new IntMap created by removing the second IntMap from the first.
+    /// Returns a new map created by removing the second map from the first.
     [<CompiledName("Difference")>]
     let inline difference (map1 : IntMap<'T>) (map2 : IntMap<'T>) : IntMap<'T> =
         // Preconditions
@@ -1357,47 +1359,50 @@ module IntMap =
 
         map1.Difference map2
 
-    /// Returns a new IntMap made from the given bindings.
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : IntMap<'T> =
         // Preconditions are checked by the member.
         IntMap.OfSeq source
 
-    /// Returns a new IntMap made from the given bindings.
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfList")>]
     let inline ofList source : IntMap<'T> =
         // Preconditions are checked by the member.
         IntMap.OfList source
 
-    /// Returns a new IntMap made from the given bindings.
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfArray")>]
     let inline ofArray source : IntMap<'T> =
         // Preconditions are checked by the member.
         IntMap.OfArray source
 
-    /// Returns a new IntMap made from the given bindings.
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfMap")>]
     let inline ofMap source : IntMap<'T> =
         // Preconditions are checked by the member.
         IntMap.OfMap source
 
-    //
+    /// Views the collection as an enumerable sequence of pairs.
+    /// The sequence will be ordered by the keys of the map.
     [<CompiledName("ToSeq")>]
     let inline toSeq (map : IntMap<'T>) =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.ToSeq ()
 
-    //
+    /// Returns a list of all key-value pairs in the mapping.
+    /// The list will be ordered by the keys of the map.
     [<CompiledName("ToList")>]
     let inline toList (map : IntMap<'T>) =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.ToList ()
 
-    //
+    /// Returns an array of all key-value pairs in the mapping.
+    /// The list will be ordered by the keys of the map.
     [<CompiledName("ToArray")>]
     let inline toArray (map : IntMap<'T>) =
         // Preconditions
@@ -1405,7 +1410,7 @@ module IntMap =
 
         map.ToArray ()
 
-    //
+    /// Returns a new Map created from the given IntMap.
     [<CompiledName("ToMap")>]
     let inline toMap (map : IntMap<'T>) =
         // Preconditions
@@ -1413,15 +1418,17 @@ module IntMap =
 
         map.ToMap ()
 
-    //
+    /// Searches the map looking for the first element where the given function
+    /// returns a Some value. If no such element is found, returns None.
     [<CompiledName("TryPick")>]
     let inline tryPick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U option =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.TryPick picker
 
-    //
+    /// Searches the map looking for the first element where the given function
+    /// returns a Some value.
     [<CompiledName("Pick")>]
     let inline pick (picker : int -> 'T -> 'U option) (map : IntMap<'T>) : 'U =
         // Preconditions
@@ -1429,71 +1436,82 @@ module IntMap =
 
         map.Pick picker
 
-    //
+    /// Builds a new collection whose elements are the results of applying the given function
+    /// to each of the elements of the collection. The key passed to the function indicates
+    /// the key of the element being transformed.
     [<CompiledName("Map")>]
     let inline map (mapping : int -> 'T -> 'U) (map : IntMap<'T>) : IntMap<'U> =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.Map mapping
 
-    //
+    /// <summary>
+    /// Builds a new map containing only the bindings for which the given
+    /// predicate returns &quot;true&quot;.
+    /// </summary>
     [<CompiledName("Filter")>]
     let inline filter (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.Filter predicate
 
-    //
+    /// <summary>
+    /// Applies the given function to each binding in the map.
+    /// Returns the map comprised of the results "x" for each binding
+    /// where the function returns <c>Some(x)</c>.
+    /// </summary>
     [<CompiledName("Choose")>]
     let inline choose (chooser : int -> 'T -> 'U option) (map : IntMap<'T>) : IntMap<'U> =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.Choose chooser
 
-    //
+    /// Applies the given function to each binding in the map.
     [<CompiledName("Iter")>]
-    let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) =
+    let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) : unit =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.Iterate action
 
-    //
+    /// Applies the given function to each binding in the map.
     [<CompiledName("IterBack")>]
-    let inline iterBack (action : int -> 'T -> unit) (map : IntMap<'T>) =
+    let inline iterBack (action : int -> 'T -> unit) (map : IntMap<'T>) : unit =
         // Preconditions
         checkNonNull "map" map
 
         map.IterateBack action
 
-    //
+    /// Folds over the bindings in the map.
     [<CompiledName("Fold")>]
-    let inline fold (folder : 'State -> int -> 'T -> 'State) (state : 'State) (map : IntMap<'T>) =
+    let inline fold (folder : 'State -> int -> 'T -> 'State)
+            (state : 'State) (map : IntMap<'T>) : 'State =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.Fold (folder, state)
 
-    //
+    /// Folds over the bindings in the map.
     [<CompiledName("FoldBack")>]
-    let inline foldBack (folder : int -> 'T -> 'State -> 'State) (map : IntMap<'T>) (state : 'State) =
+    let inline foldBack
+            (folder : int -> 'T -> 'State -> 'State) (map : IntMap<'T>) (state : 'State) : 'State =
         // Preconditions
         checkNonNull "map" map
 
         map.FoldBack (folder, state)
 
-    //
+    /// Determines if any binding in the map matches the specified predicate.
     [<CompiledName("Exists")>]
     let inline exists (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.Exists predicate
 
-    //
+    /// Determines if all bindings in the map match the specified predicate.
     [<CompiledName("Forall")>]
     let inline forall (predicate : int -> 'T -> bool) (map : IntMap<'T>) : bool =
         // Preconditions
@@ -1501,17 +1519,20 @@ module IntMap =
 
         map.Forall predicate
 
-    //
+    /// Splits the map into two maps containing the bindings for which the given
+    /// predicate returns true and false, respectively.
     [<CompiledName("Partition")>]
     let inline partition (predicate : int -> 'T -> bool) (map : IntMap<'T>) : IntMap<'T> * IntMap<'T> =
         // Preconditions
         checkNonNull "map" map
-
+        
         map.Partition predicate
 
-    //
+    /// Splits the map into two maps by applying the given partitioning function
+    /// to each binding in the map.
     [<CompiledName("MapPartition")>]
-    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
+    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>)
+            (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
         // Preconditions
         checkNonNull "map" map
 
@@ -1520,7 +1541,9 @@ module IntMap =
 
 #if PROTO_COMPILER
 
-//
+/// <summary>Immutable maps with 'tagged' integer keys.</summary>
+/// <typeparam name="Tag">The measure type used to 'tag' the integer keys of the map.</typeparam>
+/// <typeparam name="T">The type of the values stored in the map.</typeparam>
 [<MeasureAnnotatedAbbreviation>]
 type TagMap<[<Measure>] 'Tag, 'T> =
     IntMap<'T>
@@ -1534,7 +1557,7 @@ module TagMap =
     [<CompiledName("RetypeInlined")>]
     let inline private retype<'T,'U> (x:'T) : 'U = (# "" x : 'U #)
 
-    /// The empty TagMap.
+    /// The empty map.
     [<CompiledName("Empty")>]
     let empty<[<Measure>] 'Tag, 'T> : TagMap<'Tag, 'T> =
         retype IntMap<'T>.Empty
@@ -1550,7 +1573,7 @@ module TagMap =
 
         map.IsEmpty
 
-    /// Returns the number of bindings in the TagMap.
+    /// Returns the number of bindings in the map.
     [<CompiledName("Count")>]
     let inline count (map : TagMap<'Tag, 'T>) : int =
         // Retype as IntMap.
@@ -1561,14 +1584,26 @@ module TagMap =
         
         map.Count
 
-    /// The TagMap containing the given binding.
+    /// The map containing the given binding.
     [<CompiledName("Singleton")>]
     let inline singleton (key : int<'Tag>) (value : 'T) : TagMap<'Tag, 'T> =
         IntMap.Singleton (int key, value)
         |> retype
 
-    /// Look up an element in the TagMap returning a Some value if the
-    /// element is in the domain of the TagMap and None if not.
+    /// Tests if an element is in the domain of the map.
+    [<CompiledName("ContainsKey")>]
+    let inline containsKey (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : bool =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.ContainsKey (int key)
+        |> retype
+
+    /// Look up an element in the map, returning a Some value if the
+    /// element is in the domain of the map and None if not.
     [<CompiledName("TryFind")>]
     let inline tryFind (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : 'T option =
         // Retype as IntMap.
@@ -1579,7 +1614,8 @@ module TagMap =
         
         map.TryFind (int key)
         
-    //
+    /// Look up an element in the map, raising KeyNotFoundException
+    /// if the map does not contain a binding for the key.
     [<CompiledName("Find")>]
     let inline find (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : 'T =
         // Retype as IntMap.
@@ -1590,7 +1626,32 @@ module TagMap =
 
         map.Find (int key)
 
-    //
+    /// Look up an element in the map, returning the given default value
+    /// if the map does not contain a binding for the key.
+    [<CompiledName("FindOrDefault")>]
+    let inline findOrDefault defaultValue (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : 'T =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        defaultArg (map.TryFind key) defaultValue
+
+    /// Returns the key of the first mapping in the collection which satisfies the given
+    /// predicate. Returns None if no such mapping is found.
+    [<CompiledName("TryFindKey")>]
+    let inline tryFindKey (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : int<'Tag> option =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryFindKey (retype predicate)
+        |> retype
+
+    /// Returns a new map with the binding added to this map.
     [<CompiledName("Add")>]
     let inline add (key : int<'Tag>) (value : 'T) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
         // Retype as IntMap.
@@ -1603,6 +1664,19 @@ module TagMap =
         |> retype
 
     //
+    [<CompiledName("TryAdd")>]
+    let inline tryAdd (key : int<'Tag>) (value : 'T) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+        
+        // Preconditions
+        checkNonNull "map" map
+
+        map.TryAdd (key, value)
+        |> retype
+
+    /// Removes an element from the domain of the map.
+    /// No exception is raised if the element is not present.
     [<CompiledName("Remove")>]
     let inline remove (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
         // Retype as IntMap.
@@ -1614,19 +1688,7 @@ module TagMap =
         map.Remove (int key)
         |> retype
 
-    //
-    [<CompiledName("ContainsKey")>]
-    let inline containsKey (key : int<'Tag>) (map : TagMap<'Tag, 'T>) : bool =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.ContainsKey (int key)
-        |> retype
-
-    //
+    /// Returns a new map created by merging the two specified maps.
     [<CompiledName("Union")>]
     let inline union (map1 : TagMap<'Tag, 'T>) (map2 : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
         // Retype as IntMap.
@@ -1640,7 +1702,7 @@ module TagMap =
         map1.Union map2
         |> retype
 
-    //
+    /// Returns the intersection of two maps.
     [<CompiledName("Intersect")>]
     let inline intersect (map1 : TagMap<'Tag, 'T>) (map2 : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
         // Retype as IntMap.
@@ -1654,7 +1716,7 @@ module TagMap =
         map1.Intersect map2
         |> retype
 
-    //
+    /// Returns a new map created by removing the second map from the first.
     [<CompiledName("Difference")>]
     let inline difference (map1 : TagMap<'Tag, 'T>) (map2 : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> =
         // Retype as IntMap.
@@ -1668,35 +1730,36 @@ module TagMap =
         map1.Difference map2
         |> retype
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq (source : seq<int<'Tag> * 'T>) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
         IntMap.OfSeq (retype source)
         |> retype
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfList")>]
     let inline ofList (source : (int<'Tag> * 'T) list) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
         IntMap.OfList (retype source)
         |> retype
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfArray")>]
     let inline ofArray (source : (int<'Tag> * 'T)[]) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
         IntMap.OfArray (retype source)
         |> retype
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfMap")>]
     let inline ofMap (source : Map<int<'Tag>, 'T>) : TagMap<'Tag, 'T> =
         // Preconditions are checked by the member.
         IntMap.OfMap (retype source)
         |> retype
 
-    //
+    /// Views the collection as an enumerable sequence of pairs.
+    /// The sequence will be ordered by the keys of the map.
     [<CompiledName("ToSeq")>]
     let inline toSeq (map : TagMap<'Tag, 'T>) : seq<int<'Tag> * 'T> =
         // Retype as IntMap.
@@ -1708,7 +1771,8 @@ module TagMap =
         map.ToSeq ()
         |> retype
 
-    //
+    /// Returns a list of all key-value pairs in the mapping.
+    /// The list will be ordered by the keys of the map.
     [<CompiledName("ToList")>]
     let inline toList (map : TagMap<'Tag, 'T>) : (int<'Tag> * 'T) list =
         // Retype as IntMap.
@@ -1720,7 +1784,8 @@ module TagMap =
         map.ToList ()
         |> retype
 
-    //
+    /// Returns an array of all key-value pairs in the mapping.
+    /// The list will be ordered by the keys of the map.
     [<CompiledName("ToArray")>]
     let inline toArray (map : TagMap<'Tag, 'T>) : (int<'Tag> * 'T)[] =
         // Retype as IntMap.
@@ -1732,7 +1797,7 @@ module TagMap =
         map.ToArray ()
         |> retype
 
-    //
+    /// Returns a new Map created from the given IntMap.
     [<CompiledName("ToMap")>]
     let inline toMap (map : TagMap<'Tag, 'T>) : Map<int<'Tag>, 'T> =
         // Retype as IntMap.
@@ -1744,75 +1809,33 @@ module TagMap =
         map.ToMap ()
         |> retype
 
-    //
-    [<CompiledName("Iter")>]
-    let inline iter (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
+    /// Searches the map looking for the first element where the given function
+    /// returns a Some value. If no such element is found, returns None.
+    [<CompiledName("TryPick")>]
+    let inline tryPick (picker : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : 'U option =
         // Retype as IntMap.
         let map : IntMap<'T> = retype map
 
         // Preconditions
         checkNonNull "map" map
 
-        map.Iterate (retype action)
+        map.TryPick (retype picker)
 
-    //
-    [<CompiledName("IterBack")>]
-    let inline iterBack (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
+    /// Searches the map looking for the first element where the given function
+    /// returns a Some value.
+    [<CompiledName("Pick")>]
+    let inline pick (picker : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : 'U =
         // Retype as IntMap.
         let map : IntMap<'T> = retype map
 
         // Preconditions
         checkNonNull "map" map
 
-        map.IterateBack (retype action)
+        map.Pick (retype picker)
 
-    //
-    [<CompiledName("Fold")>]
-    let inline fold (folder : 'State -> int<'Tag> -> 'T -> 'State) (state : 'State) (map : TagMap<'Tag, 'T>) : 'State =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Fold (retype folder, state)
-
-    //
-    [<CompiledName("FoldBack")>]
-    let inline foldBack (folder : int<'Tag> -> 'T -> 'State -> 'State) (map : TagMap<'Tag, 'T>) (state : 'State) : 'State =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.FoldBack (retype folder, state)
-
-    //
-    [<CompiledName("Choose")>]
-    let inline choose (chooser : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Choose (retype chooser)
-        |> retype
-
-    //
-    [<CompiledName("Filter")>]
-    let inline filter (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Filter (retype predicate)
-        |> retype
-
-    //
+    /// Builds a new collection whose elements are the results of applying the given function
+    /// to each of the elements of the collection. The key passed to the function indicates
+    /// the key of the element being transformed.
     [<CompiledName("Map")>]
     let inline map (mapping : int<'Tag> -> 'T -> 'U) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
         // Retype as IntMap.
@@ -1824,7 +1847,105 @@ module TagMap =
         map.Map (retype mapping)
         |> retype
 
-    //
+    /// <summary>
+    /// Builds a new map containing only the bindings for which the given
+    /// predicate returns &quot;true&quot;.
+    /// </summary>
+    [<CompiledName("Filter")>]
+    let inline filter (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Filter (retype predicate)
+        |> retype
+
+    /// <summary>
+    /// Applies the given function to each binding in the map.
+    /// Returns the map comprised of the results "x" for each binding
+    /// where the function returns <c>Some(x)</c>.
+    /// </summary>
+    [<CompiledName("Choose")>]
+    let inline choose (chooser : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Choose (retype chooser)
+        |> retype
+
+    /// Applies the given function to each binding in the map.
+    [<CompiledName("Iter")>]
+    let inline iter (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Iterate (retype action)
+
+    /// Applies the given function to each binding in the map.
+    [<CompiledName("IterBack")>]
+    let inline iterBack (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.IterateBack (retype action)
+
+    /// Folds over the bindings in the map.
+    [<CompiledName("Fold")>]
+    let inline fold (folder : 'State -> int<'Tag> -> 'T -> 'State) (state : 'State) (map : TagMap<'Tag, 'T>) : 'State =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Fold (retype folder, state)
+
+    /// Folds over the bindings in the map.
+    [<CompiledName("FoldBack")>]
+    let inline foldBack (folder : int<'Tag> -> 'T -> 'State -> 'State) (map : TagMap<'Tag, 'T>) (state : 'State) : 'State =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.FoldBack (retype folder, state)
+
+    /// Determines if any binding in the map matches the specified predicate.
+    [<CompiledName("Exists")>]
+    let inline exists (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : bool =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Exists (retype predicate)
+
+    /// Determines if all bindings in the map match the specified predicate.
+    [<CompiledName("Forall")>]
+    let inline forall (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : bool =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.Forall (retype predicate)
+
+    /// Splits the map into two maps containing the bindings for which the given
+    /// predicate returns true and false, respectively.
     [<CompiledName("Partition")>]
     let inline partition (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'T> * TagMap<'Tag, 'T> =
         // Retype as IntMap.
@@ -1836,7 +1957,8 @@ module TagMap =
         let map1, map2 = map.Partition (retype predicate)
         (retype map1), (retype map2)
 
-    //
+    /// Splits the map into two maps by applying the given partitioning function
+    /// to each binding in the map.
     [<CompiledName("MapPartition")>]
     let inline mapPartition (partitioner : int<'Tag> -> 'T -> Choice<'U, 'V>) (map : TagMap<'Tag, 'T>) : TagMap<'Tag, 'U> * TagMap<'Tag, 'V> =
         // Retype as IntMap.
@@ -1847,62 +1969,6 @@ module TagMap =
 
         let map1, map2 = map.MapPartition (retype partitioner)
         (retype map1), (retype map2)
-
-    //
-    [<CompiledName("TryFindKey")>]
-    let inline tryFindKey (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : int<'Tag> option =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.TryFindKey (retype predicate)
-        |> retype
-
-    //
-    [<CompiledName("Exists")>]
-    let inline exists (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : bool =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Exists (retype predicate)
-
-    //
-    [<CompiledName("Forall")>]
-    let inline forall (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : bool =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Forall (retype predicate)
-
-    //
-    [<CompiledName("TryPick")>]
-    let inline tryPick (picker : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : 'U option =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.TryPick (retype picker)
-
-    //
-    [<CompiledName("Pick")>]
-    let inline pick (picker : int<'Tag> -> 'T -> 'U option) (map : TagMap<'Tag, 'T>) : 'U =
-        // Retype as IntMap.
-        let map : IntMap<'T> = retype map
-
-        // Preconditions
-        checkNonNull "map" map
-
-        map.Pick (retype picker)
 
 #endif
 
