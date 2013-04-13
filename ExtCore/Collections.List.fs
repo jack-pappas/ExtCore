@@ -263,8 +263,8 @@ let takeArray count (list : 'T list) =
 
 /// Applies a function to each element of the collection and the element which
 /// follows it, threading an accumulator argument through the computation.
-[<CompiledName("FoldPairs")>]
-let foldPairs (folder : 'State -> 'T -> 'T -> 'State) state list =
+[<CompiledName("FoldPairwise")>]
+let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) state list =
     // Preconditions
     checkNonNull "list" list
     
@@ -292,8 +292,8 @@ let foldPairs (folder : 'State -> 'T -> 'T -> 'State) state list =
 
 /// Applies a function to each element of the collection and the element which
 /// proceeds it, threading an accumulator argument through the computation.
-[<CompiledName("FoldPairsBack")>]
-let foldPairsBack (folder : 'T -> 'T -> 'State -> 'State) list state =
+[<CompiledName("FoldBackPairwise")>]
+let foldBackPairwise (folder : 'T -> 'T -> 'State -> 'State) list state =
     // Preconditions
     checkNonNull "list" list
 

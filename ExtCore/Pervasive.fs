@@ -297,6 +297,17 @@ module Lazy =
             Some lazyValue.Value
         else None
 
+    /// Transforms a lazily-initialized value by it to the given mapping function.
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> 'U) (lazyValue : Lazy<'T>) : Lazy<'U> =
+        // If the value has already been created, perform the mapping
+        // 'eagerly' for better performance.
+        if lazyValue.IsValueCreated then
+            mapping lazyValue.Value
+            |> System.Lazy.CreateFromValue
+        else
+            lazy (mapping <| lazyValue.Force ())
+
 
 /// Additional functional operators on options.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

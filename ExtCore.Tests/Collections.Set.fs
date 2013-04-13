@@ -278,10 +278,24 @@ let disjoint () : unit =
     |> should be False
 
 
-// Cartesian.fold
-// Cartesian.foldBack
-// Cartesian.iter
-// Cartesian.map
-// Cartesian.choose
+module Cartesian =
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 
+    [<TestCase>]
+    let foldBack () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let choose () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 

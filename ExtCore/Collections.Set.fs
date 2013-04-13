@@ -178,9 +178,11 @@ let choose (chooser : 'T -> 'U option) (set : Set<'T>) : Set<'U> =
             | Some result ->
                 Set.add result chosen)
 
+/// <summary>
 /// Applies the given function to each element of the set, returning the first result
 /// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
 /// then None is returned.
+/// </summary>
 [<CompiledName("TryPick")>]
 let tryPick (picker : 'T -> 'U option) (set : Set<'T>) : 'U option =
     // Preconditions
@@ -194,9 +196,11 @@ let tryPick (picker : 'T -> 'U option) (set : Set<'T>) : 'U option =
         Set.toSeq set
         |> Seq.tryPick picker
 
+/// <summary>
 /// Applies the given function to each element of the set, returning the first result
 /// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
 /// then a KeyNotFoundException is raised.
+/// </summary>
 [<CompiledName("Pick")>]
 let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
     // Preconditions
