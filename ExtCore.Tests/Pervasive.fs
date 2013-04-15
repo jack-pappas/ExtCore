@@ -19,8 +19,17 @@ limitations under the License.
 namespace Tests.ExtCore
 
 open NUnit.Framework
-open FsCheck
+open FsUnit
+//open FsCheck
 
 
 (* TODO : Implement tests for the various modules in ExtCore *)
+
+// AdditionalOperators
+// Enum
+// Lazy
+// Option
+// Choice
+// Printf
+// Tag
 

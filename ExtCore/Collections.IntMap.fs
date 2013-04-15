@@ -128,7 +128,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             else t
 
     //
-    static member (*inline*) private Join (p0, t0 : PatriciaMap<'T>, p1, t1) =
+    static member inline private Join (p0, t0 : PatriciaMap<'T>, p1, t1) =
         let m = branchingBit (p0, p1)
         let p = mask (p0, m)
         if zeroBit (p0, m) then
