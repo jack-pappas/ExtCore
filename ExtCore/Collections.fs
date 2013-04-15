@@ -111,3 +111,10 @@ module KeyValuePair =
     let inline value (kvp : KeyValuePair<'Key, 'T>) =
         kvp.Value
 
+    /// Transforms the value in a key/value pair by applying the specified function to it.
+    /// The key passed to the function indicates the key of the value being transformed.
+    /// This function is analogous to Map.map.
+    [<CompiledName("Map")>]
+    let map (mapping : 'Key -> 'T -> 'U) (kvp : KeyValuePair<'Key, 'T>) : KeyValuePair<'Key, 'U> =
+        KeyValuePair (kvp.Key, mapping kvp.Key kvp.Value)
+
