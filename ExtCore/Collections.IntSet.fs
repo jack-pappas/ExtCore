@@ -861,6 +861,25 @@ type IntSet private (trie : PatriciaSet) =
         elif otherSet.Trie === trie' then otherSet
         else IntSet (trie')
 
+    /// Computes the union of a sequence of IntSets.
+    static member internal UnionMany (sets : seq<IntSet>) : IntSet =
+        // Preconditions
+        checkNonNull "sets" sets
+
+        let combinedTrie =
+            (PatriciaSet.Empty, sets)
+            ||> Seq.fold (fun combinedSetTree set ->
+                PatriciaSet.Union (combinedSetTree, set.Trie))
+
+        IntSet (combinedTrie)
+
+    /// Computes the intersection of a sequence of IntSets.
+    static member internal IntersectMany (sets : seq<IntSet>) : IntSet =
+        // Preconditions
+        checkNonNull "sets" sets
+
+        Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
+
     /// Determines if the given set is a subset of this set.
     member this.IsSubset (otherSet : IntSet) : bool =
         PatriciaSet.IsSubset (otherSet.Trie, trie)
@@ -878,14 +897,14 @@ type IntSet private (trie : PatriciaSet) =
         PatriciaSet.IsProperSuperset (otherSet.Trie, trie)
 
     /// Returns a new IntSet made from the given elements.
-    static member OfSeq (source : seq<int>) : IntSet =
+    static member internal OfSeq (source : seq<int>) : IntSet =
         // Preconditions
         checkNonNull "source" source
 
         IntSet (PatriciaSet.OfSeq source)
 
     /// Returns a new IntSet made from the given elements.
-    static member OfList (source : int list) : IntSet =
+    static member internal OfList (source : int list) : IntSet =
         // Preconditions
         checkNonNull "source" source
 
@@ -896,7 +915,7 @@ type IntSet private (trie : PatriciaSet) =
             IntSet (PatriciaSet.OfList source)
 
     /// Returns a new IntSet made from the given elements.
-    static member OfArray (source : int[]) : IntSet =
+    static member internal OfArray (source : int[]) : IntSet =
         // Preconditions
         checkNonNull "source" source
 
@@ -907,7 +926,7 @@ type IntSet private (trie : PatriciaSet) =
             IntSet (PatriciaSet.OfArray source)
 
     /// Returns a new IntSet made from the given elements.
-    static member OfSet (source : Set<int>) : IntSet =
+    static member internal OfSet (source : Set<int>) : IntSet =
         // Preconditions
         checkNonNull "source" source
 
@@ -1042,12 +1061,7 @@ type IntSet private (trie : PatriciaSet) =
 
         /// <inherit />
         member __.Contains (item : int) =
-            notImpl "ICollection`1.Contains"
-//            match PatriciaSet.TryFind (uint32 item.Key, trie) with
-//            | None ->
-//                false
-//            | Some value ->
-//                LanguagePrimitives.HashCompare.GenericEqualityIntrinsic<'T>(value, item.Value)
+            PatriciaSet.Contains (uint32 item, trie)
 
         /// <inherit />
         member this.CopyTo (array, arrayIndex) =
@@ -1146,6 +1160,12 @@ module IntSet =
         
         set1.Union set2
 
+    /// Computes the union of a sequence of sets.
+    [<CompiledName("UnionMany")>]
+    let unionMany sets =
+        // Preconditions checked by the target method.
+        IntSet.UnionMany sets
+
     /// Computes the intersection of the two sets.
     [<CompiledName("Intersect")>]
     let inline intersect (set1 : IntSet) (set2 : IntSet) : IntSet =
@@ -1154,6 +1174,12 @@ module IntSet =
         checkNonNull "set2" set2
         
         set1.Intersect set2
+
+    /// Computes the intersection of a sequence of sets.
+    [<CompiledName("IntersectMany")>]
+    let intersectMany sets =
+        // Preconditions checked by the target method.
+        IntSet.IntersectMany sets
 
     /// Returns a new set with the elements of the second set removed from the first.
     [<CompiledName("Difference")>]
@@ -1212,25 +1238,25 @@ module IntSet =
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
-    let inline ofSeq source : IntSet =
+    let (*inline*) ofSeq source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfSeq source
 
     /// Builds a set that contains the same elements as the given list.
     [<CompiledName("OfList")>]
-    let inline ofList source : IntSet =
+    let (*inline*) ofList source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfList source
 
     /// Builds a set that contains the same elements as the given array.
     [<CompiledName("OfArray")>]
-    let inline ofArray source : IntSet =
+    let (*inline*) ofArray source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfArray source
 
     /// Builds an IntSet that contains the same elements as the given Set.
     [<CompiledName("OfSet")>]
-    let inline ofSet source : IntSet =
+    let (*inline*) ofSet source : IntSet =
         // Preconditions are checked by the member.
         IntSet.OfSet source
 
@@ -1487,6 +1513,16 @@ module TagSet =
         set1.Union set2
         |> retype
 
+    /// Computes the union of a sequence of sets.
+    [<CompiledName("UnionMany")>]
+    let unionMany (sets : seq<TagSet<'Tag>>) : TagSet<'Tag> =
+        // Retype as seq<IntSet>
+        let sets : seq<IntSet> = retype sets
+
+        // Preconditions checked by the target method.
+        IntSet.UnionMany sets
+        |> retype
+
     /// Computes the intersection of the two sets.
     [<CompiledName("Intersect")>]
     let inline intersect (set1 : TagSet<'Tag>) (set2 : TagSet<'Tag>) : TagSet<'Tag> =
@@ -1499,6 +1535,16 @@ module TagSet =
         checkNonNull "set2" set2
 
         set1.Intersect set2
+        |> retype
+
+    /// Computes the intersection of a sequence of sets.
+    [<CompiledName("IntersectMany")>]
+    let intersectMany (sets : seq<TagSet<'Tag>>) : TagSet<'Tag> =
+        // Retype as seq<IntSet>
+        let sets : seq<IntSet> = retype sets
+
+        // Preconditions checked by the target method.
+        IntSet.IntersectMany sets
         |> retype
 
     /// Returns a new set with the elements of the second set removed from the first.
