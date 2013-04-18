@@ -168,6 +168,48 @@ type private PatriciaSet =
             // Return the computed element count.
             int count
 
+    /// Retrieve the minimum element of the set.
+    static member MinElement (set : PatriciaSet) =
+        match set with
+        | Empty ->
+            invalidArg "set" "The set is empty."
+        | Lf j -> j
+        | Br (_, _, t0, _) ->
+            PatriciaSet.MinElement t0
+
+    /// Retrieve the minimum element of the set, treating the
+    /// elements of the set as signed values.
+    static member MinElementSigned (set : PatriciaSet) =
+        match set with
+        | Empty ->
+            invalidArg "set" "The set is empty."
+        | Lf j -> j
+        | Br (_, m, t0, t1) ->
+            // OPTIMIZE : Just use a bitmask here to check the top bit?
+            if (int m) < 0 then t1 else t0
+            |> PatriciaSet.MinElement
+
+    /// Retrieve the maximum element of the set.
+    static member MaxElement (set : PatriciaSet) =
+        match set with
+        | Empty ->
+            invalidArg "set" "The set is empty."
+        | Lf j -> j
+        | Br (_, _, _, t1) ->
+            PatriciaSet.MaxElement t1
+
+    /// Retrieve the maximum element of the set, treating the
+    /// elements of the set as signed values.
+    static member MaxElementSigned (set : PatriciaSet) =
+        match set with
+        | Empty ->
+            invalidArg "set" "The set is empty."
+        | Lf j -> j
+        | Br (_, m, t0, t1) ->
+            // OPTIMIZE : Just use a bitmask here to check the top bit?
+            if (int m) < 0 then t0 else t1
+            |> PatriciaSet.MaxElement
+
     /// Remove an item from the set.
     static member Remove (key, set : PatriciaSet) =
         match set with
@@ -815,6 +857,30 @@ type IntSet private (trie : PatriciaSet) =
     member __.Contains (key : int) : bool =
         PatriciaSet.Contains (uint32 key, trie)
 
+    /// The minimum unsigned value stored in the set.
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+    member __.MinElement
+        with get () : int =
+            int <| PatriciaSet.MinElement trie
+
+    /// The minimum signed value stored in the set.
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+    member __.MinElementSigned
+        with get () : int =
+            int <| PatriciaSet.MinElementSigned trie
+
+    /// The maximum unsigned value stored in the set.
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+    member __.MaxElement
+        with get () : int =
+            int <| PatriciaSet.MaxElement trie
+
+    /// The maximum signed value stored in the set.
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+    member __.MaxElementSigned
+        with get () : int =
+            int <| PatriciaSet.MaxElementSigned trie
+
     /// The IntSet containing the given element.
     static member Singleton (element : int) : IntSet =
         IntSet (Lf <| uint32 element)
@@ -1030,6 +1096,16 @@ type IntSet private (trie : PatriciaSet) =
                 trueSet,
                 falseSet.Add el), (IntSet.Empty, IntSet.Empty))
 
+    interface System.IEquatable<IntSet> with
+        /// <inherit />
+        member __.Equals other =
+            trie = other.Trie
+
+    interface System.IComparable<IntSet> with
+        /// <inherit />
+        member __.CompareTo other =
+            compare trie other.Trie
+
     interface System.Collections.IEnumerable with
         /// <inherit />
         member __.GetEnumerator () =
@@ -1150,6 +1226,38 @@ module IntSet =
         checkNonNull "set" set
         
         set.Contains key
+
+    //
+    [<CompiledName("MinElement")>]
+    let inline minElement (set : IntSet) : int =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MinElement
+
+    //
+    [<CompiledName("MinElementSigned")>]
+    let inline minElementSigned (set : IntSet) : int =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MinElementSigned
+
+    //
+    [<CompiledName("MaxElement")>]
+    let inline maxElement (set : IntSet) : int =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MaxElement
+
+    //
+    [<CompiledName("MaxElementSigned")>]
+    let inline maxElementSigned (set : IntSet) : int =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MaxElementSigned
 
     /// Computes the union of the two sets.
     [<CompiledName("Union")>]

@@ -1151,12 +1151,11 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
         /// <inherit />
         member __.Contains (item : KeyValuePair<int, 'T>) =
-            notImpl "ICollection`1.Contains"
-//            match PatriciaMap.TryFind (uint32 item.Key, trie) with
-//            | None ->
-//                false
-//            | Some value ->
-//                LanguagePrimitives.HashCompare.GenericEqualityIntrinsic<'T>(value, item.Value)
+            match PatriciaMap.TryFind (uint32 item.Key, trie) with
+            | None ->
+                false
+            | Some value ->
+                Unchecked.equals value item.Value
 
         /// <inherit />
         member this.CopyTo (array, arrayIndex) =

@@ -69,6 +69,102 @@ let contains () : unit =
     |> should be False
 
 [<TestCase>]
+let minElement () : unit =
+    // Simple test case.
+    [| 5; 3; 11; 2; 17; 4; 12; 14 |]
+    |> IntSet.ofArray
+    |> IntSet.minElement
+    |> should equal 2
+
+    // Test case for minElement (unsigned) when a negative value is in the set.
+    [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
+    |> IntSet.ofArray
+    |> IntSet.minElement
+    |> should equal 2
+
+    // Test case for minElement (unsigned) only negative values are in the set.
+    [| -5; -3; -11; -2; -17; -4; -12; -14 |]
+    |> IntSet.ofArray
+    |> IntSet.minElement
+    |> should equal -17
+
+[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+let ``minElement raises exn for empty set`` () : unit =
+    IntSet.minElement IntSet.empty |> ignore
+
+[<TestCase>]
+let minElementSigned () : unit =
+    // Simple test case.
+    [| 5; 3; 11; 2; 17; 4; 12; 14 |]
+    |> IntSet.ofArray
+    |> IntSet.minElementSigned
+    |> should equal 2
+
+    // Test case for minElementSigned when a negative value is in the set.
+    [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
+    |> IntSet.ofArray
+    |> IntSet.minElementSigned
+    |> should equal -1
+
+    // Test case for minElementSigned only negative values are in the set.
+    [| -5; -3; -11; -2; -17; -4; -12; -14 |]
+    |> IntSet.ofArray
+    |> IntSet.minElementSigned
+    |> should equal -17
+
+[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+let ``minElementSigned raises exn for empty set`` () : unit =
+    IntSet.minElementSigned IntSet.empty |> ignore
+
+[<TestCase>]
+let maxElement () : unit =
+    // Simple test case.
+    [| 5; 3; 11; 2; 17; 4; 12; 14 |]
+    |> IntSet.ofArray
+    |> IntSet.maxElement
+    |> should equal 17
+
+    // Test case for maxElement (unsigned) when a negative value is in the set.
+    [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
+    |> IntSet.ofArray
+    |> IntSet.maxElement
+    |> should equal -1
+
+    // Test case for maxElement (unsigned) only negative values are in the set.
+    [| -5; -3; -11; -2; -17; -4; -12; -14 |]
+    |> IntSet.ofArray
+    |> IntSet.maxElement
+    |> should equal -2
+
+[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+let ``maxElement raises exn for empty set`` () : unit =
+    IntSet.maxElement IntSet.empty |> ignore
+
+[<TestCase>]
+let maxElementSigned () : unit =
+    // Simple test case.
+    [| 5; 3; 11; 2; 17; 4; 12; 14 |]
+    |> IntSet.ofArray
+    |> IntSet.maxElementSigned
+    |> should equal 17
+
+    // Test case for maxElementSigned when a negative value is in the set.
+    [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
+    |> IntSet.ofArray
+    |> IntSet.maxElementSigned
+    |> should equal 17
+
+    // Test case for maxElementSigned only negative values are in the set.
+    [| -5; -3; -11; -2; -17; -4; -12; -14 |]
+    |> IntSet.ofArray
+    |> IntSet.maxElementSigned
+    |> should equal -2
+
+[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+let ``maxElementSigned raises exn for empty set`` () : unit =
+    IntSet.maxElementSigned IntSet.empty |> ignore
+
+[<TestCase>]
 let add () : unit =
     IntSet.empty
     |> IntSet.add 5
@@ -114,6 +210,10 @@ let union () : unit =
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
 [<TestCase>]
+let unionMany () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
 let intersect () : unit =
     IntSet.intersect
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
@@ -125,6 +225,10 @@ let intersect () : unit =
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
     |> should equal
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
+
+[<TestCase>]
+let intersectMany () : unit =
+    Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
 let difference () : unit =
