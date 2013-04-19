@@ -694,7 +694,11 @@ amet"
 
     [<TestCase>]
     let foldPairwise () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Count the number of occurrences where adjacent characters are the same.
+        (0, "mississippi")
+        ||> String.foldPairwise (fun count x y ->
+            if x = y then count + 1 else count)
+        |> should equal 3
 
     [<TestCase>]
     let trimChars () : unit =
