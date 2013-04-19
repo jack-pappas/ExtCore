@@ -1113,6 +1113,11 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         member this.Equals other =
             IntMap<_>.Equals (this, other)
 
+    interface System.IComparable with
+        /// <inherit />
+        member this.CompareTo other =
+            IntMap<_>.Compare (this, other :?> IntMap<'T>)
+
     interface System.IComparable<IntMap<'T>> with
         /// <inherit />
         member this.CompareTo other =

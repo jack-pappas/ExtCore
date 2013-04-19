@@ -1101,6 +1101,11 @@ type IntSet private (trie : PatriciaSet) =
         member __.Equals other =
             trie = other.Trie
 
+    interface System.IComparable with
+        /// <inherit />
+        member __.CompareTo other =
+            compare trie (other :?> IntSet).Trie
+
     interface System.IComparable<IntSet> with
         /// <inherit />
         member __.CompareTo other =
