@@ -582,6 +582,27 @@ module String =
             // Create a new string from the chosen characters.
             ofArray chosenChars.[..chosenCount-1]
 
+    /// Applies a function to each character in the string and the character which
+    /// follows it, threading an accumulator argument through the computation.
+    [<CompiledName("FoldPairwise")>]
+    let foldPairwise (folder : 'State -> char -> char -> 'State) state (str : string) =
+        // Preconditions
+        checkNonNull "str" str
+
+        // OPTIMIZATION : If the string is empty or contains just one element,
+        // immediately return the input state.
+        let len = String.length str
+        if len < 2 then state
+        else           
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            let mutable state = state
+
+            for i = 0 to len - 2 do
+                state <- folder.Invoke (state, str.[i], str.[i + 1])
+
+            // Return the final state value
+            state
+
     /// Removes all leading and trailing occurrences of
     /// the specified characters from a string.
     [<CompiledName("Trim")>]

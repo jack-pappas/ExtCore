@@ -693,6 +693,10 @@ amet"
         |> should equal "TUCBWNFOXJU HE DO"
 
     [<TestCase>]
+    let foldPairwise () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
     let trimChars () : unit =
         // Test case for empty string.
         String.empty
