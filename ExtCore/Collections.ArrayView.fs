@@ -93,6 +93,11 @@ let inline last (view : ArrayView<'T>) : 'T =
         invalidOp "Cannot retrieve the last element of an empty ArrayView<'T>."
     else view.Array.[lastIndexUnsafe view]
 
+/// Sets the elements in the ArrayView<'T> to Unchecked.defaultof.
+[<CompiledName("Clear")>]
+let inline clear (view : ArrayView<'T>) : unit =
+    System.Array.Clear (view.Array, view.Offset, view.Count)
+
 /// Builds a new array from the elements within the ArrayView<'T>.
 [<CompiledName("ToArray")>]
 let toArray (view : ArrayView<'T>) : 'T[] =
@@ -357,3 +362,65 @@ let inline sum (segment : ArrayView<'T>) : 'T =
         invalidArg "segment" "Cannot compute the sum of an empty ArrayView<'T>."
 
     reduce (+) segment
+
+//
+[<CompiledName("MapInPlace")>]
+let mapInPlace (mapping : 'T -> 'T) (view : ArrayView<'T>) : unit =
+    // Preconditions
+    // (None)
+
+    // Iterate over the view, mapping the elements and storing the results in-place.
+    let lastIndex = lastIndex view
+    let array = array view
+    for i = offset view to lastIndex do
+        array.[i] <- mapping array.[i]
+
+//
+[<CompiledName("MapIndexedInPlace")>]
+let mapiInPlace (mapping : int -> 'T -> 'T) (view : ArrayView<'T>) : unit =
+    // Preconditions
+    // (None)
+
+    // If the view is empty, return immediately.
+    if not <| isEmpty view then
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        // Iterate over the view, mapping the elements and storing the results in-place.
+        let lastIndex = lastIndex view
+        let array = array view
+        for i = offset view to lastIndex do
+            array.[i] <- mapping.Invoke (i, array.[i])
+
+//
+[<CompiledName("ChooseInPlace")>]
+let chooseInPlace (chooser : 'T -> 'T option) (view : ArrayView<'T>) : unit =
+    // Preconditions
+    // (None)
+
+    // Iterate over the view, mapping the elements and storing the results in-place.
+    let lastIndex = lastIndex view
+    let array = array view
+    for i = offset view to lastIndex do
+        match chooser array.[i] with
+        | None -> ()
+        | Some result ->
+            array.[i] <- result
+
+//
+[<CompiledName("ChooseIndexedInPlace")>]
+let chooseiInPlace (chooser : int -> 'T -> 'T option) (view : ArrayView<'T>) : unit =
+    // Preconditions
+    // (None)
+
+    // If the view is empty, return immediately.
+    if not <| isEmpty view then
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        // Iterate over the view, mapping the elements and storing the results in-place.
+        let lastIndex = lastIndex view
+        let array = array view
+        for i = offset view to lastIndex do
+            match chooser.Invoke (i, array.[i]) with
+            | None -> ()
+            | Some result ->
+                array.[i] <- result

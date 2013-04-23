@@ -141,6 +141,10 @@ let last () : unit =
     |> should equal 18
 
 [<TestCase>]
+let clear () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
 let toList () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -550,3 +554,19 @@ let sum () : unit =
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 0 5
     |> ArrayView.sum
     |> should equal 17
+
+[<TestCase>]
+let mapInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let mapiInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let chooseInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let chooseiInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
