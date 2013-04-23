@@ -19,11 +19,13 @@ limitations under the License.
 
 namespace ExtCore
 
+open System
 //open System.Diagnostics.Contracts
 
 
 /// Represents a segment of a string.
 [<Struct; CompiledName("Substring")>]
+//[<CustomEquality; CustomComparison>]
 type substring =
     /// The underlying string for this substring.
     val String : string
@@ -98,6 +100,22 @@ type substring =
             this.String,
             this.Offset + startIndex,
             finishIndex - startIndex + 1)
+
+//    interface IEquatable<substring> with
+//        /// <inherit />
+//        member __.Equals other =
+//            notImpl "Substring.Equals"
+//
+//    interface IComparable with
+//        /// <inherit />
+//        member __.CompareTo other =
+//            let other' = other :?> substring
+//            notImpl "Substring.CompareTo"
+//
+//    interface IComparable<substring> with
+//        /// <inherit />
+//        member __.CompareTo other =
+//            notImpl "Substring.CompareTo"
 
 
 /// Functional operators related to substrings.
