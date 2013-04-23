@@ -436,3 +436,20 @@ let unzipWith (mapping : 'T -> 'U * 'V) list : 'U list * 'V list =
         // Reverse the result lists before returning.
         List.rev resultList1,
         List.rev resultList2
+
+/// Returns the number of list elements matching a given predicate.
+// List.countWith predicate list = (List.filter predicate list |> List.count)
+[<CompiledName("CountWith")>]
+let countWith (predicate : 'T -> bool) (list : 'T list) : int =
+    // Preconditions
+    checkNonNull "list" list
+
+    let rec count acc list =
+        match list with
+        | [] -> acc
+        | hd :: tl ->
+            let acc = if predicate hd then acc + 1 else acc
+            count acc tl
+
+    // Call the recursive implementation to compute the number of matching elements.
+    count 0 list

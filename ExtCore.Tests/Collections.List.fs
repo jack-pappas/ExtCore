@@ -214,3 +214,7 @@ let unzipWith () : unit =
         ConsoleColor.Cyan;
         ConsoleColor.DarkBlue;
         ConsoleColor.DarkGray; ]
+
+[<TestCase>]
+let countWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."

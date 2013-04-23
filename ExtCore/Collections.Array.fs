@@ -481,3 +481,19 @@ let chooseiInPlace (chooser : int -> 'T -> 'T option) (array : 'T[]) : unit =
             | None -> ()
             | Some result ->
                 array.[i] <- result
+
+/// Returns the number of array elements matching a given predicate.
+[<CompiledName("CountWith")>]
+let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
+    // Preconditions
+    checkNonNull "array" array
+
+    let mutable matches = 0
+    let len = Array.length array
+    for i = 0 to len - 1 do
+        if predicate array.[i] then
+            matches <- matches + 1
+    
+    // Return the number of matching array elements.
+    matches
+

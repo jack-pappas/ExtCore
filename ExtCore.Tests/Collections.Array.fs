@@ -323,3 +323,7 @@ let chooseInPlace () : unit =
 [<TestCase>]
 let chooseiInPlace () : unit =
     Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let countWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."
