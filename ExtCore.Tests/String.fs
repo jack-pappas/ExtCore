@@ -30,7 +30,7 @@ module Substring =
     [<TestCase>]
     let get () : unit =
         do
-            let substr = Substring ("Hello World!", 3, 5)
+            let substr = substring ("Hello World!", 3, 5)
             
             Substring.get substr 1
             |> should equal 'o'
@@ -40,11 +40,11 @@ module Substring =
 
     [<TestCase>]
     let isEmpty () : unit =
-        Substring ("Hello World!", 4, 0)
+        substring ("Hello World!", 4, 0)
         |> Substring.isEmpty
         |> should be True
 
-        Substring ("Hello World!", 3, 4)
+        substring ("Hello World!", 3, 4)
         |> Substring.isEmpty
         |> should be False
 
@@ -83,22 +83,22 @@ module Substring =
     [<TestCase>]
     let toString () : unit =
         // Test for empty substring.
-        Substring ("Hello World!", 3, 0)
+        substring ("Hello World!", 3, 0)
         |> Substring.toString
         |> should equal String.empty
 
-        Substring ("Hello World!", 3, 6)
+        substring ("Hello World!", 3, 6)
         |> Substring.toString
         |> should equal "lo Wor"
 
     [<TestCase>]
     let toArray () : unit =
         // Test for empty substring.
-        Substring ("Hello World!", 3, 0)
+        substring ("Hello World!", 3, 0)
         |> Substring.toArray
         |> should equal Array.empty
 
-        Substring ("Hello World!", 3, 6)
+        substring ("Hello World!", 3, 6)
         |> Substring.toArray
         |> should equal [| 'l'; 'o'; ' '; 'W'; 'o'; 'r'; |]
 
@@ -107,7 +107,7 @@ module Substring =
         do
             let str = "The quick brown fox jumps over the lazy dog."
 
-            let substr = Substring (str, 4, 15)  // "quick brown fox"
+            let substr = substring (str, 4, 15)  // "quick brown fox"
             
             Substring.sub substr 6 5
             |> Substring.toString
@@ -120,11 +120,11 @@ module Substring =
             let str2 = "Hello World!"
 
             seq {
-            yield Substring (str1, 0, 35)
-            yield Substring (str2, 6, 6)
-            yield Substring (str1, 3, 1)
-            yield Substring (str2, 0, 6)
-            yield Substring (str1, 35, 9) }
+            yield substring (str1, 0, 35)
+            yield substring (str2, 6, 6)
+            yield substring (str1, 3, 1)
+            yield substring (str2, 0, 6)
+            yield substring (str1, 35, 9) }
             |> Substring.concat
             |> should equal "The quick brown fox jumps over the World! Hello lazy dog."
 
@@ -134,7 +134,7 @@ module Substring =
         do
             let elements = ResizeArray ()
 
-            Substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
+            substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
             |> Substring.iter (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
@@ -145,7 +145,7 @@ module Substring =
         do
             let elements = ResizeArray ()
 
-            Substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
+            substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
             |> Substring.iter (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
@@ -158,7 +158,7 @@ module Substring =
         do
             let elements = ResizeArray ()
 
-            Substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
+            substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
             |> Substring.iteri (fun idx c ->
                 elements.Add (
                     if idx % 2 = 0 then System.Char.ToUpper c else c))
@@ -171,7 +171,7 @@ module Substring =
         do
             let elements = ResizeArray ()
 
-            Substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
+            substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
             |> Substring.iteri (fun idx c ->
                 elements.Add (
                     if idx % 2 = 0 then System.Char.ToUpper c else c))
@@ -186,7 +186,7 @@ module Substring =
         do
             let elements = ResizeArray ()
 
-            Substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
+            substring ("The quick brown fox jumps over the lazy dog.", 4, 0)
             |> Substring.iterBack (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
@@ -197,7 +197,7 @@ module Substring =
         do
             let elements = ResizeArray ()
 
-            Substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
+            substring ("The quick brown fox jumps over the lazy dog.", 4, 15)
             |> Substring.iterBack (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
@@ -208,7 +208,7 @@ module Substring =
     let fold () : unit =
         // Test case for empty substring.
         do
-            ((0L, 0), Substring ("The quick brown fox jumps over the lazy dog.", 4, 0))
+            ((0L, 0), substring ("The quick brown fox jumps over the lazy dog.", 4, 0))
             ||> Substring.fold (fun (checksum, index) c ->
                 (checksum + int64 index) * int64 c,
                 index + 1)
@@ -217,7 +217,7 @@ module Substring =
 
         // Test case for "normal" usage of this function.
         do
-            ((0L, 0), Substring ("The quick brown fox jumps over the lazy dog.", 4, 15))
+            ((0L, 0), substring ("The quick brown fox jumps over the lazy dog.", 4, 15))
             ||> Substring.fold (fun (checksum, index) c ->
                 (checksum + int64 index) * int64 c,
                 index + 1)
@@ -228,14 +228,14 @@ module Substring =
     let foldi () : unit =
         // Test case for empty substring.
         do
-            (0L, Substring ("The quick brown fox jumps over the lazy dog.", 4, 0))
+            (0L, substring ("The quick brown fox jumps over the lazy dog.", 4, 0))
             ||> Substring.foldi (fun checksum index c ->
                 (checksum + int64 index) * int64 c)
             |> should equal 0L
 
         // Test case for "normal" usage of this function.
         do
-            (0L, Substring ("The quick brown fox jumps over the lazy dog.", 4, 15))
+            (0L, substring ("The quick brown fox jumps over the lazy dog.", 4, 15))
             ||> Substring.foldi (fun checksum index c ->
                 (checksum + int64 index) * int64 c)
             |> should equal 8117010307721961272L
@@ -244,7 +244,7 @@ module Substring =
     let foldBack () : unit =
         // Test case for empty substring.
         do
-            (Substring ("The quick brown fox jumps over the lazy dog.", 4, 0), (0L, 0))
+            (substring ("The quick brown fox jumps over the lazy dog.", 4, 0), (0L, 0))
             ||> Substring.foldBack (fun c (checksum, index) ->
                 (checksum + int64 index) * int64 c,
                 index + 1)
@@ -253,7 +253,7 @@ module Substring =
 
         // Test case for "normal" usage of this function.
         do
-            (Substring ("The quick brown fox jumps over the lazy dog.", 4, 15), (0L, 0))
+            (substring ("The quick brown fox jumps over the lazy dog.", 4, 15), (0L, 0))
             ||> Substring.foldBack (fun c (checksum, index) ->
                 (checksum + int64 index) * int64 c,
                 index + 1)
