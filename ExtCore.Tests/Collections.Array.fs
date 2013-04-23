@@ -59,6 +59,10 @@ let projectKeys () : unit =
         ConsoleColor.Black, "Black"; |]
 
 [<TestCase>]
+let clear () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
 let ``contains (value type)`` () : unit =
     // Test the function with an array of value types.
     let ``0 to 10`` = [| 0 .. 10 |]
@@ -304,3 +308,18 @@ let choose2 () : unit =
     |> should equal
        [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
 
+[<TestCase>]
+let mapInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let mapiInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let chooseInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let chooseiInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."

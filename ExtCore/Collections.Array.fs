@@ -94,6 +94,11 @@ let inline last (array : 'T[]) =
         invalidOp "Cannot retrieve the last element of an empty array."
     else array.[array.Length - 1]
 
+/// Sets all elements in the array to Unchecked.defaultof.
+[<CompiledName("Clear")>]
+let inline clear (array : 'T[]) : unit =
+    System.Array.Clear (array, 0, array.Length)
+
 /// Determines if an array contains a specified value.
 [<CompiledName("Contains")>]
 let contains value (array : 'T[]) : bool =
@@ -414,8 +419,65 @@ let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
     // then reducing it with the current state to get the new state.
     let len = Array.length array
     for i = 1 to len - 1 do
-        state <-
-            mapReduction.Reduce state (mapReduction.Map array.[i])
+        state <- mapReduction.Reduce state (mapReduction.Map array.[i])
 
     // Return the final state.
     state
+
+//
+[<CompiledName("MapInPlace")>]
+let mapInPlace (mapping : 'T -> 'T) (array : 'T[]) : unit =
+    // Preconditions
+    checkNonNull "array" array
+
+    // Iterate over the array, mapping the elements and storing the results in-place.
+    let len = Array.length array
+    for i = 0 to len - 1 do
+        array.[i] <- mapping array.[i]
+
+//
+[<CompiledName("MapIndexedInPlace")>]
+let mapiInPlace (mapping : int -> 'T -> 'T) (array : 'T[]) : unit =
+    // Preconditions
+    checkNonNull "array" array
+
+    // If the array is empty, return immediately.
+    if not <| Array.isEmpty array then
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        // Iterate over the array, mapping the elements and storing the results in-place.
+        let len = Array.length array
+        for i = 0 to len - 1 do
+            array.[i] <- mapping.Invoke (i, array.[i])
+
+//
+[<CompiledName("ChooseInPlace")>]
+let chooseInPlace (chooser : 'T -> 'T option) (array : 'T[]) : unit =
+    // Preconditions
+    checkNonNull "array" array
+
+    // Iterate over the array, mapping the elements and storing the results in-place.
+    let len = Array.length array
+    for i = 0 to len - 1 do
+        match chooser array.[i] with
+        | None -> ()
+        | Some result ->
+            array.[i] <- result
+
+//
+[<CompiledName("ChooseIndexedInPlace")>]
+let chooseiInPlace (chooser : int -> 'T -> 'T option) (array : 'T[]) : unit =
+    // Preconditions
+    checkNonNull "array" array
+
+    // If the array is empty, return immediately.
+    if not <| Array.isEmpty array then
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        // Iterate over the array, mapping the elements and storing the results in-place.
+        let len = Array.length array
+        for i = 0 to len - 1 do
+            match chooser.Invoke (i, array.[i]) with
+            | None -> ()
+            | Some result ->
+                array.[i] <- result
