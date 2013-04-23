@@ -490,3 +490,8 @@ let tryUpdate () : unit =
     initial
     |> Map.tryUpdate ConsoleColor.Blue "DarkBlue"
     |> should equal expected
+
+[<TestCase>]
+let countWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+

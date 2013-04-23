@@ -365,3 +365,17 @@ let tryUpdate key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     else
         // Return the original map.
         map
+
+//
+[<CompiledName("CountWith")>]
+let countWith (predicate : 'T -> bool) (set : Set<'T>) : int =
+    // Preconditions
+    checkNonNull "set" set
+
+    // Fold over the set, counting the number of elements which match the predicate.
+    (0, set)
+    ||> Set.fold (fun matchCount el ->
+        if predicate el then
+            matchCount + 1
+        else matchCount)
+

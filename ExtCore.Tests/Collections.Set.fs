@@ -277,6 +277,10 @@ let disjoint () : unit =
         (Set.ofArray [| 0..20 |] |> Set.filter (fun el -> el % 3 = 0))
     |> should be False
 
+[<TestCase>]
+let countWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
 
 module Cartesian =
     [<TestCase>]

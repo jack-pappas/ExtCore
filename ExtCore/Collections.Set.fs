@@ -369,6 +369,19 @@ let disjoint (set1 : Set<'T>) set2 : bool =
          set2 |> Set.exists (fun el -> Set.contains el set1))
         |> not
 
+//
+[<CompiledName("CountWith")>]
+let countWith (predicate : 'T -> bool) (set : Set<'T>) : int =
+    // Preconditions
+    checkNonNull "set" set
+
+    // Fold over the set, counting the number of elements which match the predicate.
+    (0, set)
+    ||> Set.fold (fun matchCount el ->
+        if predicate el then
+            matchCount + 1
+        else matchCount)
+
 
 /// Functions operating over the Cartesian product of two sets.
 /// These functions can offer a large memory savings since they avoid creating the product set.
