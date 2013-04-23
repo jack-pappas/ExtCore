@@ -102,7 +102,7 @@ type substring =
 
 /// Functional operators related to substrings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module substring =
+module Substring =
     open OptimizedClosures
 
     /// Returns the string underlying the given substring.
