@@ -631,6 +631,14 @@ amet"
                    ' '; 't'; 'H'; 'e'; ' '; 'l'; 'A'; 'z'; 'Y'; ' '; 'D'; 'o'; 'G'; '.'; |]
 
     [<TestCase>]
+    let iter2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iteri2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
     let map () : unit =
         // Test case for empty string.
         String.empty

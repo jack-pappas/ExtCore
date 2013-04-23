@@ -180,7 +180,7 @@ module Substring =
 
     /// Applies the given function to each character in the substring,
     /// in order from lowest to highest indices.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let iter action (substring : substring) : unit =
         let len = substring.Length
         for i = 0 to len - 1 do
@@ -189,7 +189,7 @@ module Substring =
     /// Applies the given function to each character in the substring,
     /// in order from lowest to highest indices.
     /// The integer index applied to the function is the character's index within the substring.
-    [<CompiledName("IterIndexed")>]
+    [<CompiledName("IterateIndexed")>]
     let iteri action (substring : substring) : unit =
         // OPTIMIZATION : Immediately return if the substring is empty.
         let len = substring.Length
@@ -201,7 +201,7 @@ module Substring =
 
     /// Applies the given function to each character in the substring,
     /// in order from highest to lowest indices.
-    [<CompiledName("IterBack")>]
+    [<CompiledName("IterateBack")>]
     let iterBack action (substring : substring) : unit =
         let len = substring.Length
         for i = len - 1 downto 0 do
@@ -434,7 +434,7 @@ module String =
         state
 
     /// Applies the given function to each character of the string.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let iter (action : char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str
@@ -448,7 +448,7 @@ module String =
 
     /// Applies the given function to each character of the string.
     /// The integer passed to the function indicates the index of the character.
-    [<CompiledName("IterIndexed")>]
+    [<CompiledName("IterateateIndexed")>]
     let iteri (action : int -> char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str
@@ -461,6 +461,38 @@ module String =
         // Iterate over the string, applying the action to each character.
         for i = 0 to len - 1 do
             action.Invoke (i, str.[i])
+
+    //
+    [<CompiledName("Iterate2")>]
+    let iter2 (action : char -> char -> unit) (str1 : string) (str2 : string) : unit =
+        // Preconditions
+        checkNonNull "str1" str1
+        checkNonNull "str2" str2
+        
+        let len = String.length str1
+        if len <> String.length str2 then
+            invalidArg "str2" "The strings have different lengths."
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        for i = 0 to len - 1 do
+            action.Invoke (str1.[i], str2.[i])
+
+    //
+    [<CompiledName("IterateIndexed2")>]
+    let iteri2 (action : int -> char -> char -> unit) (str1 : string) (str2 : string) : unit =
+        // Preconditions
+        checkNonNull "str1" str1
+        checkNonNull "str2" str2
+        
+        let len = String.length str1
+        if len <> String.length str2 then
+            invalidArg "str2" "The strings have different lengths."
+
+        let action = FSharpFunc<_,_,_,_>.Adapt action
+
+        for i = 0 to len - 1 do
+            action.Invoke (i, str1.[i], str2.[i])
 
     /// Builds a new string whose characters are the results of applying the given
     /// function to each character of the string.
@@ -753,7 +785,7 @@ module String =
 
         /// Applies the given function to each of the substrings in the input string that are
         /// delimited by elements of a specified Unicode character array.
-        [<CompiledName("Iter")>]
+        [<CompiledName("Iterate")>]
         let iter (separator : char[], options : StringSplitOptions)
                 (action : substring -> unit) (str : string) : unit =
             // Preconditions
@@ -869,7 +901,7 @@ module String =
         /// applied to the function is the index of the substring within the virtual array of
         /// substrings in the input string. For example, if the newline character (\n) is used
         /// as the separator, the index of each substring would be the line number.
-        [<CompiledName("IterIndexed")>]
+        [<CompiledName("IterateIndexed")>]
         let iteri (separator : char[], options : System.StringSplitOptions)
                 (action : int -> substring -> unit) (str : string) : unit =
             // Preconditions
