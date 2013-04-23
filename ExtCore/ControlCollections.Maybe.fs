@@ -181,7 +181,7 @@ module Array =
         else Some results
 
     //
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let iter (action : 'T -> unit option) (array : 'T[]) : unit option =
         // Preconditions
         checkNonNull "array" array
@@ -202,7 +202,7 @@ module Array =
         else Some ()
 
     //
-    [<CompiledName("IterIndexed")>]
+    [<CompiledName("IterateIndexed")>]
     let iteri (action : int -> 'T -> unit option) (array : 'T[]) : unit option =
         // Preconditions
         checkNonNull "array" array
@@ -345,7 +345,7 @@ module List =
         mapRec (List.empty, 0, list1, list2)
 
     //
-    [<CompiledName("Iter2")>]
+    [<CompiledName("Iterate2")>]
     let iter2 (action : 'T1 -> 'T2 -> unit option)
             (list1 : 'T1 list) (list2 : 'T2 list) : unit option =
         // Preconditions
@@ -382,7 +382,7 @@ module List =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     //
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let iter (action : 'T -> unit option) (sequence : seq<'T>) : unit option =
         // Preconditions
         checkNonNull "seq" seq

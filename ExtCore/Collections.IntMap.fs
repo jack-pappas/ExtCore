@@ -1474,7 +1474,7 @@ module IntMap =
         map.Choose chooser
 
     /// Applies the given function to each binding in the map.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let inline iter (action : int -> 'T -> unit) (map : IntMap<'T>) : unit =
         // Preconditions
         checkNonNull "map" map
@@ -1482,7 +1482,7 @@ module IntMap =
         map.Iterate action
 
     /// Applies the given function to each binding in the map.
-    [<CompiledName("IterBack")>]
+    [<CompiledName("IterateBack")>]
     let inline iterBack (action : int -> 'T -> unit) (map : IntMap<'T>) : unit =
         // Preconditions
         checkNonNull "map" map
@@ -1883,7 +1883,7 @@ module TagMap =
         |> retype
 
     /// Applies the given function to each binding in the map.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let inline iter (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
         // Retype as IntMap.
         let map : IntMap<'T> = retype map
@@ -1894,7 +1894,7 @@ module TagMap =
         map.Iterate (retype action)
 
     /// Applies the given function to each binding in the map.
-    [<CompiledName("IterBack")>]
+    [<CompiledName("IterateBack")>]
     let inline iterBack (action : int<'Tag> -> 'T -> unit) (map : TagMap<'Tag, 'T>) : unit =
         // Retype as IntMap.
         let map : IntMap<'T> = retype map

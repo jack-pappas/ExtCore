@@ -1407,7 +1407,7 @@ module IntSet =
 
     /// Applies the given function to each element of the set,
     /// in order according to the comparison function.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let inline iter (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -1416,7 +1416,7 @@ module IntSet =
 
     /// Applies the given function to each element of the set,
     /// in reverse order according to the comparison function.
-    [<CompiledName("IterBack")>]
+    [<CompiledName("IterateBack")>]
     let inline iterBack (action : int -> unit) (set : IntSet) =
         // Preconditions
         checkNonNull "set" set
@@ -1811,7 +1811,7 @@ module TagSet =
 
     /// Applies the given function to each element of the set,
     /// in order according to the comparison function.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let inline iter (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set
@@ -1823,7 +1823,7 @@ module TagSet =
 
     /// Applies the given function to each element of the set,
     /// in reverse order according to the comparison function.
-    [<CompiledName("IterBack")>]
+    [<CompiledName("IterateBack")>]
     let inline iterBack (action : int<'Tag> -> unit) (set : TagSet<'Tag>) =
         // Retype as IntSet
         let set : IntSet = retype set

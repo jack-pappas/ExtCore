@@ -407,7 +407,7 @@ module Cartesian =
                 folder.Invoke (x, y, state)))
 
     /// Applies the given function to each element in the Cartesian product of two sets.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let iter (action : 'T -> 'U -> unit) set1 set2 : unit =
         // Preconditions
         checkNonNull "set1" set1

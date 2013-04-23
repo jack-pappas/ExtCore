@@ -504,7 +504,7 @@ module Bimap =
         bimap.ToMap ()
 
     //
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let inline iter (action : 'Key -> 'T -> unit) (bimap : Bimap<'Key, 'T>) : unit =
         // Preconditions
         checkNonNull "bimap" bimap

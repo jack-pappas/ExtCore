@@ -528,7 +528,7 @@ let pick (picker : 'T -> 'U option) (resizeArray : ResizeArray<'T>) : 'U =
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
 /// Apply the given function to each element of the array.
-[<CompiledName("Iter")>]
+[<CompiledName("Iterate")>]
 let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) : unit =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
@@ -539,7 +539,7 @@ let iter (action : 'T -> unit) (resizeArray : ResizeArray<'T>) : unit =
 
 /// Apply the given function to each element of the array. The integer passed to the
 /// function indicates the index of element.
-[<CompiledName("IterIndexed")>]
+[<CompiledName("IterateIndexed")>]
 let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) : unit =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
@@ -554,7 +554,7 @@ let iteri (action : int -> 'T -> unit) (resizeArray : ResizeArray<'T>) : unit =
 /// Apply the given function to two arrays simultaneously. The two arrays
 /// must have the same lengths, otherwise an <c>ArgumentException</c> is raised.
 /// </summary>
-[<CompiledName("Iter2")>]
+[<CompiledName("Iterate2")>]
 let iter2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T1>) : unit =
     // Preconditions
     checkNonNull "resizeArray1" resizeArray1
@@ -574,7 +574,7 @@ let iter2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'
 /// also passing the index of the elements. The two arrays must have the same lengths, 
 /// otherwise an <c>ArgumentException</c> is raised.
 /// </summary>
-[<CompiledName("IterIndexed2")>]
+[<CompiledName("IterateIndexed2")>]
 let iteri2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : unit =
     // Preconditions
     checkNonNull "resizeArray1" resizeArray1

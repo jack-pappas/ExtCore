@@ -467,7 +467,7 @@ module LazyList =
             skipCell count list
 
     /// Apply the given function to each element of the collection.
-    [<CompiledName("Iter")>]
+    [<CompiledName("Iterate")>]
     let rec iter (action : 'T -> unit) (list : LazyList<'T>) =
         // Preconditions
         checkNonNull "list" list
