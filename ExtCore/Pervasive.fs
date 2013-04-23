@@ -55,6 +55,16 @@ module AdditionalOperators =
                 else
                     this.Array.[this.Offset + index] <- value
 
+    type System.Collections.Generic.List<'T> with
+        /// Implements F# slicing syntax for ResizeArray<'T>.
+        member this.GetSlice (startIndex, finishIndex) : ResizeArray<'T> =
+            let startIndex = defaultArg startIndex 0
+            let finishIndex = defaultArg finishIndex this.Count
+
+            this.GetRange (
+                startIndex,
+                finishIndex - startIndex + 1)
+
 
     (* Operators *)
 
