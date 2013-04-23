@@ -22,17 +22,17 @@ namespace ExtCore
 //open System.Diagnostics.Contracts
 
 
-/// A substring.
-[<Struct>]
-type Substring =
-    //
+/// Represents a segment of a string.
+[<Struct; CompiledName("Substring")>]
+type substring =
+    /// The underlying string for this substring.
     val String : string
     //
     val Offset : int
     //
     val Length : int
     
-    /// <summary>Create a new Substring value.</summary>
+    /// <summary>Create a new substring value.</summary>
     /// <param name="string"></param>
     /// <param name="offset"></param>
     /// <param name="length"></param>
@@ -94,133 +94,131 @@ type Substring =
         let startIndex = defaultArg startIndex 0
         let finishIndex = defaultArg finishIndex this.Length
 
-        Substring (
+        substring (
             this.String,
             this.Offset + startIndex,
             finishIndex - startIndex + 1)
 
-/// Represents a segment of a string.
-and substring = Substring
 
-/// Functional operators related to Substrings.
+/// Functional operators related to substrings.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Substring =
+module substring =
     open OptimizedClosures
 
     /// Returns the string underlying the given substring.
     [<CompiledName("String")>]
-    let inline string (substring : substring) : string =
-        substring.String
+    let inline string (substr : substring) : string =
+        substr.String
 
     /// The starting offset of the substring within it's underlying string.
     [<CompiledName("Offset")>]
-    let inline offset (substring : substring) : int =
-        substring.Offset
+    let inline offset (substr : substring) : int =
+        substr.Offset
 
     /// Returns the length of the substring.
     [<CompiledName("Length")>]
-    let inline length (substring : substring) : int =
-        substring.Length
+    let inline length (substr : substring) : int =
+        substr.Length
 
     /// Gets a character from the substring.
     [<CompiledName("Get")>]
-    let inline get (substring : substring) index : char =
-        substring.[index]
+    let inline get (substr : substring) index : char =
+        substr.[index]
 
     /// Is the substring empty?
     [<CompiledName("IsEmpty")>]
-    let inline isEmpty (substring : substring) : bool =
-        substring.IsEmpty
+    let inline isEmpty (substr : substring) : bool =
+        substr.IsEmpty
 
     /// Returns a substring which covers the entire length of the given string.
     [<CompiledName("OfString")>]
     let inline ofString (str : string) : substring =
-        Substring (str, 0, str.Length)
+        substring (str, 0, str.Length)
 
     /// Instantiates the substring as a string.
     [<CompiledName("ToString")>]
-    let inline toString (substring : substring) : string =
-        substring.ToString ()
+    let inline toString (substr : substring) : string =
+        substr.ToString ()
 
     /// Returns the characters in the given substring as a Unicode character array. 
     [<CompiledName("ToArray")>]
-    let inline toArray (substring : substring) : char[] =
-        substring.ToArray ()
+    let inline toArray (substr : substring) : char[] =
+        substr.ToArray ()
 
     /// Gets a substring of a substring.
     [<CompiledName("Sub")>]
-    let sub (substring : substring) offset count : substring =
+    let sub (substr : substring) offset count : substring =
         // Preconditions
         if offset < 0 then
             argOutOfRange "offset" "The offset cannot be negative."
         elif count < 0 then
             argOutOfRange "count" "The length of the substring cannot be negative."
-        elif offset >= substring.Length then
+        elif offset >= substr.Length then
             argOutOfRange "offset" "The offset must be less than the length of the input substring."
-        elif (offset + count) >= substring.Length then
+        elif (offset + count) >= substr.Length then
             argOutOfRange "count" "There are fewer than 'count' elements in the \
                                    input substring when starting at the given offset."
 
         // Create a new substring based on the input substring.
-        Substring (substring.String, substring.Offset + offset, count)
+        substring (substr.String, substr.Offset + offset, count)
 
     /// Builds a new string by concatenating the given sequence of substrings.
     [<CompiledName("Concat")>]
-    let concat (substrings : seq<substring>) : string =
+    let concat (substrs : seq<substring>) : string =
         // Preconditions
-        checkNonNull "substrings" substrings
+        checkNonNull "substrs" substrs
 
         // If the sequence is empty, return immediately.
-        if Seq.isEmpty substrings then
+        if Seq.isEmpty substrs then
             System.String.Empty
         else
             let sb = System.Text.StringBuilder ()
-            substrings |> Seq.iter (sb.Append >> ignore)
+            substrs |> Seq.iter (sb.Append >> ignore)
             sb.ToString ()
 
     /// Applies the given function to each character in the substring,
     /// in order from lowest to highest indices.
     [<CompiledName("Iterate")>]
-    let iter action (substring : substring) : unit =
-        let len = substring.Length
+    let iter action (substr : substring) : unit =
+        let len = substr.Length
         for i = 0 to len - 1 do
-            action substring.[i]
+            action substr.[i]
 
     /// Applies the given function to each character in the substring,
     /// in order from lowest to highest indices.
     /// The integer index applied to the function is the character's index within the substring.
     [<CompiledName("IterateIndexed")>]
-    let iteri action (substring : substring) : unit =
+    let iteri action (substr : substring) : unit =
         // OPTIMIZATION : Immediately return if the substring is empty.
-        let len = substring.Length
+        let len = substr.Length
         if len > 0 then
             let action = FSharpFunc<_,_,_>.Adapt action
 
             for i = 0 to len - 1 do
-                action.Invoke (i, substring.[i])
+                action.Invoke (i, substr.[i])
 
     /// Applies the given function to each character in the substring,
     /// in order from highest to lowest indices.
     [<CompiledName("IterateBack")>]
-    let iterBack action (substring : substring) : unit =
-        let len = substring.Length
+    let iterBack action (substr : substring) : unit =
+        let len = substr.Length
         for i = len - 1 downto 0 do
-            action substring.[i]
+            action substr.[i]
 
     /// Applies a function to each character of the substring, threading an accumulator
     /// argument through the computation.
     /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> char -> 'State) state (substring : substring) : 'State =
+    let fold (folder : 'State -> char -> 'State) state (substr : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
-        let len = substring.Length
+        let len = substr.Length
         if len = 0 then state
         else
             let folder = FSharpFunc<_,_,_>.Adapt folder
             
             let mutable state = state
             for i = 0 to len - 1 do
-                state <- folder.Invoke (state, substring.[i])
+                state <- folder.Invoke (state, substr.[i])
             state
 
     /// Applies a function to each character of the substring, threading an accumulator
@@ -228,32 +226,32 @@ module Substring =
     /// The integer index applied to the function is the character's index within the substring.
     /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : 'State -> int -> char -> 'State) state (substring : substring) : 'State =
+    let foldi (folder : 'State -> int -> char -> 'State) state (substr : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
-        let len = substring.Length
+        let len = substr.Length
         if len = 0 then state
         else
             let folder = FSharpFunc<_,_,_,_>.Adapt folder
             
             let mutable state = state
             for i = 0 to len - 1 do
-                state <- folder.Invoke (state, i, substring.[i])
+                state <- folder.Invoke (state, i, substr.[i])
             state
 
     /// Applies a function to each character of the string, threading an accumulator
     /// argument through the computation.
     /// If the input function is f and the characters are c0...cN then computes f c0 (...(f cN s)).
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : char -> 'State -> 'State) (substring : substring) state : 'State =
+    let foldBack (folder : char -> 'State -> 'State) (substr : substring) state : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
-        let len = substring.Length
+        let len = substr.Length
         if len = 0 then state
         else
             let folder = FSharpFunc<_,_,_>.Adapt folder
             
             let mutable state = state
             for i = len - 1 downto 0 do
-                state <- folder.Invoke (substring.[i], state)
+                state <- folder.Invoke (substr.[i], state)
             state
 
 
@@ -333,7 +331,7 @@ module String =
     /// Gets a substring of a string.
     [<CompiledName("Sub")>]
     let inline sub (str : string) offset count : substring =
-        Substring (str, offset, count)
+        substring (str, offset, count)
 
     /// Returns the index of the first occurrence of a specified character within a string.
     [<CompiledName("TryFindIndexOf")>]
@@ -672,7 +670,7 @@ module String =
                 index <- index + 1
 
             // If none of the characters matched the predicate, don't bother
-            // calling .Substring(), just return an empty string.
+            // calling .substring(), just return an empty string.
             if foundMatch then
                 // If the predicate was immediately matched, there's nothing
                 // to trim so return the initial string.
@@ -703,7 +701,7 @@ module String =
                 index <- index - 1
 
             // If none of the characters matched the predicate, don't bother
-            // calling .Substring(), just return an empty string.
+            // calling .substring(), just return an empty string.
             if foundMatch then
                 // If the predicate was immediately matched, there's nothing
                 // to trim so return the initial string.
@@ -737,7 +735,7 @@ module String =
                 index <- index + 1
 
             // If none of the characters matched the predicate, don't bother
-            // calling .Substring(), just return an empty string.
+            // calling .substring(), just return an empty string.
             if foundLeftMatch then
                 /// The starting index of the trimmed string.
                 let trimmedStartIndex = index - 1
@@ -813,7 +811,7 @@ module String =
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    action <| Substring (str, offset, length)
+                                    action <| substring (str, offset, length)
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -829,7 +827,7 @@ module String =
                             // Is the current character a separator?
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring.
-                                action <| Substring (str, offset, length)
+                                action <| substring (str, offset, length)
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -844,7 +842,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        action <| Substring (str, offset, length)
+                        action <| substring (str, offset, length)
 
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
@@ -863,7 +861,7 @@ module String =
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    action <| Substring (str, offset, length)
+                                    action <| substring (str, offset, length)
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -879,7 +877,7 @@ module String =
                             // Is the current character a separator?
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
-                                action <| Substring (str, offset, length)
+                                action <| substring (str, offset, length)
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -894,7 +892,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        action <| Substring (str, offset, length)
+                        action <| substring (str, offset, length)
 
         /// Applies the given function to each of the substrings in the input string that are
         /// delimited by elements of a specified Unicode character array. The integer index
@@ -934,7 +932,7 @@ module String =
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    action.Invoke (substringIndex, Substring (str, offset, length))
+                                    action.Invoke (substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -953,7 +951,7 @@ module String =
                             // Is the current character a separator?
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring.
-                                action.Invoke (substringIndex, Substring (str, offset, length))
+                                action.Invoke (substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -971,7 +969,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        action.Invoke (substringIndex, Substring (str, offset, length))
+                        action.Invoke (substringIndex, substring (str, offset, length))
 
                 | separator ->
                     /// A sorted copy of the separator array. Used with Array.BinarySearch
@@ -993,7 +991,7 @@ module String =
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    action.Invoke (substringIndex, Substring (str, offset, length))
+                                    action.Invoke (substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1012,7 +1010,7 @@ module String =
                             // Is the current character a separator?
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
-                                action.Invoke (substringIndex, Substring (str, offset, length))
+                                action.Invoke (substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1030,7 +1028,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        action.Invoke (substringIndex, Substring (str, offset, length))
+                        action.Invoke (substringIndex, substring (str, offset, length))
 
         //
         [<CompiledName("Fold")>]
@@ -1067,7 +1065,7 @@ module String =
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    state <- folder.Invoke (state, Substring (str, offset, length))
+                                    state <- folder.Invoke (state, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1083,7 +1081,7 @@ module String =
                             // Is the current character a separator?
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring.
-                                state <- folder.Invoke (state, Substring (str, offset, length))
+                                state <- folder.Invoke (state, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1098,7 +1096,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        state <- folder.Invoke (state, Substring (str, offset, length))
+                        state <- folder.Invoke (state, substring (str, offset, length))
                     state
 
                 | separator ->
@@ -1121,7 +1119,7 @@ module String =
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    state <- folder.Invoke (state, Substring (str, offset, length))
+                                    state <- folder.Invoke (state, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1137,7 +1135,7 @@ module String =
                             // Is the current character a separator?
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
-                                state <- folder.Invoke (state, Substring (str, offset, length))
+                                state <- folder.Invoke (state, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1152,7 +1150,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        state <- folder.Invoke (state, Substring (str, offset, length))
+                        state <- folder.Invoke (state, substring (str, offset, length))
                     state
 
         //
@@ -1193,7 +1191,7 @@ module String =
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                                    state <- folder.Invoke (state, substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1212,7 +1210,7 @@ module String =
                             // Is the current character a separator?
                             if Char.IsWhiteSpace str.[i] then
                                 // Apply the function to the current substring.
-                                state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                                state <- folder.Invoke (state, substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1230,7 +1228,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                        state <- folder.Invoke (state, substringIndex, substring (str, offset, length))
                     state
 
                 | separator ->
@@ -1256,7 +1254,7 @@ module String =
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring unless it's empty.
                                 if length > 0 then
-                                    state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                                    state <- folder.Invoke (state, substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1275,7 +1273,7 @@ module String =
                             // Is the current character a separator?
                             if Array.BinarySearch (sortedSeparators, str.[i]) >= 0 then
                                 // Apply the function to the current substring.
-                                state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                                state <- folder.Invoke (state, substringIndex, substring (str, offset, length))
 
                                 // Update the offset to just past the end of this substring
                                 // and reset the length to zero to begin a new substring.
@@ -1293,7 +1291,7 @@ module String =
                     // If the length is nonzero, then the last substring is still "in-progress"
                     // so apply the function to it.
                     if length > 0 || not <| skipEmptyStrings options then
-                        state <- folder.Invoke (state, substringIndex, Substring (str, offset, length))
+                        state <- folder.Invoke (state, substringIndex, substring (str, offset, length))
                     state
 
 
@@ -1303,7 +1301,7 @@ module StringOperators =
         member this.GetSlice (startIndex, finishIndex) : substring =
             let startIndex = defaultArg startIndex 0 
             let finishIndex = defaultArg finishIndex this.Length
-            Substring (this, startIndex, finishIndex - startIndex + 1)
+            substring (this, startIndex, finishIndex - startIndex + 1)
 
     type System.Text.StringBuilder with
         /// Appends a copy of the specified substring to this instance.
