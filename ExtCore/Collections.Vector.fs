@@ -26,9 +26,9 @@ open ExtCore
 
 /// <summary>Immutable array with constant-time access to elements.</summary>
 [<Struct; CompiledName("FSharpVector`1")>]
-type Vector<'T> private (elements : 'T[]) =
+type vector<'T> private (elements : 'T[]) =
     /// The empty vector instance.
-    static let empty : Vector<'T> = Vector (Array.empty)
+    static let empty : vector<'T> = vector (Array.empty)
 
     /// The empty vector.
     static member Empty
@@ -67,23 +67,21 @@ type Vector<'T> private (elements : 'T[]) =
             elements.[index]
 
     /// Creates a new Vector from the given array.
-    static member Create (source : 'T[]) : Vector<'T> =
+    static member Create (source : 'T[]) : vector<'T> =
         // Preconditions
         checkNonNull "source" source
 
         // Create a shallow copy of the source array, then pass it to
         // the private Vector constructor and return the new Vector value.
-        Vector (Array.copy source)
+        vector (Array.copy source)
 
-/// Immutable array with constant-time access to elements.
-type vector<'T> = Vector<'T>
 
 /// Functional operators related to vectors (immutable arrays).
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Vector =
     /// Checks if the vector has been initialized; if not, an InvalidArgumentException is raised.
     [<CompiledName("CheckInitialized")>]
-    let inline private checkInitialized paramName (vec : Vector<'T>) =
+    let inline private checkInitialized paramName (vec : vector<'T>) =
         if vec.IsNull then
             invalidArg paramName "The vector has not been initialized; it is equal to the \
                                   Vector type's default value (the equivalent of 'null')."
@@ -94,7 +92,7 @@ module Vector =
         // Preconditions
         checkNonNull "array" array
 
-        Vector.Create array
+        vector.Create array
 
     /// Returns the length of a vector.
     /// You can also use the property vec.Length.
@@ -116,11 +114,11 @@ module Vector =
     /// Given an element, creates an array containing just that element.
     [<CompiledName("Singleton")>]
     let inline singleton (value : 'T) : vector<'T> =
-        Vector.Create [| value |]
+        vector.Create [| value |]
 
     /// Creates a vector that contains the elements of one vector followed by the elements of another vector.
     [<CompiledName("Append")>]
-    let append (vector1 : vector<'T>) (vector2 : vector<'T>) : Vector<'T> =
+    let append (vector1 : vector<'T>) (vector2 : vector<'T>) : vector<'T> =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
@@ -210,8 +208,8 @@ module Vector =
 
     /// Returns an empty vector of the given type.
     [<CompiledName("Empty")>]
-    let empty<'T> : Vector<'T> =
-        Vector.Empty
+    let empty<'T> : vector<'T> =
+        vector.Empty
 
     //
     [<CompiledName("Exists")>]
@@ -605,7 +603,7 @@ module Vector =
         // Preconditions
         checkNonNull "set" set
 
-        Vector.Create (Set.toArray set)
+        vector.Create (Set.toArray set)
 
     /// Builds a set that contains the same elements as the given vector.
     [<CompiledName("ToSet")>]
