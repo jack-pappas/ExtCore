@@ -118,8 +118,8 @@ let revIntoArray (list : 'T list) =
 /// produced array represents the mapped original list in reverse order.</summary>
 /// <remarks><para>This represents an optimized version of:
 /// <c>fun mapping -> (List.map mapping) >> List.rev >> List.toArray</c>.</para></remarks>
-[<CompiledName("MapAndReverseIntoArray")>]
-let mapAndRevIntoArray (mapping : 'T -> 'U) (list : 'T list) =
+[<CompiledName("ReverseAndMapIntoArray")>]
+let revMapIntoArray (mapping : 'T -> 'U) (list : 'T list) =
     // Preconditions
     checkNonNull "list" list
 

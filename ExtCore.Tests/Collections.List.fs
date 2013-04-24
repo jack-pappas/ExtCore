@@ -47,13 +47,13 @@ let revIntoArray () : unit =
        [| "Yellow"; "Blue"; "Green"; "Red" |]
 
 [<TestCase>]
-let mapAndRevIntoArray () : unit =
+let revMapIntoArray () : unit =
     List.empty
-    |> List.mapAndRevIntoArray ignore
+    |> List.revMapIntoArray ignore
     |> should equal Array.empty
 
     ["Red"; "Green"; "Blue"; "Yellow"]
-    |> List.mapAndRevIntoArray String.length
+    |> List.revMapIntoArray String.length
     |> should equal [| 6; 4; 5; 3 |]
 
 [<TestCase>]
