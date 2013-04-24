@@ -27,6 +27,13 @@ open ExtCore
 /// <summary>Immutable array with constant-time access to elements.</summary>
 [<Struct; CompiledName("FSharpVector`1")>]
 type Vector<'T> private (elements : 'T[]) =
+    /// The empty vector instance.
+    static let empty : Vector<'T> = Vector (Array.empty)
+
+    /// The empty vector.
+    static member Empty
+        with get () = empty
+
     /// Gets the array containing the vector's elements.
     member internal __.Elements
         with get () = elements
@@ -83,7 +90,10 @@ module Vector =
 
     /// Builds a vector from the given array.
     [<CompiledName("OfArray")>]
-    let inline ofArray (array : 'T[]) : vector<'T> =
+    let ofArray (array : 'T[]) : vector<'T> =
+        // Preconditions
+        checkNonNull "array" array
+
         Vector.Create array
 
     /// Returns the length of a vector.
@@ -108,21 +118,224 @@ module Vector =
     let inline singleton (value : 'T) : vector<'T> =
         Vector.Create [| value |]
 
-    /// Builds a vector that contains the elements of the set in order.
-    [<CompiledName("OfSet")>]
-    let inline ofSet (set : Set<'T>) : vector<'T> =
+    /// Creates a vector that contains the elements of one vector followed by the elements of another vector.
+    [<CompiledName("Append")>]
+    let append (vector1 : vector<'T>) (vector2 : vector<'T>) : Vector<'T> =
         // Preconditions
-        checkNonNull "set" set
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.append"
 
-        Vector.Create (Set.toArray set)
-
-    /// Builds a set that contains the same elements as the given vector.
-    [<CompiledName("ToSet")>]
-    let toSet (vector : vector<'T>) : Set<'T> =
+    /// Returns the average of the elements in a vector.
+    [<CompiledName("Average")>]
+    let inline average (vector : vector<'T>) : ^T =
         // Preconditions
         checkInitialized "vector" vector
+        
+        notImpl "Vector.average"
 
-        Set.ofArray vector.Elements
+    //
+    [<CompiledName("AverageBy")>]
+    let inline averageBy (projection : 'T -> ^U) (vector : vector<'T>) : ^U =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.averageBy"
+
+    //
+    [<CompiledName("Blit")>]
+    let blit (source : vector<'T>) sourceIndex (target : vector<'T>) targetIndex count : unit =
+        // Preconditions
+        checkInitialized "source" source
+        checkInitialized "target" target
+        
+        notImpl "Vector.blit"
+
+    //
+    [<CompiledName("Collect")>]
+    let collect (mapping : 'T -> 'U[]) (vector : vector<'T>) : vector<'U> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.collect"
+
+    //
+    [<CompiledName("Concat")>]
+    let concat (vectors : seq<vector<'T>>) : vector<'T> =
+        // Preconditions
+        checkNonNull "vectors" vectors
+        
+        notImpl "Vector.concat"
+
+    //
+    [<CompiledName("Copy")>]
+    let copy (vector : vector<'T>) : vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.copy"
+
+    //
+    [<CompiledName("Create")>]
+    let create count (value : 'T) : vector<'T> =
+        // Preconditions
+        // TODO : count must be >= 0
+        
+        notImpl "Vector.create"
+
+    //
+    [<CompiledName("TryPick")>]
+    let tryPick (chooser : 'T -> 'U option) (vector : vector<'T>) : 'U option =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.tryPick"
+
+    //
+    [<CompiledName("Pick")>]
+    let pick (chooser : 'T -> 'U option) (vector : vector<'T>) : 'U =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.pick"
+
+    //
+    [<CompiledName("Choose")>]
+    let choose (chooser : 'T -> 'U option) (vector : vector<'T>) : vector<'U> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.choose"
+
+    /// Returns an empty vector of the given type.
+    [<CompiledName("Empty")>]
+    let empty<'T> : Vector<'T> =
+        Vector.Empty
+
+    //
+    [<CompiledName("Exists")>]
+    let exists (predicate : 'T -> bool) (vector : vector<'T>) : bool =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.exists"
+
+    //
+    [<CompiledName("Exists2")>]
+    let exists2 (predicate : 'T1 -> 'T2 -> bool) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : bool =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.exists2"
+
+    //
+    [<CompiledName("Filter")>]
+    let filter (predicate : 'T -> bool) (vector : vector<'T>) : vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.filter"
+
+    //
+    [<CompiledName("Find")>]
+    let find (predicate : 'T -> bool) (vector : vector<'T>) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.find"
+
+    //
+    [<CompiledName("FindIndex")>]
+    let findIndex (predicate : 'T -> bool) (vector : vector<'T>) : int =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.findIndex"
+
+    //
+    [<CompiledName("Forall")>]
+    let forall (predicate : 'T -> bool) (vector : vector<'T>) : bool =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.forall"
+
+    //
+    [<CompiledName("Forall2")>]
+    let forall2 (predicate : 'T1 -> 'T2 -> bool) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : bool =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.forall2"
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> 'State) (state : 'State) (vector : vector<'T>) : 'State =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.fold"
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'State -> 'State) (vector : vector<'T>) (state : 'State) : 'State =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.foldBack"
+
+    //
+    [<CompiledName("Get")>]
+    let get (vector : vector<'T>) (index : int) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.get"
+
+    //
+    [<CompiledName("Init")>]
+    let init (count : int) (initializer : int -> 'T) : vector<'T> =
+        // Preconditions
+        // TODO : count must be >= 0
+        
+        notImpl "Vector.init"
+
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> unit) (vector : vector<'T>) : unit =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.iter"
+
+    //
+    [<CompiledName("Iterate2")>]
+    let iter2 (action : 'T1 -> 'T2 -> unit) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : unit =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.iter2"
+
+    //
+    [<CompiledName("IterateIndexed")>]
+    let iteri (action : int -> 'T -> unit) (vector : vector<'T>) : unit =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.iteri"
+
+    //
+    [<CompiledName("IterateIndexed2")>]
+    let iteri2 (action : int -> 'T1 -> 'T2 -> unit) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : unit =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.iteri2"
 
     //
     [<CompiledName("Map")>]
@@ -138,6 +351,269 @@ module Vector =
 
         // Return the results as a vector.
         ofArray results
+
+    //
+    [<CompiledName("Map2")>]
+    let map2 (mapping : 'T1 -> 'T2 -> 'U) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : vector<'U> =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.map2"
+
+    //
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int -> 'T -> 'U) (vector : vector<'T>) : vector<'U> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.mapi"
+
+    //
+    [<CompiledName("MapIndexed2")>]
+    let mapi2 (mapping : int -> 'T1 -> 'T2 -> 'U) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : vector<'U> =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.mapi2"
+
+    //
+    [<CompiledName("Max")>]
+    let max (vector : vector<'T>) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.max"
+
+    //
+    [<CompiledName("MaxBy")>]
+    let maxBy (projection : 'T -> 'U) (vector : vector<'T>) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.maxBy"
+
+    //
+    [<CompiledName("Min")>]
+    let min (vector : vector<'T>) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.min"
+
+    //
+    [<CompiledName("MinBy")>]
+    let minBy (projection : 'T -> 'U) (vector : vector<'T>) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.minBy"
+
+    //
+    [<CompiledName("OfList")>]
+    let ofList (list : 'T list) : vector<'T> =
+        // Preconditions
+        checkNonNull "list" list
+        
+        notImpl "Vector.ofList"
+
+    //
+    [<CompiledName("OfSeq")>]
+    let ofSeq (source : seq<'T>) : vector<'T> =
+        // Preconditions
+        checkNonNull "source" source
+        
+        notImpl "Vector.ofSeq"
+
+    //
+    [<CompiledName("Partition")>]
+    let partition (predicate : 'T -> bool) (vector : vector<'T>) : vector<'T> * vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.partition"
+
+    //
+    [<CompiledName("Permute")>]
+    let permute (indexMap : int -> int) (vector : vector<'T>) : vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.permute"
+
+    //
+    [<CompiledName("Reduce")>]
+    let reduce (reduction : 'T -> 'T -> 'T) (vector : vector<'T>) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.reduce"
+
+    //
+    [<CompiledName("ReduceBack")>]
+    let reduceBack (reduction : 'T -> 'T -> 'T) (vector : vector<'T>) : 'T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.reduceBack"
+
+    //
+    [<CompiledName("Rev")>]
+    let rev (vector : vector<'T>) : vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.reduceBack"
+
+    //
+    [<CompiledName("Scan")>]
+    let scan (folder : 'State -> 'T -> 'State) (state : 'State) (vector : vector<'T>) : vector<'State> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.scan"
+
+    //
+    [<CompiledName("ScanBack")>]
+    let scanBack (folder : 'T -> 'State -> 'State) (vector : vector<'T>) (state : 'State) : vector<'State> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.scanBack"
+
+    //
+    [<CompiledName("Sub")>]
+    let sub (vector : vector<'T>) (startIndex : int) (count : int) =
+        // Preconditions
+        checkInitialized "vector" vector
+        // TODO : startIndex in bounds, count >= 0
+        
+        notImpl "Vector.sub"
+
+    //
+    [<CompiledName("Sort")>]
+    let sort (vector : vector<'T>) : vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.sort"
+
+    //
+    [<CompiledName("SortBy")>]
+    let sortBy (projection : 'T -> 'Key) (vector : vector<'T>) : vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.sortBy"
+
+    //
+    [<CompiledName("SortWith")>]
+    let sortWith (comparer : 'T -> 'T -> int) (vector : vector<'T>) : vector<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.sortWith"
+
+    //
+    [<CompiledName("Sum")>]
+    let inline sum (vector : vector<'T>) : ^T =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.sum"
+
+    //
+    [<CompiledName("SumBy")>]
+    let inline sumBy (projection : 'T -> ^U) (vector : vector<'T>) : ^U =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.sumBy"
+
+    //
+    [<CompiledName("ToList")>]
+    let toList (vector : vector<'T>) : 'T list =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.toList"
+
+    //
+    [<CompiledName("ToSeq")>]
+    let toSeq (vector : vector<'T>) : seq<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.toSeq"
+
+    //
+    [<CompiledName("TryFind")>]
+    let tryFind (predicate : 'T -> bool) (vector : vector<'T>) : 'T option =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.tryFind"
+
+    //
+    [<CompiledName("TryFindIndex")>]
+    let tryFindIndex (predicate : 'T -> bool) (vector : vector<'T>) : int option =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.tryFindIndex"
+
+    //
+    [<CompiledName("Unzip")>]
+    let unzip (vector : vector<'T1 * 'T2>) : vector<'T1> * vector<'T2> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.unzip"
+
+    //
+    [<CompiledName("Unzip3")>]
+    let unzip3 (vector : vector<'T1 * 'T2 * 'T3>) : vector<'T1> * vector<'T2> * vector<'T3> =
+        // Preconditions
+        checkInitialized "vector" vector
+        
+        notImpl "Vector.unzip3"
+
+    //
+    [<CompiledName("Zip")>]
+    let zip (vector1 : vector<'T1>) (vector2 : vector<'T2>) : vector<'T1 * 'T2> =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        
+        notImpl "Vector.zip"
+
+    //
+    [<CompiledName("Zip3")>]
+    let zip3 (vector1 : vector<'T1>) (vector2 : vector<'T2>) (vector3 : vector<'T3>)
+        : vector<'T1 * 'T2 * 'T3> =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        checkInitialized "vector3" vector3
+        
+        notImpl "Vector.zip3"
+
+    /// Builds a vector that contains the elements of the set in order.
+    [<CompiledName("OfSet")>]
+    let inline ofSet (set : Set<'T>) : vector<'T> =
+        // Preconditions
+        checkNonNull "set" set
+
+        Vector.Create (Set.toArray set)
+
+    /// Builds a set that contains the same elements as the given vector.
+    [<CompiledName("ToSet")>]
+    let toSet (vector : vector<'T>) : Set<'T> =
+        // Preconditions
+        checkInitialized "vector" vector
+
+        Set.ofArray vector.Elements
 
     /// Applies a function to each element of the array, returning a new array whose elements are
     /// tuples of the original element and the function result for that element.
