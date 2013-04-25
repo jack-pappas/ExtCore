@@ -26,13 +26,13 @@ open ExtCore
 
 (* TODO : Implement the VectorView type. *)
 
-
+(*
 /// Functional operators related to the VectorView type (views of immutable arrays).
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VectorView =
     //
     let dummy () = ()
-
+*)
     (*
 
     //

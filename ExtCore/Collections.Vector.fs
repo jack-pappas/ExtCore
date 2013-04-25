@@ -283,9 +283,13 @@ module Vector =
             // Check a couple of specific cases so we can use an
             // optimized codepath when possible.
             match vectors with
-            | :? (vector<'T>[]) as vecArray ->
-                Array.collect elements vecArray
-                |> ExtCore.vector.UnsafeCreate
+//            | :? (vector<'T>[]) as vecArray ->
+//                // NOTE : Array.map and Array.concat must be used here; if Array.collect is used
+//                // some unit tests fail because Array.collect doesn't raise an exception if an
+//                // array returned by the mapping function is null.
+//                Array.map elements vecArray
+//                |> Array.concat
+//                |> ExtCore.vector.UnsafeCreate
 
 //            | :? (vector<vector<'T>>) as vecVector ->
 //                notImpl ""
@@ -994,26 +998,26 @@ module Vector =
             invalidOp "Cannot retrieve the last element of an empty vector."
         else vec.[vec.Length - 1]
 
-    (*
     /// Determines if an array contains a specified value.
     [<CompiledName("Contains")>]
-    let contains value (vector : vector<'T>) : bool =
+    let contains value (vec : vector<'T>) : bool =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
 
-        vector.IndexOf value <> -1
+        System.Array.IndexOf (vec.Elements, value) <> -1
 
     /// <summary>
     /// Returns a new collection containing the indices of the elements for which
     /// the given predicate returns &quot;true&quot;.
     /// </summary>
     [<CompiledName("FindIndices")>]
-    let findIndices (predicate : 'T -> bool) (vector : vector<'T>) : int[] =
+    let findIndices (predicate : 'T -> bool) (vec : vector<'T>) : int[] =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
 
         let indices = ResizeArray ()
-        array |> Array.iteri (fun idx el ->
+        vec.Elements
+        |> Array.iteri (fun idx el ->
             if predicate el then indices.Add idx)
         indices.ToArray ()
 
@@ -1024,22 +1028,23 @@ module Vector =
     /// of the element being transformed.
     /// </summary>
     [<CompiledName("ChooseIndexed")>]
-    let choosei (chooser : int -> 'T -> 'U option) (vector : vector<'T>) : vector<'U> =
+    let choosei (chooser : int -> 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
 
         let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
         let chosen = ResizeArray ()
-        let len = Array.length array
+        let len = length vec
 
         for i = 0 to len - 1 do
-            match chooser.Invoke (i, array.[i]) with
+            match chooser.Invoke (i, vec.[i]) with
             | None -> ()
             | Some value ->
                 chosen.Add value
 
         chosen.ToArray ()
+        |> vector.UnsafeCreate
 
     /// <summary>
     /// Applies the given function pairwise to the two arrays.
@@ -1066,75 +1071,83 @@ module Vector =
                 chosen.Add value
 
         chosen.ToArray ()
+        |> vector.UnsafeCreate
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
     /// The integer index passed to the function indicates the array index of the element being transformed.
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (vector : vector<'T>) =
+    let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (vec : vector<'T>) =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
 
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
         let mutable state = state
-        let len = array.Length
+        let len = length vec
         for i = 0 to len - 1 do
-            state <- folder.Invoke (state, i, array.[i])
+            state <- folder.Invoke (state, i, vec.[i])
         state
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
     /// The integer index passed to the function indicates the array index of the element being transformed.
     [<CompiledName("FoldBackIndexed")>]
-    let foldiBack (folder : int -> 'T -> 'State -> 'State) (vector : vector<'T>) (state : 'State) : 'State =
+    let foldiBack (folder : int -> 'T -> 'State -> 'State) (vec : vector<'T>) (state : 'State) : 'State =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
 
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
         
         let mutable state = state
-        for i = Array.length array - 1 downto 0 do
-            state <- folder.Invoke (i, array.[i], state)
+        for i = length vec - 1 downto 0 do
+            state <- folder.Invoke (i, vec.[i], state)
         state
 
     /// Splits an array into one or more arrays; the specified predicate is applied
     /// to each element in the array, and whenever it returns true, that element will
     /// be the first element in one of the "subarrays".
     [<CompiledName("Split")>]
-    let split (predicate : 'T -> bool) (vector : vector<'T>) =
+    let split (predicate : 'T -> bool) (vec : vector<'T>) : vector<vector<'T>> =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
 
         let segments = ResizeArray<_> ()
         let mutable currentSegment = ResizeArray<_> ()
 
-        let len = array.Length
+        let len = length vec
         for i = 0 to len - 1 do
-            let el = array.[i]
+            let el = vec.[i]
             if currentSegment.Count > 0 && predicate el then
-                segments.Add <| currentSegment.ToArray ()
+                currentSegment.ToArray ()
+                |> vector.UnsafeCreate
+                |> segments.Add
+
                 currentSegment <- ResizeArray<_> ()
 
             currentSegment.Add el
 
         // Append the last segment to the segment list,
         // then return the segment list as an array.
-        segments.Add <| currentSegment.ToArray ()
+        currentSegment.ToArray ()
+        |> vector.UnsafeCreate
+        |> segments.Add
+        
         segments.ToArray ()
-
+        |> vector.UnsafeCreate
+(*
     /// Splits an array into one or more segments by applying the specified predicate
     /// to each element of the array and starting a new view at each element where
     /// the predicate returns true.
     [<CompiledName("Segment")>]
-    let segment (predicate : 'T -> bool) (vector : vector<'T>) : ArrayView<'T>[] =
+    let segment (predicate : 'T -> bool) (vec : vector<'T>) : ArrayView<'T>[] =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
         
         let segments = ResizeArray<_> ()
 
-        let len = Array.length array
+        let len = length vec
         let mutable segmentLength = 0
         for i = 0 to len - 1 do
             //
-            if segmentLength > 0 && predicate array.[i] then
+            if segmentLength > 0 && predicate vec.[i] then
                 // NOTE : The current element is the first element in the *new* segment!
                 let offset = i - segmentLength
 
@@ -1159,11 +1172,11 @@ module Vector =
     /// to the each pair of array elements and starting a new view whenever the
     /// predicate returns true.
     [<CompiledName("Segment2")>]
-    let segment2 (predicate : 'T -> 'U -> bool) (array1 : vector<'T>) (array2 : vector<'U>)
+    let segment2 (predicate : 'T -> 'U -> bool) (vector1 : vector<'T>) (vector2 : vector<'U>)
         : ArrayView<'T>[] * ArrayView<'U>[] =
         // Preconditions
-        checkNonNull "array1" array1
-        checkNonNull "array2" array2
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
 
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
         let len1 = array1.Length 
@@ -1200,18 +1213,18 @@ module Vector =
         |> segments2.Add
 
         segments1.ToArray(), segments2.ToArray()
-
+*)
     /// Splits the collection into two (2) collections, containing the elements for which the given
     /// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
     /// Array.partition, but it allows the returned collections to have different types.
     [<CompiledName("MapPartition")>]
-    let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) vector : 'U1[] * 'U2[] =
+    let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) (vec : vector<'T>) : vector<'U1> * vector<'U2> =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
     
-        // OPTIMIZATION : If the input array is empty, immediately return empty results.
-        if Array.isEmpty array then
-            Array.empty, Array.empty
+        // OPTIMIZATION : If the vector is empty, return immediately.
+        if isEmpty vec then
+            vector.Empty, vector.Empty
         else
             // Use ResizeArrays to hold the mapped values.
             let resultList1 = ResizeArray ()
@@ -1219,7 +1232,7 @@ module Vector =
 
             // Partition the array, adding each element to the ResizeArray
             // specific by the partition function.
-            array
+            vec.Elements
             |> Array.iter (fun el ->
                 match partitioner el with
                 | Choice1Of2 value ->
@@ -1228,20 +1241,21 @@ module Vector =
                     resultList2.Add value)
 
             // Convert the ResizeArrays to arrays and return them.
-            resultList1.ToArray (),
-            resultList2.ToArray ()
+            resultList1.ToArray () |> vector.UnsafeCreate,
+            resultList2.ToArray () |> vector.UnsafeCreate
 
     /// Splits the collection into two (3) collections, containing the elements for which the given
     /// function returns Choice1Of3, Choice2Of3, or Choice3Of3, respectively. This function is similar
     /// to Array.partition, but it allows the returned collections to have different types.
     [<CompiledName("MapPartition")>]
-    let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) vector : 'U1[] * 'U2[] * 'U3[] =
+    let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) (vec : vector<_>)
+        : vector<'U1> * vector<'U2> * vector<'U3> =
         // Preconditions
-        checkNonNull "vector" vector
+        checkInitialized "vec" vec
 
         // OPTIMIZATION : If the input array is empty, immediately return empty results.
-        if Array.isEmpty array then
-            Array.empty, Array.empty, Array.empty
+        if isEmpty vec then
+            vector.Empty, vector.Empty, vector.Empty
         else
             // Use ResizeArrays to hold the mapped values.
             let resultList1 = ResizeArray ()
@@ -1250,7 +1264,7 @@ module Vector =
 
             // Partition the array, adding each element to the ResizeArray
             // specific by the partition function.
-            array
+            vec.Elements
             |> Array.iter (fun el ->
                 match partitioner el with
                 | Choice1Of3 value ->
@@ -1261,39 +1275,40 @@ module Vector =
                     resultList3.Add value)
 
             // Convert the ResizeArrays to arrays and return them.
-            resultList1.ToArray (),
-            resultList2.ToArray (),
-            resultList3.ToArray ()
+            resultList1.ToArray () |> vector.UnsafeCreate,
+            resultList2.ToArray () |> vector.UnsafeCreate,
+            resultList3.ToArray () |> vector.UnsafeCreate
 
     /// Applies a mapping function to each element of the array, then repeatedly applies
     /// a reduction function to each pair of results until one (1) result value remains.
     [<CompiledName("MapReduce")>]
-    let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (vector : 'Key[]) : 'T =
+    let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (vec : vector<'Key>) : 'T =
         // Preconditions
         checkNonNull "mapReduction" mapReduction
-        checkNonNull "vector" vector
-        if Array.isEmpty array then
-            invalidArg "array" "The array is empty."
+        checkInitialized "vec" vec
+        if isEmpty vec then
+            invalidArg "vec" "The vector is empty."
 
         // Map the first element of the array so it can be
         // used as the seed for the fold.
-        let mutable state = mapReduction.Map array.[0]
+        let mutable state = mapReduction.Map vec.[0]
 
         // Implement an imperative-style fold, mapping each element
         // then reducing it with the current state to get the new state.
-        let len = Array.length array
+        let len = length vec
         for i = 1 to len - 1 do
             state <-
-                mapReduction.Reduce state (mapReduction.Map array.[i])
+                mapReduction.Reduce state (mapReduction.Map vec.[i])
 
         // Return the final state.
         state
-    *)
 
 #if FX_NO_TPL_PARALLEL
 #else
     /// Provides parallel operations on vectors.
     module Parallel =
+        open System.Threading.Tasks
+
         /// <summary>Apply the given function to each element of the array. Return
         /// the array comprised of the results "x" for each element where
         /// the function returns Some(x).</summary>
