@@ -1039,95 +1039,95 @@ let partition () : unit =
 (* Tests for the Array.Parallel module. *)
 #if FX_NO_TPL_PARALLEL
 #else
-[<TestCase>]
-let ``Parallel.choose``  () : unit = 
-    ChooseTester Vector.Parallel.choose Vector.Parallel.choose
+module Parallel =
+    [<TestCase>]
+    let choose () : unit = 
+        ChooseTester Vector.Parallel.choose Vector.Parallel.choose
 
-[<TestCase>]
-let ``Parallel.collect``  () : unit =
-    CollectTester Vector.Parallel.collect Vector.Parallel.collect
+    [<TestCase>]
+    let collect () : unit =
+        CollectTester Vector.Parallel.collect Vector.Parallel.collect
 
-[<TestCase>]
-let ``Parallel.init`` () : unit = 
-    InitTester Vector.Parallel.init Vector.Parallel.init
+    [<TestCase>]
+    let init () : unit = 
+        InitTester Vector.Parallel.init Vector.Parallel.init
 
-[<TestCase>]
-let ``Parallel.map``  () : unit =
-    MapTester Vector.Parallel.map Vector.Parallel.map
+    [<TestCase>]
+    let map () : unit =
+        MapTester Vector.Parallel.map Vector.Parallel.map
 
-[<TestCase>]
-let ``Parallel.mapi``  () : unit =
-    MapiTester Vector.Parallel.mapi Vector.Parallel.mapi
-    ()
+    [<TestCase>]
+    let mapi () : unit =
+        MapiTester Vector.Parallel.mapi Vector.Parallel.mapi
         
-[<TestCase>]
-let ``Parallel.iter`` () : unit =
-    // integer vector
-    let intArr = vector [| 1..10 |]  
-    let resultInt = ref 0    
-    let funInt (x:int) =   
-        lock resultInt (fun () -> resultInt := !resultInt + x)
-        () 
-    Vector.Parallel.iter funInt intArr 
-    if !resultInt <> 55 then Assert.Fail()    
+    [<TestCase>]
+    let iter () : unit =
+        // integer vector
+        let intArr = vector [| 1..10 |]  
+        let resultInt = ref 0    
+        let funInt (x:int) =   
+            lock resultInt (fun () -> resultInt := !resultInt + x)
+            () 
+        Vector.Parallel.iter funInt intArr 
+        if !resultInt <> 55 then Assert.Fail()    
         
-    // string vector
-    let strArr = vector [|"Lists"; "are";  "commonly" ; "list" |]
-    let resultStr = ref 0
-    let funStr (x : string) =
-        lock resultStr (fun () -> resultStr := (!resultStr) + x.Length)
+        // string vector
+        let strArr = vector [|"Lists"; "are";  "commonly" ; "list" |]
+        let resultStr = ref 0
+        let funStr (x : string) =
+            lock resultStr (fun () -> resultStr := (!resultStr) + x.Length)
+            ()
+        Vector.Parallel.iter funStr strArr  
+        if !resultStr <> 20 then Assert.Fail()   
+        
+        // empty vector    
+        let emptyArr : vector<int> = vector [| |]
+        let resultEpt = ref 0
+        Vector.Parallel.iter funInt emptyArr 
+        if !resultEpt <> 0 then Assert.Fail()    
+
+        // null vector
+        let nullArr = Unchecked.defaultof<vector<_>> : vector<string>  
+        checkThrowsArgumentNullException (fun () -> Vector.Parallel.iter funStr nullArr |> ignore)  
+        
         ()
-    Vector.Parallel.iter funStr strArr  
-    if !resultStr <> 20 then Assert.Fail()   
         
-    // empty vector    
-    let emptyArr : vector<int> = vector [| |]
-    let resultEpt = ref 0
-    Vector.Parallel.iter funInt emptyArr 
-    if !resultEpt <> 0 then Assert.Fail()    
-
-    // null vector
-    let nullArr = Unchecked.defaultof<vector<_>> : vector<string>  
-    checkThrowsArgumentNullException (fun () -> Vector.Parallel.iter funStr nullArr |> ignore)  
-        
-    ()
-        
-[<TestCase>]
-let ``Parallel.iteri`` () : unit =   
-    // integer vector
-    let intArr = vector [| 1..10 |] 
+    [<TestCase>]
+    let iteri () : unit =   
+        // integer vector
+        let intArr = vector [| 1..10 |] 
                  
-    let resultInt = ref 0    
-    let funInt (x:int) y =   
-        lock resultInt (fun () -> resultInt := !resultInt + x + y)
-        () 
-    Vector.Parallel.iteri funInt intArr 
-    if !resultInt <> 100 then Assert.Fail()    
+        let resultInt = ref 0    
+        let funInt (x:int) y =   
+            lock resultInt (fun () -> resultInt := !resultInt + x + y)
+            () 
+        Vector.Parallel.iteri funInt intArr 
+        if !resultInt <> 100 then Assert.Fail()    
         
-    // string vector
-    let strArr = vector [|"Lists"; "are";  "commonly" ; "list" |]
-    let resultStr = ref 0
-    let funStr (x:int) (y:string) =
-        lock resultStr (fun () -> resultStr := (!resultStr) + x + y.Length)
+        // string vector
+        let strArr = vector [|"Lists"; "are";  "commonly" ; "list" |]
+        let resultStr = ref 0
+        let funStr (x:int) (y:string) =
+            lock resultStr (fun () -> resultStr := (!resultStr) + x + y.Length)
+            ()
+        Vector.Parallel.iteri funStr strArr  
+        if !resultStr <> 26 then Assert.Fail()   
+        
+        // empty vector    
+        let emptyArr:vector<int> = vector [| |]
+        let resultEpt = ref 0
+        Vector.Parallel.iteri funInt emptyArr 
+        if !resultEpt <> 0 then Assert.Fail()    
+
+        // null vector
+        let nullArr : vector<string> = Unchecked.defaultof<vector<_>> 
+        checkThrowsArgumentNullException (fun () -> Vector.Parallel.iteri funStr nullArr |> ignore)  
+        
         ()
-    Vector.Parallel.iteri funStr strArr  
-    if !resultStr <> 26 then Assert.Fail()   
-        
-    // empty vector    
-    let emptyArr:vector<int> = vector [| |]
-    let resultEpt = ref 0
-    Vector.Parallel.iteri funInt emptyArr 
-    if !resultEpt <> 0 then Assert.Fail()    
 
-    // null vector
-    let nullArr : vector<string> = Unchecked.defaultof<vector<_>> 
-    checkThrowsArgumentNullException (fun () -> Vector.Parallel.iteri funStr nullArr |> ignore)  
-        
-    ()
-
-[<TestCase>]
-let ``Parallel.partition``  () : unit =
-    PartitionTester Vector.Parallel.partition Vector.Parallel.partition    
+    [<TestCase>]
+    let partition () : unit =
+        PartitionTester Vector.Parallel.partition Vector.Parallel.partition    
 #endif    
 
 
