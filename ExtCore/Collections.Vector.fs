@@ -64,9 +64,12 @@ type vector<'T> private (elements : 'T[]) =
             elements.LongLength
 
     /// Returns the vector element at the specified index.
-    member __.Item
+    member this.Item
         with get index =
             // Preconditions
+            if this.IsNull then
+                raise <| System.NullReferenceException "Cannot retrieve an item from a null-equivalent vector."
+
             // None -- The CLR inserts it's own bounds check automatically so adding one here
             // would impact performance without gaining any additional safety.
             elements.[index]
@@ -133,8 +136,7 @@ module Vector =
 
     /// Returns the underlying array for a vector.
     let internal elements (vec : vector<'T>) : 'T[] =
-        if vec.IsNull then null
-        else vec.Elements
+        vec.Elements
 
     /// Returns an empty vector of the given type.
     [<CompiledName("Empty")>]
@@ -468,11 +470,7 @@ module Vector =
     //
     [<CompiledName("Get")>]
     let inline get (vec : vector<'T>) (index : int) : 'T =
-        // Preconditions
-        checkInitialized "vec" vec
-        // NOTE : The index must be in-bounds here, but the bounds will be checked
-        // when the JIT compiler emits the code for the vector.Item property so we
-        // just call that directly and use that bounds check instead of an explicit one here.
+        // Preconditions are handled by the vector.Item property.
         vec.[index]
 
     //
