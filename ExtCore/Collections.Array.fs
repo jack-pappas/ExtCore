@@ -53,7 +53,7 @@ let inline toSet (array : 'T[]) : Set<'T> =
 /// Builds a vector from the given array.
 [<CompiledName("Readonly")>]
 let inline toVector (arr : 'T[]) : vector<'T> =
-    vector.Create arr
+    ExtCore.vector.Create arr
 
 /// Applies a function to each element of the array, returning a new array whose elements are
 /// tuples of the original element and the function result for that element.

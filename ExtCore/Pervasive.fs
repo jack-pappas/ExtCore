@@ -20,25 +20,90 @@ limitations under the License.
 namespace ExtCore
 
 
-/// Additional operators for F# data types.
+(* Type abbreviations *)
+
+/// Type abbreviation for System.Collections.Generic.IDictionary`2.
+type dict<'Key, 'Value> = System.Collections.Generic.IDictionary<'Key, 'Value>
+
+/// <summary>
+/// Array views are similar to array slices, but instead of creating a copy of the
+/// 'sliced' elements they simply provide convienient access to some section of the
+/// underlying array.
+/// </summary>
+/// <remarks>
+/// Type abbreviation for System.ArraySegment&lt;T&gt;
+/// </remarks>
+type ArrayView<'T> = System.ArraySegment<'T>
+
+/// <summary>Immutable array with constant-time access to elements.</summary>
+[<Struct; CompiledName("FSharpVector`1")>]
+type vector<'T> private (elements : 'T[]) =
+    /// The empty vector instance.
+    static let empty : vector<'T> = vector (Array.empty)
+
+    /// The empty vector.
+    static member Empty
+        with get () = empty
+
+    /// Gets the array containing the vector's elements.
+    member internal __.Elements
+        with get () = elements
+
+    /// Is the vector empty?
+    member __.IsEmpty
+        with get () =
+            Array.isEmpty elements
+
+    /// Is the vector 'null' (uninitialized)?
+    member __.IsNull
+        with get () =
+            System.Object.ReferenceEquals (null, elements)
+
+    /// Gets a 32-bit integer that represents the total number of elements in the Vector.
+    member __.Length
+        with get () =
+            elements.Length
+
+    /// Gets a 64-bit integer that represents the total number of elements in the Vector.
+    member __.LongLength
+        with get () =
+            elements.LongLength
+
+    /// Returns the vector element at the specified index.
+    member __.Item
+        with get index =
+            // Preconditions
+            // None -- The CLR inserts it's own bounds check automatically so adding one here
+            // would impact performance without gaining any additional safety.
+            elements.[index]
+
+    /// Creates a new Vector from the given array.
+    static member Create (source : 'T[]) : vector<'T> =
+        // Preconditions
+        if System.Object.ReferenceEquals (null, source)
+            then nullArg "source"
+
+        // Create a shallow copy of the source array, then pass it to
+        // the private Vector constructor and return the new Vector value.
+        vector (Array.copy source)
+
+    /// Creates a new Vector from the given array.
+    /// This method is considered "unsafe" and should be used with caution because
+    /// the given array is used directly instead of being copied; if the array is
+    /// modified by some other code, the vector will also be modified (which violates
+    /// the semantics of the type).
+    static member UnsafeCreate (source : 'T[]) : vector<'T> =
+        // Preconditions
+        if System.Object.ReferenceEquals (null, source)
+            then nullArg "source"
+
+        // Create a new vector directly from the source array.
+        vector (source)
+
+
+/// Basic F# Operators. This module is automatically opened in all F# code.
 [<AutoOpen>]
-module AdditionalOperators =
-    (* Type abbreviations *)
-
-    /// Type abbreviation for System.Collections.Generic.IDictionary`2.
-    type dict<'Key, 'Value> = System.Collections.Generic.IDictionary<'Key, 'Value>
-
-    /// <summary>
-    /// Array views are similar to array slices, but instead of creating a copy of the
-    /// 'sliced' elements they simply provide convienient access to some section of the
-    /// underlying array.
-    /// </summary>
-    /// <remarks>
-    /// Type abbreviation for System.ArraySegment&lt;T&gt;
-    /// </remarks>
-    type ArrayView<'T> = System.ArraySegment<'T>
-
-
+module Operators =
     (* Type extensions *)
 
     type System.ArraySegment<'T> with
@@ -64,7 +129,6 @@ module AdditionalOperators =
             this.GetRange (
                 startIndex,
                 finishIndex - startIndex + 1)
-
 
     (* Operators *)
 
@@ -489,18 +553,23 @@ module Printf =
         ksprintf Trace.WriteLine fmt
 
 
-/// Helper functions for working with tagged integers.
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Tag =
+/// Additional F# operators and types that are available without opening a module or namespace.
+[<AutoOpen>]
+module ExtraTopLevelOperators =
     open LanguagePrimitives
 
+    /// Creates an immutable vector from an array.
+    [<CompiledName("Vector")>]
+    let inline vector (array : 'T[]) : vector<'T> =
+        vector.Create array
+
     /// Creates a tagged integer from an integer value.
-    [<CompiledName("OfInt")>]
-    let inline ofInt<[<Measure>] 'Tag> (value : int) : int<'Tag> =
+    [<CompiledName("Tag")>]
+    let inline tag<[<Measure>] 'Tag> (value : int) : int<'Tag> =
         Int32WithMeasure value
 
-    /// Removes the tag from a tagged integer, returning just the integer value.
-    [<CompiledName("ToInt")>]
-    let inline toInt<[<Measure>] 'Tag> (tag : int<'Tag>) : int =
+    /// Removes the tag from a tagged integer, returning the integer value.
+    [<CompiledName("Untag")>]
+    let inline untag<[<Measure>] 'Tag> (tag : int<'Tag>) : int =
         int tag
 
