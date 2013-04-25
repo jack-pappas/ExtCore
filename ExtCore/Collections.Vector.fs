@@ -142,9 +142,25 @@ module Vector =
         // Preconditions
         checkInitialized "source" source
         checkInitialized "target" target
-        // TODO : sourceIndex, targetIndex, count in-bounds
+        if sourceIndex < 0 then
+            invalidArg "sourceIndex" "The source index cannot be negative."
+        elif count < 0 then
+            invalidArg "count" "The number of elements to copy cannot be negative."
+        elif targetIndex < 0 then
+            invalidArg "targetIndex" "The target index cannot be negative."
+        elif sourceIndex + count > source.Length
+            then invalidArg "count" "The number of elements to copy is too large given the source index and source array length."
+        elif targetIndex + count > target.Length then
+            invalidArg "count" "The number of elements to copy is too large given the target index and target array length."
         
-        notImpl "Vector.blit"
+        // First, create a copy of the target vector.
+        let resultArray = Array.copy target.Elements
+        
+        // Blit the elements from the source array into the result.
+        Array.blit source.Elements sourceIndex resultArray targetIndex count
+
+        // Return a vector which wraps the result array.
+        ExtCore.vector.UnsafeCreate resultArray
 
     //
     [<CompiledName("Collect")>]
@@ -256,9 +272,19 @@ module Vector =
     let fill (target : vector<'T>) (targetIndex : int) (count : int) (value : 'T) : vector<'T> =
         // Preconditions
         checkInitialized "target" target
-        // TODO : Check that targetIndex and count are in-bounds.
+        if targetIndex < 0 then
+            invalidArg "targetIndex" "The target index cannot be negative."
+        elif count < 0 then
+            invalidArg "count" "The number of elements to fill is too great given the target index and target vector length."
 
-        notImpl "Vector.fill"
+        // Create a copy of the target vector.
+        let resultArray = Array.copy target.Elements
+        
+        // Fill the elements in the copied array.
+        Array.fill resultArray targetIndex count value
+
+        // Return a vector which wraps the result array.
+        ExtCore.vector.UnsafeCreate resultArray
 
     //
     [<CompiledName("Filter")>]
