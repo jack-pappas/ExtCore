@@ -354,7 +354,7 @@ module TaggedArray =
         let mutable state = state
 
         for i = 0 to len - 1 do
-            let result, state' = mapping.Invoke (tag i, array.[i], state)
+            let result, state' = mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i], state)
             results.[i] <- result
             state <- state'
 
@@ -376,7 +376,7 @@ module TaggedArray =
         let mutable state = state
 
         for i = len - 1 downto 0 do
-            let result, state' = mapping.Invoke (tag i, array.[i], state)
+            let result, state' = mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i], state)
             results.[i] <- result
             state <- state'
 
@@ -398,7 +398,7 @@ module TaggedArray =
         let mutable innerState = innerState
 
         for i = 0 to len - 1 do
-            let innerState', outerState' = folder.Invoke (tag i, innerState, array.[i], outerState)
+            let innerState', outerState' = folder.Invoke (Int32WithMeasure<'Tag> i, innerState, array.[i], outerState)
             innerState <- innerState'
             outerState <- outerState'
 

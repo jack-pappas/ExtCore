@@ -105,6 +105,7 @@
     <Compile Include="ControlCollections.Cps.fs" />
     <Compile Include="NativeInterop.fs" />
     <Compile Include="Args.fs" />
+    <Compile Include="ExtraPervasives.fs" />
     <Compile Include="AssemblyInfo.fs" />
   </ItemGroup>
   <PropertyGroup>
