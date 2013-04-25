@@ -64,6 +64,14 @@ module Vector =
     let singleton (value : 'T) : vector<'T> =
         ExtCore.vector.UnsafeCreate [| value |]
 
+    //
+    [<CompiledName("ZeroCreate")>]
+    let zeroCreate count : vector<'T> =
+        // Preconditions
+        // TODO : count must be >= 0
+        
+        notImpl "Vector.zeroCreate"
+
     /// Creates a vector that contains the elements of one vector followed by the elements of another vector.
     [<CompiledName("Append")>]
     let append (vector1 : vector<'T>) (vector2 : vector<'T>) : vector<'T> =
@@ -96,7 +104,7 @@ module Vector =
 
     //
     [<CompiledName("Blit")>]
-    let blit (source : vector<'T>) sourceIndex (target : vector<'T>) targetIndex count : unit =
+    let blit (source : vector<'T>) sourceIndex (target : vector<'T>) targetIndex count : vector<'T> =
         // Preconditions
         checkInitialized "source" source
         checkInitialized "target" target
@@ -184,6 +192,15 @@ module Vector =
         notImpl "Vector.exists2"
 
     //
+    [<CompiledName("Fill")>]
+    let fill (target : vector<'T>) (targetIndex : int) (count : int) (value : 'T) : vector<'T> =
+        // Preconditions
+        checkInitialized "target" target
+        // TODO : Check that targetIndex and count are in-bounds.
+
+        notImpl "Vector.fill"
+
+    //
     [<CompiledName("Filter")>]
     let filter (predicate : 'T -> bool) (vec : vector<'T>) : vector<'T> =
         // Preconditions
@@ -234,10 +251,30 @@ module Vector =
         notImpl "Vector.fold"
 
     //
+    [<CompiledName("Fold2")>]
+    let fold2 (folder : 'State -> 'T1 -> 'T2 -> 'State) (state : 'State) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : 'State =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        // TODO : Check vectors have the same length
+        
+        notImpl "Vector.fold"
+
+    //
     [<CompiledName("FoldBack")>]
     let foldBack (folder : 'T -> 'State -> 'State) (vec : vector<'T>) (state : 'State) : 'State =
         // Preconditions
         checkInitialized "vec" vec
+        
+        notImpl "Vector.foldBack"
+
+    //
+    [<CompiledName("FoldBack2")>]
+    let foldBack2 (folder : 'T1 -> 'T2 -> 'State -> 'State) (vector1 : vector<'T1>) (vector2 : vector<'T2>) (state : 'State) : 'State =
+        // Preconditions
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        // TODO : Check vectors have the same length
         
         notImpl "Vector.foldBack"
 
@@ -972,7 +1009,7 @@ module Vector =
 
         //
         [<CompiledName("Collect")>]
-        let collect (chooser : 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
+        let collect (mapping : 'T -> vector<'U>) (vec : vector<'T>) : vector<'U> =
             // TODO
             notImpl "Vector.Parallel.collect"
 
