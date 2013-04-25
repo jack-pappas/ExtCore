@@ -1052,20 +1052,20 @@ module Vector =
     /// returns <c>Some(x)</c>.
     /// </summary>
     [<CompiledName("Choose2")>]
-    let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : vector<'U> =
+    let choose2 (chooser : 'T1 -> 'T2 -> 'U option) (vector1 : vector<'T1>) (vector2 : vector<'T2>) : vector<'U> =
         // Preconditions
-        checkNonNull "array1" array1
-        checkNonNull "array2" array2
-        if Array.length array1 <> Array.length array2 then
-            invalidArg "array2" "The arrays have different lengths."
+        checkInitialized "vector1" vector1
+        checkInitialized "vector2" vector2
+        if length vector1 <> length vector2 then
+            invalidArg "vector2" "The vectors have different lengths."
 
         let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
         let chosen = ResizeArray ()
-        let len = Array.length array1
+        let len = length vector1
 
         for i = 0 to len - 1 do
-            match chooser.Invoke (array1.[i], array2.[i]) with
+            match chooser.Invoke (vector1.[i], vector2.[i]) with
             | None -> ()
             | Some value ->
                 chosen.Add value
@@ -1302,6 +1302,21 @@ module Vector =
 
         // Return the final state.
         state
+
+    /// Returns the number of vector elements matching a given predicate.
+    [<CompiledName("CountWith")>]
+    let countWith (predicate : 'T -> bool) (vec : vector<'T>) : int =
+        // Preconditions
+        checkInitialized "vec" vec
+
+        let mutable matches = 0
+        let len = length vec
+        for i = 0 to len - 1 do
+            if predicate vec.[i] then
+                matches <- matches + 1
+    
+        // Return the number of matching vector elements.
+        matches
 
 #if FX_NO_TPL_PARALLEL
 #else

@@ -1035,6 +1035,281 @@ let private PartitionTester partInt partString =
 let partition () : unit =
     PartitionTester Vector.partition Vector.partition    
 
+[<TestCase>]
+let projectValues () : unit =
+    Vector.empty
+    |> Vector.projectValues ignore
+    |> should equal Vector.empty
+
+    [|  ConsoleColor.Magenta;
+        ConsoleColor.DarkGreen;
+        ConsoleColor.Cyan;
+        ConsoleColor.Black; |]
+    |> vector
+    |> Vector.projectValues (sprintf "%O")
+    |> should equal
+        <| vector [|
+        ConsoleColor.Magenta, "Magenta";
+        ConsoleColor.DarkGreen, "DarkGreen";
+        ConsoleColor.Cyan, "Cyan";
+        ConsoleColor.Black, "Black"; |]
+
+[<TestCase>]
+let projectKeys () : unit =
+    Vector.empty
+    |> Vector.projectKeys ignore
+    |> should equal Vector.empty
+
+    [|"Magenta"; "DarkGreen"; "Cyan"; "Black"|]
+    |> vector
+    |> Vector.projectKeys (fun colorName ->
+        Enum.Parse (typeof<ConsoleColor>, colorName)
+        :?> System.ConsoleColor)
+    |> should equal
+        <| vector [|
+        ConsoleColor.Magenta, "Magenta";
+        ConsoleColor.DarkGreen, "DarkGreen";
+        ConsoleColor.Cyan, "Cyan";
+        ConsoleColor.Black, "Black"; |]
+
+[<TestCase>]
+let ``contains (value type)`` () : unit =
+    // Test the function with an array of value types.
+    let ``0 to 10`` = vector [| 0 .. 10 |]
+
+    ``0 to 10``
+    |> Vector.contains 5
+    |> should be True
+
+    ``0 to 10``
+    |> Vector.contains 15
+    |> should be False
+
+[<TestCase>]
+let ``contains (reference type with IEquatable<T>)`` () : unit =
+    // Test the function with an array of reference types,
+    // where the element type implements IEquatable<'T>.
+    let colors = vector [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray"; "DarkGreen";
+                    "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"; |]
+
+    colors
+    |> Vector.contains "DarkBlue"
+    |> should be True
+
+    colors
+    |> Vector.contains "Aquamarine"
+    |> should be False
+
+[<TestCase>]
+let ``contains (reference type)`` () : unit =
+    // Test the function with an array of reference types,
+    // where the element type does NOT implement IEquatable<'T>.
+    let ex = exn ()
+
+    [| exn (); exn (); exn (); ex; exn (); |]
+    |> vector
+    |> Vector.contains ex
+    |> should be True
+
+    [| exn (); exn (); exn (); exn (); exn (); |]
+    |> vector
+    |> Vector.contains ex
+    |> should be False
+
+[<TestCase>]
+let foldi () : unit =
+    ("", vector [| 'a' .. 'f' |])
+    ||> Vector.foldi (fun str idx c ->
+        str + (String (Array.create idx c)))
+    |> should equal "bccdddeeeefffff"
+
+[<TestCase>]
+let foldiBack () : unit =
+    (vector [| 'a' .. 'f' |], "")
+    ||> Vector.foldiBack (fun idx c str ->
+        str + (String (Array.create idx c)))
+    |> should equal "fffffeeeedddccb"
+
+[<TestCase>]
+let split () : unit =
+    /// The set of prime numbers less than 40.
+    let primes =
+        Set.ofArray [| 2; 3; 5; 7; 11; 13; 17; 19; 23; 29; 31; 37; |]
+
+    let chunks =
+        [| 0 .. 40 |]
+        |> vector
+        |> Vector.split (fun x ->
+            Set.contains x primes)
+
+    chunks
+    |> should equal
+        <| vector [|
+        vector [| 0; 1 |];
+        vector [| 2 |];
+        vector [| 3; 4 |];
+        vector [| 5; 6 |];
+        vector [| 7 .. 10 |];
+        vector [| 11; 12 |];
+        vector [| 13 .. 16 |];
+        vector [| 17; 18 |];
+        vector [| 19 .. 22 |];
+        vector [| 23 .. 28 |];
+        vector [| 29; 30 |];
+        vector [| 31 .. 36 |];
+        vector [| 37 .. 40 |]; |]
+
+//[<TestCase>]
+//let segment () : unit =
+//    /// The set of prime numbers less than 40.
+//    let primes =
+//        Set.ofArray [| 2; 3; 5; 7; 11; 13; 17; 19; 23; 29; 31; 37; |]
+//
+//    let segments =
+//        [| 0 .. 40 |]
+//        |> Array.segment (fun x ->
+//            Set.contains x primes)
+//
+//    segments
+//    |> Array.map (fun view ->
+//        view.Count)
+//    |> should equal [|
+//        2; 1; 2; 2; 4; 2; 4; 2; 4; 6; 2; 6; 4; |]
+//
+//[<TestCase>]
+//let segment2 () : unit =
+//    let vowels = Set.ofArray [| 'a'; 'e'; 'i'; 'o'; 'u' |]
+//
+//    let intSegments, charSegments =
+//        ([| 1..3..78 |], [| 'a'..'z' |])
+//        ||> Array.segment2 (fun x c ->
+//            x % 7 = 0 || Set.contains c vowels)
+//
+//    // First, check that each pair of segments has the same number of elements.
+//    (intSegments, charSegments)
+//    ||> Array.forall2 (fun intSeg charSeg ->
+//        intSeg.Count = charSeg.Count)
+//    |> should be True
+//
+//    // Now check that the array was segmented correctly.
+//    intSegments
+//    |> Array.map (fun view ->
+//        view.Count)
+//    |> should equal [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
+
+[<TestCase>]
+let mapPartition () : unit =
+    let left, right =
+        vector [| 0 .. 10 |]
+        |> Vector.mapPartition (fun x ->
+            if x % 2 = 0 then
+                Choice1Of2 <| x.ToString ()
+            else
+                Choice2Of2 <| x * x * x)
+
+    left
+    |> should equal
+        <| vector [| "0"; "2"; "4"; "6"; "8"; "10" |]
+
+    right
+    |> should equal
+        <| vector [| 1; 27; 125; 343; 729 |]
+
+[<TestCase>]
+let mapPartition3 () : unit =
+    let left, middle, right =
+        vector [| 0 .. 15 |]
+        |> Vector.mapPartition3 (fun x ->
+            match x % 3 with
+            | 0 ->
+                Choice1Of3 <| (1 <<< x)
+            | 1 ->
+                Choice2Of3 <| x.ToString ()
+            | _ ->
+                Choice3Of3 <| x * x)
+
+    left
+    |> should equal
+        <| vector [| 1; 8; 64; 512; 4096; 32768 |]
+
+    middle
+    |> should equal
+        <| vector [| "1"; "4"; "7"; "10"; "13" |]
+
+    right
+    |> should equal
+        <| vector [| 4; 25; 64; 121; 196 |]
+
+[<TestCase>]
+let mapReduce () : unit =
+    let expected =
+        Map.ofArray [| 'i', 4; 'm', 1; 'p', 2; 's', 4 |]
+
+    "mississippi".ToCharArray ()
+    |> vector
+    |> Vector.mapReduce
+        { new IMapReduction<char, Map<char, int>> with
+            member __.Map c =
+                Map.singleton c 1
+            member __.Reduce left right =
+                (left, right)
+                ||> Map.fold (fun charCounts c count ->
+                    match Map.tryFind c charCounts with
+                    | None ->
+                        Map.add c count charCounts
+                    | Some existingCount ->
+                        Map.add c (existingCount + count) charCounts) }
+    |> should equal expected
+
+[<TestCase>]
+let findIndices () : unit =
+    let primeArray = [| 2; 3; 5; 7; 11; 13; 17; 19; 23; 29; 31; 37; |]
+
+    /// The set of prime numbers less than 40.
+    let primes = Set.ofArray primeArray
+
+    vector [| 0 .. 40 |]
+    |> Vector.findIndices (fun x ->
+        Set.contains x primes)
+    |> should equal primeArray
+
+    Vector.empty
+    |> Vector.findIndices (fun x ->
+        Set.contains x primes)
+    |> should equal (Array.empty : int[])
+
+[<TestCase>]
+let choosei () : unit =
+    let colors =
+        vector [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+           "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green" |]
+
+    colors
+    |> Vector.choosei (fun idx colorName ->
+        if String.length colorName <= idx then
+            Some <| colorName.ToLower ()
+        else None)
+    |> should equal [|
+        "darkred"; "gray"; "green" |]
+
+[<TestCase>]
+let choose2 () : unit =
+    let colors =
+        vector [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+           "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green" |]
+
+    (vector [|10..-1..0|], colors)
+    ||> Vector.choose2 (fun x colorName ->
+        if (x + String.length colorName) % 2 = 0 then
+            Some <| colorName.ToLower ()
+        else None)
+    |> should equal
+       <| vector [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
+
+[<TestCase>]
+let countWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
 
 (* Tests for the Array.Parallel module. *)
 #if FX_NO_TPL_PARALLEL
