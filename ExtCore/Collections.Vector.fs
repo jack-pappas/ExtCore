@@ -1,5 +1,6 @@
 ﻿(*
 
+Copyright 2002-2012 Microsoft Corporation
 Copyright 2010-2012 TidePowerd Ltd.
 Copyright 2013 Jack Pappas
 
@@ -31,8 +32,21 @@ module Vector =
     [<CompiledName("CheckInitialized")>]
     let inline private checkInitialized paramName (vec : vector<'T>) =
         if vec.IsNull then
-            invalidArg paramName "The vector has not been initialized; it is equal to the \
-                                  Vector type's default value (the equivalent of 'null')."
+            System.ArgumentNullException (
+                paramName,
+                "The vector has not been initialized; it is equal to the \
+                 Vector type's default value (the equivalent of 'null').")
+            |> raise
+
+    /// Returns the underlying array for a vector.
+    let internal elements (vec : vector<'T>) : 'T[] =
+        if vec.IsNull then null
+        else vec.Elements
+
+    /// Returns an empty vector of the given type.
+    [<CompiledName("Empty")>]
+    let empty<'T> : vector<'T> =
+        ExtCore.vector.Empty
 
     /// Builds a vector from the given array.
     [<CompiledName("OfArray")>]
@@ -68,9 +82,15 @@ module Vector =
     [<CompiledName("ZeroCreate")>]
     let zeroCreate count : vector<'T> =
         // Preconditions
-        // TODO : count must be >= 0
-        
-        notImpl "Vector.zeroCreate"
+        if count < 0 then
+            invalidArg "count" "The number of elements cannot be negative."
+
+        // OPTIMIZATION : If the count is zero return the empty vector instance.
+        if count = 0 then
+            ExtCore.vector.Empty
+        else
+            Array.zeroCreate count
+            |> ExtCore.vector.UnsafeCreate
 
     /// Creates a vector that contains the elements of one vector followed by the elements of another vector.
     [<CompiledName("Append")>]
@@ -91,8 +111,15 @@ module Vector =
     let inline average (vec : vector<'T>) : ^T =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.average"
+
+        let len = vec.Length
+        if len = 0 then
+            invalidArg "array" "The array is empty."
+
+        let mutable acc : ^T = GenericZero
+        for i = 0 to len - 1 do
+            acc <- Checked.(+) acc vec.[i]
+        DivideByInt acc len
 
     //
     [<CompiledName("AverageBy")>]
@@ -100,10 +127,17 @@ module Vector =
         // Preconditions
         checkInitialized "vec" vec
         
-        notImpl "Vector.averageBy"
+        let len = vec.Length
+        if len = 0 then
+            invalidArg "array" "The array is empty."
+
+        let mutable acc : ^U = GenericZero
+        for i = 0 to len - 1 do
+            acc <- Checked.(+) acc (projection vec.[i])
+        DivideByInt acc len
 
     //
-    [<CompiledName("Blit")>]
+    [<CompiledName("CopyTo")>]
     let blit (source : vector<'T>) sourceIndex (target : vector<'T>) targetIndex count : vector<'T> =
         // Preconditions
         checkInitialized "source" source
@@ -117,69 +151,94 @@ module Vector =
     let collect (mapping : 'T -> vector<'U>) (vec : vector<'T>) : vector<'U> =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.collect"
+
+        // OPTIMIZATION : If the vector is empty return the empty instance.
+        if isEmpty vec then
+            ExtCore.vector.Empty
+        else
+            Array.collect (mapping >> elements) vec.Elements
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Concat")>]
     let concat (vectors : seq<vector<'T>>) : vector<'T> =
         // Preconditions
         checkNonNull "vectors" vectors
-        
-        notImpl "Vector.concat"
+
+        // OPTIMIZATION : If the sequence is empty, return the empty vector instance.
+        if Seq.isEmpty vectors then
+            ExtCore.vector.Empty
+        else
+            // Check a couple of specific cases so we can use an
+            // optimized codepath when possible.
+            match vectors with
+            | :? (vector<'T>[]) as vecArray ->
+                Array.collect elements vecArray
+                |> ExtCore.vector.UnsafeCreate
+
+//            | :? (vector<vector<'T>>) as vecVector ->
+//                notImpl ""
+
+            | _ ->
+                vectors
+                |> Seq.map elements
+                |> Array.concat
+                |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Copy")>]
     let copy (vec : vector<'T>) : vector<'T> =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.copy"
+
+        ExtCore.vector.Create vec.Elements
 
     //
     [<CompiledName("Create")>]
     let create count (value : 'T) : vector<'T> =
         // Preconditions
-        // TODO : count must be >= 0
-        
-        notImpl "Vector.create"
+        if count < 0 then
+            invalidArg "count" "The number of elements must be greater than or equal to zero (0)."
+
+        Array.create count value
+        |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("TryPick")>]
     let tryPick (chooser : 'T -> 'U option) (vec : vector<'T>) : 'U option =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.tryPick"
+
+        Array.tryPick chooser vec.Elements
 
     //
     [<CompiledName("Pick")>]
     let pick (chooser : 'T -> 'U option) (vec : vector<'T>) : 'U =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.pick"
+
+        Array.pick chooser vec.Elements
 
     //
     [<CompiledName("Choose")>]
     let choose (chooser : 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.choose"
 
-    /// Returns an empty vector of the given type.
-    [<CompiledName("Empty")>]
-    let empty<'T> : vector<'T> =
-        ExtCore.vector.Empty
+        // If the vector is empty, return immediately.
+        if isEmpty vec then
+            ExtCore.vector.Empty
+        else
+            Array.choose chooser vec.Elements
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Exists")>]
     let exists (predicate : 'T -> bool) (vec : vector<'T>) : bool =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.exists"
+
+        Array.exists predicate vec.Elements
 
     //
     [<CompiledName("Exists2")>]
@@ -187,9 +246,10 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        // TODO : Check vectors have the same length
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
         
-        notImpl "Vector.exists2"
+        Array.exists2 predicate vector1.Elements vector2.Elements
 
     //
     [<CompiledName("Fill")>]
@@ -205,32 +265,37 @@ module Vector =
     let filter (predicate : 'T -> bool) (vec : vector<'T>) : vector<'T> =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.filter"
+
+        // If the vector is empty, return the empty vector instance.
+        if isEmpty vec then
+            ExtCore.vector.Empty
+        else
+            Array.filter predicate vec.Elements
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Find")>]
     let find (predicate : 'T -> bool) (vec : vector<'T>) : 'T =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.find"
+
+        Array.find predicate vec.Elements
 
     //
     [<CompiledName("FindIndex")>]
     let findIndex (predicate : 'T -> bool) (vec : vector<'T>) : int =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.findIndex"
+
+        Array.findIndex predicate vec.Elements
 
     //
     [<CompiledName("Forall")>]
     let forall (predicate : 'T -> bool) (vec : vector<'T>) : bool =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.forall"
+
+        Array.forall predicate vec.Elements
 
     //
     [<CompiledName("Forall2")>]
@@ -238,17 +303,18 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        // TODO : Check vectors have the same length
-        
-        notImpl "Vector.forall2"
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
+
+        Array.forall2 predicate vector1.Elements vector2.Elements
 
     //
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> 'T -> 'State) (state : 'State) (vec : vector<'T>) : 'State =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.fold"
+
+        Array.fold folder state vec.Elements
 
     //
     [<CompiledName("Fold2")>]
@@ -256,17 +322,18 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        // TODO : Check vectors have the same length
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
         
-        notImpl "Vector.fold"
+        Array.fold2 folder state vector1.Elements vector2.Elements
 
     //
     [<CompiledName("FoldBack")>]
     let foldBack (folder : 'T -> 'State -> 'State) (vec : vector<'T>) (state : 'State) : 'State =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.foldBack"
+
+        Array.foldBack folder vec.Elements state
 
     //
     [<CompiledName("FoldBack2")>]
@@ -274,26 +341,34 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        // TODO : Check vectors have the same length
-        
-        notImpl "Vector.foldBack"
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
+
+        Array.foldBack2 folder vector1.Elements vector2.Elements state
 
     //
     [<CompiledName("Get")>]
     let inline get (vec : vector<'T>) (index : int) : 'T =
         // Preconditions
         checkInitialized "vec" vec
-        // TODO : Index must be in-bounds
-        
-        notImpl "Vector.get"
+        // NOTE : The index must be in-bounds here, but the bounds will be checked
+        // when the JIT compiler emits the code for the vector.Item property so we
+        // just call that directly and use that bounds check instead of an explicit one here.
+        vec.[index]
 
     //
     [<CompiledName("Init")>]
     let init (count : int) (initializer : int -> 'T) : vector<'T> =
         // Preconditions
-        // TODO : count must be >= 0
+        if count < 0 then
+            invalidArg "count" "Cannot initialize an array with a negative number of elements."
         
-        notImpl "Vector.init"
+        // OPTIMIZATION : If the count is zero, return the empty vector instance.
+        if count = 0 then
+            ExtCore.vector.Empty
+        else
+            Array.init count initializer
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Iterate")>]
@@ -301,9 +376,7 @@ module Vector =
         // Preconditions
         checkInitialized "vec" vec
 
-        // If the vector is empty return immediately.
-        if not <| isEmpty vec then
-            Array.iter action vec.Elements
+        Array.iter action vec.Elements
 
     //
     [<CompiledName("Iterate2")>]
@@ -311,8 +384,10 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        
-        notImpl "Vector.iter2"
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
+
+        Array.iter2 action vector1.Elements vector2.Elements
 
     //
     [<CompiledName("IterateIndexed")>]
@@ -320,9 +395,7 @@ module Vector =
         // Preconditions
         checkInitialized "vec" vec
         
-        // If the vector is empty return immediately.
-        if not <| isEmpty vec then
-            Array.iteri action vec.Elements
+        Array.iteri action vec.Elements
 
     //
     [<CompiledName("IterateIndexed2")>]
@@ -330,8 +403,10 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
         
-        notImpl "Vector.iteri2"
+        Array.iteri2 action vector1.Elements vector2.Elements
 
     //
     [<CompiledName("Map")>]
@@ -351,8 +426,15 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
         
-        notImpl "Vector.map2"
+        // If the vectors are empty, return immediately.
+        if isEmpty vector1 then
+            ExtCore.vector.Empty
+        else
+            Array.map2 mapping vector1.Elements vector2.Elements
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("MapIndexed")>]
@@ -372,40 +454,89 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        
-        notImpl "Vector.mapi2"
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
+
+        // If the vectors are empty, return immediately.
+        if isEmpty vector1 then
+            ExtCore.vector.Empty
+        else
+            Array.mapi2 mapping vector1.Elements vector2.Elements
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Max")>]
-    let max (vec : vector<'T>) : 'T =
+    let inline max (vec : vector<'T>) : 'T =
         // Preconditions
         checkInitialized "vec" vec
         
-        notImpl "Vector.max"
+        let len = vec.Length
+        if len = 0 then
+            invalidArg "array" "The array is empty."
+
+        let mutable acc = vec.[0]
+        for i = 1 to len - 1 do
+            let curr = vec.[i]
+            if curr > acc then 
+                acc <- curr
+        acc
 
     //
     [<CompiledName("MaxBy")>]
-    let maxBy (projection : 'T -> 'U) (vec : vector<'T>) : 'T =
+    let inline maxBy (projection : 'T -> 'U) (vec : vector<'T>) : 'T =
         // Preconditions
         checkInitialized "vec" vec
         
-        notImpl "Vector.maxBy"
+        let len = vec.Length
+        if len = 0 then
+            invalidArg "array" "The array is empty."
+
+        let mutable accv = vec.[0]
+        let mutable acc = projection accv
+        for i = 1 to len - 1 do
+            let currv = vec.[i]
+            let curr = projection currv
+            if curr > acc then
+                acc <- curr
+                accv <- currv
+        accv
 
     //
     [<CompiledName("Min")>]
-    let min (vec : vector<'T>) : 'T =
+    let inline min (vec : vector<'T>) : 'T =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.min"
+
+        let len = vec.Length
+        if len = 0 then
+            invalidArg "array" "The array is empty."
+
+        let mutable acc = vec.[0]
+        for i = 1 to len - 1 do
+            let curr = vec.[i]
+            if curr < acc then 
+                acc <- curr
+        acc
 
     //
     [<CompiledName("MinBy")>]
-    let minBy (projection : 'T -> 'U) (vec : vector<'T>) : 'T =
+    let inline minBy (projection : 'T -> 'U) (vec : vector<'T>) : 'T =
         // Preconditions
         checkInitialized "vec" vec
         
-        notImpl "Vector.minBy"
+        let len = vec.Length
+        if len = 0 then
+            invalidArg "array" "The array is empty."
+
+        let mutable accv = vec.[0]
+        let mutable acc = projection accv
+        for i = 1 to len - 1 do
+            let currv = vec.[i]
+            let curr = projection currv
+            if curr < acc then
+                acc <- curr
+                accv <- currv
+        accv
 
     //
     [<CompiledName("OfList")>]
@@ -424,8 +555,19 @@ module Vector =
     let ofSeq (source : seq<'T>) : vector<'T> =
         // Preconditions
         checkNonNull "source" source
-        
-        notImpl "Vector.ofSeq"
+
+        // If the source is empty, return the empty vector instance.
+        if Seq.isEmpty source then
+            ExtCore.vector.Empty
+        else
+            // Examine the type of the sequence, so we can use
+            // an optimized code path if possible.
+            match source with
+            | :? ('T[]) as arr ->
+                ExtCore.vector.Create arr
+            | _ ->
+                Seq.toArray source
+                |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Partition")>]
@@ -445,8 +587,13 @@ module Vector =
     let permute (indexMap : int -> int) (vec : vector<'T>) : vector<'T> =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.permute"
+
+        // If the input vector is empty, return the empty instance.
+        if isEmpty vec then
+            ExtCore.vector.Empty
+        else
+            Array.permute indexMap vec.Elements
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Reduce")>]
@@ -454,15 +601,15 @@ module Vector =
         // Preconditions
         checkInitialized "vec" vec
         
-        notImpl "Vector.reduce"
+        Array.reduce reduction vec.Elements
 
     //
     [<CompiledName("ReduceBack")>]
     let reduceBack (reduction : 'T -> 'T -> 'T) (vec : vector<'T>) : 'T =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.reduceBack"
+
+        Array.reduceBack reduction vec.Elements
 
     //
     [<CompiledName("Rev")>]
@@ -481,8 +628,13 @@ module Vector =
     let scan (folder : 'State -> 'T -> 'State) (state : 'State) (vec : vector<'T>) : vector<'State> =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.scan"
+
+        // If the vector is empty, return the empty vector instance.
+        if isEmpty vec then
+            ExtCore.vector.Empty
+        else
+            Array.scan folder state vec.Elements
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("ScanBack")>]
@@ -490,7 +642,12 @@ module Vector =
         // Preconditions
         checkInitialized "vec" vec
         
-        notImpl "Vector.scanBack"
+        // If the vector is empty, return the empty vector instance.
+        if isEmpty vec then
+            ExtCore.vector.Empty
+        else
+            Array.scanBack folder vec.Elements state
+            |> ExtCore.vector.UnsafeCreate
 
     //
     [<CompiledName("Sub")>]
@@ -542,16 +699,24 @@ module Vector =
     let inline sum (vec : vector<'T>) : ^T =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.sum"
+
+        let mutable acc : ^T = GenericZero
+        let len = vec.Length
+        for i = 0 to len - 1 do
+            acc <- Checked.(+) acc vec.[i]
+        acc
 
     //
     [<CompiledName("SumBy")>]
     let inline sumBy (projection : 'T -> ^U) (vec : vector<'T>) : ^U =
         // Preconditions
         checkInitialized "vec" vec
-        
-        notImpl "Vector.sumBy"
+
+        let mutable acc : ^U = GenericZero
+        let len = vec.Length
+        for i = 0 to len - 1 do
+            acc <- Checked.(+) acc (projection vec.[i])
+        acc
 
     //
     [<CompiledName("ToList")>]
@@ -626,7 +791,12 @@ module Vector =
             ExtCore.vector.UnsafeCreate vec2,
             ExtCore.vector.UnsafeCreate vec3
 
-    //
+    /// <summary>Combines three arrays into an vector of pairs. The three arrays must have equal lengths,
+    /// otherwise an <c>ArgumentException</c> is raised.</summary>
+    /// <param name="vector1">The first input vector.</param>
+    /// <param name="vector2">The second input vector.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the input vectors differ in length.</exception>
+    /// <returns>The vector of tupled elements.</returns>
     [<CompiledName("Zip")>]
     let zip (vector1 : vector<'T1>) (vector2 : vector<'T2>) : vector<'T1 * 'T2> =
         // Preconditions
@@ -635,7 +805,13 @@ module Vector =
         
         notImpl "Vector.zip"
 
-    //
+    /// <summary>Combines three arrays into an vector of triples. The three arrays must have equal lengths,
+    /// otherwise an <c>ArgumentException</c> is raised.</summary>
+    /// <param name="vector1">The first input vector.</param>
+    /// <param name="vector2">The second input vector.</param>
+    /// <param name="vector3">The third input vector.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the input vectors differ in length.</exception>
+    /// <returns>The vector of tupled elements.</returns>
     [<CompiledName("Zip3")>]
     let zip3 (vector1 : vector<'T1>) (vector2 : vector<'T2>) (vector3 : vector<'T3>)
         : vector<'T1 * 'T2 * 'T3> =
@@ -999,51 +1175,103 @@ module Vector =
 
 #if FX_NO_TPL_PARALLEL
 #else
-    //
+    /// Provides parallel operations on vectors.
     module Parallel =
-        //
+        /// <summary>Apply the given function to each element of the array. Return
+        /// the array comprised of the results "x" for each element where
+        /// the function returns Some(x).</summary>
+        ///
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to elements of the input array is not specified.</remarks>
+        /// <param name="chooser">The function to generate options from the elements.</param>
+        /// <param name="array">The input array.</param>
+        /// <returns>'U[]</returns>
         [<CompiledName("Choose")>]
         let choose (chooser : 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
             // TODO
             notImpl "Vector.Parallel.choose"
 
-        //
+        /// <summary>For each element of the array, apply the given function. Concatenate all the results and return the combined array.</summary>
+        ///
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to elements of the input array is not specified.</remarks>
+        /// <param name="mapping"></param>
+        /// <param name="array">The input array.</param>
+        /// <returns>'U[]</returns>
         [<CompiledName("Collect")>]
         let collect (mapping : 'T -> vector<'U>) (vec : vector<'T>) : vector<'U> =
             // TODO
             notImpl "Vector.Parallel.collect"
 
-        //
+        /// <summary>Build a new array whose elements are the results of applying the given function
+        /// to each of the elements of the array.</summary>
+        ///
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to elements of the input array is not specified.</remarks>
+        /// <param name="mapping"></param>
+        /// <param name="array">The input array.</param>
+        /// <returns>'U[]</returns>
         [<CompiledName("Map")>]
         let map (mapping : 'T -> 'U) (vec : vector<'T>) : vector<'U> =
             // TODO
             notImpl "Vector.Parallel.map"
 
-        //
+        /// <summary>Build a new array whose elements are the results of applying the given function
+        /// to each of the elements of the array. The integer index passed to the
+        /// function indicates the index of element being transformed.</summary>
+        ///
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to elements of the input array is not specified.</remarks>
+        /// <param name="mapping"></param>
+        /// <param name="array">The input array.</param>
+        /// <returns>'U[]</returns>
         [<CompiledName("MapIndexed")>]
         let mapi (mapping : int -> 'T -> 'U) (vec : vector<'T>) : vector<'U> =
             // TODO
             notImpl "Vector.Parallel.mapi"
 
-        //
+        /// <summary>Apply the given function to each element of the array. </summary>
+        ///
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to elements of the input array is not specified.</remarks>
+        /// <param name="action"></param>
+        /// <param name="array">The input array.</param>
         [<CompiledName("Iterate")>]
         let iter (action : 'T -> unit) (vec : vector<'T>) : unit =
             // TODO
             notImpl "Vector.Parallel.iter"
 
-        //
+        /// <summary>Apply the given function to each element of the array. The integer passed to the
+        /// function indicates the index of element.</summary>
+        ///
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to elements of the input array is not specified.</remarks>
+        /// <param name="action"></param>
+        /// <param name="array">The input array.</param>
         [<CompiledName("IterateIndexed")>]
         let iteri (action : int -> 'T -> unit) (vec : vector<'T>) : unit =
             // TODO
             notImpl "Vector.Parallel.iteri"
 
-        //
+        /// <summary>Create an array given the dimension and a generator function to compute the elements.</summary>
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to indicies is not specified.</remarks>
+        /// <param name="count"></param>
+        /// <param name="initializer"></param>
+        /// <returns>'T[]</returns>
         [<CompiledName("Initialize")>]
         let init (count : int) (initializer : int -> 'T) : vector<'T> =
             // TODO
             notImpl "Vector.Parallel.init"
 
-        //
+        /// <summary>Split the collection into two collections, containing the 
+        /// elements for which the given predicate returns "true" and "false"
+        /// respectively.</summary>
+        /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
+        /// The order in which the given function is applied to indicies is not specified.</remarks>
+        /// <param name="predicate">The function to test the input elements.</param>
+        /// <param name="array">The input array.</param>
+        /// <returns>'T[] * 'T[]</returns>
         [<CompiledName("Partition")>]
         let partition (predicate : 'T -> bool) (vec : vector<'T>) : vector<'T> * vector<'T> =
             // TODO
