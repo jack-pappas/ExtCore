@@ -1021,3 +1021,57 @@ module Vector =
         // Return the final state.
         state
     *)
+
+#if FX_NO_TPL_PARALLEL
+#else
+    //
+    module Parallel =
+        //
+        [<CompiledName("Choose")>]
+        let choose (chooser : 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
+            // TODO
+            notImpl "Vector.Parallel.choose"
+
+        //
+        [<CompiledName("Collect")>]
+        let collect (chooser : 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
+            // TODO
+            notImpl "Vector.Parallel.collect"
+
+        //
+        [<CompiledName("Map")>]
+        let map (mapping : 'T -> 'U) (vec : vector<'T>) : vector<'U> =
+            // TODO
+            notImpl "Vector.Parallel.map"
+
+        //
+        [<CompiledName("MapIndexed")>]
+        let mapi (mapping : int -> 'T -> 'U) (vec : vector<'T>) : vector<'U> =
+            // TODO
+            notImpl "Vector.Parallel.mapi"
+
+        //
+        [<CompiledName("Iterate")>]
+        let iter (action : 'T -> unit) (vec : vector<'T>) : unit =
+            // TODO
+            notImpl "Vector.Parallel.iter"
+
+        //
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> 'T -> unit) (vec : vector<'T>) : unit =
+            // TODO
+            notImpl "Vector.Parallel.iteri"
+
+        //
+        [<CompiledName("Initialize")>]
+        let init (count : int) (initializer : int -> 'T) : vector<'T> =
+            // TODO
+            notImpl "Vector.Parallel.init"
+
+        //
+        [<CompiledName("Partition")>]
+        let partition (predicate : 'T -> bool) (vec : vector<'T>) : vector<'T> * vector<'T> =
+            // TODO
+            notImpl "Vector.Parallel.partition"
+
+#endif
