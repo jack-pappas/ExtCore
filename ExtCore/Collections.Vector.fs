@@ -75,6 +75,16 @@ type vector<'T> private (elements : 'T[]) =
         // the private Vector constructor and return the new Vector value.
         vector (Array.copy source)
 
+    /// Creates a new Vector from the given array.
+    /// This method is considered "unsafe" (and restricted to internal callers only)
+    /// because it uses the given array directly instead of making a copy of it.
+    static member internal UnsafeCreate (source : 'T[]) : vector<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        // Create a new vector directly from the source array.
+        vector (source)
+
 
 /// Functional operators related to vectors (immutable arrays).
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -113,8 +123,8 @@ module Vector =
 
     /// Given an element, creates an array containing just that element.
     [<CompiledName("Singleton")>]
-    let inline singleton (value : 'T) : vector<'T> =
-        vector.Create [| value |]
+    let singleton (value : 'T) : vector<'T> =
+        vector.UnsafeCreate [| value |]
 
     /// Creates a vector that contains the elements of one vector followed by the elements of another vector.
     [<CompiledName("Append")>]
@@ -122,22 +132,27 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        
-        notImpl "Vector.append"
+
+        // OPTIMIZATION : Only perform the append operation if both inputs are non-empty.
+        if isEmpty vector1 then vector2
+        elif isEmpty vector2 then vector1
+        else
+            Array.append vector1.Elements vector2.Elements
+            |> vector.UnsafeCreate
 
     /// Returns the average of the elements in a vector.
     [<CompiledName("Average")>]
-    let inline average (vector : vector<'T>) : ^T =
+    let inline average (vec : vector<'T>) : ^T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.average"
 
     //
     [<CompiledName("AverageBy")>]
-    let inline averageBy (projection : 'T -> ^U) (vector : vector<'T>) : ^U =
+    let inline averageBy (projection : 'T -> ^U) (vec : vector<'T>) : ^U =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.averageBy"
 
@@ -147,14 +162,15 @@ module Vector =
         // Preconditions
         checkInitialized "source" source
         checkInitialized "target" target
+        // TODO : sourceIndex, targetIndex, count in-bounds
         
         notImpl "Vector.blit"
 
     //
     [<CompiledName("Collect")>]
-    let collect (mapping : 'T -> 'U[]) (vector : vector<'T>) : vector<'U> =
+    let collect (mapping : 'T -> vector<'U>) (vec : vector<'T>) : vector<'U> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.collect"
 
@@ -168,9 +184,9 @@ module Vector =
 
     //
     [<CompiledName("Copy")>]
-    let copy (vector : vector<'T>) : vector<'T> =
+    let copy (vec : vector<'T>) : vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.copy"
 
@@ -184,25 +200,25 @@ module Vector =
 
     //
     [<CompiledName("TryPick")>]
-    let tryPick (chooser : 'T -> 'U option) (vector : vector<'T>) : 'U option =
+    let tryPick (chooser : 'T -> 'U option) (vec : vector<'T>) : 'U option =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.tryPick"
 
     //
     [<CompiledName("Pick")>]
-    let pick (chooser : 'T -> 'U option) (vector : vector<'T>) : 'U =
+    let pick (chooser : 'T -> 'U option) (vec : vector<'T>) : 'U =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.pick"
 
     //
     [<CompiledName("Choose")>]
-    let choose (chooser : 'T -> 'U option) (vector : vector<'T>) : vector<'U> =
+    let choose (chooser : 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.choose"
 
@@ -213,9 +229,9 @@ module Vector =
 
     //
     [<CompiledName("Exists")>]
-    let exists (predicate : 'T -> bool) (vector : vector<'T>) : bool =
+    let exists (predicate : 'T -> bool) (vec : vector<'T>) : bool =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.exists"
 
@@ -225,38 +241,39 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
+        // TODO : Check vectors have the same length
         
         notImpl "Vector.exists2"
 
     //
     [<CompiledName("Filter")>]
-    let filter (predicate : 'T -> bool) (vector : vector<'T>) : vector<'T> =
+    let filter (predicate : 'T -> bool) (vec : vector<'T>) : vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.filter"
 
     //
     [<CompiledName("Find")>]
-    let find (predicate : 'T -> bool) (vector : vector<'T>) : 'T =
+    let find (predicate : 'T -> bool) (vec : vector<'T>) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.find"
 
     //
     [<CompiledName("FindIndex")>]
-    let findIndex (predicate : 'T -> bool) (vector : vector<'T>) : int =
+    let findIndex (predicate : 'T -> bool) (vec : vector<'T>) : int =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.findIndex"
 
     //
     [<CompiledName("Forall")>]
-    let forall (predicate : 'T -> bool) (vector : vector<'T>) : bool =
+    let forall (predicate : 'T -> bool) (vec : vector<'T>) : bool =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.forall"
 
@@ -266,30 +283,32 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
+        // TODO : Check vectors have the same length
         
         notImpl "Vector.forall2"
 
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> 'State) (state : 'State) (vector : vector<'T>) : 'State =
+    let fold (folder : 'State -> 'T -> 'State) (state : 'State) (vec : vector<'T>) : 'State =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.fold"
 
     //
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : 'T -> 'State -> 'State) (vector : vector<'T>) (state : 'State) : 'State =
+    let foldBack (folder : 'T -> 'State -> 'State) (vec : vector<'T>) (state : 'State) : 'State =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.foldBack"
 
     //
     [<CompiledName("Get")>]
-    let get (vector : vector<'T>) (index : int) : 'T =
+    let inline get (vec : vector<'T>) (index : int) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
+        // TODO : Index must be in-bounds
         
         notImpl "Vector.get"
 
@@ -303,11 +322,13 @@ module Vector =
 
     //
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> unit) (vector : vector<'T>) : unit =
+    let iter (action : 'T -> unit) (vec : vector<'T>) : unit =
         // Preconditions
-        checkInitialized "vector" vector
-        
-        notImpl "Vector.iter"
+        checkInitialized "vec" vec
+
+        // If the vector is empty return immediately.
+        if not <| isEmpty vec then
+            Array.iter action vec.Elements
 
     //
     [<CompiledName("Iterate2")>]
@@ -320,11 +341,13 @@ module Vector =
 
     //
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> unit) (vector : vector<'T>) : unit =
+    let iteri (action : int -> 'T -> unit) (vec : vector<'T>) : unit =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
-        notImpl "Vector.iteri"
+        // If the vector is empty return immediately.
+        if not <| isEmpty vec then
+            Array.iteri action vec.Elements
 
     //
     [<CompiledName("IterateIndexed2")>]
@@ -337,18 +360,15 @@ module Vector =
 
     //
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) (vector : vector<'T>) : vector<'U> =
+    let map (mapping : 'T -> 'U) (vec : vector<'T>) : vector<'U> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
 
-        let len = vector.Length
-        let results = Array.zeroCreate len
-
-        for i = 0 to len - 1 do
-            results.[i] <- mapping vector.[i]
-
-        // Return the results as a vector.
-        ofArray results
+        // If the vector is empty, return immediately.
+        if isEmpty vec then empty
+        else
+            Array.map mapping vec.Elements
+            |> vector.UnsafeCreate
 
     //
     [<CompiledName("Map2")>]
@@ -361,11 +381,15 @@ module Vector =
 
     //
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> 'U) (vector : vector<'T>) : vector<'U> =
+    let mapi (mapping : int -> 'T -> 'U) (vec : vector<'T>) : vector<'U> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
-        notImpl "Vector.mapi"
+        // If the vector is empty, return immediately.
+        if isEmpty vec then empty
+        else
+            Array.mapi mapping vec.Elements
+            |> vector.UnsafeCreate
 
     //
     [<CompiledName("MapIndexed2")>]
@@ -378,33 +402,33 @@ module Vector =
 
     //
     [<CompiledName("Max")>]
-    let max (vector : vector<'T>) : 'T =
+    let max (vec : vector<'T>) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.max"
 
     //
     [<CompiledName("MaxBy")>]
-    let maxBy (projection : 'T -> 'U) (vector : vector<'T>) : 'T =
+    let maxBy (projection : 'T -> 'U) (vec : vector<'T>) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.maxBy"
 
     //
     [<CompiledName("Min")>]
-    let min (vector : vector<'T>) : 'T =
+    let min (vec : vector<'T>) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.min"
 
     //
     [<CompiledName("MinBy")>]
-    let minBy (projection : 'T -> 'U) (vector : vector<'T>) : 'T =
+    let minBy (projection : 'T -> 'U) (vec : vector<'T>) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.minBy"
 
@@ -413,8 +437,12 @@ module Vector =
     let ofList (list : 'T list) : vector<'T> =
         // Preconditions
         checkNonNull "list" list
-        
-        notImpl "Vector.ofList"
+
+        match list with
+        | [] -> empty
+        | _ ->
+            Array.ofList list
+            |> vector.UnsafeCreate
 
     //
     [<CompiledName("OfSeq")>]
@@ -426,156 +454,202 @@ module Vector =
 
     //
     [<CompiledName("Partition")>]
-    let partition (predicate : 'T -> bool) (vector : vector<'T>) : vector<'T> * vector<'T> =
+    let partition (predicate : 'T -> bool) (vec : vector<'T>) : vector<'T> * vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
-        
-        notImpl "Vector.partition"
+        checkInitialized "vec" vec
+
+        // If the vector is empty return immediately.
+        if isEmpty vec then empty, empty
+        else
+            let trueVec, falseVec = Array.partition predicate vec.Elements
+            vector.UnsafeCreate trueVec,
+            vector.UnsafeCreate falseVec
 
     //
     [<CompiledName("Permute")>]
-    let permute (indexMap : int -> int) (vector : vector<'T>) : vector<'T> =
+    let permute (indexMap : int -> int) (vec : vector<'T>) : vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.permute"
 
     //
     [<CompiledName("Reduce")>]
-    let reduce (reduction : 'T -> 'T -> 'T) (vector : vector<'T>) : 'T =
+    let reduce (reduction : 'T -> 'T -> 'T) (vec : vector<'T>) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.reduce"
 
     //
     [<CompiledName("ReduceBack")>]
-    let reduceBack (reduction : 'T -> 'T -> 'T) (vector : vector<'T>) : 'T =
+    let reduceBack (reduction : 'T -> 'T -> 'T) (vec : vector<'T>) : 'T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.reduceBack"
 
     //
     [<CompiledName("Rev")>]
-    let rev (vector : vector<'T>) : vector<'T> =
+    let rev (vec : vector<'T>) : vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
-        
-        notImpl "Vector.reduceBack"
+        checkInitialized "vec" vec
+
+        // If the input vector is empty return immediately.
+        if isEmpty vec then empty
+        else
+            Array.rev vec.Elements
+            |> vector.UnsafeCreate
 
     //
     [<CompiledName("Scan")>]
-    let scan (folder : 'State -> 'T -> 'State) (state : 'State) (vector : vector<'T>) : vector<'State> =
+    let scan (folder : 'State -> 'T -> 'State) (state : 'State) (vec : vector<'T>) : vector<'State> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.scan"
 
     //
     [<CompiledName("ScanBack")>]
-    let scanBack (folder : 'T -> 'State -> 'State) (vector : vector<'T>) (state : 'State) : vector<'State> =
+    let scanBack (folder : 'T -> 'State -> 'State) (vec : vector<'T>) (state : 'State) : vector<'State> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.scanBack"
 
     //
     [<CompiledName("Sub")>]
-    let sub (vector : vector<'T>) (startIndex : int) (count : int) =
+    let sub (vec : vector<'T>) (startIndex : int) (count : int) =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         // TODO : startIndex in bounds, count >= 0
         
         notImpl "Vector.sub"
 
     //
     [<CompiledName("Sort")>]
-    let sort (vector : vector<'T>) : vector<'T> =
+    let sort (vec : vector<'T>) : vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
-        
-        notImpl "Vector.sort"
+        checkInitialized "vec" vec
+
+        // If the vector is empty return immediately.
+        if isEmpty vec then empty
+        else
+            Array.sort vec.Elements
+            |> vector.UnsafeCreate
 
     //
     [<CompiledName("SortBy")>]
-    let sortBy (projection : 'T -> 'Key) (vector : vector<'T>) : vector<'T> =
+    let sortBy (projection : 'T -> 'Key) (vec : vector<'T>) : vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
-        notImpl "Vector.sortBy"
+        // If the vector is empty return immediately.
+        if isEmpty vec then empty
+        else
+            Array.sortBy projection vec.Elements
+            |> vector.UnsafeCreate
 
     //
     [<CompiledName("SortWith")>]
-    let sortWith (comparer : 'T -> 'T -> int) (vector : vector<'T>) : vector<'T> =
+    let sortWith (comparer : 'T -> 'T -> int) (vec : vector<'T>) : vector<'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
-        notImpl "Vector.sortWith"
+        // If the vector is empty return immediately.
+        if isEmpty vec then empty
+        else
+            Array.sortWith comparer vec.Elements
+            |> vector.UnsafeCreate
 
     //
     [<CompiledName("Sum")>]
-    let inline sum (vector : vector<'T>) : ^T =
+    let inline sum (vec : vector<'T>) : ^T =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.sum"
 
     //
     [<CompiledName("SumBy")>]
-    let inline sumBy (projection : 'T -> ^U) (vector : vector<'T>) : ^U =
+    let inline sumBy (projection : 'T -> ^U) (vec : vector<'T>) : ^U =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
         notImpl "Vector.sumBy"
 
     //
     [<CompiledName("ToList")>]
-    let toList (vector : vector<'T>) : 'T list =
+    let toList (vec : vector<'T>) : 'T list =
         // Preconditions
-        checkInitialized "vector" vector
-        
-        notImpl "Vector.toList"
+        checkInitialized "vec" vec
+
+        // If the vector is empty return immediately.
+        if isEmpty vec then List.empty
+        else
+            Array.toList vec.Elements
 
     //
     [<CompiledName("ToSeq")>]
-    let toSeq (vector : vector<'T>) : seq<'T> =
+    let toSeq (vec : vector<'T>) : seq<'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
-        notImpl "Vector.toSeq"
+        // If the vector is empty return immediately.
+        if isEmpty vec then Seq.empty
+        else
+            Seq.readonly vec.Elements
 
     //
     [<CompiledName("TryFind")>]
-    let tryFind (predicate : 'T -> bool) (vector : vector<'T>) : 'T option =
+    let tryFind (predicate : 'T -> bool) (vec : vector<'T>) : 'T option =
         // Preconditions
-        checkInitialized "vector" vector
-        
-        notImpl "Vector.tryFind"
+        checkInitialized "vec" vec
+
+        // If the vector is empty return immediately.
+        if isEmpty vec then None
+        else
+            Array.tryFind predicate vec.Elements
 
     //
     [<CompiledName("TryFindIndex")>]
-    let tryFindIndex (predicate : 'T -> bool) (vector : vector<'T>) : int option =
+    let tryFindIndex (predicate : 'T -> bool) (vec : vector<'T>) : int option =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
-        notImpl "Vector.tryFindIndex"
+        // If the vector is empty return immediately.
+        if isEmpty vec then None
+        else
+            Array.tryFindIndex predicate vec.Elements
 
     //
     [<CompiledName("Unzip")>]
-    let unzip (vector : vector<'T1 * 'T2>) : vector<'T1> * vector<'T2> =
+    let unzip (vec : vector<'T1 * 'T2>) : vector<'T1> * vector<'T2> =
         // Preconditions
-        checkInitialized "vector" vector
-        
-        notImpl "Vector.unzip"
+        checkInitialized "vec" vec
+
+        // If the vector is empty return immediately.
+        if isEmpty vec then
+            empty, empty
+        else
+            let vec1, vec2 = Array.unzip vec.Elements
+            vector.UnsafeCreate vec1,
+            vector.UnsafeCreate vec2
 
     //
     [<CompiledName("Unzip3")>]
-    let unzip3 (vector : vector<'T1 * 'T2 * 'T3>) : vector<'T1> * vector<'T2> * vector<'T3> =
+    let unzip3 (vec : vector<'T1 * 'T2 * 'T3>) : vector<'T1> * vector<'T2> * vector<'T3> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
         
-        notImpl "Vector.unzip3"
+        // If the vector is empty return immediately.
+        if isEmpty vec then
+            empty, empty, empty
+        else
+            let vec1, vec2, vec3 = Array.unzip3 vec.Elements
+            vector.UnsafeCreate vec1,
+            vector.UnsafeCreate vec2,
+            vector.UnsafeCreate vec3
 
     //
     [<CompiledName("Zip")>]
@@ -607,50 +681,50 @@ module Vector =
 
     /// Builds a set that contains the same elements as the given vector.
     [<CompiledName("ToSet")>]
-    let toSet (vector : vector<'T>) : Set<'T> =
+    let toSet (vec : vector<'T>) : Set<'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
 
-        Set.ofArray vector.Elements
+        Set.ofArray vec.Elements
 
     /// Applies a function to each element of the array, returning a new array whose elements are
     /// tuples of the original element and the function result for that element.
     [<CompiledName("ProjectValues")>]
-    let projectValues (projection : 'Key -> 'T) (vector : vector<'Key>) : vector<'Key * 'T> =
+    let projectValues (projection : 'Key -> 'T) (vec : vector<'Key>) : vector<'Key * 'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
 
-        vector |> map (fun x -> x, projection x)
+        vec |> map (fun x -> x, projection x)
 
     /// Applies a function to each element of the array, returning a new array whose elements are
     /// tuples of the original element and the function result for that element.
     [<CompiledName("ProjectKeys")>]
-    let projectKeys (projection : 'T -> 'Key) (vector : vector<'T>) : vector<'Key * 'T> =
+    let projectKeys (projection : 'T -> 'Key) (vec : vector<'T>) : vector<'Key * 'T> =
         // Preconditions
-        checkInitialized "vector" vector
+        checkInitialized "vec" vec
 
-        vector |> map (fun x -> projection x, x)
+        vec |> map (fun x -> projection x, x)
 
     /// Returns the first element in the array.
     [<CompiledName("First")>]
-    let inline first (vector : vector<'T>) : 'T =
-        if isEmpty vector then
+    let inline first (vec : vector<'T>) : 'T =
+        if isEmpty vec then
             invalidOp "Cannot retrieve the first element of an empty vector."
-        else vector.[0]
+        else vec.[0]
 
     /// Returns the index of the last element in the array.
     [<CompiledName("LastIndex")>]
-    let inline lastIndex (vector : vector<'T>) : int =
-        if isEmpty vector then
+    let inline lastIndex (vec : vector<'T>) : int =
+        if isEmpty vec then
             invalidOp "The array is empty."
-        else vector.Length - 1
+        else vec.Length - 1
 
     /// Returns the last element in the array.
     [<CompiledName("Last")>]
-    let inline last (vector : vector<'T>) : 'T =
-        if isEmpty vector then
+    let inline last (vec : vector<'T>) : 'T =
+        if isEmpty vec then
             invalidOp "Cannot retrieve the last element of an empty vector."
-        else vector.[vector.Length - 1]
+        else vec.[vec.Length - 1]
 
     (*
     /// Determines if an array contains a specified value.
