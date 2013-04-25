@@ -1084,9 +1084,8 @@ type IntSet private (trie : PatriciaSet) =
         this.Fold ((fun map el ->
             map.Add (mapping el)), IntSet.Empty)
 
-    (* OPTIMIZE : The methods below should be replaced with optimized implementations where possible. *)
-
     //
+    // OPTIMIZE : Replace this with an optimized implementation instead of using Fold.
     member this.Partition (predicate : int -> bool) : IntSet * IntSet =
         this.Fold ((fun (trueSet, falseSet) el ->
             if predicate el then
@@ -1095,6 +1094,15 @@ type IntSet private (trie : PatriciaSet) =
             else
                 trueSet,
                 falseSet.Add el), (IntSet.Empty, IntSet.Empty))
+
+    /// <inherit />
+    override __.Equals other =
+        trie = (other :?> IntSet).Trie
+
+    /// <inherit />
+    override __.GetHashCode () =
+        // TODO : Come up with a better hash code implementation.
+        trie.GetHashCode ()
 
     interface System.IEquatable<IntSet> with
         /// <inherit />
