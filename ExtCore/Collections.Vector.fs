@@ -1335,8 +1335,11 @@ module Vector =
         /// <returns>'U[]</returns>
         [<CompiledName("Choose")>]
         let choose (chooser : 'T -> 'U option) (vec : vector<'T>) : vector<'U> =
-            // TODO
-            notImpl "Vector.Parallel.choose"
+            // Preconditions
+            checkInitialized "vec" vec
+
+            Array.Parallel.choose chooser vec.Elements
+            |> vector.UnsafeCreate
 
         /// <summary>For each element of the array, apply the given function. Concatenate all the results and return the combined array.</summary>
         ///
@@ -1347,8 +1350,11 @@ module Vector =
         /// <returns>'U[]</returns>
         [<CompiledName("Collect")>]
         let collect (mapping : 'T -> vector<'U>) (vec : vector<'T>) : vector<'U> =
-            // TODO
-            notImpl "Vector.Parallel.collect"
+            // Preconditions
+            checkInitialized "vec" vec
+
+            Array.Parallel.collect (mapping >> elements) vec.Elements
+            |> vector.UnsafeCreate
 
         /// <summary>Build a new array whose elements are the results of applying the given function
         /// to each of the elements of the array.</summary>
@@ -1360,8 +1366,12 @@ module Vector =
         /// <returns>'U[]</returns>
         [<CompiledName("Map")>]
         let map (mapping : 'T -> 'U) (vec : vector<'T>) : vector<'U> =
-            // TODO
-            notImpl "Vector.Parallel.map"
+            // Preconditions
+            checkInitialized "vec" vec
+
+            vec.Elements
+            |> Array.Parallel.map mapping
+            |> vector.UnsafeCreate
 
         /// <summary>Build a new array whose elements are the results of applying the given function
         /// to each of the elements of the array. The integer index passed to the
@@ -1374,8 +1384,12 @@ module Vector =
         /// <returns>'U[]</returns>
         [<CompiledName("MapIndexed")>]
         let mapi (mapping : int -> 'T -> 'U) (vec : vector<'T>) : vector<'U> =
-            // TODO
-            notImpl "Vector.Parallel.mapi"
+            // Preconditions
+            checkInitialized "vec" vec
+
+            vec.Elements
+            |> Array.Parallel.mapi mapping
+            |> vector.UnsafeCreate
 
         /// <summary>Apply the given function to each element of the array. </summary>
         ///
@@ -1385,8 +1399,11 @@ module Vector =
         /// <param name="array">The input array.</param>
         [<CompiledName("Iterate")>]
         let iter (action : 'T -> unit) (vec : vector<'T>) : unit =
-            // TODO
-            notImpl "Vector.Parallel.iter"
+            // Preconditions
+            checkInitialized "vec" vec
+
+            vec.Elements
+            |> Array.Parallel.iter action
 
         /// <summary>Apply the given function to each element of the array. The integer passed to the
         /// function indicates the index of element.</summary>
@@ -1397,8 +1414,11 @@ module Vector =
         /// <param name="array">The input array.</param>
         [<CompiledName("IterateIndexed")>]
         let iteri (action : int -> 'T -> unit) (vec : vector<'T>) : unit =
-            // TODO
-            notImpl "Vector.Parallel.iteri"
+            // Preconditions
+            checkInitialized "vec" vec
+
+            vec.Elements
+            |> Array.Parallel.iteri action
 
         /// <summary>Create an array given the dimension and a generator function to compute the elements.</summary>
         /// <remarks>Performs the operation in parallel using System.Threading.Parallel.For.
@@ -1408,8 +1428,12 @@ module Vector =
         /// <returns>'T[]</returns>
         [<CompiledName("Initialize")>]
         let init (count : int) (initializer : int -> 'T) : vector<'T> =
-            // TODO
-            notImpl "Vector.Parallel.init"
+            // Preconditions
+            if count < 0 then
+                invalidArg "count" "The number of elements to initialize cannot be negative."
+
+            Array.Parallel.init count initializer
+            |> vector.UnsafeCreate
 
         /// <summary>Split the collection into two collections, containing the 
         /// elements for which the given predicate returns "true" and "false"
@@ -1421,7 +1445,13 @@ module Vector =
         /// <returns>'T[] * 'T[]</returns>
         [<CompiledName("Partition")>]
         let partition (predicate : 'T -> bool) (vec : vector<'T>) : vector<'T> * vector<'T> =
-            // TODO
-            notImpl "Vector.Parallel.partition"
+            // Preconditions
+            checkInitialized "vec" vec
+
+            let trueArray, falseArray =
+                Array.Parallel.partition predicate vec.Elements
+
+            vector.UnsafeCreate trueArray,
+            vector.UnsafeCreate falseArray
 
 #endif
