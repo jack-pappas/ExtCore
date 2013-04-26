@@ -31,6 +31,15 @@ open ExtCore.Control
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     open System.Collections
+
+    /// Returns a new array created by transforming each element of an
+    /// array into an Async value which returns the element when executed.
+    [<CompiledName("Lift")>]
+    let lift (array : 'T[]) : Async<'T>[] =
+        // Preconditions
+        checkNonNull "array" array
+
+        Array.map async.Return array
         
     (* OPTIMIZE :   Some of the functions below build an Async workflow by folding forwards (left-to-right)
                     over the array. Depending on how async is implemented internally though, it might
@@ -265,10 +274,458 @@ module Array =
 
     // TODO : mapReduce
 
+/// Functions for manipulating lists within 'async' workflows.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module List =
+    (* NOTE :   Many of the functions below are implemented with a simple public "wrapper"
+                function which calls a private recursive implementation. This reduces memory
+                compared to a naive implementation using something like List.fold -- these
+                recursive implementations avoid creating a large Async instance up-front
+                (which would consume approximately the same amount of memory as the list itself). *)
+
+    //
+    [<CompiledName("Lift")>]
+    let lift (list : 'T list) : Async<'T> list =
+        // Preconditions
+        checkNonNull "list" list
+
+        List.map async.Return list
+
+    /// Async implementation of List.map.
+    let rec private mapImpl (mapping, mapped : 'U list, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            // Reverse the list of mapped values before returning it.
+            return List.rev mapped
+
+        | el :: pending ->
+            // Apply the current list element to the mapping function.
+            let! mappedEl = mapping el
+
+            // Cons the result to the list of mapped values, then continue
+            // mapping the rest of the pending list elements.
+            return! mapImpl (mapping, mappedEl :: mapped, pending)
+        }
+
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> Async<'U>) (list : 'T list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        mapImpl (mapping, [], list)
+
+    /// Async implementation of List.mapi.
+    let rec private mapiImpl (mapping : FSharpFunc<_,_,_>, mapped : 'U list, pending : 'T list, currentIndex) =
+        async {
+        match pending with
+        | [] ->
+            // Reverse the list of mapped values before returning it.
+            return List.rev mapped
+
+        | el :: pending ->
+            // Apply the current list element to the mapping function.
+            let! mappedEl = mapping.Invoke (currentIndex, el)
+
+            // Cons the result to the list of mapped values, then continue
+            // mapping the rest of the pending list elements.
+            return! mapiImpl (mapping, mappedEl :: mapped, pending, currentIndex + 1)
+        }
+
+    //
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int -> 'T -> Async<'U>) (list : 'T list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+        mapiImpl (mapping, [], list, 0)
+
+    /// Async implementation of List.fold.
+    let rec private foldImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) =
+        async {
+        match pending with
+        | [] ->
+            // Return the final state value.
+            return state
+
+        | el :: pending ->
+            // Apply the folder to the current list element and state value.
+            let! state = folder.Invoke (state, el)
+
+            // Continue folding over the rest of the list.
+            return! foldImpl (folder, pending, state)
+        }
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> Async<'State>) (state : 'State) (list : 'T list) : Async<'State> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+        foldImpl (folder, list, state)
+
+    /// Async implementation of List.foldBack.
+    let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) =
+        async {
+        match pending with
+        | [] ->
+            // Return the final state value.
+            return state
+
+        | el :: pending ->
+            // Apply the folder to the rest of the list before processing the
+            // current element (because we're folding backwards).
+            let! state = foldBackImpl (folder, pending, state)
+
+            // Apply the folder to the current list element and state value.
+            return! folder.Invoke (el, state)
+        }
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'State -> Async<'State>) (list : 'T list) (state : 'State) : Async<'State> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+        foldBackImpl (folder, list, state)
+
+    /// Async implementation of List.choose.
+    let rec private chooseImpl (chooser, chosen : 'U list, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            // Reverse the list of chosen values before returning it.
+            return List.rev chosen
+
+        | el :: pending ->
+            // Apply the current list element to the chooser function.
+            let! result = chooser el
+            
+            match result with
+            | None ->
+                // Continue processing the remaining elements.
+                return! chooseImpl (chooser, chosen, pending)
+
+            | Some result ->
+                // Cons the result to the list of chosen values, then continue
+                // mapping the rest of the pending list elements.
+                return! chooseImpl (chooser, result :: chosen, pending)
+        }
+
+    //
+    [<CompiledName("Choose")>]
+    let choose (chooser : 'T -> Async<'U option>) (list : 'T list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        chooseImpl (chooser, [], list)
+
+    /// Async implementation of List.collect.
+    // OPTIMIZE : It may be possible to reduce memory usage by processing the "outer" list
+    // backwards (like List.foldBack), in which case we could append each of the resulting
+    // lists to an accumulator and we wouldn't need to reverse the result at the end.
+    let rec private collectImpl (mapping, collected : 'U list, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            // Return the results before returning.
+            return List.rev collected
+
+        | el :: pending ->
+            // Apply the current element to the mapping function.
+            let! result = mapping el
+
+            // Append the result (a list) to the list of collected values and
+            // continue processing the remaining list elements.
+            return! collectImpl (mapping, collected @ result, pending)
+
+        }
+
+    //
+    [<CompiledName("Collect")>]
+    let collect (mapping : 'T -> Async<'U list>) (list : 'T list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        collectImpl (mapping, [], list)
+
+    /// Async implementation of List.exists.
+    let rec private existsImpl (predicate, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            // None of the list elements matched the predicate.
+            return false
+
+        | el :: pending ->
+            // Apply the current list element to the predicate.
+            let! result = predicate el
+
+            // If the element matched, short-circuit (return immediately);
+            // otherwise, continue processing the rest of the list.
+            if result then
+                return true
+            else
+                return! existsImpl (predicate, pending)
+        }
+
+    //
+    [<CompiledName("Exists")>]
+    let exists (predicate : 'T -> Async<bool>) (list : 'T list) : Async<bool> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        existsImpl (predicate, list)
+
+    /// Async implementation of List.forall.
+    let rec private forallImpl (predicate, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            // All of the list elements matched the predicate.
+            return true
+
+        | el :: pending ->
+            // Apply the current list element to the predicate.
+            let! result = predicate el
+
+            // If the element didn't match, short-circuit (return immediately);
+            // otherwise, continue processing the rest of the list.
+            if result then
+                return! forallImpl (predicate, pending)
+            else
+                return false
+        }
+
+    //
+    [<CompiledName("Forall")>]
+    let forall (predicate : 'T -> Async<bool>) (list : 'T list) : Async<bool> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        forallImpl (predicate, list)
+
+    /// Async implementation of List.filter.
+    let rec private filterImpl (predicate, filtered : 'T list, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            // Reverse the list of filtered values before returning it.
+            return List.rev filtered
+
+        | el :: pending ->
+            // Apply the current list element to the predicate.
+            let! result = predicate el
+
+            // If the current element matched the predicate, cons it onto the list of
+            // filtered elements and continue processing the rest of the list.
+            let filtered = if result then el :: filtered else filtered
+            return! filterImpl (predicate, filtered, pending)
+        }
+
+    //
+    [<CompiledName("Filter")>]
+    let filter (predicate : 'T -> Async<bool>) (list : 'T list) : Async<'T list> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        filterImpl (predicate, [], list)
+
+    /// Async implementation of List.tryFind.
+    let rec private tryFindImpl (predicate, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            // None of the list elements matched the predicate.
+            return None
+
+        | el :: pending ->
+            // Apply the current list element to the predicate.
+            let! result = predicate el
+
+            // If the element matched, short-circuit (return immediately);
+            // otherwise, continue processing the rest of the list.
+            if result then
+                return Some el
+            else
+                return! tryFindImpl (predicate, pending)
+        }
+
+    //
+    [<CompiledName("TryFind")>]
+    let tryFind (predicate : 'T -> Async<bool>) (list : 'T list) : Async<'T option> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        tryFindImpl (predicate, list)
+
+    //
+    [<CompiledName("Find")>]
+    let find (predicate : 'T -> Async<bool>) (list : 'T list) : Async<'T> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation for tryFind.
+        async {
+        let! result = tryFindImpl (predicate, list)
+
+        match result with
+        | Some result ->
+            return result
+
+        | None ->
+            // No matching element was found, so raise an exception.
+            // NOTE : The 'return' keyword is needed here for type-checking reasons.
+            return keyNotFound "The list does not contain any elements which match the given predicate."
+        }
+
+    /// Async implementation of List.tryFindIndex.
+    let rec private tryFindIndexImpl (predicate, pending : 'T list, currentIndex) =
+        async {
+        match pending with
+        | [] ->
+            // None of the list elements matched the predicate.
+            return None
+
+        | el :: pending ->
+            // Apply the current list element to the predicate.
+            let! result = predicate el
+
+            // If the element matched, short-circuit (return immediately);
+            // otherwise, continue processing the rest of the list.
+            if result then
+                return Some currentIndex
+            else
+                return! tryFindIndexImpl (predicate, pending, currentIndex + 1)
+        }
+
+    //
+    [<CompiledName("TryFindIndex")>]
+    let tryFindIndex (predicate : 'T -> Async<bool>) (list : 'T list) : Async<int option> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        tryFindIndexImpl (predicate, list, 0)
+
+    //
+    [<CompiledName("FindIndex")>]
+    let findIndex (predicate : 'T -> Async<bool>) (list : 'T list) : Async<int> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation for tryFindIndex.
+        async {
+        let! result = tryFindIndexImpl (predicate, list, 0)
+
+        match result with
+        | Some result ->
+            return result
+
+        | None ->
+            // No matching element was found, so raise an exception.
+            // NOTE : The 'return' keyword is needed here for type-checking reasons.
+            return keyNotFound "The list does not contain any elements which match the given predicate."
+        }
+
+    /// Async implementation of List.init.
+    let rec private initImpl (initializer, initialized : 'T list, count, index) =
+        async {
+        if index >= count then
+            // Reverse the initialized list and return it.
+            return List.rev initialized
+        else
+            // Initialize a value with the current index.
+            let! newEl = initializer index
+
+            // Cons the new element onto the list of initialized values
+            // and continue processing.
+            return! initImpl (initializer, newEl :: initialized, count, index + 1)
+        }
+
+    //
+    [<CompiledName("Initialize")>]
+    let init (count : int) (initializer : int -> Async<'T>) : Async<'T list> =
+        // Preconditions
+        if count < 0 then
+            invalidArg "count" "The number of elements to initialize cannot be negative."
+
+        // Call the recursive implementation.
+        initImpl (initializer, [], count, 0)
+
+    /// Async implementation of Async.iter.
+    let rec private iterImpl (action, pending : 'T list) =
+        async {
+        match pending with
+        | [] ->
+            return ()
+        | el :: pending ->
+            // Apply the action to the current element.
+            do! action el
+
+            // Continue processing the rest of the list.
+            return! iterImpl (action, pending)
+        }
+
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> Async<unit>) (list : 'T list) : Async<unit> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        iterImpl (action, list)
+
+    /// Async implementation of Async.iteri.
+    let rec private iteriImpl (action : FSharpFunc<_,_,_>, pending : 'T list, index) =
+        async {
+        match pending with
+        | [] ->
+            return ()
+        | el :: pending ->
+            // Apply the action to the current element.
+            do! action.Invoke (index, el)
+
+            // Continue processing the rest of the list.
+            return! iteriImpl (action, pending, index + 1)
+        }
+
+    //
+    [<CompiledName("IterateIndexed")>]
+    let iteri (action : int -> 'T -> Async<unit>) (list : 'T list) : Async<unit> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        let action = FSharpFunc<_,_,_>.Adapt action
+        iteriImpl (action, list, 0)
+
 
 /// Functions for manipulating sequences within 'async' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
+    //
+    [<CompiledName("Lift")>]
+    let lift (source : seq<'T>) : seq<Async<'T>> =
+        // Preconditions
+        checkNonNull "source" source
+
+        Seq.map async.Return source
+
 (*
     //
     [<CompiledName("Map")>]

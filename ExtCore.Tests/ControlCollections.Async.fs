@@ -29,6 +29,10 @@ open FsUnit
 /// Tests for the ExtCore.Control.Collections.Async.Array module.
 module Array =
     [<TestCase>]
+    let lift () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
     let init () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
@@ -65,8 +69,83 @@ module Array =
         Assert.Inconclusive "Test not yet implemented."
 
 
+/// Tests for the ExtCore.Control.Collections.Async.List module.
+module List =
+    [<TestCase>]
+    let lift () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let fold () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let foldBack () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let choose () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let collect () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let exists () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let forall () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let filter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let tryFind () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let find () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let tryFindIndex () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let findIndex () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let init () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iter () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let iteri () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
 /// Tests for the ExtCore.Control.Collections.Async.Seq module.
 module Seq =
+    [<TestCase>]
+    let lift () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
 
     /// Tests for the ExtCore.Control.Collections.Async.Seq.Parallel module.
     module Parallel =

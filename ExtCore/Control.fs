@@ -1397,7 +1397,7 @@ module StatefulChoice =
 module Async =
     open Microsoft.FSharp.Control
 
-    //
+    /// Transforms an Async value using the specified function.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (value : Async<'T>) : Async<'U> =
         async {
