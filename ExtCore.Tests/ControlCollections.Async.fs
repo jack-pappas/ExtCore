@@ -30,19 +30,56 @@ open FsUnit
 module Array =
     [<TestCase>]
     let lift () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        [| 1; 1; 2; 3; 5; 8; 13; 21; |]
+        |> Async.Array.lift
+        |> Array.map Async.RunSynchronously
+        |> should equal
+            [| 1; 1; 2; 3; 5; 8; 13; 21; |]
 
     [<TestCase>]
     let init () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for creating an empty array.
+        Async.Array.init 0 <| fun x ->
+            async {
+            return x * 17
+            }
+        |> Async.RunSynchronously
+        |> Array.isEmpty
+        |> should be True
+
+        // Sample usage test cases.
+        Async.Array.init 4 <| fun x ->
+            async {
+            return x * 17
+            }
+        |> Async.RunSynchronously
+        |> should equal
+            [| 0; 17; 34; 51; |]
 
     [<TestCase>]
     let map () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        [| 1; 1; 2; 3; 5; 8; 13; 21; |]
+        |> Async.Array.map (fun el ->
+            async {
+            return el * 3
+            })
+        |> Async.RunSynchronously
+        |> should equal
+            [| 3; 3; 6; 9; 15; 24; 39; 63; |]
 
     [<TestCase>]
     let mapi () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        [| 1; 1; 2; 3; 5; 8; 13; 21; |]
+        |> Async.Array.mapi (fun idx el ->
+            async {
+            return idx + el
+            })
+        |> Async.RunSynchronously
+        |> should equal
+            [1; 2; 4; 6; 9; 13; 19; 28]
 
     [<TestCase>]
     let map2 () : unit =
@@ -54,19 +91,147 @@ module Array =
 
     [<TestCase>]
     let fold () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        (String.empty, [| 2; 17; 4; 12; |])
+        ||> Async.Array.fold (fun state x ->
+            async {
+            return state + x.ToString()
+            })
+        |> Async.RunSynchronously
+        |> should equal "217412"
 
     [<TestCase>]
     let foldi () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        (String.empty, [| 2; 17; 4; 12; |])
+        ||> Async.Array.foldi (fun state idx x ->
+            async {
+            return state + (x + idx).ToString()
+            })
+        |> Async.RunSynchronously
+        |> should equal "218615"
 
     [<TestCase>]
     let iter () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        do
+            // Test case for an empty array.
+            let elements = ResizeArray ()
+
+            Array.empty
+            |> Async.Array.iter (fun x ->
+                async {
+                do elements.Add (x * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.isEmpty elements
+            |> should be True
+
+        do
+            // Sample usage test case.
+            let elements = ResizeArray ()
+
+            [| 2; 17; 4; 12; |]
+            |> Async.Array.iter (fun x ->
+                async {
+                do elements.Add (x * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.toArray elements
+            |> should equal
+                [| 6; 51; 12; 36; |]
+
+        do
+            // Sample usage test case.
+            let elements = ResizeArray ()
+
+            [| 11; 23; 47; |]
+            |> Async.Array.iter (fun x ->
+                async {
+                do elements.Add (x * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.toArray elements
+            |> should equal
+                [| 33; 69; 141; |]
+
+        do
+            // Sample usage test case.
+            let elements = ResizeArray ()
+
+            [| 7; 11; 18; |]
+            |> Async.Array.iter (fun x ->
+                async {
+                do elements.Add (x * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.toArray elements
+            |> should equal
+                [| 21; 33; 54; |]
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        do
+            // Test case for an empty ArrayView.
+            let elements = ResizeArray ()
+
+            Array.empty
+            |> Async.Array.iteri (fun idx x ->
+                async {
+                do elements.Add ((x + idx) * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.isEmpty elements
+            |> should be True
+
+        do
+            // Sample usage test case.
+            let elements = ResizeArray ()
+
+            [| 2; 17; 4; 12; |]
+            |> Async.Array.iteri (fun idx x ->
+                async {
+                do elements.Add ((x + idx) * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.toArray elements
+            |> should equal
+                [| 6; 54; 18; 45; |]
+
+        do
+            // Sample usage test case.
+            let elements = ResizeArray ()
+
+            [| 11; 23; 47; |]
+            |> Async.Array.iteri (fun idx x ->
+                async {
+                do elements.Add ((x + idx) * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.toArray elements
+            |> should equal
+                [| 33; 72; 147; |]
+
+        do
+            // Sample usage test case.
+            let elements = ResizeArray ()
+
+            [| 7; 11; 18; |]
+            |> Async.Array.iteri (fun idx x ->
+                async {
+                do elements.Add ((x + idx) * 3)
+                })
+            |> Async.RunSynchronously
+
+            ResizeArray.toArray elements
+            |> should equal
+                [| 21; 36; 60; |]
 
 
 /// Tests for the ExtCore.Control.Collections.Async.List module.
