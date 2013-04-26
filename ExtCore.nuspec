@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>ExtCore</id>
-        <version>0.8.16</version>
+        <version>0.8.17</version>
         <dependencies>
         </dependencies>
         <title>ExtCore</title>
@@ -11,6 +11,7 @@
         <licenseUrl>http://opensource.org/licenses/Apache-2.0</licenseUrl>
         <projectUrl>https://github.com/jack-pappas/ExtCore</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <summary>ExtCore is an extended core library for F#.</summary>
         <description>ExtCore provides extensions to the F# core library (FSharp.Core) and aims to help you build industrial-strength F# applications. These extensions include additional functions for modules such as Array, List, Set, and Map; immutable IntSet, IntMap, LazyList, and Queue collections; a variety of computation expressions (workflows); and "workflow collections" -- collections modules which have been adapted to work seamlessly from within workflows.</description>
         <tags>f# fsharp workflow collections immutable workflow monad computation fsharpx intmap lazylist</tags>
     </metadata>
