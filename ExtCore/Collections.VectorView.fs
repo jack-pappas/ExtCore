@@ -19,22 +19,41 @@ limitations under the License.
 
 namespace ExtCore.Collections
 
+open System.Runtime.InteropServices
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
 
+(* Turn off warning about unverifiable IL; it is due to the use of
+   [<StructLayout>] on the VectorView type. *)
+#nowarn "9"
 
-(* TODO : Implement the VectorView type. *)
+(*
+//
+[<Struct>]
+[<StructLayout(LayoutKind.Sequential)>]
+type VectorView<'T> private (vector : vector<'T>, offset : int, count : int) =
+    //
+    member __.Vector
+        with get () = vector
+
+    //
+    member __.Offset
+        with get () = offset
+
+    //
+    member __.Count
+        with get () = count
+
+    //
+    new (vec : vector<'T>) =
+        VectorView (vec, 0, vec.Length)
+*)
 
 (*
 /// Functional operators related to the VectorView type (views of immutable arrays).
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VectorView =
-    //
-    let dummy () = ()
-*)
-    (*
-
     //
     [<CompiledName("Average")>]
     let average (vector : vector<'T>) =
