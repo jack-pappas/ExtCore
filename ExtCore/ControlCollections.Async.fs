@@ -46,7 +46,7 @@ module Array =
                     be more efficient to fold backwards so that as each element is processed it can tail-call
                     the next element. *)
 
-    //
+    /// Async implementation of Array.init.
     [<CompiledName("Init")>]
     let init (count : int) (initializer : int -> Async<'T>) : Async<'T[]> =
         // Preconditions
@@ -65,7 +65,7 @@ module Array =
         return result
         }
 
-    //
+    /// Async implementation of Array.map.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> Async<'U>) (array : 'T[]) : Async<'U[]> =
         // Preconditions
@@ -84,7 +84,7 @@ module Array =
         return result
         }
 
-    //
+    /// Async implementation of Array.mapi.
     [<CompiledName("MapIndexed")>]
     let mapi (mapping : int -> 'T -> Async<'U>) (array : 'T[]) : Async<'U[]> =
         // Preconditions
@@ -105,7 +105,7 @@ module Array =
         return result
         }
 
-    //
+    /// Async implementation of Array.map2.
     [<CompiledName("Map2")>]
     let map2 (mapping : 'T1 -> 'T2 -> Async<'U>) (array1 : 'T1[]) (array2 : 'T2[]) : Async<'U[]> =
         // Preconditions
@@ -129,7 +129,7 @@ module Array =
         return result
         }
 
-    //
+    /// Async implementation of Array.mapPartition.
     [<CompiledName("MapPartition")>]
     let mapPartition (partitioner : 'T -> Async<Choice<'U, 'V>>) (array : 'T[]) : Async<'U[] * 'V[]> =
         // Preconditions
@@ -161,7 +161,7 @@ module Array =
         return result1, result2
         }
 
-    //
+    /// Async implementation of Array.fold.
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
         // Preconditions
@@ -179,7 +179,7 @@ module Array =
             return! folder.Invoke (state, el)
             })
 
-    //
+    /// Async implementation of Array.foldi.
     [<CompiledName("FoldIndexed")>]
     let foldi (folder : 'State -> int -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
         // Preconditions
@@ -197,7 +197,7 @@ module Array =
             return! folder.Invoke (state, index, el)
             })
 
-    //
+    /// Async implementation of Array.iter.
     [<CompiledName("Iterate")>]
     let iter (action : 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
         // Preconditions
@@ -213,7 +213,7 @@ module Array =
             do! action el
             })
 
-    //
+    /// Async implementation of Array.iteri.
     [<CompiledName("IterateIndexed")>]
     let iteri (action : int -> 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
         // Preconditions
@@ -232,7 +232,7 @@ module Array =
             })
 
     (*
-    //
+    /// Async implementation of Array.reduce.
     [<CompiledName("Reduce")>]
     let reduce (reduction : 'T -> 'T -> Async<'T>) (array : 'T[]) : Async<'T> =
         // Preconditions
@@ -242,7 +242,7 @@ module Array =
 
         raise <| System.NotImplementedException "ExtCore.Control.Collections.Async.Array.reduce"
 
-    //
+    /// Async implementation of Array.tryFind.
     [<CompiledName("TryFind")>]
     let tryFind (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<'T option> =
         // Preconditions
@@ -261,7 +261,7 @@ module Array =
         return None
         }
 
-    //
+    /// Async implementation of Array.find.
     [<CompiledName("Find")>]
     let find (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<'T> =
         // Preconditions
@@ -283,7 +283,8 @@ module List =
                 recursive implementations avoid creating a large Async instance up-front
                 (which would consume approximately the same amount of memory as the list itself). *)
 
-    //
+    /// Returns a new list created by transforming each element of an
+    /// list into an Async value which returns the element when executed.
     [<CompiledName("Lift")>]
     let lift (list : 'T list) : Async<'T> list =
         // Preconditions
@@ -308,7 +309,7 @@ module List =
             return! mapImpl (mapping, mappedEl :: mapped, pending)
         }
 
-    //
+    /// Async implementation of List.map.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> Async<'U>) (list : 'T list) : Async<'U list> =
         // Preconditions
@@ -334,7 +335,7 @@ module List =
             return! mapiImpl (mapping, mappedEl :: mapped, pending, currentIndex + 1)
         }
 
-    //
+    /// Async implementation of List.mapi.
     [<CompiledName("MapIndexed")>]
     let mapi (mapping : int -> 'T -> Async<'U>) (list : 'T list) : Async<'U list> =
         // Preconditions
@@ -360,7 +361,7 @@ module List =
             return! foldImpl (folder, pending, state)
         }
 
-    //
+    /// Async implementation of List.fold.
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> 'T -> Async<'State>) (state : 'State) (list : 'T list) : Async<'State> =
         // Preconditions
@@ -387,7 +388,7 @@ module List =
             return! folder.Invoke (el, state)
         }
 
-    //
+    /// Async implementation of List.foldBack.
     [<CompiledName("FoldBack")>]
     let foldBack (folder : 'T -> 'State -> Async<'State>) (list : 'T list) (state : 'State) : Async<'State> =
         // Preconditions
@@ -420,7 +421,7 @@ module List =
                 return! chooseImpl (chooser, result :: chosen, pending)
         }
 
-    //
+    /// Async implementation of List.choose.
     [<CompiledName("Choose")>]
     let choose (chooser : 'T -> Async<'U option>) (list : 'T list) : Async<'U list> =
         // Preconditions
@@ -450,7 +451,7 @@ module List =
 
         }
 
-    //
+    /// Async implementation of List.collect.
     [<CompiledName("Collect")>]
     let collect (mapping : 'T -> Async<'U list>) (list : 'T list) : Async<'U list> =
         // Preconditions
@@ -479,7 +480,7 @@ module List =
                 return! existsImpl (predicate, pending)
         }
 
-    //
+    /// Async implementation of List.exists.
     [<CompiledName("Exists")>]
     let exists (predicate : 'T -> Async<bool>) (list : 'T list) : Async<bool> =
         // Preconditions
@@ -508,7 +509,7 @@ module List =
                 return false
         }
 
-    //
+    /// Async implementation of List.forall.
     [<CompiledName("Forall")>]
     let forall (predicate : 'T -> Async<bool>) (list : 'T list) : Async<bool> =
         // Preconditions
@@ -535,7 +536,7 @@ module List =
             return! filterImpl (predicate, filtered, pending)
         }
 
-    //
+    /// Async implementation of List.filter.
     [<CompiledName("Filter")>]
     let filter (predicate : 'T -> Async<bool>) (list : 'T list) : Async<'T list> =
         // Preconditions
@@ -564,7 +565,7 @@ module List =
                 return! tryFindImpl (predicate, pending)
         }
 
-    //
+    /// Async implementation of List.tryFind.
     [<CompiledName("TryFind")>]
     let tryFind (predicate : 'T -> Async<bool>) (list : 'T list) : Async<'T option> =
         // Preconditions
@@ -573,7 +574,7 @@ module List =
         // Call the recursive implementation.
         tryFindImpl (predicate, list)
 
-    //
+    /// Async implementation of List.find.
     [<CompiledName("Find")>]
     let find (predicate : 'T -> Async<bool>) (list : 'T list) : Async<'T> =
         // Preconditions
@@ -613,7 +614,7 @@ module List =
                 return! tryFindIndexImpl (predicate, pending, currentIndex + 1)
         }
 
-    //
+    /// Async implementation of List.tryFindIndex.
     [<CompiledName("TryFindIndex")>]
     let tryFindIndex (predicate : 'T -> Async<bool>) (list : 'T list) : Async<int option> =
         // Preconditions
@@ -622,7 +623,7 @@ module List =
         // Call the recursive implementation.
         tryFindIndexImpl (predicate, list, 0)
 
-    //
+    /// Async implementation of List.findIndex.
     [<CompiledName("FindIndex")>]
     let findIndex (predicate : 'T -> Async<bool>) (list : 'T list) : Async<int> =
         // Preconditions
@@ -657,7 +658,7 @@ module List =
             return! initImpl (initializer, newEl :: initialized, count, index + 1)
         }
 
-    //
+    /// Async implementation of List.init.
     [<CompiledName("Initialize")>]
     let init (count : int) (initializer : int -> Async<'T>) : Async<'T list> =
         // Preconditions
@@ -681,7 +682,7 @@ module List =
             return! iterImpl (action, pending)
         }
 
-    //
+    /// Async implementation of List.iter.
     [<CompiledName("Iterate")>]
     let iter (action : 'T -> Async<unit>) (list : 'T list) : Async<unit> =
         // Preconditions
@@ -704,7 +705,7 @@ module List =
             return! iteriImpl (action, pending, index + 1)
         }
 
-    //
+    /// Async implementation of List.iteri.
     [<CompiledName("IterateIndexed")>]
     let iteri (action : int -> 'T -> Async<unit>) (list : 'T list) : Async<unit> =
         // Preconditions
@@ -718,7 +719,8 @@ module List =
 /// Functions for manipulating sequences within 'async' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
-    //
+    /// Returns a new sequence created by transforming each element of an
+    /// sequence into an Async value which returns the element when executed.
     [<CompiledName("Lift")>]
     let lift (source : seq<'T>) : seq<Async<'T>> =
         // Preconditions
