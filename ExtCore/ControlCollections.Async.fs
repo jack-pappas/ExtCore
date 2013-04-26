@@ -438,8 +438,8 @@ module List =
         async {
         match pending with
         | [] ->
-            // Return the results before returning.
-            return List.rev collected
+            // Return the collected results.
+            return collected
 
         | el :: pending ->
             // Apply the current element to the mapping function.
