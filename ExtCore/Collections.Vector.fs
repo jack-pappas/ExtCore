@@ -775,9 +775,15 @@ module Vector =
     let sub (vec : vector<'T>) (startIndex : int) (count : int) =
         // Preconditions
         checkInitialized "vec" vec
-        // TODO : startIndex in bounds, count >= 0
-        
-        notImpl "Vector.sub"
+        if startIndex < 0 then
+            invalidArg "startIndex" "The start index cannot be negative."
+        elif count < 0 then
+            invalidArg "count" "The number of elements cannot be negative."
+        elif startIndex + count > length vec then
+            invalidArg "count" "The number of elements is too great given the start index and vector length."
+
+        Array.sub vec.Elements startIndex count
+        |> vector.UnsafeCreate
 
     //
     [<CompiledName("Sort")>]
@@ -923,8 +929,15 @@ module Vector =
         // Preconditions
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
-        
-        notImpl "Vector.zip"
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
+
+        // If the vectors are empty, return immediately.
+        if isEmpty vector1 then
+            vector.Empty
+        else
+            Array.zip vector1.Elements vector2.Elements
+            |> vector.UnsafeCreate
 
     /// <summary>Combines three arrays into an vector of triples. The three arrays must have equal lengths,
     /// otherwise an <c>ArgumentException</c> is raised.</summary>
@@ -940,8 +953,17 @@ module Vector =
         checkInitialized "vector1" vector1
         checkInitialized "vector2" vector2
         checkInitialized "vector3" vector3
-        
-        notImpl "Vector.zip3"
+        if vector1.Length <> vector2.Length then
+            invalidArg "vector2" "The vectors have different lengths."
+        elif vector1.Length <> vector3.Length then
+            invalidArg "vector3" "The vectors have different lengths."
+
+        // If the vectors are empty, return immediately.
+        if isEmpty vector1 then
+            vector.Empty
+        else
+            Array.zip3 vector1.Elements vector2.Elements vector3.Elements
+            |> vector.UnsafeCreate
 
     /// Builds a vector that contains the elements of the set in order.
     [<CompiledName("OfSet")>]

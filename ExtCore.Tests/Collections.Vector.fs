@@ -1310,6 +1310,42 @@ let choose2 () : unit =
 let countWith () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
+[<TestCase>]
+let max () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let maxBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let min () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let minBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sub () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let unzip () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let unzip3 () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let zip () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let zip3 () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
 
 (* Tests for the Array.Parallel module. *)
 #if FX_NO_TPL_PARALLEL
