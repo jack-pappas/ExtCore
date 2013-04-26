@@ -1746,28 +1746,28 @@ module TagSet =
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
-    let inline ofSeq source : TagSet<'Tag> =
+    let (*inline*) ofSeq source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfSeq source
         |> retype
 
     /// Builds a set that contains the same elements as the given list.
     [<CompiledName("OfList")>]
-    let inline ofList source : TagSet<'Tag> =
+    let (*inline*) ofList source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfList source
         |> retype
 
     /// Builds a set that contains the same elements as the given array.
     [<CompiledName("OfArray")>]
-    let inline ofArray source : TagSet<'Tag> =
+    let (*inline*) ofArray source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfArray source
         |> retype
 
     /// Builds an IntSet that contains the same elements as the given Set.
     [<CompiledName("OfSet")>]
-    let inline ofSet source : TagSet<'Tag> =
+    let (*inline*) ofSet source : TagSet<'Tag> =
         // Preconditions are checked by the member.
         IntSet.OfSet source
         |> retype

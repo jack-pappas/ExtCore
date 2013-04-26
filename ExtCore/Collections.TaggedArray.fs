@@ -41,7 +41,7 @@ module TaggedArray =
         let len = array.Length
         let results = Array.zeroCreate len
         for i = 0 to len - 1 do
-            results.[i] <- mapping.Invoke (Tag.ofInt<'Tag> i, array.[i])
+            results.[i] <- mapping.Invoke (Int32WithMeasure<'Tag> i, array.[i])
         results
 
     /// Similar to Array.mapi, but 'tags' the index values with a unit-of-measure
@@ -59,7 +59,7 @@ module TaggedArray =
 
         let results = Array.zeroCreate len1
         for i = 0 to len1 - 1 do
-            results.[i] <- mapping.Invoke (Tag.ofInt<'Tag> i, array1.[i], array2.[i])
+            results.[i] <- mapping.Invoke (Int32WithMeasure<'Tag> i, array1.[i], array2.[i])
         results
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
@@ -74,7 +74,7 @@ module TaggedArray =
         let mutable state = state
         let len = Array.length array
         for i = 0 to len - 1 do
-            state <- folder.Invoke (Tag.ofInt<'Tag> i, state, array.[i])
+            state <- folder.Invoke (Int32WithMeasure<'Tag> i, state, array.[i])
         state
 
     /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
@@ -89,7 +89,7 @@ module TaggedArray =
         
         let mutable state = state
         for i = Array.length array - 1 downto 0 do
-            state <- folder.Invoke (Tag.ofInt<'Tag> i, array.[i], state)
+            state <- folder.Invoke (Int32WithMeasure<'Tag> i, array.[i], state)
         state
 
 #endif
