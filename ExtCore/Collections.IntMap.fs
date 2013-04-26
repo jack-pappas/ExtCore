@@ -1640,7 +1640,7 @@ module TagMap =
         // Preconditions
         checkNonNull "map" map
 
-        defaultArg (map.TryFind key) defaultValue
+        defaultArg (map.TryFind (int key)) defaultValue
 
     /// Returns the key of the first mapping in the collection which satisfies the given
     /// predicate. Returns None if no such mapping is found.
@@ -1676,7 +1676,7 @@ module TagMap =
         // Preconditions
         checkNonNull "map" map
 
-        map.TryAdd (key, value)
+        map.TryAdd (int key, value)
         |> retype
 
     /// Removes an element from the domain of the map.
