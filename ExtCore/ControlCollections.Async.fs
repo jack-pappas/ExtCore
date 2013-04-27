@@ -41,6 +41,102 @@ module Array =
 
         Array.map async.Return array
 
+    /// Async implementation of Array.fold.
+    let rec private foldImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) =
+        async {
+        if currentIndex >= array.Length then
+            // We've reached the end of the array so return the final state value.
+            return state
+        else
+            // Invoke the folder with the current array element and state value.
+            let! state = folder.Invoke (state, array.[currentIndex])
+
+            // Continue folding over the remaining array elements.
+            return! foldImpl (folder, array, state, currentIndex + 1)
+        }
+
+    /// Async implementation of Array.fold.
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+        foldImpl (folder, array, state, 0)
+
+    /// Async implementation of Array.foldBack.
+    let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) =
+        async {
+        if currentIndex < 0 then
+            // We've reached the beginning of the array so return the final state value.
+            return state
+        else
+            // Invoke the folder with the current array element and state value.
+            let! state = folder.Invoke (array.[currentIndex], state)
+
+            // Continue folding over the remaining array elements.
+            return! foldBackImpl (folder, array, state, currentIndex - 1)
+        }
+
+    /// Async implementation of Array.foldBack.
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'State -> Async<'State>) (array : 'T[]) (state : 'State) : Async<'State> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+        foldBackImpl (folder, array, state, array.Length - 1)
+
+    /// Async implementation of Array.foldi.
+    let rec private foldiImpl (folder : FSharpFunc<_,_,_,_>, array : 'T[], state : 'State, currentIndex) =
+        async {
+        if currentIndex >= array.Length then
+            // We've reached the end of the array so return the final state value.
+            return state
+        else
+            // Invoke the folder with the current array element and state value.
+            let! state = folder.Invoke (state, currentIndex, array.[currentIndex])
+
+            // Continue folding over the remaining array elements.
+            return! foldiImpl (folder, array, state, currentIndex + 1)
+        }
+
+    /// Async implementation of Array.foldi.
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : 'State -> int -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        foldiImpl (folder, array, state, 0)
+
+    /// Async implementation of Array.foldiBack.
+    let rec private foldiBackImpl (folder : FSharpFunc<_,_,_,_>, array : 'T[], state : 'State, currentIndex) =
+        async {
+        if currentIndex < 0 then
+            // We've reached the beginning of the array so return the final state value.
+            return state
+        else
+            // Invoke the folder with the current array element and state value.
+            let! state = folder.Invoke (currentIndex, array.[currentIndex], state)
+
+            // Continue folding over the remaining array elements.
+            return! foldiBackImpl (folder, array, state, currentIndex - 1)
+        }
+
+    /// Async implementation of Array.foldiBack.
+    [<CompiledName("FoldIndexedBack")>]
+    let foldiBack (folder : int -> 'T -> 'State -> Async<'State>) (array : 'T[]) (state : 'State) : Async<'State> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        foldiBackImpl (folder, array, state, array.Length - 1)
+
     /// Async implementation of Array.init.
     [<CompiledName("Init")>]
     let init (count : int) (initializer : int -> Async<'T>) : Async<'T[]> =
@@ -59,6 +155,47 @@ module Array =
         // Return the completed results.
         return result
         }
+
+    /// Async implementation of Array.iter.
+    let rec private iterImpl (action, array : 'T[], currentIndex) =
+        async {
+        if currentIndex < array.Length then
+            // Apply the current array element to the action function.
+            do! action array.[currentIndex]
+
+            // Continue iterating over the remaining array elements.
+            return! iterImpl (action, array, currentIndex + 1)
+        }
+
+    /// Async implementation of Array.iter.
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        iterImpl (action, array, 0)
+
+    /// Async implementation of Array.iteri.
+    let rec private iteriImpl (action : FSharpFunc<_,_,_>, array : 'T[], currentIndex) =
+        async {
+        if currentIndex < array.Length then
+            // Invoke the action with the current index and array element.
+            do! action.Invoke (currentIndex, array.[currentIndex])
+
+            // Continue iterating over the remaining array elements.
+            return! iteriImpl (action, array, currentIndex + 1)
+        }
+
+    /// Async implementation of Array.iteri.
+    [<CompiledName("IterateIndexed")>]
+    let iteri (action : int -> 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        let action = FSharpFunc<_,_,_>.Adapt action
+        iteriImpl (action, array, 0)
 
     /// Async implementation of Array.map.
     [<CompiledName("Map")>]
@@ -179,143 +316,6 @@ module Array =
         let result2 = ResizeArray.toArray resultList2
         return result1, result2
         }
-
-    /// Async implementation of Array.fold.
-    let rec private foldImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) =
-        async {
-        if currentIndex >= array.Length then
-            // We've reached the end of the array so return the final state value.
-            return state
-        else
-            // Invoke the folder with the current array element and state value.
-            let! state = folder.Invoke (state, array.[currentIndex])
-
-            // Continue folding over the remaining array elements.
-            return! foldImpl (folder, array, state, currentIndex + 1)
-        }
-
-    /// Async implementation of Array.fold.
-    [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
-        // Preconditions
-        checkNonNull "array" array
-
-        // Call the recursive implementation.
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-        foldImpl (folder, array, state, 0)
-
-    /// Async implementation of Array.foldBack.
-    let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) =
-        async {
-        if currentIndex < 0 then
-            // We've reached the beginning of the array so return the final state value.
-            return state
-        else
-            // Invoke the folder with the current array element and state value.
-            let! state = folder.Invoke (array.[currentIndex], state)
-
-            // Continue folding over the remaining array elements.
-            return! foldBackImpl (folder, array, state, currentIndex - 1)
-        }
-
-    /// Async implementation of Array.foldBack.
-    [<CompiledName("FoldBack")>]
-    let foldBack (folder : 'T -> 'State -> Async<'State>) (array : 'T[]) (state : 'State) : Async<'State> =
-        // Preconditions
-        checkNonNull "array" array
-
-        // Call the recursive implementation.
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-        foldBackImpl (folder, array, state, array.Length - 1)
-
-    /// Async implementation of Array.foldi.
-    let rec private foldiImpl (folder : FSharpFunc<_,_,_,_>, array : 'T[], state : 'State, currentIndex) =
-        async {
-        if currentIndex >= array.Length then
-            // We've reached the end of the array so return the final state value.
-            return state
-        else
-            // Invoke the folder with the current array element and state value.
-            let! state = folder.Invoke (state, currentIndex, array.[currentIndex])
-
-            // Continue folding over the remaining array elements.
-            return! foldiImpl (folder, array, state, currentIndex + 1)
-        }
-
-    /// Async implementation of Array.foldi.
-    [<CompiledName("FoldIndexed")>]
-    let foldi (folder : 'State -> int -> 'T -> Async<'State>) (state : 'State) (array : 'T[]) : Async<'State> =
-        // Preconditions
-        checkNonNull "array" array
-
-        // Call the recursive implementation.
-        let folder = FSharpFunc<_,_,_,_>.Adapt folder
-        foldiImpl (folder, array, state, 0)
-
-    /// Async implementation of Array.foldiBack.
-    let rec private foldiBackImpl (folder : FSharpFunc<_,_,_,_>, array : 'T[], state : 'State, currentIndex) =
-        async {
-        if currentIndex < 0 then
-            // We've reached the beginning of the array so return the final state value.
-            return state
-        else
-            // Invoke the folder with the current array element and state value.
-            let! state = folder.Invoke (currentIndex, array.[currentIndex], state)
-
-            // Continue folding over the remaining array elements.
-            return! foldiBackImpl (folder, array, state, currentIndex - 1)
-        }
-
-    /// Async implementation of Array.foldiBack.
-    [<CompiledName("FoldIndexedBack")>]
-    let foldiBack (folder : int -> 'T -> 'State -> Async<'State>) (array : 'T[]) (state : 'State) : Async<'State> =
-        // Preconditions
-        checkNonNull "array" array
-
-        // Call the recursive implementation.
-        let folder = FSharpFunc<_,_,_,_>.Adapt folder
-        foldiBackImpl (folder, array, state, array.Length - 1)
-
-    /// Async implementation of Array.iter.
-    let rec private iterImpl (action, array : 'T[], currentIndex) =
-        async {
-        if currentIndex < array.Length then
-            // Apply the current array element to the action function.
-            do! action array.[currentIndex]
-
-            // Continue iterating over the remaining array elements.
-            return! iterImpl (action, array, currentIndex + 1)
-        }
-
-    /// Async implementation of Array.iter.
-    [<CompiledName("Iterate")>]
-    let iter (action : 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
-        // Preconditions
-        checkNonNull "array" array
-
-        // Call the recursive implementation.
-        iterImpl (action, array, 0)
-
-    /// Async implementation of Array.iteri.
-    let rec private iteriImpl (action : FSharpFunc<_,_,_>, array : 'T[], currentIndex) =
-        async {
-        if currentIndex < array.Length then
-            // Invoke the action with the current index and array element.
-            do! action.Invoke (currentIndex, array.[currentIndex])
-
-            // Continue iterating over the remaining array elements.
-            return! iteriImpl (action, array, currentIndex + 1)
-        }
-
-    /// Async implementation of Array.iteri.
-    [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> Async<unit>) (array : 'T[]) : Async<unit> =
-        // Preconditions
-        checkNonNull "array" array
-
-        // Call the recursive implementation.
-        let action = FSharpFunc<_,_,_>.Adapt action
-        iteriImpl (action, array, 0)
 
     /// Async implementation of Array.reduce.
     [<CompiledName("Reduce")>]
@@ -440,6 +440,59 @@ module Array =
             return keyNotFound "The array does not contain any elements which match the given predicate."
         }
 
+    /// Async implementation of Array.exists.
+    let rec private existsImpl (predicate, array : 'T[], currentIndex) =
+        async {
+        if currentIndex >= array.Length then
+            // No matching element was found.
+            return false
+        else
+            // Apply the predicate to the current array element.
+            let! elementIsMatch = predicate array.[currentIndex]
+
+            // If the element matched the predicate, short-circuit (return immediately);
+            // otherwise, continue processing the remaining array elements.
+            if elementIsMatch then
+                return true
+            else
+                return! existsImpl (predicate, array, currentIndex + 1)
+        }
+
+    /// Async implementation of Array.exists.
+    [<CompiledName("Exists")>]
+    let exists (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<bool> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        existsImpl (predicate, array, 0)
+
+    /// Async implementation of Array.forall.
+    let rec private forallImpl (predicate, array : 'T[], currentIndex) =
+        async {
+        if currentIndex >= array.Length then
+            // All elements matched the predicate.
+            return true
+        else
+            // Apply the predicate to the current array element.
+            let! elementIsMatch = predicate array.[currentIndex]
+
+            // If the element matched the predicate, continue processing the
+            // remaining array elements; otherwise return immediately.
+            if elementIsMatch then
+                return! forallImpl (predicate, array, currentIndex + 1)
+            else
+                return false
+        }
+
+    /// Async implementation of Array.forall.
+    [<CompiledName("Forall")>]
+    let forall (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<bool> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        forallImpl (predicate, array, 0)
 
 
 /// Functions for manipulating lists within 'async' workflows.
