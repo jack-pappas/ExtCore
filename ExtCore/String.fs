@@ -478,7 +478,9 @@ module String =
         for i = 0 to len - 1 do
             action.Invoke (i, str.[i])
 
-    //
+    /// Applies the given function to pairs of characters drawn from matching indices
+    /// in two strings. The two strings must have the same length, otherwise an
+    /// ArgumentException is raised.
     [<CompiledName("Iterate2")>]
     let iter2 (action : char -> char -> unit) (str1 : string) (str2 : string) : unit =
         // Preconditions
@@ -494,7 +496,9 @@ module String =
         for i = 0 to len - 1 do
             action.Invoke (str1.[i], str2.[i])
 
-    //
+    /// Applies the given function to pairs of characters drawn from matching indices
+    /// in two strings, also passing the index of the characters. The two strings must
+    /// have the same length, otherwise an ArgumentException is raised.
     [<CompiledName("IterateIndexed2")>]
     let iteri2 (action : int -> char -> char -> unit) (str1 : string) (str2 : string) : unit =
         // Preconditions
@@ -1048,7 +1052,9 @@ module String =
                     if length > 0 || not <| skipEmptyStrings options then
                         action.Invoke (substringIndex, substring (str, offset, length))
 
-        //
+        /// Applies the given function to each of the substrings in the input string that are
+        /// delimited by elements of a specified Unicode character array, threading an accumulator
+        /// argument through the computation.
         [<CompiledName("Fold")>]
         let fold (separator : char[], options : System.StringSplitOptions)
                 (folder : 'State -> substring -> 'State) (state : 'State) (str : string) : 'State =
@@ -1171,7 +1177,12 @@ module String =
                         state <- folder.Invoke (state, substring (str, offset, length))
                     state
 
-        //
+        /// Applies the given function to each of the substrings in the input string that are
+        /// delimited by elements of a specified Unicode character array, threading an accumulator
+        /// argument through the computation. The integer index
+        /// applied to the function is the index of the substring within the virtual array of
+        /// substrings in the input string. For example, if the newline character (\n) is used
+        /// as the separator, the index of each substring would be the line number.
         [<CompiledName("FoldIndexed")>]
         let foldi (separator : char[], options : System.StringSplitOptions)
                 (folder : 'State -> int -> substring -> 'State) (state : 'State) (str : string) : 'State =
@@ -1312,9 +1323,36 @@ module String =
                         state <- folder.Invoke (state, substringIndex, substring (str, offset, length))
                     state
 
+        (*
+        //
+        [<CompiledName("Filter")>]
+        let filter (separator : char[], options : System.StringSplitOptions)
+                (predicate : substring -> bool) (str : string) : string[] =
+            // Preconditions
+            checkNonNull "str" str
 
-//
-module StringOperators =
+            // OPTIMIZATION : If the input string is empty, return immediately.
+            if isEmpty str then Array.empty
+            else
+                notImpl "String.Split.filter"
+
+        //
+        [<CompiledName("Choose")>]
+        let choose (separator : char[], options : System.StringSplitOptions)
+                (chooser : substring -> string option) (str : string) : string[] =
+            // Preconditions
+            checkNonNull "str" str
+
+            // OPTIMIZATION : If the input string is empty, return immediately.
+            if isEmpty str then Array.empty
+            else
+                notImpl "String.Split.choose"
+        *)
+
+
+/// Extension methods for System.String and System.Text.StringBuilder
+/// which provide integration with the substring type.
+module SubstringExtensions =
     type System.String with
         member this.GetSlice (startIndex, finishIndex) : substring =
             let startIndex = defaultArg startIndex 0 

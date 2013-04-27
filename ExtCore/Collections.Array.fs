@@ -497,7 +497,8 @@ let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
     // Return the number of matching array elements.
     matches
 
-//
+/// Applies a function to each character in the string and the character which
+/// follows it, threading an accumulator argument through the computation.
 [<CompiledName("FoldPairwise")>]
 let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) (state : 'State) (array : 'T[]) : 'State =
     // Preconditions
@@ -508,17 +509,17 @@ let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) (state : 'State) (array
     if len < 2 then state
     else
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
-
-        // Fold over each pair of elements in the array.
         let mutable state = state
     
+        // Fold backwards over each pair of elements in the array.
         for i = 0 to len - 2 do
             state <- folder.Invoke (state, array.[i], array.[i + 1])
 
         // Return the final state value.
         state
 
-//
+/// Applies a function to each character in the string and the character which
+/// proceeds it, threading an accumulator argument through the computation.
 [<CompiledName("FoldPairwiseBack")>]
 let foldPairwiseBack (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
     // Preconditions
@@ -529,10 +530,9 @@ let foldPairwiseBack (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (sta
     if len < 2 then state
     else
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        let mutable state = state
 
         // Fold over each pair of elements in the array.
-        let mutable state = state
-    
         for i = len - 1 downto 1 do
             state <- folder.Invoke (array.[i], array.[i + 1], state)
 
