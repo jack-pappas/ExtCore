@@ -1386,18 +1386,6 @@ let sortBy () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
-let sortInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
-
-[<TestCase>]
-let sortInPlaceBy () : unit =
-    Assert.Inconclusive "Test not yet implemented."
-
-[<TestCase>]
-let sortInPlaceWith () : unit =
-    Assert.Inconclusive "Test not yet implemented."
-
-[<TestCase>]
 let sortWith () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
