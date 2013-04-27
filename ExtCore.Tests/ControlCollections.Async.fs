@@ -106,7 +106,14 @@ module Array =
 
     [<TestCase>]
     let foldBack () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        ([| 2; 17; 4; 12; |], String.empty)
+        ||> Async.Array.foldBack (fun x state ->
+            async {
+            return state + x.ToString()
+            })
+        |> Async.RunSynchronously
+        |> should equal "124172"
 
     [<TestCase>]
     let foldi () : unit =
@@ -121,7 +128,14 @@ module Array =
 
     [<TestCase>]
     let foldiBack () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        ([| 2; 17; 4; 12; |], String.empty)
+        ||> Async.Array.foldiBack (fun idx x state ->
+            async {
+            return state + (x + idx).ToString()
+            })
+        |> Async.RunSynchronously
+        |> should equal "156182"
 
     [<TestCase>]
     let iter () : unit =
