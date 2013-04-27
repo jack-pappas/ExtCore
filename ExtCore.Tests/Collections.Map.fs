@@ -492,6 +492,44 @@ let tryUpdate () : unit =
     |> should equal expected
 
 [<TestCase>]
+let update () : unit =
+    let initial =
+        Map.empty
+        |> Map.add ConsoleColor.Red "Red"
+        |> Map.add ConsoleColor.Green "Green"
+        |> Map.add ConsoleColor.Blue "Blue"
+        |> Map.add ConsoleColor.Black "Black"
+        |> Map.add ConsoleColor.Cyan "Cyan"
+
+    let expected =
+        Map.empty
+        |> Map.add ConsoleColor.Red "Red"
+        |> Map.add ConsoleColor.Green "Green"
+        |> Map.add ConsoleColor.Blue "DarkBlue"
+        |> Map.add ConsoleColor.Black "Black"
+        |> Map.add ConsoleColor.Cyan "Cyan"
+
+    // The binding should be updated when it already exists for a given key.
+    initial
+    |> Map.update ConsoleColor.Blue "DarkBlue"
+    |> should equal expected
+
+[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+let ``update raises exn when map doesn't contain key`` () : unit =
+    let initial =
+        Map.empty
+        |> Map.add ConsoleColor.Red "Red"
+        |> Map.add ConsoleColor.Green "Green"
+        |> Map.add ConsoleColor.Blue "Blue"
+        |> Map.add ConsoleColor.Black "Black"
+        |> Map.add ConsoleColor.Cyan "Cyan"
+
+    // An exception should be raised when there's no existing binding with a given key.
+    initial
+    |> Map.update ConsoleColor.White "White"
+    |> should equal initial
+
+[<TestCase>]
 let countWith () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
