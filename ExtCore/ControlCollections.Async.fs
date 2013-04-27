@@ -426,7 +426,7 @@ module Array =
         // Preconditions
         checkNonNull "array" array
 
-        // Call the recursive implementation for tryFind.
+        // Call the recursive implementation for tryFindIndex.
         async {
         let! result = tryFindIndexImpl (predicate, array, 0)
 
@@ -493,6 +493,53 @@ module Array =
 
         // Call the recursive implementation.
         forallImpl (predicate, array, 0)
+
+    /// Async implementation of Array.tryPick.
+    let rec private tryPickImpl (picker, array : 'T[], currentIndex) : Async<'U option> =
+        async {
+        if currentIndex >= array.Length then
+            // No element was picked.
+            return None
+        else
+            // Apply the picker to the current array element.
+            let! pickResult = picker array.[currentIndex]
+
+            // If a value was picked, return it; otherwise continue processing
+            // the remaining array elements.
+            if Option.isSome pickResult then
+                return pickResult
+            else
+                return! tryPickImpl (picker, array, currentIndex + 1)
+        }
+
+    /// Async implementation of Array.tryPick.
+    [<CompiledName("TryPick")>]
+    let tryPick (picker : 'T -> Async<'U option>) (array : 'T[]) : Async<'U option> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation.
+        tryPickImpl (picker, array, 0)
+
+    /// Async implementation of Array.pick.
+    [<CompiledName("Pick")>]
+    let pick (picker : 'T -> Async<'U option>) (array : 'T[]) : Async<'U> =
+        // Preconditions
+        checkNonNull "array" array
+
+        // Call the recursive implementation for tryPick.
+        async {
+        let! result = tryPickImpl (picker, array, 0)
+
+        match result with
+        | Some result ->
+            return result
+
+        | None ->
+            // No matching element was found, so raise an exception.
+            // NOTE : The 'return' keyword is needed here for type-checking reasons.
+            return keyNotFound "The array does not contain any elements which match the given picker."
+        }
 
 
 /// Functions for manipulating lists within 'async' workflows.

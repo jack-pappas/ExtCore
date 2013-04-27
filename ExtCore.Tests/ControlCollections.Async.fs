@@ -91,7 +91,25 @@ module Array =
 
     [<TestCase>]
     let mapPartition () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        do
+            let left, right =
+                [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
+                |> Async.Array.mapPartition (fun colorName ->
+                    async {
+                    let len = String.length colorName
+                    if len % 2 = 0 then
+                        return Choice1Of2 len
+                    else
+                        return Choice2Of2 <| colorName.ToLower ()
+                    })
+                |> Async.RunSynchronously
+
+            left
+            |> should equal [| 6; 6; 4; 6; |]
+
+            right
+            |> should equal [| "red"; "green" |]
 
     [<TestCase>]
     let fold () : unit =
@@ -260,28 +278,255 @@ module Array =
                 [| 21; 36; 60; |]
 
     [<TestCase>]
-    let reduce () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+    let exists () : unit =
+        // Test case for an empty array.
+        Array.empty
+        |> Async.Array.exists (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be False
 
-    [<TestCase>]
-    let reduceBack () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        [| 2; 17; 4; 12; |]
+        |> Async.Array.exists (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be True
 
-    [<TestCase>]
-    let tryFind () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        [| 11; 23; 47; |]
+        |> Async.Array.exists (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be False
+
+        // Test case for multiple matching values.
+        [| 7; 11; 18; 29; 48; |]
+        |> Async.Array.exists (fun x ->
+            async {
+            return x % 2 = 0 && x % 3 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be True
 
     [<TestCase>]
     let find () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        [| 2; 17; 4; 12; |]
+        |> Async.Array.find (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal 12
 
-    [<TestCase>]
-    let tryFindIndex () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Test case for multiple matching values.
+        [| 7; 11; 18; 29; 48; |]
+        |> Async.Array.find (fun x ->
+            async {
+            return x % 2 = 0 && x % 3 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal 18
 
     [<TestCase>]
     let findIndex () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        [| 2; 17; 4; 12; |]
+        |> Async.Array.findIndex (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal 3
+
+        // Test case for multiple matching values.
+        [| 7; 11; 18; 29; 48; |]
+        |> Async.Array.findIndex (fun x ->
+            async {
+            return x % 2 = 0 && x % 3 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal 2
+
+    [<TestCase>]
+    let forall () : unit =
+        // Test case for an empty array.
+        Array.empty
+        |> Async.Array.forall (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be True
+
+        // Test case for multiple matching values.
+        [| 2; 16; 4; 12; |]
+        |> Async.Array.forall (fun x ->
+            async {
+            return x % 2 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be True
+
+        // Sample usage test cases.
+        [| 11; 23; 47; |]
+        |> Async.Array.forall (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be False
+    
+        [| 7; 11; 18; 29; 48; |]
+        |> Async.Array.forall (fun x ->
+            async {
+            return x % 2 = 0 && x % 3 = 0
+            })
+        |> Async.RunSynchronously
+        |> should be False
+
+    [<TestCase>]
+    let pick () : unit =
+        // Sample usage test cases.
+        [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
+        |> Async.Array.pick (fun colorName ->
+            async {
+            if colorName.StartsWith "G" then
+                return Some (String.length colorName)
+            else return None
+            })
+        |> Async.RunSynchronously
+        |> should equal 5
+
+    [<TestCase>]
+    let reduce () : unit =
+        // Sample usage test cases.
+        [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
+        |> Async.Array.reduce (fun x y ->
+            async {
+            if String.length x % 2 = 0 then
+                return x + y
+            else
+                return y + x
+            })
+        |> Async.RunSynchronously
+        |> should equal "GreenYellowOrangeRedBlueViolet"
+
+    [<TestCase>]
+    let reduceBack () : unit =
+        // Sample usage test cases.
+        [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
+        |> Async.Array.reduceBack (fun x y ->
+            async {
+            if String.length x % 2 = 0 then
+                return x + y
+            else
+                return y + x
+            })
+        |> Async.RunSynchronously
+        |> should equal "OrangeYellowBlueVioletGreenRed"
+
+    [<TestCase>]
+    let tryFind () : unit =
+        // Test case for an empty array.
+        Array.empty
+        |> Async.Array.tryFind (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal None
+
+        // Sample usage test cases.
+        [| 2; 17; 4; 12; |]
+        |> Async.Array.tryFind (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal (Some 12)
+
+        [| 11; 23; 47; |]
+        |> Async.Array.tryFind (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal None
+
+        // Test case for multiple matching values.
+        [| 7; 11; 18; 29; 48; |]
+        |> Async.Array.tryFind (fun x ->
+            async {
+            return x % 2 = 0 && x % 3 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal (Some 18)
+
+    [<TestCase>]
+    let tryFindIndex () : unit =
+        // Test case for an empty array.
+        Array.empty
+        |> Async.Array.tryFindIndex (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal None
+
+        // Sample usage test cases.
+        [| 2; 17; 4; 12; |]
+        |> Async.Array.tryFindIndex (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal (Some 3)
+
+        [| 23; 47; 106; |]
+        |> Async.Array.tryFindIndex (fun x ->
+            async {
+            return x % 3 = 0 && x % 4 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal None
+
+        // Test case for multiple matching values.
+        [| 7; 11; 18; 29; 48; |]
+        |> Async.Array.tryFindIndex (fun x ->
+            async {
+            return x % 2 = 0 && x % 3 = 0
+            })
+        |> Async.RunSynchronously
+        |> should equal (Some 2)
+
+    [<TestCase>]
+    let tryPick () : unit =
+        [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
+        |> Async.Array.tryPick (fun colorName ->
+            async {
+            if colorName.StartsWith "T" then
+                return Some (String.length colorName)
+            else return None
+            })
+        |> Async.RunSynchronously
+        |> should equal None
+
+        [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
+        |> Async.Array.tryPick (fun colorName ->
+            async {
+            if colorName.StartsWith "G" then
+                return Some (String.length colorName)
+            else return None
+            })
+        |> Async.RunSynchronously
+        |> should equal (Some 5)
 
 
 /// Tests for the ExtCore.Control.Collections.Async.List module.
