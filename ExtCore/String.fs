@@ -1327,7 +1327,7 @@ module String =
         //
         [<CompiledName("Filter")>]
         let filter (separator : char[], options : System.StringSplitOptions)
-                (predicate : substring -> bool) (str : string) : string[] =
+                (predicate : substring -> bool) (str : string) : substring[] =
             // Preconditions
             checkNonNull "str" str
 
@@ -1354,6 +1354,8 @@ module String =
 /// which provide integration with the substring type.
 module SubstringExtensions =
     type System.String with
+        /// Returns a new substring created from this string and the given
+        /// starting and ending indices.
         member this.GetSlice (startIndex, finishIndex) : substring =
             let startIndex = defaultArg startIndex 0 
             let finishIndex = defaultArg finishIndex this.Length

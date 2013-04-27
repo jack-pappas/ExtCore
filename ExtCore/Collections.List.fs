@@ -438,7 +438,7 @@ let unzipWith (mapping : 'T -> 'U * 'V) list : 'U list * 'V list =
         List.rev resultList2
 
 /// Returns the number of list elements matching a given predicate.
-// List.countWith predicate list = (List.filter predicate list |> List.count)
+// List.countWith predicate list = (List.filter predicate list |> List.length)
 [<CompiledName("CountWith")>]
 let countWith (predicate : 'T -> bool) (list : 'T list) : int =
     // Preconditions

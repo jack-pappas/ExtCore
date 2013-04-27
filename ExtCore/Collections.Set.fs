@@ -369,7 +369,8 @@ let disjoint (set1 : Set<'T>) set2 : bool =
          set2 |> Set.exists (fun el -> Set.contains el set1))
         |> not
 
-//
+/// Returns the number of set elements matching a given predicate.
+// Set.countWith predicate set = (Set.filter predicate set |> Set.count)
 [<CompiledName("CountWith")>]
 let countWith (predicate : 'T -> bool) (set : Set<'T>) : int =
     // Preconditions

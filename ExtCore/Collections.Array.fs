@@ -483,6 +483,7 @@ let chooseiInPlace (chooser : int -> 'T -> 'T option) (array : 'T[]) : unit =
                 array.[i] <- result
 
 /// Returns the number of array elements matching a given predicate.
+// Array.countWith predicate array = (Array.filter predicate array |> Array.length)
 [<CompiledName("CountWith")>]
 let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
     // Preconditions

@@ -366,16 +366,38 @@ let tryUpdate key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
         // Return the original map.
         map
 
-//
-[<CompiledName("CountWith")>]
-let countWith (predicate : 'T -> bool) (set : Set<'T>) : int =
+/// Like Map.add, but only overwrites the value of an existing entry.
+/// If the map does not contain the given key, KeyNotFoundException is raised.
+[<CompiledName("Update")>]
+let update key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
-    checkNonNull "set" set
+    checkNonNull "map" map
 
-    // Fold over the set, counting the number of elements which match the predicate.
-    (0, set)
-    ||> Set.fold (fun matchCount el ->
-        if predicate el then
-            matchCount + 1
-        else matchCount)
+    // OPTIMIZE : This function could be faster if we had access to the
+    // MapTree within the map instance (because then we'd only need to traverse
+    // it once). Maybe this function can be added to the Map module in a future version of F#.
+    if Map.containsKey key map then
+        // Overwrite the value of the existing entry.
+        Map.add key value map
+    else
+        keyNotFound "The map does not contain the specified key."
+
+/// Returns the number of map elements matching a given predicate.
+// Map.countWith predicate map = (Map.filter predicate map |> Map.count)
+[<CompiledName("CountWith")>]
+let countWith (predicate : 'Key -> 'T -> bool) (map : Map<'Key, 'T>) : int =
+    // Preconditions
+    checkNonNull "map" map
+
+    // OPTIMIZATION : If the map is empty, return immediately.
+    if Map.isEmpty map then 0
+    else
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        // Fold over the map, counting the number of elements which match the predicate.
+        (0, map)
+        ||> Map.fold (fun matchCount key value ->
+            if predicate.Invoke (key, value) then
+                matchCount + 1
+            else matchCount)
 
