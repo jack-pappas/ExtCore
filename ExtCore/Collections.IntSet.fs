@@ -1102,7 +1102,10 @@ type IntSet private (trie : PatriciaSet) =
     /// <inherit />
     override __.GetHashCode () =
         // TODO : Come up with a better hash code implementation.
-        trie.GetHashCode ()
+        match trie with
+        | Empty -> 0
+        | _ ->
+            trie.GetHashCode ()
 
     interface System.IEquatable<IntSet> with
         /// <inherit />
