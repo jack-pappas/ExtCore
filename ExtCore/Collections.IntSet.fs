@@ -31,7 +31,7 @@ module internal PatriciaTrieConstants =
     /// within the optimized traversal methods for Patricia tries.
     // TODO : Run some experiments to determine if this is a good initial capacity,
     // or if some other value would provide better average-case performance.
-    let [<Literal>] defaultTraversalStackSize = 32
+    let [<Literal>] defaultTraversalStackSize = 16
 
 
 type internal Mask = uint32
@@ -1144,7 +1144,7 @@ type IntSet private (trie : PatriciaSet) =
             with get () = true
 
         /// <inherit />
-        member __.Add x =
+        member __.Add _ =
             notSupported "IntSets cannot be mutated."
 
         /// <inherit />
@@ -1174,7 +1174,7 @@ type IntSet private (trie : PatriciaSet) =
             |> ignore
 
         /// <inherit />
-        member __.Remove item : bool =
+        member __.Remove _ : bool =
             notSupported "IntSets cannot be mutated."
 
 //
