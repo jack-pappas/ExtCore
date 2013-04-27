@@ -802,6 +802,39 @@ amet"
         |> String.trimWith System.Char.IsLetterOrDigit
         |> should equal "Hello World!1"
 
+    [<TestCase>]
+    let fold2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let foldBack2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let map2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let mapi2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let tryFind () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let find () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let tryPick () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let pick () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+
     module Split =
         open System
 

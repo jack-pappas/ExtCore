@@ -388,7 +388,7 @@ module String =
 
     /// Returns the index of the first character in the string which satisfies the given predicate.
     [<CompiledName("TryFindIndex")>]
-    let tryFindIndex (predicate : char -> bool) (str : string) =
+    let tryFindIndex (predicate : char -> bool) (str : string) : int option =
         // Preconditions
         checkNonNull "str" str
 
@@ -410,7 +410,7 @@ module String =
 
     /// Returns the index of the first character in the string which satisfies the given predicate.
     [<CompiledName("FindIndex")>]
-    let findIndex (predicate : char -> bool) (str : string) =
+    let findIndex (predicate : char -> bool) (str : string) : int =
         // Preconditions
         checkNonNull "str" str
 
@@ -418,6 +418,76 @@ module String =
         match tryFindIndex predicate str with
         | Some index ->
             index
+        | None ->
+            // TODO : Return a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    /// Returns the first character in the string which satisfies the given predicate.
+    [<CompiledName("TryFind")>]
+    let tryFind (predicate : char -> bool) (str : string) : char option =
+        // Preconditions
+        checkNonNull "str" str
+
+        let len = String.length str
+        
+        let mutable index = 0
+        let mutable foundMatch = false
+
+        while index < len && not foundMatch do
+            foundMatch <- predicate str.[index]
+            index <- index + 1
+
+        // Return the matching character, if any.
+        if foundMatch then
+            // Subtract one from the index since it was incremented after finding
+            // the match but before the loop terminated.
+            Some str.[index - 1]
+        else None
+
+    /// Returns the first character in the string which satisfies the given predicate.
+    [<CompiledName("Find")>]
+    let find (predicate : char -> bool) (str : string) : char =
+        // Preconditions
+        checkNonNull "str" str
+
+        // Use tryFind to find the match; raise an exception if one is not found.
+        match tryFind predicate str with
+        | Some ch ->
+            ch
+        | None ->
+            // TODO : Return a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("TryPick")>]
+    let tryPick (picker : char -> 'T option) (str : string) : 'T option =
+        // Preconditions
+        checkNonNull "str" str
+
+        let len = String.length str
+        
+        let mutable picked = None
+        let mutable index = 0
+
+        while index < len && Option.isNone picked do
+            picked <- picker str.[index]
+            index <- index + 1
+
+        // Return the picked value, if any.
+        picked
+
+    //
+    [<CompiledName("Pick")>]
+    let pick (picker : char -> 'T option) (str : string) : 'T =
+        // Preconditions
+        checkNonNull "str" str
+
+        // Use tryPick to find the match; raise an exception if one is not found.
+        match tryPick picker str with
+        | Some result ->
+            result
         | None ->
             // TODO : Return a better error message.
             //keyNotFound ""
@@ -431,16 +501,19 @@ module String =
         // Preconditions
         checkNonNull "str" str
 
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-
         /// The length of the input string.
         let len = String.length str
 
-        // Fold over the string.
-        let mutable state = state
-        for i = 0 to len - 1 do
-            state <- folder.Invoke (state, str.[i])
-        state
+        // OPTIMIZATION : If the string is empty return immediately.
+        if len = 0 then state
+        else
+            let folder = FSharpFunc<_,_,_>.Adapt folder
+            let mutable state = state
+        
+            // Fold over the string.
+            for i = 0 to len - 1 do
+                state <- folder.Invoke (state, str.[i])
+            state
 
     /// Applies a function to each character of the string, threading an accumulator
     /// argument through the computation.
@@ -450,16 +523,73 @@ module String =
         // Preconditions
         checkNonNull "str" str
 
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-
         /// The length of the input string.
         let len = String.length str
 
-        // Fold backwards over the string.
-        let mutable state = state
-        for i = len - 1 downto 0 do
-            state <- folder.Invoke (str.[i], state)
-        state
+        // OPTIMIZATION : If the string is empty return immediately.
+        if len = 0 then state
+        else
+            let folder = FSharpFunc<_,_,_>.Adapt folder
+            let mutable state = state
+
+            // Fold backwards over the string.
+            for i = len - 1 downto 0 do
+                state <- folder.Invoke (str.[i], state)
+            state
+
+    /// Applies the given function to pairs of characters drawn from matching indices
+    /// in two strings, threading an accumulator argument through the computation.
+    /// The two strings must have the same length, otherwise an ArgumentException is raised.
+    /// If the input function is f and the characters are c0...cN and d0...dN then
+    /// computes f (...(f s c0 d0)...) cN d0.
+    [<CompiledName("Fold2")>]
+    let fold2 (folder : 'State -> char -> char -> 'State) (state : 'State) (str1 : string) (str2 : string) : 'State =
+        // Preconditions
+        checkNonNull "str1" str1
+        checkNonNull "str2" str2
+
+        /// The length of the input string.
+        let len = String.length str1
+        if len <> String.length str2 then
+            invalidArg "str" "The strings have different lengths."
+
+        // OPTIMIZATION : If the strings are empty return immediately.
+        if len = 0 then state
+        else
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+            // Fold over the strings.
+            let mutable state = state
+            for i = 0 to len - 1 do
+                state <- folder.Invoke (state, str1.[i], str2.[i])
+            state
+
+    /// Applies the given function to pairs of characters drawn from matching indices
+    /// in two strings, threading an accumulator argument through the computation.
+    /// The two strings must have the same length, otherwise an ArgumentException is raised.
+    /// If the input function is f and the characters are c0...cN and d0...dN then
+    /// computes f c0 d0 (...(f cN dN s)).
+    [<CompiledName("FoldBack2")>]
+    let foldBack2 (folder : char -> char -> 'State -> 'State) (str1 : string) (str2 : string) (state : 'State) : 'State =
+        // Preconditions
+        checkNonNull "str1" str1
+        checkNonNull "str2" str2
+
+        /// The length of the input string.
+        let len = String.length str1
+        if len <> String.length str2 then
+            invalidArg "str" "The strings have different lengths."
+
+        // OPTIMIZATION : If the strings are empty return immediately.
+        if len = 0 then state
+        else
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+            // Fold backwards over the strings.
+            let mutable state = state
+            for i = len - 1 downto 0 do
+                state <- folder.Invoke (str1.[i], str2.[i], state)
+            state
 
     /// Applies the given function to each character of the string.
     [<CompiledName("Iterate")>]
@@ -476,7 +606,7 @@ module String =
 
     /// Applies the given function to each character of the string.
     /// The integer passed to the function indicates the index of the character.
-    [<CompiledName("IterateateIndexed")>]
+    [<CompiledName("IterateIndexed")>]
     let iteri (action : int -> char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str
@@ -575,6 +705,69 @@ module String =
             // and storing the result into the array of mapped characters.
             for i = 0 to len - 1 do
                 mappedChars.[i] <- mapping.Invoke (i, str.[i])
+
+            // Create a new string from the mapped characters.
+            ofArray mappedChars
+
+    /// Builds a new string whose characters are the results of applying the given
+    /// function to the corresponding characters of the two strings pairwise.
+    /// The two inputs strings must have the same length, otherwise ArgumentException is raised.
+    [<CompiledName("Map2")>]
+    let map2 (mapping : char -> char -> char) (str1 : string) (str2 : string) : string =
+        // Preconditions
+        checkNonNull "str1" str1
+        checkNonNull "str2" str2
+
+        /// The length of the input string.
+        let len = String.length str1
+        if len <> String.length str2 then
+            invalidArg "str" "The strings have different lengths."
+
+        // OPTIMIZATION : If the strings are empty return immediately.
+        if len = 0 then
+            empty
+        else
+            let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+            /// The mapped characters.
+            let mappedChars = Array.zeroCreate len
+
+            // Iterate over the string, applying the mapping to each character pair
+            // and storing the result into the array of mapped characters.
+            for i = 0 to len - 1 do
+                mappedChars.[i] <- mapping.Invoke (str1.[i], str2.[i])
+
+            // Create a new string from the mapped characters.
+            ofArray mappedChars
+
+    /// Builds a new string whose characters are the results of applying the given
+    /// function to the corresponding characters of the two strings pairwise,
+    /// also passing the index of the characters.
+    /// The two inputs strings must have the same length, otherwise ArgumentException is raised.
+    [<CompiledName("MapIndexed2")>]
+    let mapi2 (mapping : int -> char -> char -> char) (str1 : string) (str2 : string) : string =
+       // Preconditions
+        checkNonNull "str1" str1
+        checkNonNull "str2" str2
+        
+        /// The length of the input string.
+        let len = String.length str1
+        if len <> String.length str2 then
+            invalidArg "str" "The strings have different lengths."
+
+        // OPTIMIZATION : If the strings are empty return immediately.
+        if len = 0 then
+            empty
+        else
+            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+
+            /// The mapped characters.
+            let mappedChars = Array.zeroCreate len
+
+            // Iterate over the string, applying the mapping to each character pair
+            // and storing the result into the array of mapped characters.
+            for i = 0 to len - 1 do
+                mappedChars.[i] <- mapping.Invoke (i, str1.[i], str2.[i])
 
             // Create a new string from the mapped characters.
             ofArray mappedChars
