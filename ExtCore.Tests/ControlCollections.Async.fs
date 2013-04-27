@@ -233,6 +233,22 @@ module Array =
             |> should equal
                 [| 21; 36; 60; |]
 
+    [<TestCase>]
+    let reduce () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let reduceBack () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let tryFind () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let find () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
 
 /// Tests for the ExtCore.Control.Collections.Async.List module.
 module List =

@@ -231,7 +231,6 @@ module Array =
             do! action.Invoke (index, el)
             })
 
-    (*
     /// Async implementation of Array.reduce.
     [<CompiledName("Reduce")>]
     let reduce (reduction : 'T -> 'T -> Async<'T>) (array : 'T[]) : Async<'T> =
@@ -240,37 +239,78 @@ module Array =
         if Array.isEmpty array then
             invalidArg "array" "The array is empty."
 
-        raise <| System.NotImplementedException "ExtCore.Control.Collections.Async.Array.reduce"
+        // OPTIMIZATION : If the array contains only one element, return immediately.
+        let initialState = async.Return array.[0]
+        if Array.length array = 1 then
+            initialState
+        else
+            let reduction = FSharpFunc<_,_,_>.Adapt reduction
 
-    /// Async implementation of Array.tryFind.
-    [<CompiledName("TryFind")>]
-    let tryFind (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<'T option> =
+            // Fold over the array to create the Async which performs the reduction.
+            (initialState, array)
+            ||> Array.fold (fun previousResult el ->
+                async {
+                // Get the result from the previous workflow.
+                let! result = previousResult
+
+                // Reduce the result and the current element.
+                return! reduction.Invoke (result, el)
+                })
+
+    /// Async implementation of Array.reduceBack.
+    [<CompiledName("ReduceBack")>]
+    let reduceBack (reduction : 'T -> 'T -> Async<'T>) (array : 'T[]) : Async<'T> =
         // Preconditions
         checkNonNull "array" array
         if Array.isEmpty array then
             invalidArg "array" "The array is empty."
 
-        let len = Array.length array
-        let result = ref None
-        let mutable index = 0
+        // OPTIMIZATION : If the array contains only one element, return immediately.
+        let initialState = async.Return array.[array.Length - 1]
+        if Array.length array = 1 then
+            initialState
+        else
+            let reduction = FSharpFunc<_,_,_>.Adapt reduction
 
-        async {
-        // Loop until we find a matching element, or we run out of elements to try.
+            // Fold over the array to create the Async which performs the reduction.
+            (array, initialState)
+            ||> Array.foldBack (fun el previousResult ->
+                async {
+                // Get the result from the previous workflow.
+                let! result = previousResult
 
-        raise <| System.NotImplementedException "ExtCore.Control.Collections.Async.Array.tryFind"
-        return None
-        }
+                // Reduce the result and the current element.
+                return! reduction.Invoke (result, el)
+                })
 
-    /// Async implementation of Array.find.
-    [<CompiledName("Find")>]
-    let find (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<'T> =
-        // Preconditions
-        checkNonNull "array" array
-        if Array.isEmpty array then
-            invalidArg "array" "The array is empty."
-
-        raise <| System.NotImplementedException "ExtCore.Control.Collections.Async.Array.find"
-    *)
+//    /// Async implementation of Array.tryFind.
+//    [<CompiledName("TryFind")>]
+//    let tryFind (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<'T option> =
+//        // Preconditions
+//        checkNonNull "array" array
+//        if Array.isEmpty array then
+//            invalidArg "array" "The array is empty."
+//
+//        let len = Array.length array
+//        let result = ref None
+//        let mutable index = 0
+//
+//        async {
+//        // Loop until we find a matching element, or we run out of elements to try.
+//
+//        raise <| System.NotImplementedException "ExtCore.Control.Collections.Async.Array.tryFind"
+//        return None
+//        }
+//
+//    /// Async implementation of Array.find.
+//    [<CompiledName("Find")>]
+//    let find (predicate : 'T -> Async<bool>) (array : 'T[]) : Async<'T> =
+//        // Preconditions
+//        checkNonNull "array" array
+//        if Array.isEmpty array then
+//            invalidArg "array" "The array is empty."
+//
+//        raise <| System.NotImplementedException "ExtCore.Control.Collections.Async.Array.find"
 
     // TODO : mapReduce
 
