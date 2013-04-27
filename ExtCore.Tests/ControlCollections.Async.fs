@@ -105,6 +105,10 @@ module Array =
         |> should equal "217412"
 
     [<TestCase>]
+    let foldBack () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
     let foldi () : unit =
         // Sample usage test cases.
         (String.empty, [| 2; 17; 4; 12; |])
@@ -114,6 +118,10 @@ module Array =
             })
         |> Async.RunSynchronously
         |> should equal "218615"
+
+    [<TestCase>]
+    let foldiBack () : unit =
+        Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let iter () : unit =
@@ -251,6 +259,14 @@ module Array =
 
     [<TestCase>]
     let find () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let tryFindIndex () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let findIndex () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
 
