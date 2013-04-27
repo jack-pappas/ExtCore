@@ -327,3 +327,11 @@ let chooseiInPlace () : unit =
 [<TestCase>]
 let countWith () : unit =
     Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let foldPairwise () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let foldPairwiseBack () : unit =
+    Assert.Inconclusive "Test not yet implemented."

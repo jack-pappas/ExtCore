@@ -497,3 +497,45 @@ let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
     // Return the number of matching array elements.
     matches
 
+//
+[<CompiledName("FoldPairwise")>]
+let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) (state : 'State) (array : 'T[]) : 'State =
+    // Preconditions
+    checkNonNull "array" array
+
+    // OPTIMIZATION : If the array is empty or contains only one element, return immediately.
+    let len = Array.length array
+    if len < 2 then state
+    else
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        // Fold over each pair of elements in the array.
+        let mutable state = state
+    
+        for i = 0 to len - 2 do
+            state <- folder.Invoke (state, array.[i], array.[i + 1])
+
+        // Return the final state value.
+        state
+
+//
+[<CompiledName("FoldPairwiseBack")>]
+let foldPairwiseBack (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
+    // Preconditions
+    checkNonNull "array" array
+
+    // OPTIMIZATION : If the array is empty or contains only one element, return immediately.
+    let len = Array.length array
+    if len < 2 then state
+    else
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        // Fold over each pair of elements in the array.
+        let mutable state = state
+    
+        for i = len - 1 downto 1 do
+            state <- folder.Invoke (array.[i], array.[i + 1], state)
+
+        // Return the final state value.
+        state
+
