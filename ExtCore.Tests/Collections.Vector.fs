@@ -1310,6 +1310,21 @@ let choose2 () : unit =
 let countWith () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
+
+(* TODO : Implement tests which are missing from the ArrayModule tests in FSharp.Core. *)
+
+[<TestCase>]
+let length () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let map2 () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let mapi2 () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
 [<TestCase>]
 let max () : unit =
     Assert.Inconclusive "Test not yet implemented."
@@ -1327,7 +1342,87 @@ let minBy () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
+let ofList () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let ofSeq () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let permute () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let reduce () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let reduceBack () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let rev () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let scan () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let scanBack () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let set () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sort () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sortBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sortInPlace () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sortInPlaceBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sortInPlaceWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sortWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
 let sub () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sum () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sumBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let toList () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let tryFind () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let tryFindIndex () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
@@ -1336,6 +1431,10 @@ let unzip () : unit =
 
 [<TestCase>]
 let unzip3 () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let zeroCreate () : unit =
     Assert.Inconclusive "Test not yet implemented."
 
 [<TestCase>]
@@ -1439,7 +1538,5 @@ module Parallel =
     [<TestCase>]
     let partition () : unit =
         PartitionTester Vector.Parallel.partition Vector.Parallel.partition    
-#endif    
-
-
+#endif
 
