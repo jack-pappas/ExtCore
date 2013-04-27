@@ -129,6 +129,30 @@ module Array =
         return result
         }
 
+    /// Async implementation of Array.mapi2.
+    [<CompiledName("MapIndexed2")>]
+    let mapi2 (mapping : int -> 'T1 -> 'T2 -> Async<'U>) (array1 : 'T1[]) (array2 : 'T2[]) : Async<'U[]> =
+        // Preconditions
+        checkNonNull "array1" array1
+        checkNonNull "array2" array2
+
+        let len = Array.length array1
+        if Array.length array2 <> len then
+            invalidArg "array2" "The arrays have different lengths."
+
+        let result = Array.zeroCreate len
+        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+
+        async {
+        // Apply the mapping function to each array element.
+        for i in 0 .. len - 1 do
+            let! mappedValue = mapping.Invoke (i, array1.[i], array2.[i])
+            result.[i] <- mappedValue
+
+        // Return the completed results.
+        return result
+        }
+
     /// Async implementation of Array.mapPartition.
     [<CompiledName("MapPartition")>]
     let mapPartition (partitioner : 'T -> Async<Choice<'U, 'V>>) (array : 'T[]) : Async<'U[] * 'V[]> =

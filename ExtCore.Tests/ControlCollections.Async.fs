@@ -86,6 +86,10 @@ module Array =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
+    let mapi2 () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
     let mapPartition () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
