@@ -570,3 +570,23 @@ let chooseInPlace () : unit =
 [<TestCase>]
 let chooseiInPlace () : unit =
     Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let average () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let averageBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let maxBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let minBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+
+[<TestCase>]
+let sumBy () : unit =
+    Assert.Inconclusive "Test not yet implemented."

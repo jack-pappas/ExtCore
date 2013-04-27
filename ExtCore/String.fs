@@ -318,6 +318,18 @@ module String =
     let inline toArray (str : string) =
         str.ToCharArray ()
 
+    /// Returns a copy of the given string, converted to lowercase using the
+    /// casing rules of the invariant culture.
+    [<CompiledName("ToLowerInvariant")>]
+    let inline toLower (str : string) : string =
+        str.ToLowerInvariant ()
+
+    /// Returns a copy of the given string, converted to lowercase using the
+    /// casing rules of the invariant culture.
+    [<CompiledName("ToUpperInvariant")>]
+    let inline toUpper (str : string) : string =
+        str.ToUpperInvariant ()
+
     /// Returns a string array that contains the substrings in a string that are delimited
     /// by elements of the given Unicode character array. The returned array will be empty
     /// if and only if the input string is empty.

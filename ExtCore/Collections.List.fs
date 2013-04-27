@@ -448,6 +448,9 @@ let countWith (predicate : 'T -> bool) (list : 'T list) : int =
         match list with
         | [] -> acc
         | hd :: tl ->
+            // TODO : Should we use checked addition here? It is unlikely that anyone
+            // will have a list with more than Int32.MaxValue elements, but maybe we should
+            // use checked addition just in case...
             let acc = if predicate hd then acc + 1 else acc
             count acc tl
 

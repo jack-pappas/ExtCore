@@ -150,3 +150,7 @@ let cycle () : unit =
         !elementEvalCount
         |> should equal 5
 
+[<TestCase>]
+let countWith () : unit =
+    Assert.Inconclusive "Test not yet implemented."
+

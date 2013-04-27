@@ -27,7 +27,7 @@ open FsUnit
 /// Tests for the ExtCore.Control.State module.
 module State =
     [<TestCase>]
-    let run () : unit =
+    let bindChoice () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
@@ -43,11 +43,7 @@ module State =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let setState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let bindChoice () : unit =
+    let map () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
@@ -55,7 +51,11 @@ module State =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let map () : unit =
+    let run () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
 
@@ -73,10 +73,6 @@ module Reader =
 /// Tests for the ExtCore.Control.ReaderState module.
 module ReaderState =
     [<TestCase>]
-    let run () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
     let evaluate () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
@@ -89,6 +85,10 @@ module ReaderState =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
+    let run () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
     let setState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
@@ -96,26 +96,40 @@ module ReaderState =
 /// Tests for the ExtCore.Control.Choice module.
 module Choice =
     [<TestCase>]
-    let bindOrRaise () : unit =
+    let bindOrFail () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let bindOrFail () : unit =
+    let bindOrRaise () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase; ExpectedException(typeof<exn>)>]
+    let ``bindOrRaise raises exn for Choice2Of2`` () : unit =
+        Choice2Of2 (exn "An error occurred within the computation.")
+        |> Choice.bindOrRaise
+        |> ignore
+
+    [<TestCase>]
+    let failwith () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let setError () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
-    [<TestCase>]
-    let failwith () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
 
 /// Tests for the ExtCore.Control.ProtectedState module.
 module ProtectedState =
     [<TestCase>]
-    let liftState () : unit =
+    let discardState () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let failwith () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let getState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
@@ -131,11 +145,7 @@ module ProtectedState =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let setState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let getState () : unit =
+    let liftState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
@@ -143,18 +153,14 @@ module ProtectedState =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let failwith () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let discardState () : unit =
+    let setState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.StatefulChoice module.
 module StatefulChoice =
     [<TestCase>]
-    let liftState () : unit =
+    let getState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
@@ -162,15 +168,15 @@ module StatefulChoice =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
-    let setState () : unit =
-        Assert.Inconclusive "Test not yet implemented."
-
-    [<TestCase>]
-    let getState () : unit =
+    let liftState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
     [<TestCase>]
     let map () : unit =
+        Assert.Inconclusive "Test not yet implemented."
+
+    [<TestCase>]
+    let setState () : unit =
         Assert.Inconclusive "Test not yet implemented."
 
 
@@ -178,6 +184,12 @@ module StatefulChoice =
 module Async =
     [<TestCase>]
     let map () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        // Sample usage test cases.
+        async {
+            return "Hello World!" }
+        |> Async.map String.toLower
+        |> Async.RunSynchronously
+        |> should equal "hello world!"
+
 
 

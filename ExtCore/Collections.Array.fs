@@ -493,6 +493,9 @@ let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
     let len = Array.length array
     for i = 0 to len - 1 do
         if predicate array.[i] then
+            // TODO : Should we use checked addition here? .NET currently limits array
+            // sizes to less than Int32.MaxValue elements, but it is possible to create
+            // larger arrays on some versions of Mono.
             matches <- matches + 1
     
     // Return the number of matching array elements.

@@ -107,3 +107,18 @@ let cycle count (generator : int -> 'T) : seq<'T> =
         while true do
             yield! cycledSeq }
 
+/// Returns the number of elements in the sequence matching a given predicate.
+// Seq.countWith predicate sequence = (Seq.filter predicate sequence |> Seq.length)
+[<CompiledName("CountWith")>]
+let countWith (predicate : 'T -> bool) (sequence : seq<'T>) : int64 =
+    // Preconditions
+    checkNonNull "sequence" sequence
+
+    // Fold over the sequence, counting the number of elements which
+    // match the given predicate.
+    (0L, sequence)
+    ||> Seq.fold (fun matchCount el ->
+        if predicate el then
+            matchCount + 1L
+        else
+            matchCount)
