@@ -23,7 +23,6 @@ open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
-//open FsCheck
 
 
 /// Tests for the ExtCore.Control.Collections.Async.Array module.
@@ -83,11 +82,30 @@ module Array =
 
     [<TestCase>]
     let map2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Sample usage test cases.
+        ([| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |],
+         [| 1; 1; 2; 3; 5; 8; |])
+        ||> Async.Array.map2 (fun color fibo ->
+            async {
+            return sprintf "%i:%s" fibo color
+            })
+        |> Async.RunSynchronously
+        |> should equal
+            [| "1:Red"; "1:Orange"; "2:Yellow"; "3:Green"; "5:Blue"; "8:Violet"; |]
 
     [<TestCase>]
     let mapi2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Sample usage test cases.
+        ([| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |],
+         [| 1; 1; 2; 3; 5; 8; |])
+        ||> Async.Array.mapi2 (fun idx color fibo ->
+            async {
+            return sprintf "%i:(%i, %s)" (idx + 1) fibo color
+            })
+        |> Async.RunSynchronously
+        |> should equal
+            [| "1:(1, Red)"; "2:(1, Orange)"; "3:(2, Yellow)";
+               "4:(3, Green)"; "5:(5, Blue)"; "6:(8, Violet)"; |]
 
     [<TestCase>]
     let mapPartition () : unit =
@@ -1019,7 +1037,13 @@ module List =
 module Seq =
     [<TestCase>]
     let lift () : unit =
-        Assert.Ignore "Test not yet implemented."
+        [| 1; 1; 2; 3; 5; 8; 13; 21; |]
+        |> Seq.ofArray
+        |> Async.Seq.lift
+        |> Seq.map Async.RunSynchronously
+        |> Seq.toArray
+        |> should equal
+            [| 1; 1; 2; 3; 5; 8; 13; 21; |]
 
 
     /// Tests for the ExtCore.Control.Collections.Async.Seq.Parallel module.

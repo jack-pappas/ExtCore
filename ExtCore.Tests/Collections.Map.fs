@@ -300,7 +300,7 @@ let join () : unit =
         |> Map.add ConsoleColor.White "White"
 
     (initial1, initial2)
-    ||> Map.join (fun color name1 name2 ->
+    ||> Map.join (fun _ name1 name2 ->
         if Enum.IsDefined (typeof<ConsoleColor>, name1) then name1
         elif Enum.IsDefined (typeof<ConsoleColor>, name2) then name2
         else "(Unknown)")

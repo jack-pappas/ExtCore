@@ -23,50 +23,384 @@ open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
-//open FsCheck
 
 
 /// Tests for the ExtCore.Control.Collections.State.Array module.
 module Array =
+    /// Increments the counter (representing some global state) and
+    /// combines it with a state value passed via the state workflow.
+    let private modifyState (counter : int ref) state : unit * int =
+        let state' =
+            let c = !counter
+            if c % 2 = 0 then state + c else state * c
+        incr counter
+        (), state'
+
+    /// Combines the length of a string with the state value.
+    let private combineLength (str : string) (state : int) : unit * int =
+        let state' =
+            if state % 2 = 0 then str.Length + state
+            else str.Length * state
+        (), state'
+
     [<TestCase>]
     let iter () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                Array.empty
+                |> State.Array.iter (fun _ ->
+                    state {
+                    do! modifyState iterationCount
+                    })
+            let (), finalState = State.run testFunc 7
+
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let testFunc =
+                [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |]
+                |> State.Array.iter combineLength
+            let (), finalState = State.run testFunc 0
+
+            finalState |> should equal 122
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                Array.empty
+                |> State.Array.iteri (fun _ _ ->
+                    state {
+                    do! modifyState iterationCount
+                    })
+            let (), finalState = State.run testFunc 7
+
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let initials = ref ""
+            let testFunc =
+                [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |]
+                |> State.Array.iteri (fun idx colorName ->
+                    state {
+                    initials := !initials + (String.replicate (idx + 1) <| colorName.[0].ToString())
+                    do! combineLength colorName
+                    })
+            let (), finalState = State.run testFunc 0
+
+            !initials |> should equal "ROOYYYGGGGBBBBBVVVVVV"
+            finalState |> should equal 122
 
     [<TestCase>]
     let map () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                Array.empty
+                |> State.Array.map (fun _ ->
+                    state {
+                    do! modifyState iterationCount
+                    return ()
+                    })
+            let results, finalState = State.run testFunc 7
+
+            Array.isEmpty results |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let testFunc =
+                [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |]
+                |> State.Array.map (fun colorName ->
+                    state {
+                    do! combineLength colorName
+                    return colorName.ToLowerInvariant ()
+                    })
+            let results, finalState = State.run testFunc 0
+
+            results
+            |> should equal
+                [| "red"; "orange"; "yellow"; "green"; "blue"; "violet"; |]
+            finalState |> should equal 122
 
     [<TestCase>]
     let mapi () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                Array.empty
+                |> State.Array.mapi (fun _ _ ->
+                    state {
+                    do! modifyState iterationCount
+                    return ()
+                    })
+            let results, finalState = State.run testFunc 7
+
+            Array.isEmpty results |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let testFunc =
+                [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |]
+                |> State.Array.mapi (fun idx colorName ->
+                    state {
+                    do! combineLength colorName
+
+                    if idx % 2 = 0 then
+                        return colorName.ToLowerInvariant ()
+                    else
+                        return colorName.ToUpperInvariant ()
+                    })
+            let results, finalState = State.run testFunc 0
+
+            results
+            |> should equal
+                [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
+            finalState |> should equal 122
 
     [<TestCase>]
     let mapBack () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                Array.empty
+                |> State.Array.mapBack (fun _ ->
+                    state {
+                    do! modifyState iterationCount
+                    return ()
+                    })
+            let results, finalState = State.run testFunc 7
+
+            Array.isEmpty results |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let testFunc =
+                [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |]
+                |> State.Array.mapBack (fun colorName ->
+                    state {
+                    do! combineLength colorName
+                    return colorName.ToLowerInvariant ()
+                    })
+            let results, finalState = State.run testFunc 0
+
+            results
+            |> should equal
+                [| "red"; "orange"; "yellow"; "green"; "blue"; "violet"; |]
+            finalState |> should equal 99
 
     [<TestCase>]
     let mapiBack () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                Array.empty
+                |> State.Array.mapiBack (fun _ _ ->
+                    state {
+                    do! modifyState iterationCount
+                    return ()
+                    })
+            let results, finalState = State.run testFunc 7
+
+            Array.isEmpty results |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let testFunc =
+                [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |]
+                |> State.Array.mapiBack (fun idx colorName ->
+                    state {
+                    do! combineLength colorName
+
+                    if idx % 2 = 0 then
+                        return colorName.ToLowerInvariant ()
+                    else
+                        return colorName.ToUpperInvariant ()
+                    })
+            let results, finalState = State.run testFunc 0
+
+            results
+            |> should equal
+                [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
+            finalState |> should equal 99
 
     [<TestCase>]
     let map2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                (Array.empty, Array.empty)
+                ||> State.Array.map2 (fun _ _ ->
+                    state {
+                    do! modifyState iterationCount
+                    return ()
+                    })
+            let results, finalState = State.run testFunc 7
+
+            Array.isEmpty results |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let testFunc =
+                ([| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |],
+                 [| 1; 1; 2; 3; 5; 8; |])
+                ||> State.Array.map2 (fun colorName fibo ->
+                    state {
+                    do! combineLength colorName
+                    return sprintf "%i:%s" fibo <| colorName.ToLowerInvariant ()
+                    })
+            let results, finalState = State.run testFunc 0
+
+            results
+            |> should equal
+                [| "1:red"; "1:orange"; "2:yellow"; "3:green"; "5:blue"; "8:violet"; |]
+            finalState |> should equal 122
+            
+    [<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+    let ``map2 raises exn when arrays have different lengths`` () : unit =
+        let testFunc =
+            ([| 1..3 |], [| 2..10 |])
+            ||> State.Array.map2 (fun _ _ ->
+                state {
+                return ()
+                })
+        State.run testFunc 15
+        |> ignore
 
     [<TestCase>]
     let mapi2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                (Array.empty, Array.empty)
+                ||> State.Array.mapi2 (fun _ _ _ ->
+                    state {
+                    do! modifyState iterationCount
+                    return ()
+                    })
+            let results, finalState = State.run testFunc 7
+
+            Array.isEmpty results |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let testFunc =
+                ([| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |],
+                 [| 1; 1; 2; 3; 5; 8; |])
+                ||> State.Array.mapi2 (fun idx colorName fibo ->
+                    state {
+                    do! combineLength colorName
+                    if idx % 2 = 0 then
+                        return sprintf "%i:%s" fibo <| colorName.ToLowerInvariant ()
+                    else
+                        return sprintf "%i:%s" fibo <| colorName.ToUpperInvariant ()
+                    })
+            let results, finalState = State.run testFunc 0
+
+            results
+            |> should equal
+                [| "1:red"; "1:ORANGE"; "2:yellow"; "3:GREEN"; "5:blue"; "8:VIOLET"; |]
+            finalState |> should equal 122
+
+    [<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+    let ``mapi2 raises exn when arrays have different lengths`` () : unit =
+        let testFunc =
+            ([| 1..3 |], [| 2..10 |])
+            ||> State.Array.mapi2 (fun _ _ _ ->
+                state {
+                return ()
+                })
+        State.run testFunc 15
+        |> ignore
 
     [<TestCase>]
     let fold () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                ("", (Array.empty : string[]))
+                ||> State.Array.fold (fun initials colorName ->
+                    state {
+                    do! modifyState iterationCount
+                    return initials + colorName.[0].ToString()
+                    })
+            let foldResult, finalState = State.run testFunc 7
+
+            String.isEmpty foldResult |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+            
+        // Sample usage test cases.
+        do
+            let testFunc =
+                ("", [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |])
+                ||> State.Array.fold (fun initials colorName ->
+                    state {
+                    do! combineLength colorName
+                    return initials + colorName.[0].ToString()
+                    })
+            let foldResult, finalState = State.run testFunc 0
+
+            foldResult |> should equal "ROYGBV"
+            finalState |> should equal 122
 
     [<TestCase>]
     let foldi () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let iterationCount = ref 0
+            let testFunc =
+                ("", (Array.empty : string[]))
+                ||> State.Array.foldi (fun idx initials colorName ->
+                    state {
+                    do! modifyState iterationCount
+                    return initials + (String.replicate (idx + 1) <| colorName.[0].ToString())
+                    })
+            let foldResult, finalState = State.run testFunc 7
+
+            String.isEmpty foldResult |> should be True
+            finalState |> should equal 7
+            !iterationCount |> should equal 0
+            
+        // Sample usage test cases.
+        do
+            let testFunc =
+                ("", [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet"; |])
+                ||> State.Array.foldi (fun idx initials colorName ->
+                    state {
+                    do! combineLength colorName
+                    return initials + (String.replicate (idx + 1) <| colorName.[0].ToString())
+                    })
+            let foldResult, finalState = State.run testFunc 0
+
+            foldResult |> should equal "ROOYYYGGGGBBBBBVVVVVV"
+            finalState |> should equal 122
 
 
 /// Tests for the ExtCore.Control.Collections.State.List module.
