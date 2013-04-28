@@ -18,7 +18,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_NET40</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\ExtCore.XML</DocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -30,7 +30,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_NET40</DefineConstants>
+    <DefineConstants>TRACE;FX_ATLEAST_40</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\ExtCore.XML</DocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -41,7 +41,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
-    <DefineConstants>TRACE;DEBUG;PROTO_COMPILER;FX_ATLEAST_NET40</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;PROTO_COMPILER;FX_ATLEAST_40</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\ExtCore.XML</DocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -53,7 +53,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;PROTO_COMPILER;FX_ATLEAST_NET40</DefineConstants>
+    <DefineConstants>TRACE;PROTO_COMPILER;FX_ATLEAST_40</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\ExtCore.XML</DocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
