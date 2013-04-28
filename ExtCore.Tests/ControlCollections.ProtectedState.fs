@@ -30,43 +30,43 @@ open FsUnit
 module Array =
     [<TestCase>]
     let iter () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let map () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let mapi () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.ProtectedState.List module.
 module List =
     [<TestCase>]
     let map () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.ProtectedState.ArrayView module.
 module ArrayView =
     [<TestCase>]
     let iter () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let map () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let mapi () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 

@@ -142,7 +142,7 @@ let last () : unit =
 
 [<TestCase>]
 let clear () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let toList () : unit =
@@ -557,36 +557,36 @@ let sum () : unit =
 
 [<TestCase>]
 let mapInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let mapiInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let chooseInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let chooseiInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let average () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let averageBy () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let maxBy () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let minBy () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let sumBy () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."

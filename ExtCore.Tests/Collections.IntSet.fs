@@ -211,7 +211,7 @@ let union () : unit =
 
 [<TestCase>]
 let unionMany () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let intersect () : unit =
@@ -228,7 +228,7 @@ let intersect () : unit =
 
 [<TestCase>]
 let intersectMany () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let difference () : unit =

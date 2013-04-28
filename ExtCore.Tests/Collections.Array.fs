@@ -60,7 +60,7 @@ let projectKeys () : unit =
 
 [<TestCase>]
 let clear () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let ``contains (value type)`` () : unit =
@@ -310,28 +310,28 @@ let choose2 () : unit =
 
 [<TestCase>]
 let mapInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let mapiInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let chooseInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let chooseiInPlace () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let countWith () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let foldPairwise () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 [<TestCase>]
 let foldPairwiseBack () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."

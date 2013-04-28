@@ -83,11 +83,11 @@ module Array =
 
     [<TestCase>]
     let map2 () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let mapi2 () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let mapPartition () : unit =
@@ -1019,12 +1019,12 @@ module List =
 module Seq =
     [<TestCase>]
     let lift () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 
     /// Tests for the ExtCore.Control.Collections.Async.Seq.Parallel module.
     module Parallel =
         [<TestCase>]
         let batch () : unit =
-            Assert.Inconclusive "Test not yet implemented."
+            Assert.Ignore "Test not yet implemented."
 

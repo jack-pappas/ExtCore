@@ -279,27 +279,27 @@ let disjoint () : unit =
 
 [<TestCase>]
 let countWith () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
 
 module Cartesian =
     [<TestCase>]
     let fold () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let foldBack () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let iter () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let map () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let choose () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 

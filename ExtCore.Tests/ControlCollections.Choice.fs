@@ -30,82 +30,82 @@ open FsUnit
 module Array =
     [<TestCase>]
     let map () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let mapi () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let map2 () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let fold () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let foldi () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let init () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let iter () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let iteri () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let reduce () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.List module.
 module List =
     [<TestCase>]
     let fold () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let map2 () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let mapi2 () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let iter2 () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.Seq module.
 module Seq =
     [<TestCase>]
     let iter () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.Set module.
 module Set =
     [<TestCase>]
     let fold () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
     [<TestCase>]
     let mapToArray () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.ArrayView module.
 module ArrayView =
     [<TestCase>]
     let fold () : unit =
-        Assert.Inconclusive "Test not yet implemented."
+        Assert.Ignore "Test not yet implemented."
 
 

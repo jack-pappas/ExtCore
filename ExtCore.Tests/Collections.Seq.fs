@@ -152,5 +152,5 @@ let cycle () : unit =
 
 [<TestCase>]
 let countWith () : unit =
-    Assert.Inconclusive "Test not yet implemented."
+    Assert.Ignore "Test not yet implemented."
 
