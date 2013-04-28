@@ -370,7 +370,7 @@ let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
 /// Splits the collection into two (3) collections, containing the elements for which the given
 /// function returns Choice1Of3, Choice2Of3, or Choice3Of3, respectively. This function is similar
 /// to Array.partition, but it allows the returned collections to have different types.
-[<CompiledName("MapPartition")>]
+[<CompiledName("MapPartition3")>]
 let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U2[] * 'U3[] =
     // Preconditions
     checkNonNull "array" array
