@@ -23,7 +23,6 @@ open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
 open FsUnit
-//open FsCheck
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Array module.
@@ -54,9 +53,16 @@ module Array =
     [<Test>]
     let iter () : unit =
         // Test case for an empty array.
-        Array.empty
-        |> Maybe.Array.iter (fun _ -> None)
-        |> should equal (Some ())
+        do
+            let iterationCount = ref 0
+
+            Array.empty
+            |> Maybe.Array.iter (fun _ ->
+                incr iterationCount
+                None)
+            |> should equal (Some ())
+
+            !iterationCount |> should equal 0
 
         // Sample usage test cases.
         do
@@ -102,9 +108,16 @@ module Array =
     [<Test>]
     let iteri () : unit =
         // Test case for an empty array.
-        Array.empty
-        |> Maybe.Array.iteri (fun _ _ -> None)
-        |> should equal (Some ())
+        do
+            let iterationCount = ref 0
+
+            Array.empty
+            |> Maybe.Array.iteri (fun _ _ ->
+                incr iterationCount
+                None)
+            |> should equal (Some ())
+
+            !iterationCount |> should equal 0
 
         // Sample usage test cases.
         do
@@ -553,23 +566,164 @@ module List =
 module Seq =
     [<Test>]
     let iter () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty sequence.
+        do
+            let iterationCount = ref 0
+
+            Seq.empty
+            |> Maybe.Seq.iter (fun _ ->
+                incr iterationCount
+                None)
+            |> should equal (Some ())
+
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let iterationCount = ref 0
+
+            [| 0..4 |]
+            |> Seq.ofArray
+            |> Maybe.Seq.iter (fun x ->
+                incr iterationCount
+                if x > 0 && x % 5 = 0 then None
+                else Some ())
+            |> Option.isSome
+            |> should be True
+
+            !iterationCount |> should equal 5
+
+        do
+            let iterationCount = ref 0
+
+            [| 0..5 |]
+            |> Seq.ofArray
+            |> Maybe.Seq.iter (fun x ->
+                incr iterationCount
+                if x > 0 && x % 5 = 0 then None
+                else Some ())
+            |> Option.isNone
+            |> should be True
+
+            !iterationCount |> should equal 6
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            [| 0..5 |]
+            |> Seq.ofArray
+            |> Maybe.Seq.iter (fun x ->
+                incr iterationCount
+                if x > 0 && x % 2 = 0 then None
+                else Some ())
+            |> Option.isNone
+            |> should be True
+
+            !iterationCount |> should equal 3
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Set module.
 module Set =
     [<Test>]
     let fold () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty set.
+        ("", Set.empty)
+        ||> Maybe.Set.fold (fun _ _ -> None)
+        |> should equal (Some "")
+
+        // Sample usage test cases.
+        ("", set [| 0..4 |])
+        ||> Maybe.Set.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal (Some "abcde")
+
+        ("", set [| 0..5 |])
+        ||> Maybe.Set.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ("", set [| 0..5 |])
+            ||> Maybe.Set.fold (fun str x ->
+                incr iterationCount
+                if x <> 0 && x % 2 = 0 then None
+                else Some (str + ((char (int 'a' + x)).ToString ())))
+            |> should equal None
+
+            !iterationCount |> should equal 3
 
     [<Test>]
     let mapToArray () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty set.
+        Set.empty
+        |> Maybe.Set.mapToArray (fun _ -> None)
+        |> should equal (Some Array.empty)
+
+        // Sample usage test cases.
+        set [| 0..4 |]
+        |> Maybe.Set.mapToArray (fun x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some ((char (int 'a' + x)).ToString ()))
+        |> should equal (Some [| "a"; "b"; "c"; "d"; "e"; |])
+
+        set [| 0..5 |]
+        |> Maybe.Set.mapToArray (fun x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some ((char (int 'a' + x)).ToString ()))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            set [| 0..5 |]
+            |> Maybe.Set.mapToArray (fun x ->
+                incr iterationCount
+                if x <> 0 && x % 2 = 0 then None
+                else Some ((char (int 'a' + x)).ToString ()))
+            |> should equal None
+
+            !iterationCount |> should equal 3
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.ArrayView module.
 module ArrayView =
     [<Test>]
     let fold () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty ArrayView.
+        ("", ArrayView.create [| 0..4 |] 0 0)
+        ||> Maybe.ArrayView.fold (fun _ _ -> None)
+        |> should equal (Some "")
+
+        // Sample usage test cases.
+        ("", ArrayView.create [| -2..8 |] 2 5)
+        ||> Maybe.ArrayView.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal (Some "abcde")
+
+        ("", ArrayView.create [| -2..8 |] 2 6)
+        ||> Maybe.ArrayView.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ("", ArrayView.create [| -2..8 |] 2 5)
+            ||> Maybe.ArrayView.fold (fun str x ->
+                incr iterationCount
+                if x <> 0 && x % 2 = 0 then None
+                else Some (str + ((char (int 'a' + x)).ToString ())))
+            |> should equal None
+
+            !iterationCount |> should equal 3
 
