@@ -371,20 +371,182 @@ module Array =
 /// Tests for the ExtCore.Control.Collections.Maybe.List module.
 module List =
     [<Test>]
+    let fold () : unit =
+        // Test case for an empty list.
+        ("", List.empty)
+        ||> Maybe.List.fold (fun _ _ -> None)
+        |> should equal (Some "")
+
+        // Sample usage test cases.
+        ("", [0..4])
+        ||> Maybe.List.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal (Some "abcde")
+
+        ("", [0..5])
+        ||> Maybe.List.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ("", [0..5])
+            ||> Maybe.List.fold (fun str x ->
+                incr iterationCount
+                if x <> 0 && x % 2 = 0 then None
+                else Some (str + ((char (int 'a' + x)).ToString ())))
+            |> should equal None
+
+            !iterationCount |> should equal 3
+
+    [<Test>]
     let iter2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty list.
+        do
+            let iterationCount = ref 0
+
+            (List.empty, List.empty)
+            ||> Maybe.List.iter2 (fun _ _ ->
+                incr iterationCount
+                None)
+            |> should equal (Some ())
+
+            !iterationCount |> should equal 0
+
+        // Sample usage test cases.
+        do
+            let iterationCount = ref 0
+
+            ([0..4], [1; 1; 2; 3; 5])
+            ||> Maybe.List.iter2 (fun nat fibo ->
+                incr iterationCount
+                let x = nat + fibo
+                if x >= 10 then None
+                else Some ())
+            |> should equal (Some ())
+
+            !iterationCount |> should equal 5
+
+        do
+            let iterationCount = ref 0
+
+            ([0..5], [1; 1; 2; 3; 5; 8])
+            ||> Maybe.List.iter2 (fun nat fibo ->
+                incr iterationCount
+                let x = nat + fibo
+                if x >= 10 then None
+                else Some ())
+            |> should equal None
+
+            !iterationCount |> should equal 6
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ([0..5], [1; 1; 2; 3; 5; 8])
+            ||> Maybe.List.iter2 (fun nat fibo ->
+                incr iterationCount
+                let x = nat + fibo
+                if x >= 2 then None
+                else Some ())
+            |> should equal None
+
+            !iterationCount |> should equal 2
+
+    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    let ``iter2 raises exn when lists have different lengths`` () : unit =
+        ([0..4], [0..7])
+        ||> Maybe.List.iter2 (fun _ _ -> None)
+        |> ignore
 
     [<Test>]
     let map2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty list.
+        (List.empty, List.empty)
+        ||> Maybe.List.map2 (fun _ _ -> None)
+        |> should equal (Some List.empty)
+
+        // Sample usage test cases.
+        ([0..4], [1; 1; 2; 3; 5])
+        ||> Maybe.List.map2 (fun nat fibo ->
+            let x = nat + fibo
+            if x >= 10 then None
+            else Some x)
+        |> should equal (Some [1; 2; 4; 6; 9])
+
+        ([0..5], [1; 1; 2; 3; 5; 8])
+        ||> Maybe.List.map2 (fun nat fibo ->
+            let x = nat + fibo
+            if x >= 10 then None
+            else Some x)
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ([0..5], [1; 1; 2; 3; 5; 8])
+            ||> Maybe.List.map2 (fun nat fibo ->
+                incr iterationCount
+                let x = nat + fibo
+                if x >= 2 then None
+                else Some x)
+            |> should equal None
+
+            !iterationCount |> should equal 2
+
+    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    let ``map2 raises exn when lists have different lengths`` () : unit =
+        ([0..4], [0..7])
+        ||> Maybe.List.map2 (fun _ _ -> None)
+        |> ignore
 
     [<Test>]
     let mapi2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty list.
+        (List.empty, List.empty)
+        ||> Maybe.List.mapi2 (fun _ _ _ -> None)
+        |> should equal (Some List.empty)
 
-    [<Test>]
-    let fold () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Sample usage test cases.
+        ([1..5], [1; 1; 2; 3; 5])
+        ||> Maybe.List.mapi2 (fun idx nat fibo ->
+            let x = idx + (max nat fibo)
+            if x >= 10 then None
+            else Some x)
+        |> should equal (Some [1; 3; 5; 7; 9])
+
+        ([1..6], [1; 1; 2; 3; 5; 8])
+        ||> Maybe.List.mapi2 (fun idx nat fibo ->
+            let x = idx + (max nat fibo)
+            if x >= 10 then None
+            else Some x)
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ([1..5], [1; 1; 2; 3; 5])
+            ||> Maybe.List.mapi2 (fun idx nat fibo ->
+                incr iterationCount
+                let x = idx + (max nat fibo)
+                if x >= 2 then None
+                else Some x)
+            |> should equal None
+
+            !iterationCount |> should equal 2
+
+    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    let ``mapi2 raises exn when lists have different lengths`` () : unit =
+        ([0..4], [0..7])
+        ||> Maybe.List.mapi2 (fun _ _ _ -> None)
+        |> ignore
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Seq module.
