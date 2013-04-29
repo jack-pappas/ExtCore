@@ -29,11 +29,12 @@ let appendSingleton () : unit =
     Seq.empty
     |> Seq.appendSingleton 123
     |> Seq.length
-    |> should equal 1
+    |> assertEqual 1
 
     seq { 0 .. 4 }
     |> Seq.appendSingleton 10
-    |> should equal [0; 1; 2; 3; 4; 10]
+    |> Seq.toList
+    |> assertEqual [0; 1; 2; 3; 4; 10]
 
 [<Test>]
 let projectValues () : unit =
@@ -41,7 +42,7 @@ let projectValues () : unit =
     |> Seq.projectValues (fun asciiChar ->
         asciiChar.ToString().ToUpper())
     |> Seq.toList
-    |> should equal
+    |> assertEqual
        ['a', "A";
         'b', "B";
         'c', "C";
@@ -57,7 +58,7 @@ let projectKeys () : unit =
         yield "Yellow" }
     |> Seq.projectKeys String.length
     |> Seq.toList
-    |> should equal
+    |> assertEqual
        [3, "Red";
         4, "Blue";
         5, "Green";
@@ -78,7 +79,7 @@ let replicate () : unit =
         yield "Yellow" }
     |> Seq.replicate 4
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| "Red"; "Blue"; "Green"; "Yellow";
            "Red"; "Blue"; "Green"; "Yellow";
            "Red"; "Blue"; "Green"; "Yellow";
@@ -99,14 +100,14 @@ let replicate () : unit =
             yield "Yellow" }
         |> Seq.replicate 4
         |> Seq.toArray
-        |> should equal
+        |> assertEqual
             [| "Red"; "Blue"; "Green"; "Yellow";
                "Red"; "Blue"; "Green"; "Yellow";
                "Red"; "Blue"; "Green"; "Yellow";
                "Red"; "Blue"; "Green"; "Yellow"; |]
 
         !elementEvalCount
-        |> should equal 4
+        |> assertEqual 4
 
 [<Test>]
 let repeat () : unit =
@@ -114,7 +115,7 @@ let repeat () : unit =
     Seq.repeat "Hello World!"
     |> Seq.take 5
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; |]
 
 [<Test>]
@@ -124,7 +125,7 @@ let cycle () : unit =
         4 - i)
     |> Seq.take 23
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| 4; 3; 2; 1; 0;
            4; 3; 2; 1; 0;
            4; 3; 2; 1; 0;
@@ -140,7 +141,7 @@ let cycle () : unit =
             4 - i)
         |> Seq.take 23
         |> Seq.toArray
-        |> should equal
+        |> assertEqual
             [| 4; 3; 2; 1; 0;
                4; 3; 2; 1; 0;
                4; 3; 2; 1; 0;
@@ -148,7 +149,7 @@ let cycle () : unit =
                4; 3; 2; |]
 
         !elementEvalCount
-        |> should equal 5
+        |> assertEqual 5
 
 [<Test>]
 let countWith () : unit =
@@ -157,24 +158,24 @@ let countWith () : unit =
     |> Seq.ofArray
     |> Seq.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 0
+    |> assertEqual 0L
 
     // Sample usage test cases.
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Seq.ofArray
     |> Seq.countWith (fun x ->
         x < 0)
-    |> should equal 0
+    |> assertEqual 0L
 
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Seq.ofArray
     |> Seq.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 1
+    |> assertEqual 1L
 
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Seq.ofArray
     |> Seq.countWith (fun x ->
         x % 3 = 0)
-    |> should equal 4
+    |> assertEqual 4L
 

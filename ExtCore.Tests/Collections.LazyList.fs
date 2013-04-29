@@ -171,18 +171,18 @@ let ``Basic Test #4`` () : unit =
 
     lazyList
     |> LazyList.head
-    |> should equal 1
+    |> assertEqual 1
 
     lazyList
     |> LazyList.tail
     |> LazyList.head
-    |> should equal 2
+    |> assertEqual 2
 
     lazyList
     |> LazyList.tail
     |> LazyList.tail
     |> LazyList.head
-    |> should equal 3
+    |> assertEqual 3
 
 [<Test>]
 let ``Basic Test #5`` () : unit =
@@ -202,7 +202,7 @@ let ``Basic Test #5`` () : unit =
     |> LazyList.tail
     |> LazyList.tail
     |> LazyList.head
-    |> should equal 'M'
+    |> assertEqual 'M'
 
 
     ()

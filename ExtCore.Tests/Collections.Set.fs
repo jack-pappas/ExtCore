@@ -33,7 +33,7 @@ let foldi () : unit =
     ([], colors)
     ||> Set.foldi (fun lst idx el ->
         (idx, el) :: lst)
-    |> should equal [
+    |> assertEqual [
         5, "Yellow";
         4, "Violet";
         3, "Red";
@@ -48,7 +48,7 @@ let mapToArray () : unit =
 
     colors
     |> Set.mapToArray String.length
-    |> should equal [|
+    |> assertEqual [|
         4; 5; 6; 3; 6; 6 |]
 
 [<Test>]
@@ -58,7 +58,7 @@ let init () : unit =
 
     Set.init 26 <| fun i ->
         char (int 'a' + i)
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let tryExtractMin () : unit =
@@ -68,10 +68,10 @@ let tryExtractMin () : unit =
             Set.tryExtractMin initialSet
 
         minElement
-        |> should equal None
+        |> assertEqual None
 
         remaining
-        |> should equal initialSet  // TODO : Make this even stricter by checking for reference (physical) equality.
+        |> assertEqual initialSet  // TODO : Make this even stricter by checking for reference (physical) equality.
 
     do
         let initialSet = Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -79,10 +79,10 @@ let tryExtractMin () : unit =
             Set.tryExtractMin initialSet
 
         minElement
-        |> should equal (Some "Blue")
+        |> assertEqual (Some "Blue")
 
         remaining
-        |> should equal (Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Violet" |])
+        |> assertEqual (Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Violet" |])
 
 [<Test>]
 let tryExtractMax () : unit =
@@ -92,10 +92,10 @@ let tryExtractMax () : unit =
             Set.tryExtractMax initialSet
 
         maxElement
-        |> should equal None
+        |> assertEqual None
 
         remaining
-        |> should equal initialSet  // TODO : Make this even stricter by checking for reference (physical) equality.
+        |> assertEqual initialSet  // TODO : Make this even stricter by checking for reference (physical) equality.
 
     do
         let maxElement, remaining =
@@ -104,10 +104,10 @@ let tryExtractMax () : unit =
             |> Set.tryExtractMax
 
         maxElement
-        |> should equal (Some "Yellow")
+        |> assertEqual (Some "Yellow")
 
         remaining
-        |> should equal (Set.ofArray [| "Red"; "Orange"; "Green"; "Blue"; "Violet" |])
+        |> assertEqual (Set.ofArray [| "Red"; "Orange"; "Green"; "Blue"; "Violet" |])
     
 [<Test>]
 let extractMin () : unit =
@@ -117,10 +117,10 @@ let extractMin () : unit =
         |> Set.extractMin
 
     minElement
-    |> should equal "Blue"
+    |> assertEqual "Blue"
 
     remaining
-    |> should equal (Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Violet" |])
+    |> assertEqual (Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Violet" |])
 
 [<Test>]
 let extractMax () : unit =
@@ -130,24 +130,24 @@ let extractMax () : unit =
         |> Set.extractMax
 
     maxElement
-    |> should equal "Yellow"
+    |> assertEqual "Yellow"
 
     remaining
-    |> should equal (Set.ofArray [| "Red"; "Orange"; "Green"; "Blue"; "Violet" |])
+    |> assertEqual (Set.ofArray [| "Red"; "Orange"; "Green"; "Blue"; "Violet" |])
 
 [<Test>]
 let reduce () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
     |> Set.reduce (+)
-    |> should equal "BlueGreenOrangeRedVioletYellow"
+    |> assertEqual "BlueGreenOrangeRedVioletYellow"
 
 [<Test>]
 let reduceBack () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
     |> Set.reduceBack (+)
-    |> should equal "BlueGreenOrangeRedVioletYellow"
+    |> assertEqual "BlueGreenOrangeRedVioletYellow"
 
 [<Test>]
 let choose () : unit =
@@ -156,8 +156,8 @@ let choose () : unit =
     |> Set.choose (fun colorName ->
         let len = String.length colorName
         if len < 6 then Some len else None)
-    |> should equal [|
-        3; 4; 5 |]
+    |> assertEqual
+        <| set [| 3; 4; 5 |]
 
 [<Test>]
 let tryPick () : unit =
@@ -165,13 +165,13 @@ let tryPick () : unit =
     |> Set.ofArray
     |> Set.tryPick (fun colorName ->
         if colorName.StartsWith "T" then Some (String.length colorName) else None)
-    |> should equal None
+    |> assertEqual None
 
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
     |> Set.tryPick (fun colorName ->
         if colorName.StartsWith "G" then Some (String.length colorName) else None)
-    |> should equal (Some 5)
+    |> assertEqual (Some 5)
 
 [<Test>]
 let pick () : unit =
@@ -179,7 +179,7 @@ let pick () : unit =
     |> Set.ofArray
     |> Set.pick (fun colorName ->
         if colorName.StartsWith "G" then Some (String.length colorName) else None)
-    |> should equal 5
+    |> assertEqual 5
 
 [<Test>]
 let tryFind () : unit =
@@ -187,13 +187,13 @@ let tryFind () : unit =
     |> Set.ofArray
     |> Set.tryFind (fun colorName ->
         colorName.StartsWith "T")
-    |> should equal None
+    |> assertEqual None
 
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
     |> Set.tryFind (fun colorName ->
         colorName.StartsWith "G")
-    |> should equal (Some "Green")
+    |> assertEqual (Some "Green")
 
 [<Test>]
 let find () : unit =
@@ -201,7 +201,7 @@ let find () : unit =
     |> Set.ofArray
     |> Set.find (fun colorName ->
         colorName.StartsWith "G")
-    |> should equal "Green"
+    |> assertEqual "Green"
 
 [<Test>]
 let mapPartition () : unit =
@@ -216,28 +216,28 @@ let mapPartition () : unit =
                 Choice2Of2 <| colorName.ToLower ())
 
     left
-    |> should equal (Set.ofArray [| 4; 6; 6; 6 |])
+    |> assertEqual (Set.ofArray [| 4; 6; 6; 6 |])
 
     right
-    |> should equal (Set.ofArray [| "red"; "green" |])
+    |> assertEqual (Set.ofArray [| "red"; "green" |])
 
 [<Test>]
 let symmetricDifference () : unit =
     Set.symmetricDifference Set.empty Set.empty
-    |> should equal Set.empty
+    |> assertEqual Set.empty
 
     Set.symmetricDifference (Set.ofArray [| 0..2..20 |]) (Set.ofArray [| 0..3..20 |])
-    |> should equal (Set.ofArray [| 2; 3; 4; 8; 9; 10; 14; 15; 16; 20 |])
+    |> assertEqual (Set.ofArray [| 2; 3; 4; 8; 9; 10; 14; 15; 16; 20 |])
 
 [<Test>]
 let cartesian () : unit =
     Set.cartesian Set.empty Set.empty
-    |> should equal Set.empty
+    |> assertEqual Set.empty
 
     Set.cartesian
         (Set.ofArray [| "Red"; "Green"; "Blue" |])
         (Set.ofArray [| 20; 30 |])
-    |> should equal (Set.ofArray
+    |> assertEqual (Set.ofArray
         [|
         "Blue", 20;
         "Blue", 30;
@@ -253,7 +253,7 @@ let collect () : unit =
     |> Set.collect (fun el ->
         Set.ofArray [|
             el; el + 1; el * 2 |])
-    |> should equal (Set.ofArray
+    |> assertEqual (Set.ofArray
         [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |])
 
 [<Test>]
@@ -262,7 +262,7 @@ let condense () : unit =
     |> Set.ofArray
     |> Set.condense (fun el ->
         Set.ofArray [| 0 .. el |])
-    |> should equal (Set.ofArray [| 0; 1; 2; 3; 4; 5; 6; 7 |])
+    |> assertEqual (Set.ofArray [| 0; 1; 2; 3; 4; 5; 6; 7 |])
 
 [<Test>]
 let disjoint () : unit =
@@ -283,26 +283,26 @@ let countWith () : unit =
     Set.empty
     |> Set.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 0
+    |> assertEqual 0
 
     // Sample usage test cases.
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Set.ofArray
     |> Set.countWith (fun x ->
         x < 0)
-    |> should equal 0
+    |> assertEqual 0
 
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Set.ofArray
     |> Set.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 1
+    |> assertEqual 1
 
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Set.ofArray
     |> Set.countWith (fun x ->
         x % 3 = 0)
-    |> should equal 4
+    |> assertEqual 4
 
 
 module Cartesian =

@@ -45,27 +45,27 @@ let isEmpty () : unit =
 let count () : unit =
     IntMap.empty
     |> IntMap.count
-    |> should equal 0
+    |> assertEqual 0
 
     IntMap.singleton 1 'a'
     |> IntMap.count
-    |> should equal 1
+    |> assertEqual 1
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.count
-    |> should equal 8
+    |> assertEqual 8
 
 [<Test>]
 let singleton () : unit =
     IntMap.singleton 1 'a'
-    |> should equal (
+    |> assertEqual (
         IntMap.add 1 'a' IntMap.empty)
 
     IntMap.singleton 1 'a'
     |> IntMap.count
-    |> should equal 1
+    |> assertEqual 1
 
 [<Test>]
 let containsKey () : unit =
@@ -86,19 +86,19 @@ let tryFind () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
     |> IntMap.tryFind 5
-    |> should equal (Some 'a')
+    |> assertEqual (Some 'a')
 
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
     |> IntMap.tryFind 7
-    |> should equal None
+    |> assertEqual None
 
 [<Test>]
 let find () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
     |> IntMap.find 5
-    |> should equal 'a'
+    |> assertEqual 'a'
 
 [<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``find raises exn when key is not found`` () : unit =
@@ -112,33 +112,33 @@ let findOrDefault () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
     |> IntMap.findOrDefault 'z' 5
-    |> should equal 'a'
+    |> assertEqual 'a'
 
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
     |> IntMap.findOrDefault 'z' 7
-    |> should equal 'z'
+    |> assertEqual 'z'
 
 [<Test>]
 let tryFindKey () : unit =
     (IntMap.empty : IntMap<string>)
     |> IntMap.tryFindKey (fun k v ->
         k % 2 = 0)
-    |> should equal None
+    |> assertEqual None
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.tryFindKey (fun k v ->
         (k + int v) % 11 = 0)
-    |> should equal (Some 12)
+    |> assertEqual (Some 12)
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.tryFindKey (fun k v ->
         (k + int v) % 289 = 0)
-    |> should equal None
+    |> assertEqual None
 
 [<Test>]
 let add () : unit =
@@ -146,7 +146,7 @@ let add () : unit =
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.add 5 'x'
-    |> should equal (IntMap.ofArray
+    |> assertEqual (IntMap.ofArray
        [| (5, 'x'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |])
 
@@ -154,13 +154,13 @@ let add () : unit =
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.add 13 'x'
-    |> should equal (IntMap.ofArray
+    |> assertEqual (IntMap.ofArray
        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (13, 'x'); |])
 
     IntMap.empty
     |> IntMap.add 5 'x'
-    |> should equal (
+    |> assertEqual (
         IntMap.singleton 5 'x')
 
 [<Test>]
@@ -173,14 +173,14 @@ let remove () : unit =
     [(5, "a"); (3, "b")]
     |> IntMap.ofList
     |> IntMap.remove 5
-    |> should equal (
+    |> assertEqual (
         IntMap.singleton 3 "b")
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.remove 4
-    |> should equal (IntMap.ofArray
+    |> assertEqual (IntMap.ofArray
        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (12, 'b'); (14, 'c'); |])
 
@@ -189,7 +189,7 @@ let union () : unit =
     IntMap.union
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
         (IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |])
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -203,7 +203,7 @@ let intersect () : unit =
     IntMap.intersect
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
         (IntMap.ofArray [| (5, 'a'); (11, 'f'); (17, 'a'); (4, 'g'); (14, 'c'); |])
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (11, 'F'); (4, 'G'); |])
 
 [<Test>]
@@ -211,13 +211,13 @@ let difference () : unit =
     IntMap.difference
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
         IntMap.empty
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
     IntMap.difference
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
         (IntMap.ofArray [| (3, 'b'); (11, 'f'); (2, 'd'); (4, 'g'); (12, 'b'); |])
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'a'); (17, 'a'); (14, 'c'); |])
 
 [<Test>]
@@ -261,7 +261,7 @@ let ofSeq () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> Seq.ofArray
     |> IntMap.ofSeq
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -272,7 +272,7 @@ let ofList () : unit =
 
     [(5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G')]
     |> IntMap.ofList
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -284,7 +284,7 @@ let ofArray () : unit =
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -297,7 +297,7 @@ let ofMap () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
     |> Map.ofArray
     |> IntMap.ofMap
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -311,7 +311,7 @@ let toSeq () : unit =
     |> IntMap.ofArray
     |> IntMap.toSeq
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
 
 [<Test>]
@@ -324,7 +324,7 @@ let toList () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
     |> IntMap.toList
-    |> should equal
+    |> assertEqual
         [(2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a')]
 
 [<Test>]
@@ -337,7 +337,7 @@ let toArray () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
     |> IntMap.toArray
-    |> should equal
+    |> assertEqual
         [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
 
 [<Test>]
@@ -350,7 +350,7 @@ let toMap () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
     |> IntMap.toMap
-    |> should equal
+    |> assertEqual
         (Map.ofArray [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |])
 
 [<Test>]
@@ -361,7 +361,7 @@ let tryPick () : unit =
         if (k + v) = 10 then
             Some 11
         else None)
-    |> should equal None
+    |> assertEqual None
 
     // Test case where no elements match the 'picker' function.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -370,7 +370,7 @@ let tryPick () : unit =
         if System.Char.IsControl v then
             Some (int v + k)
         else None)
-    |> should equal None
+    |> assertEqual None
 
     // Test case where a single binding matches the 'picker' function.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -379,7 +379,7 @@ let tryPick () : unit =
         if (k % 7 = 0) && v = 'c' then
             Some (k - 2)
         else None)
-    |> should equal (Some 12)
+    |> assertEqual (Some 12)
 
     // Test case where multiple bindings match the 'picker' function.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -388,7 +388,7 @@ let tryPick () : unit =
         if k % 3 = 2 then
             Some v
         else None)
-    |> should equal (Some 'd')
+    |> assertEqual (Some 'd')
 
 [<Test>]
 let pick () : unit =
@@ -399,7 +399,7 @@ let pick () : unit =
         if (k % 7 = 0) && v = 'c' then
             Some (k - 2)
         else None)
-    |> should equal 12
+    |> assertEqual 12
 
     // Test case where multiple bindings match the 'picker' function.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -408,7 +408,7 @@ let pick () : unit =
         if k % 3 = 2 then
             Some v
         else None)
-    |> should equal 'd'
+    |> assertEqual 'd'
 
 [<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``pick raises exn on empty input`` () : unit =
@@ -439,7 +439,7 @@ let map () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.map (sprintf "%i:%c")
-    |> should equal (IntMap.ofArray
+    |> assertEqual (IntMap.ofArray
         [| (5, "5:a"); (3, "3:b"); (11, "11:f"); (2, "2:d");
             (17, "17:a"); (4, "4:g"); (12, "12:b"); (14, "14:c"); |])
 
@@ -449,7 +449,7 @@ let filter () : unit =
     |> IntMap.ofArray
     |> IntMap.filter (fun k v ->
         (k % 2 = 0) && System.Char.IsLower v)
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (2, 'd'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -460,7 +460,7 @@ let choose () : unit =
         if k % 2 <> 0 then
             Some (System.Char.ToUpper v)
         else None)
-    |> should equal
+    |> assertEqual
         (IntMap.ofArray [| (5, 'A'); (3, 'B'); (17, 'A'); (11, 'F'); |])
 
 [<Test>]
@@ -486,7 +486,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [| 'D'; 'B'; 'G'; 'A'; 'F'; 'B'; 'C'; 'A'; |]
 
 [<Test>]
@@ -512,7 +512,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [| 'A'; 'C'; 'B'; 'F'; 'A'; 'G'; 'B'; 'D'; |]
 
 [<Test>]
@@ -524,7 +524,7 @@ let fold () : unit =
         ||> IntMap.fold (fun counter k v ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal 0
+        |> assertEqual 0
 
         elements
         |> ResizeArray.isEmpty
@@ -541,11 +541,11 @@ let fold () : unit =
         ||> IntMap.fold (fun counter k v ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal (IntMap.count testMap)
+        |> assertEqual (IntMap.count testMap)
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [| 102; 102; 77; 105; 85; 115; 119; 121; |]
 
 [<Test>]
@@ -557,7 +557,7 @@ let foldBack () : unit =
         ||> IntMap.foldBack (fun counter k v ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal 0
+        |> assertEqual 0
 
         elements
         |> ResizeArray.isEmpty
@@ -574,11 +574,11 @@ let foldBack () : unit =
         ||> IntMap.foldBack (fun k v counter ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal (IntMap.count testMap)
+        |> assertEqual (IntMap.count testMap)
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [| 114; 114; 112; 84; 106; 80; 107; 109; |]
 
 [<Test>]
@@ -643,11 +643,11 @@ let partition () : unit =
                 (k + int v) % 2 = 0)
 
         evens
-        |> should equal
+        |> assertEqual
             (IntMap.ofArray [| (5, 'a'); (2, 'd'); (17, 'a'); (12, 'b'); |])
 
         odds
-        |> should equal
+        |> assertEqual
             (IntMap.ofArray [| (3, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |])
 
 
@@ -688,9 +688,9 @@ let mapPartition () : unit =
                 else
                     Choice2Of2 (k, System.Char.ToUpper v))
 
-        evens |> should equal (IntMap.ofArray evensExpected)
+        evens |> assertEqual (IntMap.ofArray evensExpected)
 
-        odds |> should equal (IntMap.ofArray oddsExpected)
+        odds |> assertEqual (IntMap.ofArray oddsExpected)
 
 
 

@@ -189,7 +189,7 @@ module Async =
             return "Hello World!" }
         |> Async.map String.toLower
         |> Async.RunSynchronously
-        |> should equal "hello world!"
+        |> assertEqual "hello world!"
 
 
 

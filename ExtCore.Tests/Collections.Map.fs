@@ -30,7 +30,7 @@ open FsUnit
 let keys () : unit =
     Map.empty
     |> Map.keys
-    |> should equal Set.empty
+    |> assertEqual Set.empty
     
     Map.empty
     |> Map.add "Red" ConsoleColor.Red
@@ -38,13 +38,13 @@ let keys () : unit =
     |> Map.add "Blue" ConsoleColor.Blue
     |> Map.add "Black" ConsoleColor.Black
     |> Map.keys
-    |> should equal (Set.ofArray [| "Red"; "Green"; "Blue"; "Black" |])
+    |> assertEqual (Set.ofArray [| "Red"; "Green"; "Blue"; "Black" |])
 
 [<Test>]
 let values () : unit =
     Map.empty
     |> Map.values
-    |> should equal Set.empty
+    |> assertEqual Set.empty
 
     Map.empty
     |> Map.add "Red" ConsoleColor.Red
@@ -52,13 +52,13 @@ let values () : unit =
     |> Map.add "Blue" ConsoleColor.Blue
     |> Map.add "Default" ConsoleColor.Red
     |> Map.values
-    |> should equal (Set.ofArray [| ConsoleColor.Red; ConsoleColor.Green; ConsoleColor.Blue |])
+    |> assertEqual (Set.ofArray [| ConsoleColor.Red; ConsoleColor.Green; ConsoleColor.Blue |])
 
 [<Test>]
 let ofKvpSeq () : unit =
     Seq.empty
     |> Map.ofKvpSeq
-    |> should equal Map.empty
+    |> assertEqual Map.empty
 
     let expected =
         Map.empty
@@ -73,7 +73,7 @@ let ofKvpSeq () : unit =
         yield KeyValuePair ("Blue", ConsoleColor.Blue)
         yield KeyValuePair ("Black", ConsoleColor.Black) }
     |> Map.ofKvpSeq
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let ofKeys () : unit =
@@ -87,7 +87,7 @@ let ofKeys () : unit =
     Set.ofArray [|
         ConsoleColor.Red; ConsoleColor.Green; ConsoleColor.Blue; ConsoleColor.Black |]
     |> Map.ofKeys (sprintf "%O")
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let ofValues () : unit =
@@ -101,7 +101,7 @@ let ofValues () : unit =
     Set.ofArray [| "Red"; "Green"; "Blue"; "Black" |]
     |> Map.ofValues (fun colorName ->
         Enum.Parse (typeof<System.ConsoleColor>, colorName) :?> System.ConsoleColor)
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let removeKeys () : unit =
@@ -119,7 +119,7 @@ let removeKeys () : unit =
     // Removing an empty key set shouldn't modify the map.
     initial
     |> Map.removeKeys Set.empty
-    |> should equal initial
+    |> assertEqual initial
 
     let expected =
         Map.empty
@@ -136,7 +136,7 @@ let removeKeys () : unit =
     // Remove RGB colors from the initial map.
     initial
     |> Map.removeKeys rgb
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let filterKeys () : unit =
@@ -154,7 +154,7 @@ let filterKeys () : unit =
     // Filtering with an empty key set should return an empty map.
     initial
     |> Map.filterKeys Set.empty
-    |> should equal Map.empty
+    |> assertEqual Map.empty
 
     let expected =
         Map.empty
@@ -169,7 +169,7 @@ let filterKeys () : unit =
     // Keep only the RGB colors
     initial
     |> Map.filterKeys rgb
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let choose () : unit =
@@ -200,7 +200,7 @@ let choose () : unit =
         | ConsoleColor.Blue, "Blue" ->
             Some (0uy, 0uy, 255uy)
         | _ -> None)
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let mapPartition () : unit =
@@ -225,14 +225,14 @@ let mapPartition () : unit =
                 Choice2Of2 len)
 
     left
-    |> should equal (Map.ofArray
+    |> assertEqual (Map.ofArray
         [| ConsoleColor.Blue, ConsoleColor.Blue;
            ConsoleColor.Cyan, ConsoleColor.Cyan;
            ConsoleColor.Gray, ConsoleColor.Gray;
            ConsoleColor.Yellow, ConsoleColor.Yellow; |])
 
     right
-    |> should equal (Map.ofArray
+    |> assertEqual (Map.ofArray
         [| ConsoleColor.Red, 3;
            ConsoleColor.Green, 5;
            ConsoleColor.Black, 5;
@@ -268,7 +268,7 @@ let union () : unit =
         |> Map.add ConsoleColor.White "White"
 
     Map.union initial1 initial2
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let join () : unit =
@@ -304,7 +304,7 @@ let join () : unit =
         if Enum.IsDefined (typeof<ConsoleColor>, name1) then name1
         elif Enum.IsDefined (typeof<ConsoleColor>, name2) then name2
         else "(Unknown)")
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let inverse () : unit =
@@ -333,7 +333,7 @@ let inverse () : unit =
             ConsoleColor.Gray, "Gray";
             ConsoleColor.Green, "Green" |]
         |> Map.inverse
-        |> should equal expected
+        |> assertEqual expected
 
 [<Test>]
 let pivot () : unit =
@@ -368,7 +368,7 @@ let pivot () : unit =
             ConsoleColor.Gray, "Gray";
             ConsoleColor.Green, "Green" |]
         |> Map.pivot
-        |> should equal expected
+        |> assertEqual expected
         
 [<Test>]
 let pivotKeySet () : unit =
@@ -422,14 +422,14 @@ let pivotKeySet () : unit =
         ConsoleColor.Gray;
         ConsoleColor.Green; |]
     |> Map.pivotWith colorCategory
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let tryAdd () : unit =
     // Adding to an empty map should always succeed.
     Map.empty
     |> Map.tryAdd ConsoleColor.Blue "Blue"
-    |> should equal (Map.singleton ConsoleColor.Blue "Blue")
+    |> assertEqual (Map.singleton ConsoleColor.Blue "Blue")
 
     let initial =
         Map.empty
@@ -451,19 +451,19 @@ let tryAdd () : unit =
     // The binding should be added to the map when there's no existing binding with a given key..
     initial
     |> Map.tryAdd ConsoleColor.Yellow "Yellow"
-    |> should equal expected
+    |> assertEqual expected
 
     // The map should be unchanged when a binding already exists with the same key.
     initial
     |> Map.tryAdd ConsoleColor.Blue "DarkBlue"
-    |> should equal initial
+    |> assertEqual initial
 
 [<Test>]
 let tryUpdate () : unit =
     // An empty map can't be updated (the result should always be an empty map).
     Map.empty
     |> Map.tryUpdate ConsoleColor.Blue "Blue"
-    |> should equal Map.empty
+    |> assertEqual Map.empty
 
     let initial =
         Map.empty
@@ -484,12 +484,12 @@ let tryUpdate () : unit =
     // The map should be unchanged when there's no existing binding with a given key.
     initial
     |> Map.tryUpdate ConsoleColor.White "White"
-    |> should equal initial
+    |> assertEqual initial
 
     // The binding should be updated when it already exists for a given key.
     initial
     |> Map.tryUpdate ConsoleColor.Blue "DarkBlue"
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let update () : unit =
@@ -512,7 +512,7 @@ let update () : unit =
     // The binding should be updated when it already exists for a given key.
     initial
     |> Map.update ConsoleColor.Blue "DarkBlue"
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``update raises exn when map doesn't contain key`` () : unit =
@@ -527,7 +527,7 @@ let ``update raises exn when map doesn't contain key`` () : unit =
     // An exception should be raised when there's no existing binding with a given key.
     initial
     |> Map.update ConsoleColor.White "White"
-    |> should equal initial
+    |> assertEqual initial
 
 [<Test>]
 let countWith () : unit =

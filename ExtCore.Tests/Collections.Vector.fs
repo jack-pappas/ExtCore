@@ -53,14 +53,14 @@ let append () : unit =
     Vector.append
         (vector [| 1; 2 |])
         (vector [| 3; 4 |])
-    |> should equal
+    |> assertEqual
         (vector [| 1; 2; 3; 4 |])
         
     // string vector
     Vector.append
         (vector [| "a"; "b" |])
         (vector [| "C"; "D" |])
-    |> should equal
+    |> assertEqual
         (vector [| "a"; "b"; "C"; "D" |])
 
     // empty vector
@@ -1039,7 +1039,7 @@ let partition () : unit =
 let projectValues () : unit =
     Vector.empty
     |> Vector.projectValues ignore
-    |> should equal Vector.empty
+    |> assertEqual Vector.empty
 
     [|  ConsoleColor.Magenta;
         ConsoleColor.DarkGreen;
@@ -1047,7 +1047,7 @@ let projectValues () : unit =
         ConsoleColor.Black; |]
     |> vector
     |> Vector.projectValues (sprintf "%O")
-    |> should equal
+    |> assertEqual
         <| vector [|
         ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
@@ -1058,14 +1058,14 @@ let projectValues () : unit =
 let projectKeys () : unit =
     Vector.empty
     |> Vector.projectKeys ignore
-    |> should equal Vector.empty
+    |> assertEqual Vector.empty
 
     [|"Magenta"; "DarkGreen"; "Cyan"; "Black"|]
     |> vector
     |> Vector.projectKeys (fun colorName ->
         Enum.Parse (typeof<ConsoleColor>, colorName)
         :?> System.ConsoleColor)
-    |> should equal
+    |> assertEqual
         <| vector [|
         ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
@@ -1121,14 +1121,14 @@ let foldi () : unit =
     ("", vector [| 'a' .. 'f' |])
     ||> Vector.foldi (fun str idx c ->
         str + (String (Array.create idx c)))
-    |> should equal "bccdddeeeefffff"
+    |> assertEqual "bccdddeeeefffff"
 
 [<Test>]
 let foldiBack () : unit =
     (vector [| 'a' .. 'f' |], "")
     ||> Vector.foldiBack (fun idx c str ->
         str + (String (Array.create idx c)))
-    |> should equal "fffffeeeedddccb"
+    |> assertEqual "fffffeeeedddccb"
 
 [<Test>]
 let split () : unit =
@@ -1143,7 +1143,7 @@ let split () : unit =
             Set.contains x primes)
 
     chunks
-    |> should equal
+    |> assertEqual
         <| vector [|
         vector [| 0; 1 |];
         vector [| 2 |];
@@ -1173,7 +1173,7 @@ let split () : unit =
 //    segments
 //    |> Array.map (fun view ->
 //        view.Count)
-//    |> should equal [|
+//    |> assertEqual [|
 //        2; 1; 2; 2; 4; 2; 4; 2; 4; 6; 2; 6; 4; |]
 //
 //[<Test>]
@@ -1195,7 +1195,7 @@ let split () : unit =
 //    intSegments
 //    |> Array.map (fun view ->
 //        view.Count)
-//    |> should equal [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
+//    |> assertEqual [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
 
 [<Test>]
 let mapPartition () : unit =
@@ -1208,11 +1208,11 @@ let mapPartition () : unit =
                 Choice2Of2 <| x * x * x)
 
     left
-    |> should equal
+    |> assertEqual
         <| vector [| "0"; "2"; "4"; "6"; "8"; "10" |]
 
     right
-    |> should equal
+    |> assertEqual
         <| vector [| 1; 27; 125; 343; 729 |]
 
 [<Test>]
@@ -1229,15 +1229,15 @@ let mapPartition3 () : unit =
                 Choice3Of3 <| x * x)
 
     left
-    |> should equal
+    |> assertEqual
         <| vector [| 1; 8; 64; 512; 4096; 32768 |]
 
     middle
-    |> should equal
+    |> assertEqual
         <| vector [| "1"; "4"; "7"; "10"; "13" |]
 
     right
-    |> should equal
+    |> assertEqual
         <| vector [| 4; 25; 64; 121; 196 |]
 
 [<Test>]
@@ -1259,7 +1259,7 @@ let mapReduce () : unit =
                         Map.add c count charCounts
                     | Some existingCount ->
                         Map.add c (existingCount + count) charCounts) }
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let findIndices () : unit =
@@ -1271,12 +1271,12 @@ let findIndices () : unit =
     vector [| 0 .. 40 |]
     |> Vector.findIndices (fun x ->
         Set.contains x primes)
-    |> should equal primeArray
+    |> assertEqual primeArray
 
     Vector.empty
     |> Vector.findIndices (fun x ->
         Set.contains x primes)
-    |> should equal (Array.empty : int[])
+    |> assertEqual (Array.empty : int[])
 
 [<Test>]
 let choosei () : unit =
@@ -1289,8 +1289,8 @@ let choosei () : unit =
         if String.length colorName <= idx then
             Some <| colorName.ToLower ()
         else None)
-    |> should equal [|
-        "darkred"; "gray"; "green" |]
+    |> assertEqual
+        <| vector [| "darkred"; "gray"; "green" |]
 
 [<Test>]
 let choose2 () : unit =
@@ -1303,7 +1303,7 @@ let choose2 () : unit =
         if (x + String.length colorName) % 2 = 0 then
             Some <| colorName.ToLower ()
         else None)
-    |> should equal
+    |> assertEqual
        <| vector [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
 
 [<Test>]

@@ -38,21 +38,21 @@ let isEmpty () : unit =
 let count () : unit =
     IntSet.empty
     |> IntSet.count
-    |> should equal 0
+    |> assertEqual 0
 
     IntSet.singleton 4
     |> IntSet.count
-    |> should equal 1
+    |> assertEqual 1
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.count
-    |> should equal 8
+    |> assertEqual 8
 
 [<Test>]
 let singleton () : unit =
     IntSet.singleton 6
-    |> should equal (
+    |> assertEqual (
         IntSet.empty
         |> IntSet.add 6)
 
@@ -74,19 +74,19 @@ let minElement () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.minElement
-    |> should equal 2
+    |> assertEqual 2
 
     // Test case for minElement (unsigned) when a negative value is in the set.
     [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
     |> IntSet.ofArray
     |> IntSet.minElement
-    |> should equal 2
+    |> assertEqual 2
 
     // Test case for minElement (unsigned) only negative values are in the set.
     [| -5; -3; -11; -2; -17; -4; -12; -14 |]
     |> IntSet.ofArray
     |> IntSet.minElement
-    |> should equal -17
+    |> assertEqual -17
 
 [<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``minElement raises exn for empty set`` () : unit =
@@ -98,19 +98,19 @@ let minElementSigned () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.minElementSigned
-    |> should equal 2
+    |> assertEqual 2
 
     // Test case for minElementSigned when a negative value is in the set.
     [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
     |> IntSet.ofArray
     |> IntSet.minElementSigned
-    |> should equal -1
+    |> assertEqual -1
 
     // Test case for minElementSigned only negative values are in the set.
     [| -5; -3; -11; -2; -17; -4; -12; -14 |]
     |> IntSet.ofArray
     |> IntSet.minElementSigned
-    |> should equal -17
+    |> assertEqual -17
 
 [<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``minElementSigned raises exn for empty set`` () : unit =
@@ -122,19 +122,19 @@ let maxElement () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.maxElement
-    |> should equal 17
+    |> assertEqual 17
 
     // Test case for maxElement (unsigned) when a negative value is in the set.
     [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
     |> IntSet.ofArray
     |> IntSet.maxElement
-    |> should equal -1
+    |> assertEqual -1
 
     // Test case for maxElement (unsigned) only negative values are in the set.
     [| -5; -3; -11; -2; -17; -4; -12; -14 |]
     |> IntSet.ofArray
     |> IntSet.maxElement
-    |> should equal -2
+    |> assertEqual -2
 
 [<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``maxElement raises exn for empty set`` () : unit =
@@ -146,19 +146,19 @@ let maxElementSigned () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.maxElementSigned
-    |> should equal 17
+    |> assertEqual 17
 
     // Test case for maxElementSigned when a negative value is in the set.
     [| 5; 3; 11; 2; 17; 4; 12; 14; -1 |]
     |> IntSet.ofArray
     |> IntSet.maxElementSigned
-    |> should equal 17
+    |> assertEqual 17
 
     // Test case for maxElementSigned only negative values are in the set.
     [| -5; -3; -11; -2; -17; -4; -12; -14 |]
     |> IntSet.ofArray
     |> IntSet.maxElementSigned
-    |> should equal -2
+    |> assertEqual -2
 
 [<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``maxElementSigned raises exn for empty set`` () : unit =
@@ -168,37 +168,37 @@ let ``maxElementSigned raises exn for empty set`` () : unit =
 let add () : unit =
     IntSet.empty
     |> IntSet.add 5
-    |> should equal (
+    |> assertEqual (
         IntSet.singleton 5)
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.add 5
-    |> should equal (IntSet.ofArray
+    |> assertEqual (IntSet.ofArray
         [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.add 8
-    |> should equal (IntSet.ofArray
+    |> assertEqual (IntSet.ofArray
         [| 5; 3; 11; 2; 17; 4; 12; 14; 8 |])
 
 [<Test>]
 let remove () : unit =
     IntSet.singleton 6
     |> IntSet.remove 6
-    |> should equal IntSet.empty
+    |> assertEqual IntSet.empty
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.remove 5
-    |> should equal (IntSet.ofArray
+    |> assertEqual (IntSet.ofArray
         [| 3; 11; 2; 17; 4; 12; 14 |])
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.remove 8
-    |> should equal (IntSet.ofArray
+    |> assertEqual (IntSet.ofArray
         [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
 [<Test>]
@@ -206,7 +206,7 @@ let union () : unit =
     IntSet.union
         (IntSet.ofArray [| 3; 11; 2; 4; 12 |])
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
-    |> should equal
+    |> assertEqual
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
 [<Test>]
@@ -218,12 +218,12 @@ let intersect () : unit =
     IntSet.intersect
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
         IntSet.empty
-    |> should equal IntSet.empty
+    |> assertEqual IntSet.empty
 
     IntSet.intersect
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
-    |> should equal
+    |> assertEqual
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
 
 [<Test>]
@@ -235,13 +235,13 @@ let difference () : unit =
     IntSet.difference
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         IntSet.empty
-    |> should equal
+    |> assertEqual
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
     IntSet.difference
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
-    |> should equal
+    |> assertEqual
         (IntSet.ofArray [| 3; 2; 12 |])
 
 [<Test>]
@@ -412,7 +412,7 @@ let isProperSuperset () : unit =
 let ofSeq () : unit =
     Seq.empty
     |> IntSet.ofSeq
-    |> should equal IntSet.empty
+    |> assertEqual IntSet.empty
     
     seq {
         yield! seq { 2 .. 5 }
@@ -421,29 +421,29 @@ let ofSeq () : unit =
         yield 14
         yield 17 }
     |> IntSet.ofSeq
-    |> should equal (
+    |> assertEqual (
         IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
 [<Test>]
 let ofList () : unit =
     List.empty
     |> IntSet.ofList
-    |> should equal IntSet.empty
+    |> assertEqual IntSet.empty
 
     [5; 3; 11; 2; 17; 4; 12; 14]
     |> IntSet.ofList
-    |> should equal (
+    |> assertEqual (
         IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
 [<Test>]
 let ofArray () : unit =
     Array.empty
     |> IntSet.ofArray
-    |> should equal IntSet.empty
+    |> assertEqual IntSet.empty
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
-    |> should equal (
+    |> assertEqual (
         IntSet.empty
         |> IntSet.add 2
         |> IntSet.add 3
@@ -458,12 +458,12 @@ let ofArray () : unit =
 let ofSet () : unit =
     Set.empty
     |> IntSet.ofSet
-    |> should equal IntSet.empty
+    |> assertEqual IntSet.empty
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> Set.ofArray
     |> IntSet.ofSet
-    |> should equal (
+    |> assertEqual (
         IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
 [<Test>]
@@ -477,43 +477,43 @@ let toSeq () : unit =
     |> IntSet.ofArray
     |> IntSet.toSeq
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [|2; 3; 4; 5; 11; 12; 14; 17|]
 
 [<Test>]
 let toList () : unit =
     IntSet.empty
     |> IntSet.toList
-    |> should equal List.empty<int>
+    |> assertEqual List.empty<int>
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.toList
-    |> should equal
+    |> assertEqual
         [2; 3; 4; 5; 11; 12; 14; 17]
 
 [<Test>]
 let toArray () : unit =
     IntSet.empty
     |> IntSet.toArray
-    |> should equal Array.empty<int>
+    |> assertEqual Array.empty<int>
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.toArray
-    |> should equal
+    |> assertEqual
         [|2; 3; 4; 5; 11; 12; 14; 17|]
 
 [<Test>]
 let toSet () : unit =
     IntSet.empty
     |> IntSet.toSet
-    |> should equal Set.empty<int>
+    |> assertEqual Set.empty<int>
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.toSet
-    |> should equal
+    |> assertEqual
         (Set.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
 [<Test>]
@@ -527,7 +527,7 @@ let iter () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> should equal
+    |> assertEqual
         [|4; 5; 6; 7; 13; 14; 16; 19|]
 
 [<Test>]
@@ -541,7 +541,7 @@ let iterBack () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> should equal
+    |> assertEqual
         [|19; 16; 14; 13; 7; 6; 5; 4|]
 
 [<Test>]
@@ -553,7 +553,7 @@ let fold () : unit =
         ||> IntSet.fold (fun counter el ->
             elements.Add (counter + el + 2)
             counter + 1)
-        |> should equal 0
+        |> assertEqual 0
 
         elements
         |> ResizeArray.isEmpty
@@ -570,11 +570,11 @@ let fold () : unit =
         ||> IntSet.fold (fun counter el ->
             elements.Add (counter + el + 2)
             counter + 1)
-        |> should equal (IntSet.count testSet)
+        |> assertEqual (IntSet.count testSet)
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [|4; 6; 8; 10; 17; 19; 22; 26|]
 
 [<Test>]
@@ -586,7 +586,7 @@ let foldBack () : unit =
         ||> IntSet.foldBack (fun el counter ->
             elements.Add (counter + el + 2)
             counter + 1)
-        |> should equal 0
+        |> assertEqual 0
 
         elements
         |> ResizeArray.isEmpty
@@ -603,11 +603,11 @@ let foldBack () : unit =
         ||> IntSet.foldBack (fun el counter ->
             elements.Add (counter + el + 2)
             counter + 1)
-        |> should equal (IntSet.count testSet)
+        |> assertEqual (IntSet.count testSet)
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [|19; 17; 16; 16; 11; 11; 11; 11|]
 
 [<Test>]
@@ -617,7 +617,7 @@ let choose () : unit =
         if el % 2 = 0 then
             Some (el + 1)
         else None)
-    |> should equal IntSet.empty
+    |> assertEqual IntSet.empty
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
@@ -625,7 +625,7 @@ let choose () : unit =
         if el % 2 = 0 then
             Some (el + 1)
         else None)
-    |> should equal
+    |> assertEqual
         (IntSet.ofArray [|3; 5; 13; 15|])
 
 [<Test>]
@@ -640,7 +640,7 @@ let filter () : unit =
     |> IntSet.ofArray
     |> IntSet.filter (fun el ->
         el % 2 <> 0)
-    |> should equal
+    |> assertEqual
         (IntSet.ofArray [|5; 3; 11; 17|])
 
 [<Test>]
@@ -655,7 +655,7 @@ let map () : unit =
     |> IntSet.ofArray
     |> IntSet.map (fun el ->
         el * 2)
-    |> should equal (
+    |> assertEqual (
         [| 5; 3; 11; 2; 17; 4; 12; 14 |]
         |> Set.ofArray
         |> ExtCore.Collections.Set.mapToArray (fun el ->
@@ -686,11 +686,11 @@ let partition () : unit =
                 el % 2 = 0)
 
         evens
-        |> should equal
+        |> assertEqual
             (IntSet.ofArray [|2; 4; 12; 14|])
 
         odds
-        |> should equal
+        |> assertEqual
             (IntSet.ofArray [|5; 3; 11; 17|])
 
 [<Test>]
@@ -739,7 +739,7 @@ let tryPick () : unit =
         if el % 7 = 0 then
             Some (el + 2)
         else None)
-    |> should equal (None : int option)
+    |> assertEqual (None : int option)
 
     // Test for case where the set does not contain a matching element.
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
@@ -748,7 +748,7 @@ let tryPick () : unit =
         if el > 30 then
             Some (el - 10)
         else None)
-    |> should equal (None : int option)
+    |> assertEqual (None : int option)
 
     // Test for case where the set contains a single matching element.
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
@@ -757,7 +757,7 @@ let tryPick () : unit =
         if el % 7 = 0 then
             Some (el - 2)
         else None)
-    |> should equal (Some 12)
+    |> assertEqual (Some 12)
 
     // Test for case where the set contains multiple matching elements.
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
@@ -766,7 +766,7 @@ let tryPick () : unit =
         if el % 3 = 2 then
             Some (el + 1)
         else None)
-    |> should equal (Some 3)
+    |> assertEqual (Some 3)
 
 [<Test>]
 let pick () : unit =
@@ -776,7 +776,7 @@ let pick () : unit =
         if el % 3 = 2 then
             Some (el + 1)
         else None)
-    |> should equal 3
+    |> assertEqual 3
 
 [<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``pick raises exn on empty input`` () : unit =

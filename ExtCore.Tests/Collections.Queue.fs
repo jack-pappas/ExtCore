@@ -40,21 +40,21 @@ let isEmpty () : unit =
 let length () : unit =
     Queue.empty
     |> Queue.length
-    |> should equal 0
+    |> assertEqual 0
 
     Queue.empty
     |> Queue.enqueue "foo"
     |> Queue.enqueue "bar"
     |> Queue.enqueue "baz"
     |> Queue.length
-    |> should equal 3
+    |> assertEqual 3
 
 [<Test>]
 let enqueue () : unit =
     Queue.empty
     |> Queue.enqueue "Hello"
     |> Queue.toArray
-    |> should equal
+    |> assertEqual
         [| "Hello" |]
 
     [| "foo"; "bar"; "baz"; |]
@@ -64,7 +64,7 @@ let enqueue () : unit =
     |> Queue.enqueue "bar"
     |> Queue.enqueue "bar"
     |> Queue.toArray
-    |> should equal
+    |> assertEqual
         [| "foo"; "bar"; "baz"; "cdr"; "car"; "bar"; "bar"; |]
 
     // Test case for checking that the Queue is persistent as expected.
@@ -75,14 +75,14 @@ let enqueue () : unit =
         |> Queue.enqueue "Hello"
         |> Queue.enqueue "World"
         |> Queue.toArray
-        |> should equal
+        |> assertEqual
             [| "foo"; "bar"; "baz"; "Hello"; "World"; |]
 
         queue
         |> Queue.enqueue "cdr"
         |> Queue.enqueue "car"
         |> Queue.toArray
-        |> should equal
+        |> assertEqual
             [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
 
 [<Test>]
@@ -90,7 +90,7 @@ let enqueueFront () : unit =
     Queue.empty
     |> Queue.enqueueFront "Hello"
     |> Queue.toArray
-    |> should equal
+    |> assertEqual
         [| "Hello" |]
     
     Queue.empty
@@ -100,7 +100,7 @@ let enqueueFront () : unit =
     |> Queue.enqueue "cdr"
     |> Queue.enqueueFront "car"
     |> Queue.toArray
-    |> should equal
+    |> assertEqual
         [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
 
     // Test case for checking that the Queue is persistent as expected.
@@ -111,14 +111,14 @@ let enqueueFront () : unit =
         |> Queue.enqueueFront "Hello"
         |> Queue.enqueueFront "World"
         |> Queue.toArray
-        |> should equal
+        |> assertEqual
             [| "World"; "Hello"; "foo"; "bar"; "baz"; |]
 
         queue
         |> Queue.enqueueFront "cdr"
         |> Queue.enqueueFront "car"
         |> Queue.toArray
-        |> should equal
+        |> assertEqual
             [| "car"; "cdr"; "foo"; "bar"; "baz"; |]
 
 [<Test>]
@@ -127,24 +127,24 @@ let dequeue () : unit =
         let queue = Queue.ofArray [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "car"
-        Queue.length queue |> should equal 4
+        result |> assertEqual "car"
+        Queue.length queue |> assertEqual 4
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "baz"
-        Queue.length queue |> should equal 3
+        result |> assertEqual "baz"
+        Queue.length queue |> assertEqual 3
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "foo"
-        Queue.length queue |> should equal 2
+        result |> assertEqual "foo"
+        Queue.length queue |> assertEqual 2
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "bar"
-        Queue.length queue |> should equal 1
+        result |> assertEqual "bar"
+        Queue.length queue |> assertEqual 1
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "cdr"
-        Queue.length queue |> should equal 0
+        result |> assertEqual "cdr"
+        Queue.length queue |> assertEqual 0
 
     // Test case for checking that the Queue is persistent as expected.
     do
@@ -152,38 +152,38 @@ let dequeue () : unit =
 
         // Run a simple dequeue test.
         let result, queue = Queue.dequeue queue
-        result |> should equal "car"
-        Queue.length queue |> should equal 4
+        result |> assertEqual "car"
+        Queue.length queue |> assertEqual 4
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "baz"
-        Queue.length queue |> should equal 3
+        result |> assertEqual "baz"
+        Queue.length queue |> assertEqual 3
 
         // Change to queue' here, so we can use the "partial" queue later.
         let result, queue' = Queue.dequeue queue
-        result |> should equal "foo"
-        Queue.length queue' |> should equal 2
+        result |> assertEqual "foo"
+        Queue.length queue' |> assertEqual 2
 
         let result, queue' = Queue.dequeue queue'
-        result |> should equal "bar"
-        Queue.length queue' |> should equal 1
+        result |> assertEqual "bar"
+        Queue.length queue' |> assertEqual 1
 
         let result, queue' = Queue.dequeue queue'
-        result |> should equal "cdr"
-        Queue.length queue' |> should equal 0
+        result |> assertEqual "cdr"
+        Queue.length queue' |> assertEqual 0
 
         // Now re-run the test for the last few elements using the partial queue.
         let result, queue = Queue.dequeue queue
-        result |> should equal "foo"
-        Queue.length queue |> should equal 2
+        result |> assertEqual "foo"
+        Queue.length queue |> assertEqual 2
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "bar"
-        Queue.length queue |> should equal 1
+        result |> assertEqual "bar"
+        Queue.length queue |> assertEqual 1
 
         let result, queue = Queue.dequeue queue
-        result |> should equal "cdr"
-        Queue.length queue |> should equal 0
+        result |> assertEqual "cdr"
+        Queue.length queue |> assertEqual 0
 
 [<Test; ExpectedException(typeof<System.InvalidOperationException>)>]
 let ``dequeue raises exn when queue is empty`` () : unit =
@@ -202,7 +202,7 @@ let ofList () : unit =
     |> Queue.ofList
     |> Queue.toSeq
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
 
 [<Test>]
@@ -216,7 +216,7 @@ let ofArray () : unit =
     |> Queue.ofArray
     |> Queue.toSeq
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
 
 [<Test>]
@@ -236,7 +236,7 @@ let toSeq () : unit =
     |> Queue.enqueue "car"
     |> Queue.toSeq
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| "bar"; "baz"; "cdr"; "car"; |]
 
 [<Test>]
@@ -255,7 +255,7 @@ let toList () : unit =
     |> Queue.enqueue "cdr"
     |> Queue.enqueue "car"
     |> Queue.toList
-    |> should equal
+    |> assertEqual
         ["bar"; "baz"; "cdr"; "car"]
 
 [<Test>]
@@ -274,5 +274,5 @@ let toArray () : unit =
     |> Queue.enqueue "cdr"
     |> Queue.enqueue "car"
     |> Queue.toArray
-    |> should equal
+    |> assertEqual
         [| "bar"; "baz"; "cdr"; "car"; |]

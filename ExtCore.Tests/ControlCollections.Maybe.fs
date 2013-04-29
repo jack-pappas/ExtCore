@@ -31,24 +31,24 @@ module Array =
     let init () : unit =
         // Test case for an empty array.
         Maybe.Array.init 0 <| fun _ -> None
-        |> should equal (Some Array.empty)
+        |> assertEqual (Some Array.empty)
 
         // Sample usage test cases.
         Maybe.Array.init 5 <| fun x ->
             Some (x * 7)
-        |> should equal
+        |> assertEqual
             <| Some [| 0; 7; 14; 21; 28; |]
 
         Maybe.Array.init 5 <| fun x ->
             if x > 0 && x % 5 = 0 then None
             else Some (x * 2)
-        |> should equal
+        |> assertEqual
             <| Some [| 0; 2; 4; 6; 8; |]
 
         Maybe.Array.init 6 <| fun x ->
             if x > 0 && x % 5 = 0 then None
             else Some (x * 2)
-        |> should equal None
+        |> assertEqual None
 
     [<Test>]
     let iter () : unit =
@@ -60,9 +60,9 @@ module Array =
             |> Maybe.Array.iter (fun _ ->
                 incr iterationCount
                 None)
-            |> should equal (Some ())
+            |> assertEqual (Some ())
 
-            !iterationCount |> should equal 0
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -76,7 +76,7 @@ module Array =
             |> Option.isSome
             |> should be True
 
-            !iterationCount |> should equal 5
+            !iterationCount |> assertEqual 5
 
         do
             let iterationCount = ref 0
@@ -89,7 +89,7 @@ module Array =
             |> Option.isNone
             |> should be True
 
-            !iterationCount |> should equal 6
+            !iterationCount |> assertEqual 6
 
         // Test case for short-circuiting.
         do
@@ -103,7 +103,7 @@ module Array =
             |> Option.isNone
             |> should be True
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let iteri () : unit =
@@ -115,9 +115,9 @@ module Array =
             |> Maybe.Array.iteri (fun _ _ ->
                 incr iterationCount
                 None)
-            |> should equal (Some ())
+            |> assertEqual (Some ())
 
-            !iterationCount |> should equal 0
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -132,7 +132,7 @@ module Array =
             |> Option.isSome
             |> should be True
 
-            !iterationCount |> should equal 5
+            !iterationCount |> assertEqual 5
 
         do
             let iterationCount = ref 0
@@ -146,7 +146,7 @@ module Array =
             |> Option.isNone
             |> should be True
 
-            !iterationCount |> should equal 6
+            !iterationCount |> assertEqual 6
 
         // Test case for short-circuiting.
         do
@@ -161,27 +161,27 @@ module Array =
             |> Option.isNone
             |> should be True
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let map () : unit =
         // Test case for an empty array.
         Array.empty
         |> Maybe.Array.map (fun _ -> None)
-        |> should equal (Some Array.empty)
+        |> assertEqual (Some Array.empty)
 
         // Sample usage test cases.
         [| 0..4 |]
         |> Maybe.Array.map (fun x ->
             if x > 0 && x % 5 = 0 then None
             else Some (x * 3))
-        |> should equal (Some [| 0; 3; 6; 9; 12; |])
+        |> assertEqual (Some [| 0; 3; 6; 9; 12; |])
 
         [| 0..5 |]
         |> Maybe.Array.map (fun x ->
             if x > 0 && x % 5 = 0 then None
             else Some (x * 3))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -192,16 +192,16 @@ module Array =
                 incr iterationCount
                 if x > 0 && x % 2 = 0 then None
                 else Some (x * 3))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let mapi () : unit =
         // Test case for an empty array.
         Array.empty
         |> Maybe.Array.mapi (fun _ _ -> None)
-        |> should equal (Some Array.empty)
+        |> assertEqual (Some Array.empty)
 
         // Sample usage test cases.
         [| 0..4 |]
@@ -209,14 +209,14 @@ module Array =
             let y = x * idx
             if y > 0 && y % 5 = 0 then None
             else Some (y * 3))
-        |> should equal (Some [| 0; 3; 12; 27; 48; |])
+        |> assertEqual (Some [| 0; 3; 12; 27; 48; |])
 
         [| 0..5 |]
         |> Maybe.Array.mapi (fun idx x ->
             let y = x * idx
             if y > 0 && y % 5 = 0 then None
             else Some (y * 3))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -228,16 +228,16 @@ module Array =
                 let y = x * idx
                 if y > 0 && y % 2 = 0 then None
                 else Some (y * 3))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let map2 () : unit =
         // Test case for an empty array.
         (Array.empty, Array.empty)
         ||> Maybe.Array.map2 (fun _ _ -> None)
-        |> should equal (Some Array.empty)
+        |> assertEqual (Some Array.empty)
 
         // Sample usage test cases.
         ([| 0..4 |], [| 1; 1; 2; 3; 5; |])
@@ -245,14 +245,14 @@ module Array =
             let x = nat + fibo
             if x >= 10 then None
             else Some x)
-        |> should equal (Some [| 1; 2; 4; 6; 9; |])
+        |> assertEqual (Some [| 1; 2; 4; 6; 9; |])
 
         ([| 0..5 |], [| 1; 1; 2; 3; 5; 8; |])
         ||> Maybe.Array.map2 (fun nat fibo ->
             let x = nat + fibo
             if x >= 10 then None
             else Some x)
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -264,9 +264,9 @@ module Array =
                 let x = nat + fibo
                 if x >= 2 then None
                 else Some x)
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 2
+            !iterationCount |> assertEqual 2
 
     [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``map2 raises exn when arrays have different lengths`` () : unit =
@@ -279,20 +279,20 @@ module Array =
         // Test case for an empty array.
         ("", Array.empty)
         ||> Maybe.Array.fold (fun _ _ -> None)
-        |> should equal (Some "")
+        |> assertEqual (Some "")
 
         // Sample usage test cases.
         ("", [| 0..4 |])
         ||> Maybe.Array.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal (Some "abcde")
+        |> assertEqual (Some "abcde")
 
         ("", [| 0..5 |])
         ||> Maybe.Array.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -303,16 +303,16 @@ module Array =
                 incr iterationCount
                 if x <> 0 && x % 2 = 0 then None
                 else Some (str + ((char (int 'a' + x)).ToString ())))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let foldi () : unit =
         // Test case for an empty array.
         ("", Array.empty)
         ||> Maybe.Array.foldi (fun _ _ _ -> None)
-        |> should equal (Some "")
+        |> assertEqual (Some "")
 
         // Sample usage test cases.
         ("", [| 0..4 |])
@@ -320,14 +320,14 @@ module Array =
             let y = x * idx
             if y <> 0 && y % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal (Some "abcde")
+        |> assertEqual (Some "abcde")
 
         ("", [| 0..5 |])
         ||> Maybe.Array.foldi (fun idx str x ->
             let y = x * idx
             if y <> 0 && y % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -339,9 +339,9 @@ module Array =
                 let y = x * idx
                 if y <> 0 && y % 2 = 0 then None
                 else Some (str + ((char (int 'a' + x)).ToString ())))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let reduce () : unit =
@@ -351,14 +351,14 @@ module Array =
             let z = x + y
             if z > 10 then None
             else Some z)
-        |> should equal (Some 10)
+        |> assertEqual (Some 10)
 
         [| 0..5 |]
         |> Maybe.Array.reduce (fun x y ->
             let z = x + y
             if z > 10 then None
             else Some z)
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -370,9 +370,9 @@ module Array =
                 let z = x + y
                 if z > 5 then None
                 else Some z)
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``reduce raises exn for empty array`` () : unit =
@@ -388,20 +388,20 @@ module List =
         // Test case for an empty list.
         ("", List.empty)
         ||> Maybe.List.fold (fun _ _ -> None)
-        |> should equal (Some "")
+        |> assertEqual (Some "")
 
         // Sample usage test cases.
         ("", [0..4])
         ||> Maybe.List.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal (Some "abcde")
+        |> assertEqual (Some "abcde")
 
         ("", [0..5])
         ||> Maybe.List.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -412,9 +412,9 @@ module List =
                 incr iterationCount
                 if x <> 0 && x % 2 = 0 then None
                 else Some (str + ((char (int 'a' + x)).ToString ())))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let iter2 () : unit =
@@ -426,9 +426,9 @@ module List =
             ||> Maybe.List.iter2 (fun _ _ ->
                 incr iterationCount
                 None)
-            |> should equal (Some ())
+            |> assertEqual (Some ())
 
-            !iterationCount |> should equal 0
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -440,9 +440,9 @@ module List =
                 let x = nat + fibo
                 if x >= 10 then None
                 else Some ())
-            |> should equal (Some ())
+            |> assertEqual (Some ())
 
-            !iterationCount |> should equal 5
+            !iterationCount |> assertEqual 5
 
         do
             let iterationCount = ref 0
@@ -453,9 +453,9 @@ module List =
                 let x = nat + fibo
                 if x >= 10 then None
                 else Some ())
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 6
+            !iterationCount |> assertEqual 6
 
         // Test case for short-circuiting.
         do
@@ -467,9 +467,9 @@ module List =
                 let x = nat + fibo
                 if x >= 2 then None
                 else Some ())
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 2
+            !iterationCount |> assertEqual 2
 
     [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``iter2 raises exn when lists have different lengths`` () : unit =
@@ -482,7 +482,7 @@ module List =
         // Test case for an empty list.
         (List.empty, List.empty)
         ||> Maybe.List.map2 (fun _ _ -> None)
-        |> should equal (Some List.empty)
+        |> assertEqual (Some List.empty)
 
         // Sample usage test cases.
         ([0..4], [1; 1; 2; 3; 5])
@@ -490,14 +490,14 @@ module List =
             let x = nat + fibo
             if x >= 10 then None
             else Some x)
-        |> should equal (Some [1; 2; 4; 6; 9])
+        |> assertEqual (Some [1; 2; 4; 6; 9])
 
         ([0..5], [1; 1; 2; 3; 5; 8])
         ||> Maybe.List.map2 (fun nat fibo ->
             let x = nat + fibo
             if x >= 10 then None
             else Some x)
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -509,9 +509,9 @@ module List =
                 let x = nat + fibo
                 if x >= 2 then None
                 else Some x)
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 2
+            !iterationCount |> assertEqual 2
 
     [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``map2 raises exn when lists have different lengths`` () : unit =
@@ -524,7 +524,7 @@ module List =
         // Test case for an empty list.
         (List.empty, List.empty)
         ||> Maybe.List.mapi2 (fun _ _ _ -> None)
-        |> should equal (Some List.empty)
+        |> assertEqual (Some List.empty)
 
         // Sample usage test cases.
         ([1..5], [1; 1; 2; 3; 5])
@@ -532,14 +532,14 @@ module List =
             let x = idx + (max nat fibo)
             if x >= 10 then None
             else Some x)
-        |> should equal (Some [1; 3; 5; 7; 9])
+        |> assertEqual (Some [1; 3; 5; 7; 9])
 
         ([1..6], [1; 1; 2; 3; 5; 8])
         ||> Maybe.List.mapi2 (fun idx nat fibo ->
             let x = idx + (max nat fibo)
             if x >= 10 then None
             else Some x)
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -551,9 +551,9 @@ module List =
                 let x = idx + (max nat fibo)
                 if x >= 2 then None
                 else Some x)
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 2
+            !iterationCount |> assertEqual 2
 
     [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``mapi2 raises exn when lists have different lengths`` () : unit =
@@ -574,9 +574,9 @@ module Seq =
             |> Maybe.Seq.iter (fun _ ->
                 incr iterationCount
                 None)
-            |> should equal (Some ())
+            |> assertEqual (Some ())
 
-            !iterationCount |> should equal 0
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -591,7 +591,7 @@ module Seq =
             |> Option.isSome
             |> should be True
 
-            !iterationCount |> should equal 5
+            !iterationCount |> assertEqual 5
 
         do
             let iterationCount = ref 0
@@ -605,7 +605,7 @@ module Seq =
             |> Option.isNone
             |> should be True
 
-            !iterationCount |> should equal 6
+            !iterationCount |> assertEqual 6
 
         // Test case for short-circuiting.
         do
@@ -620,7 +620,7 @@ module Seq =
             |> Option.isNone
             |> should be True
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Set module.
@@ -630,20 +630,20 @@ module Set =
         // Test case for an empty set.
         ("", Set.empty)
         ||> Maybe.Set.fold (fun _ _ -> None)
-        |> should equal (Some "")
+        |> assertEqual (Some "")
 
         // Sample usage test cases.
         ("", set [| 0..4 |])
         ||> Maybe.Set.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal (Some "abcde")
+        |> assertEqual (Some "abcde")
 
         ("", set [| 0..5 |])
         ||> Maybe.Set.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -654,29 +654,29 @@ module Set =
                 incr iterationCount
                 if x <> 0 && x % 2 = 0 then None
                 else Some (str + ((char (int 'a' + x)).ToString ())))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
     [<Test>]
     let mapToArray () : unit =
         // Test case for an empty set.
         Set.empty
         |> Maybe.Set.mapToArray (fun _ -> None)
-        |> should equal (Some Array.empty)
+        |> assertEqual (Some Array.empty)
 
         // Sample usage test cases.
         set [| 0..4 |]
         |> Maybe.Set.mapToArray (fun x ->
             if x <> 0 && x % 5 = 0 then None
             else Some ((char (int 'a' + x)).ToString ()))
-        |> should equal (Some [| "a"; "b"; "c"; "d"; "e"; |])
+        |> assertEqual (Some [| "a"; "b"; "c"; "d"; "e"; |])
 
         set [| 0..5 |]
         |> Maybe.Set.mapToArray (fun x ->
             if x <> 0 && x % 5 = 0 then None
             else Some ((char (int 'a' + x)).ToString ()))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -687,9 +687,9 @@ module Set =
                 incr iterationCount
                 if x <> 0 && x % 2 = 0 then None
                 else Some ((char (int 'a' + x)).ToString ()))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.ArrayView module.
@@ -699,20 +699,20 @@ module ArrayView =
         // Test case for an empty ArrayView.
         ("", ArrayView.create [| 0..4 |] 0 0)
         ||> Maybe.ArrayView.fold (fun _ _ -> None)
-        |> should equal (Some "")
+        |> assertEqual (Some "")
 
         // Sample usage test cases.
         ("", ArrayView.create [| -2..8 |] 2 5)
         ||> Maybe.ArrayView.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal (Some "abcde")
+        |> assertEqual (Some "abcde")
 
         ("", ArrayView.create [| -2..8 |] 2 6)
         ||> Maybe.ArrayView.fold (fun str x ->
             if x <> 0 && x % 5 = 0 then None
             else Some (str + ((char (int 'a' + x)).ToString ())))
-        |> should equal None
+        |> assertEqual None
 
         // Test case for short-circuiting.
         do
@@ -723,7 +723,7 @@ module ArrayView =
                 incr iterationCount
                 if x <> 0 && x % 2 = 0 then None
                 else Some (str + ((char (int 'a' + x)).ToString ())))
-            |> should equal None
+            |> assertEqual None
 
-            !iterationCount |> should equal 3
+            !iterationCount |> assertEqual 3
 

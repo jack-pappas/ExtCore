@@ -29,14 +29,14 @@ open FsUnit
 let projectValues () : unit =
     Array.empty
     |> Array.projectValues ignore
-    |> should equal Array.empty
+    |> assertEqual Array.empty
 
     [|  ConsoleColor.Magenta;
         ConsoleColor.DarkGreen;
         ConsoleColor.Cyan;
         ConsoleColor.Black; |]
     |> Array.projectValues (sprintf "%O")
-    |> should equal [|
+    |> assertEqual [|
         ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -46,13 +46,13 @@ let projectValues () : unit =
 let projectKeys () : unit =
     Array.empty
     |> Array.projectKeys ignore
-    |> should equal Array.empty
+    |> assertEqual Array.empty
 
     [|"Magenta"; "DarkGreen"; "Cyan"; "Black"|]
     |> Array.projectKeys (fun colorName ->
         Enum.Parse (typeof<ConsoleColor>, colorName)
         :?> System.ConsoleColor)
-    |> should equal [|
+    |> assertEqual [|
         ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -109,14 +109,14 @@ let foldi () : unit =
     ("", [| 'a' .. 'f' |])
     ||> Array.foldi (fun str idx c ->
         str + (String (Array.create idx c)))
-    |> should equal "bccdddeeeefffff"
+    |> assertEqual "bccdddeeeefffff"
 
 [<Test>]
 let foldiBack () : unit =
     ([| 'a' .. 'f' |], "")
     ||> Array.foldiBack (fun idx c str ->
         str + (String (Array.create idx c)))
-    |> should equal "fffffeeeedddccb"
+    |> assertEqual "fffffeeeedddccb"
 
 [<Test>]
 let split () : unit =
@@ -130,7 +130,7 @@ let split () : unit =
             Set.contains x primes)
 
     chunks
-    |> should equal [|
+    |> assertEqual [|
         [| 0; 1 |];
         [| 2 |];
         [| 3; 4 |];
@@ -159,7 +159,7 @@ let segment () : unit =
     segments
     |> Array.map (fun view ->
         view.Count)
-    |> should equal [|
+    |> assertEqual [|
         2; 1; 2; 2; 4; 2; 4; 2; 4; 6; 2; 6; 4; |]
 
 [<Test>]
@@ -181,28 +181,28 @@ let segment2 () : unit =
     intSegments
     |> Array.map (fun view ->
         view.Count)
-    |> should equal [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
+    |> assertEqual [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
         
 [<Test>]
 let expandRight () : unit =
     (Array.empty : int[])
     |> Array.expandRight 10
-    |> should equal <| Array.zeroCreate<int> 10
+    |> assertEqual <| Array.zeroCreate<int> 10
 
     [| 0; 1; 1; 2; 3; 5; 8; 13 |]
     |> Array.expandRight 4
-    |> should equal [|
+    |> assertEqual [|
         0; 1; 1; 2; 3; 5; 8; 13; 0; 0; 0; 0 |]
 
 [<Test>]
 let expandLeft () : unit =
     (Array.empty : int[])
     |> Array.expandLeft 10
-    |> should equal <| Array.zeroCreate<int> 10
+    |> assertEqual <| Array.zeroCreate<int> 10
 
     [| 0; 1; 1; 2; 3; 5; 8; 13 |]
     |> Array.expandLeft 4
-    |> should equal [|
+    |> assertEqual [|
         0; 0; 0; 0; 0; 1; 1; 2; 3; 5; 8; 13 |]
 
 [<Test>]
@@ -216,10 +216,10 @@ let mapPartition () : unit =
                 Choice2Of2 <| x * x * x)
 
     left
-    |> should equal [| "0"; "2"; "4"; "6"; "8"; "10" |]
+    |> assertEqual [| "0"; "2"; "4"; "6"; "8"; "10" |]
 
     right
-    |> should equal [| 1; 27; 125; 343; 729 |]
+    |> assertEqual [| 1; 27; 125; 343; 729 |]
 
 [<Test>]
 let mapPartition3 () : unit =
@@ -235,13 +235,13 @@ let mapPartition3 () : unit =
                 Choice3Of3 <| x * x)
 
     left
-    |> should equal [| 1; 8; 64; 512; 4096; 32768 |]
+    |> assertEqual [| 1; 8; 64; 512; 4096; 32768 |]
 
     middle
-    |> should equal [| "1"; "4"; "7"; "10"; "13" |]
+    |> assertEqual [| "1"; "4"; "7"; "10"; "13" |]
 
     right
-    |> should equal [| 4; 25; 64; 121; 196 |]
+    |> assertEqual [| 4; 25; 64; 121; 196 |]
 
 [<Test>]
 let mapReduce () : unit =
@@ -261,7 +261,7 @@ let mapReduce () : unit =
                         Map.add c count charCounts
                     | Some existingCount ->
                         Map.add c (existingCount + count) charCounts) }
-    |> should equal expected
+    |> assertEqual expected
 
 [<Test>]
 let findIndices () : unit =
@@ -273,12 +273,12 @@ let findIndices () : unit =
     [| 0 .. 40 |]
     |> Array.findIndices (fun x ->
         Set.contains x primes)
-    |> should equal primeArray
+    |> assertEqual primeArray
 
     Array.empty
     |> Array.findIndices (fun x ->
         Set.contains x primes)
-    |> should equal (Array.empty : int[])
+    |> assertEqual (Array.empty : int[])
 
 [<Test>]
 let choosei () : unit =
@@ -291,7 +291,7 @@ let choosei () : unit =
         if String.length colorName <= idx then
             Some <| colorName.ToLower ()
         else None)
-    |> should equal [|
+    |> assertEqual [|
         "darkred"; "gray"; "green" |]
 
 [<Test>]
@@ -305,7 +305,7 @@ let choose2 () : unit =
         if (x + String.length colorName) % 2 = 0 then
             Some <| colorName.ToLower ()
         else None)
-    |> should equal
+    |> assertEqual
        [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
 
 [<Test>]
@@ -330,23 +330,23 @@ let countWith () : unit =
     Array.empty
     |> Array.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 0
+    |> assertEqual 0
 
     // Sample usage test cases.
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Array.countWith (fun x ->
         x < 0)
-    |> should equal 0
+    |> assertEqual 0
 
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Array.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 1
+    |> assertEqual 1
 
     [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
     |> Array.countWith (fun x ->
         x % 3 = 0)
-    |> should equal 4
+    |> assertEqual 4
 
 [<Test>]
 let foldPairwise () : unit =
@@ -354,12 +354,12 @@ let foldPairwise () : unit =
     (0, "mississippi".ToCharArray ())
     ||> Array.foldPairwise (fun count x y ->
         if x = y then count + 1 else count)
-    |> should equal 3
+    |> assertEqual 3
 
     (0, [| 0; 1; 1; 2; 3; 5; 8; 13; 21; 34; 55; 89; 144; |])
     ||> Array.foldPairwise (fun diffSum x y ->
         diffSum + (y - x))
-    |> should equal 144
+    |> assertEqual 144
 
 [<Test>]
 let foldBackPairwise () : unit =
@@ -367,4 +367,4 @@ let foldBackPairwise () : unit =
     ("mississippi".ToCharArray (), 0)
     ||> Array.foldBackPairwise (fun x y count ->
         if x = y then count + 1 else count)
-    |> should equal 3
+    |> assertEqual 3

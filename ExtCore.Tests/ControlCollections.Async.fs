@@ -33,7 +33,7 @@ module Array =
         [| 1; 1; 2; 3; 5; 8; 13; 21; |]
         |> Async.Array.lift
         |> Array.map Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [| 1; 1; 2; 3; 5; 8; 13; 21; |]
 
     [<Test>]
@@ -53,7 +53,7 @@ module Array =
             return x * 17
             }
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [| 0; 17; 34; 51; |]
 
     [<Test>]
@@ -65,7 +65,7 @@ module Array =
             return el * 3
             })
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [| 3; 3; 6; 9; 15; 24; 39; 63; |]
 
     [<Test>]
@@ -77,8 +77,8 @@ module Array =
             return idx + el
             })
         |> Async.RunSynchronously
-        |> should equal
-            [1; 2; 4; 6; 9; 13; 19; 28]
+        |> assertEqual
+            [| 1; 2; 4; 6; 9; 13; 19; 28; |]
 
     [<Test>]
     let map2 () : unit =
@@ -90,7 +90,7 @@ module Array =
             return sprintf "%i:%s" fibo color
             })
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [| "1:Red"; "1:Orange"; "2:Yellow"; "3:Green"; "5:Blue"; "8:Violet"; |]
 
     [<Test>]
@@ -103,7 +103,7 @@ module Array =
             return sprintf "%i:(%i, %s)" (idx + 1) fibo color
             })
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [| "1:(1, Red)"; "2:(1, Orange)"; "3:(2, Yellow)";
                "4:(3, Green)"; "5:(5, Blue)"; "6:(8, Violet)"; |]
 
@@ -124,10 +124,10 @@ module Array =
                 |> Async.RunSynchronously
 
             left
-            |> should equal [| 6; 6; 4; 6; |]
+            |> assertEqual [| 6; 6; 4; 6; |]
 
             right
-            |> should equal [| "red"; "green" |]
+            |> assertEqual [| "red"; "green" |]
 
     [<Test>]
     let fold () : unit =
@@ -138,7 +138,7 @@ module Array =
             return state + x.ToString()
             })
         |> Async.RunSynchronously
-        |> should equal "217412"
+        |> assertEqual "217412"
 
     [<Test>]
     let foldBack () : unit =
@@ -149,7 +149,7 @@ module Array =
             return state + x.ToString()
             })
         |> Async.RunSynchronously
-        |> should equal "124172"
+        |> assertEqual "124172"
 
     [<Test>]
     let foldi () : unit =
@@ -160,7 +160,7 @@ module Array =
             return state + (x + idx).ToString()
             })
         |> Async.RunSynchronously
-        |> should equal "218615"
+        |> assertEqual "218615"
 
     [<Test>]
     let foldiBack () : unit =
@@ -171,7 +171,7 @@ module Array =
             return state + (x + idx).ToString()
             })
         |> Async.RunSynchronously
-        |> should equal "156182"
+        |> assertEqual "156182"
 
     [<Test>]
     let iter () : unit =
@@ -201,7 +201,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 6; 51; 12; 36; |]
 
         do
@@ -216,7 +216,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 33; 69; 141; |]
 
         do
@@ -231,7 +231,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 21; 33; 54; |]
 
     [<Test>]
@@ -262,7 +262,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 6; 54; 18; 45; |]
 
         do
@@ -277,7 +277,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 33; 72; 147; |]
 
         do
@@ -292,7 +292,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 21; 36; 60; |]
 
     [<Test>]
@@ -341,7 +341,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 12
+        |> assertEqual 12
 
         // Test case for multiple matching values.
         [| 7; 11; 18; 29; 48; |]
@@ -350,7 +350,7 @@ module Array =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 18
+        |> assertEqual 18
 
     [<Test>]
     let findIndex () : unit =
@@ -361,7 +361,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 3
+        |> assertEqual 3
 
         // Test case for multiple matching values.
         [| 7; 11; 18; 29; 48; |]
@@ -370,7 +370,7 @@ module Array =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 2
+        |> assertEqual 2
 
     [<Test>]
     let forall () : unit =
@@ -420,7 +420,7 @@ module Array =
             else return None
             })
         |> Async.RunSynchronously
-        |> should equal 5
+        |> assertEqual 5
 
     [<Test>]
     let reduce () : unit =
@@ -434,7 +434,7 @@ module Array =
                 return y + x
             })
         |> Async.RunSynchronously
-        |> should equal "GreenYellowOrangeRedBlueViolet"
+        |> assertEqual "GreenYellowOrangeRedBlueViolet"
 
     [<Test>]
     let reduceBack () : unit =
@@ -448,7 +448,7 @@ module Array =
                 return y + x
             })
         |> Async.RunSynchronously
-        |> should equal "OrangeYellowBlueVioletGreenRed"
+        |> assertEqual "OrangeYellowBlueVioletGreenRed"
 
     [<Test>]
     let tryFind () : unit =
@@ -459,7 +459,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Sample usage test cases.
         [| 2; 17; 4; 12; |]
@@ -468,7 +468,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 12)
+        |> assertEqual (Some 12)
 
         [| 11; 23; 47; |]
         |> Async.Array.tryFind (fun x ->
@@ -476,7 +476,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Test case for multiple matching values.
         [| 7; 11; 18; 29; 48; |]
@@ -485,7 +485,7 @@ module Array =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 18)
+        |> assertEqual (Some 18)
 
     [<Test>]
     let tryFindIndex () : unit =
@@ -496,7 +496,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Sample usage test cases.
         [| 2; 17; 4; 12; |]
@@ -505,7 +505,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 3)
+        |> assertEqual (Some 3)
 
         [| 23; 47; 106; |]
         |> Async.Array.tryFindIndex (fun x ->
@@ -513,7 +513,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Test case for multiple matching values.
         [| 7; 11; 18; 29; 48; |]
@@ -522,7 +522,7 @@ module Array =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 2)
+        |> assertEqual (Some 2)
 
     [<Test>]
     let tryPick () : unit =
@@ -534,7 +534,7 @@ module Array =
             else return None
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
         |> Async.Array.tryPick (fun colorName ->
@@ -544,7 +544,7 @@ module Array =
             else return None
             })
         |> Async.RunSynchronously
-        |> should equal (Some 5)
+        |> assertEqual (Some 5)
 
 
 /// Tests for the ExtCore.Control.Collections.Async.List module.
@@ -555,7 +555,7 @@ module List =
         [1; 1; 2; 3; 5; 8; 13; 21]
         |> Async.List.lift
         |> List.map Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [1; 1; 2; 3; 5; 8; 13; 21]
 
     [<Test>]
@@ -566,7 +566,7 @@ module List =
             async {
             return el * 3 })
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [3; 3; 6; 9; 15; 24; 39; 63]
 
     [<Test>]
@@ -577,7 +577,7 @@ module List =
             async {
             return idx + el })
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [1; 2; 4; 6; 9; 13; 19; 28]
 
     [<Test>]
@@ -588,7 +588,7 @@ module List =
             async {
             return state + x.ToString() })
         |> Async.RunSynchronously
-        |> should equal "217412"
+        |> assertEqual "217412"
 
     [<Test>]
     let foldBack () : unit =
@@ -598,7 +598,7 @@ module List =
             async {
             return state + x.ToString() })
         |> Async.RunSynchronously
-        |> should equal "124172"
+        |> assertEqual "124172"
 
     [<Test>]
     let choose () : unit =
@@ -625,7 +625,7 @@ module List =
                 return None
             })
         |> Async.RunSynchronously
-        |> should equal ["12"]
+        |> assertEqual ["12"]
 
         [11; 23; 47]
         |> Async.List.choose (fun x ->
@@ -649,7 +649,7 @@ module List =
                 return None
             })
         |> Async.RunSynchronously
-        |> should equal ["18"; "48"]
+        |> assertEqual ["18"; "48"]
 
     [<Test>]
     let collect () : unit =
@@ -660,7 +660,7 @@ module List =
             return [el; el + 1; el * 2]
             })
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [0; 1; 0; 1; 2; 2; 1; 2; 2; 2; 3; 4; 3; 4; 6; 5; 6; 10; 8; 9; 16]
 
     [<Test>]
@@ -756,7 +756,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal [12]
+        |> assertEqual [12]
 
         [11; 23; 47]
         |> Async.List.filter (fun x ->
@@ -774,7 +774,7 @@ module List =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal [18; 48]
+        |> assertEqual [18; 48]
 
     [<Test>]
     let tryFind () : unit =
@@ -785,7 +785,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Sample usage test cases.
         [2; 17; 4; 12]
@@ -794,7 +794,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 12)
+        |> assertEqual (Some 12)
 
         [11; 23; 47]
         |> Async.List.tryFind (fun x ->
@@ -802,7 +802,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Test case for multiple matching values.
         [7; 11; 18; 29; 48]
@@ -811,7 +811,7 @@ module List =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 18)
+        |> assertEqual (Some 18)
 
     [<Test>]
     let find () : unit =
@@ -822,7 +822,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 12
+        |> assertEqual 12
 
         // Test case for multiple matching values.
         [7; 11; 18; 29; 48]
@@ -831,7 +831,7 @@ module List =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 18
+        |> assertEqual 18
 
     [<Test>]
     let tryFindIndex () : unit =
@@ -842,7 +842,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Sample usage test cases.
         [2; 17; 4; 12]
@@ -851,7 +851,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 3)
+        |> assertEqual (Some 3)
 
         [23; 47; 106]
         |> Async.List.tryFindIndex (fun x ->
@@ -859,7 +859,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal None
+        |> assertEqual None
 
         // Test case for multiple matching values.
         [7; 11; 18; 29; 48]
@@ -868,7 +868,7 @@ module List =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal (Some 2)
+        |> assertEqual (Some 2)
 
     [<Test>]
     let findIndex () : unit =
@@ -879,7 +879,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 3
+        |> assertEqual 3
 
         // Test case for multiple matching values.
         [7; 11; 18; 29; 48]
@@ -888,7 +888,7 @@ module List =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should equal 2
+        |> assertEqual 2
 
     [<Test>]
     let init () : unit =
@@ -907,7 +907,7 @@ module List =
             return x * 17
             }
         |> Async.RunSynchronously
-        |> should equal
+        |> assertEqual
             [0; 17; 34; 51]
 
     [<Test>]
@@ -938,7 +938,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 6; 51; 12; 36; |]
 
         do
@@ -953,7 +953,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 33; 69; 141; |]
 
         do
@@ -968,7 +968,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 21; 33; 54; |]
 
     [<Test>]
@@ -999,7 +999,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 6; 54; 18; 45; |]
 
         do
@@ -1014,7 +1014,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 33; 72; 147; |]
 
         do
@@ -1029,7 +1029,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.toArray elements
-            |> should equal
+            |> assertEqual
                 [| 21; 36; 60; |]
 
 
@@ -1042,7 +1042,7 @@ module Seq =
         |> Async.Seq.lift
         |> Seq.map Async.RunSynchronously
         |> Seq.toArray
-        |> should equal
+        |> assertEqual
             [| 1; 1; 2; 3; 5; 8; 13; 21; |]
 
 

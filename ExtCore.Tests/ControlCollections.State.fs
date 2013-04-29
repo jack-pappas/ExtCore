@@ -60,8 +60,8 @@ module Array =
                     })
             let (), finalState = State.run testFunc 7
 
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -70,7 +70,7 @@ module Array =
                 |> State.Array.iter combineLength
             let (), finalState = State.run testFunc 0
 
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test>]
     let iteri () : unit =
@@ -85,8 +85,8 @@ module Array =
                     })
             let (), finalState = State.run testFunc 7
 
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -100,8 +100,8 @@ module Array =
                     })
             let (), finalState = State.run testFunc 0
 
-            !initials |> should equal "ROOYYYGGGGBBBBBVVVVVV"
-            finalState |> should equal 122
+            !initials |> assertEqual "ROOYYYGGGGBBBBBVVVVVV"
+            finalState |> assertEqual 122
 
     [<Test>]
     let map () : unit =
@@ -118,8 +118,8 @@ module Array =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -133,9 +133,9 @@ module Array =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "red"; "orange"; "yellow"; "green"; "blue"; "violet"; |]
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test>]
     let mapi () : unit =
@@ -152,8 +152,8 @@ module Array =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -171,9 +171,9 @@ module Array =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test>]
     let mapBack () : unit =
@@ -190,8 +190,8 @@ module Array =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -205,9 +205,9 @@ module Array =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "red"; "orange"; "yellow"; "green"; "blue"; "violet"; |]
-            finalState |> should equal 99
+            finalState |> assertEqual 99
 
     [<Test>]
     let mapiBack () : unit =
@@ -224,8 +224,8 @@ module Array =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -243,9 +243,9 @@ module Array =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
-            finalState |> should equal 99
+            finalState |> assertEqual 99
 
     [<Test>]
     let map2 () : unit =
@@ -262,8 +262,8 @@ module Array =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -278,9 +278,9 @@ module Array =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "1:red"; "1:orange"; "2:yellow"; "3:green"; "5:blue"; "8:violet"; |]
-            finalState |> should equal 122
+            finalState |> assertEqual 122
             
     [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``map2 raises exn when arrays have different lengths`` () : unit =
@@ -308,8 +308,8 @@ module Array =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -327,9 +327,9 @@ module Array =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "1:red"; "1:ORANGE"; "2:yellow"; "3:GREEN"; "5:blue"; "8:VIOLET"; |]
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``mapi2 raises exn when arrays have different lengths`` () : unit =
@@ -357,8 +357,8 @@ module Array =
             let foldResult, finalState = State.run testFunc 7
 
             String.isEmpty foldResult |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
             
         // Sample usage test cases.
         do
@@ -371,8 +371,8 @@ module Array =
                     })
             let foldResult, finalState = State.run testFunc 0
 
-            foldResult |> should equal "ROYGBV"
-            finalState |> should equal 122
+            foldResult |> assertEqual "ROYGBV"
+            finalState |> assertEqual 122
 
     [<Test>]
     let foldi () : unit =
@@ -389,8 +389,8 @@ module Array =
             let foldResult, finalState = State.run testFunc 7
 
             String.isEmpty foldResult |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
             
         // Sample usage test cases.
         do
@@ -403,8 +403,8 @@ module Array =
                     })
             let foldResult, finalState = State.run testFunc 0
 
-            foldResult |> should equal "ROOYYYGGGGBBBBBVVVVVV"
-            finalState |> should equal 122
+            foldResult |> assertEqual "ROOYYYGGGGBBBBBVVVVVV"
+            finalState |> assertEqual 122
 
 
 /// Tests for the ExtCore.Control.Collections.State.List module.
@@ -422,8 +422,8 @@ module List =
                     })
             let (), finalState = State.run testFunc 7
 
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -432,7 +432,7 @@ module List =
                 |> State.List.iter combineLength
             let (), finalState = State.run testFunc 0
 
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test>]
     let iteri () : unit =
@@ -447,8 +447,8 @@ module List =
                     })
             let (), finalState = State.run testFunc 7
 
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -462,8 +462,8 @@ module List =
                     })
             let (), finalState = State.run testFunc 0
 
-            !initials |> should equal "ROOYYYGGGGBBBBBVVVVVV"
-            finalState |> should equal 122
+            !initials |> assertEqual "ROOYYYGGGGBBBBBVVVVVV"
+            finalState |> assertEqual 122
 
     [<Test>]
     let map () : unit =
@@ -480,8 +480,8 @@ module List =
             let results, finalState = State.run testFunc 7
 
             List.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -495,9 +495,9 @@ module List =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 ["red"; "orange"; "yellow"; "green"; "blue"; "violet"]
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test>]
     let mapi () : unit =
@@ -514,8 +514,8 @@ module List =
             let results, finalState = State.run testFunc 7
 
             List.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -533,9 +533,9 @@ module List =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 ["red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"]
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test>]
     let fold () : unit =
@@ -552,8 +552,8 @@ module List =
             let foldResult, finalState = State.run testFunc 7
 
             String.isEmpty foldResult |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
             
         // Sample usage test cases.
         do
@@ -566,8 +566,8 @@ module List =
                     })
             let foldResult, finalState = State.run testFunc 0
 
-            foldResult |> should equal "ROYGBV"
-            finalState |> should equal 122
+            foldResult |> assertEqual "ROYGBV"
+            finalState |> assertEqual 122
 
 
 /// Tests for the ExtCore.Control.Collections.State.TaggedArray module.
@@ -589,8 +589,8 @@ module TaggedArray =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -608,9 +608,9 @@ module TaggedArray =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
-            finalState |> should equal 122
+            finalState |> assertEqual 122
 
     [<Test>]
     let mapiBack () : unit =
@@ -627,8 +627,8 @@ module TaggedArray =
             let results, finalState = State.run testFunc 7
 
             Array.isEmpty results |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -646,9 +646,9 @@ module TaggedArray =
             let results, finalState = State.run testFunc 0
 
             results
-            |> should equal
+            |> assertEqual
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
-            finalState |> should equal 99
+            finalState |> assertEqual 99
 
     [<Test>]
     let foldi () : unit =
@@ -665,8 +665,8 @@ module TaggedArray =
             let foldResult, finalState = State.run testFunc 7
 
             String.isEmpty foldResult |> should be True
-            finalState |> should equal 7
-            !iterationCount |> should equal 0
+            finalState |> assertEqual 7
+            !iterationCount |> assertEqual 0
             
         // Sample usage test cases.
         do
@@ -679,8 +679,8 @@ module TaggedArray =
                     })
             let foldResult, finalState = State.run testFunc 0
 
-            foldResult |> should equal "ROOYYYGGGGBBBBBVVVVVV"
-            finalState |> should equal 122
+            foldResult |> assertEqual "ROOYYYGGGGBBBBBVVVVVV"
+            finalState |> assertEqual 122
 
 
 /// Tests for the ExtCore.Control.Collections.State.ArrayView module.

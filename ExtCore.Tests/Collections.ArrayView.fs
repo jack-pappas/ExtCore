@@ -46,7 +46,7 @@ let ofArray () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14; |]
     |> ArrayView.ofArray
     |> ArrayView.count
-    |> should equal 8
+    |> assertEqual 8
 
 [<Test>]
 let create () : unit =
@@ -65,7 +65,7 @@ let create () : unit =
     (2, 3)
     ||> ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |]
     |> ArrayView.toArray
-    |> should equal
+    |> assertEqual
         [| 11; 2; 17; |]
 
 [<Test>]
@@ -74,10 +74,10 @@ let get () : unit =
         let view = ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
 
         ArrayView.get view 1
-        |> should equal 17
+        |> assertEqual 17
 
         ArrayView.get view 3
-        |> should equal 12
+        |> assertEqual 12
 
 [<Test>]
 let set () : unit =
@@ -90,55 +90,55 @@ let set () : unit =
 
         // Confirm the new element value via the ArrayView.
         ArrayView.get view 1
-        |> should equal 9
+        |> assertEqual 9
 
         // Confirm the new element value by directly checking the underlying array.
-        arr.[4] |> should equal 9
+        arr.[4] |> assertEqual 9
 
 [<Test>]
 let first () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.first
-    |> should equal 2
+    |> assertEqual 2
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.first
-    |> should equal 11
+    |> assertEqual 11
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.first
-    |> should equal 7
+    |> assertEqual 7
 
 [<Test>]
 let lastIndex () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.lastIndex
-    |> should equal 6
+    |> assertEqual 6
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.lastIndex
-    |> should equal 3
+    |> assertEqual 3
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.lastIndex
-    |> should equal 6
+    |> assertEqual 6
 
 [<Test>]
 let last () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.last
-    |> should equal 12
+    |> assertEqual 12
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.last
-    |> should equal 47
+    |> assertEqual 47
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.last
-    |> should equal 18
+    |> assertEqual 18
 
 [<Test>]
 let clear () : unit =
@@ -149,17 +149,17 @@ let toList () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.toList
-    |> should equal
+    |> assertEqual
         [2; 17; 4; 12]
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.toList
-    |> should equal
+    |> assertEqual
         [11; 23; 47]
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.toList
-    |> should equal
+    |> assertEqual
         [7; 11; 18]
 
 [<Test>]
@@ -167,17 +167,17 @@ let toArray () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.toArray
-    |> should equal
+    |> assertEqual
         [| 2; 17; 4; 12; |]
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.toArray
-    |> should equal
+    |> assertEqual
         [| 11; 23; 47; |]
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.toArray
-    |> should equal
+    |> assertEqual
         [| 7; 11; 18; |]
 
 [<Test>]
@@ -185,17 +185,17 @@ let mapToArray () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.mapToArray (fun x -> 3 * x)
-    |> should equal
+    |> assertEqual
         [| 6; 51; 12; 36; |]
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.mapToArray (fun x -> 3 * x)
-    |> should equal
+    |> assertEqual
         [| 33; 69; 141; |]
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.mapToArray (fun x -> 3 * x)
-    |> should equal
+    |> assertEqual
         [| 21; 33; 54; |]
 
 [<Test>]
@@ -206,7 +206,7 @@ let tryPick () : unit =
         if x % 3 = 0 && x % 4 = 0 then
             Some (sprintf "Match: %i" x)
         else None)
-    |> should equal None
+    |> assertEqual None
 
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -214,14 +214,14 @@ let tryPick () : unit =
         if x % 3 = 0 && x % 4 = 0 then
             Some (sprintf "Match: %i" x)
         else None)
-    |> should equal (Some "Match: 12")
+    |> assertEqual (Some "Match: 12")
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.tryPick (fun x ->
         if x % 3 = 0 && x % 4 = 0 then
             Some (sprintf "Match: %i" x)
         else None)
-    |> should equal None
+    |> assertEqual None
 
     // Test case for multiple matching values.
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
@@ -229,7 +229,7 @@ let tryPick () : unit =
         if x % 2 = 0 && x % 3 = 0 then
             Some (sprintf "Match: %i" x)
         else None)
-    |> should equal (Some "Match: 18")
+    |> assertEqual (Some "Match: 18")
 
 [<Test>]
 let pick () : unit =
@@ -239,7 +239,7 @@ let pick () : unit =
         if x % 3 = 0 && x % 4 = 0 then
             Some (sprintf "Match: %i" x)
         else None)
-    |> should equal "Match: 12"
+    |> assertEqual "Match: 12"
 
     // Test case for multiple matching values.
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
@@ -247,7 +247,7 @@ let pick () : unit =
         if x % 2 = 0 && x % 3 = 0 then
             Some (sprintf "Match: %i" x)
         else None)
-    |> should equal "Match: 18"
+    |> assertEqual "Match: 18"
 
 [<Test>]
 let tryFind () : unit =
@@ -255,24 +255,24 @@ let tryFind () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
     |> ArrayView.tryFind (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal None
+    |> assertEqual None
 
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.tryFind (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal (Some 12)
+    |> assertEqual (Some 12)
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.tryFind (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal None
+    |> assertEqual None
 
     // Test case for multiple matching values.
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.tryFind (fun x ->
         x % 2 = 0 && x % 3 = 0)
-    |> should equal (Some 18)
+    |> assertEqual (Some 18)
 
 [<Test>]
 let find () : unit =
@@ -280,13 +280,13 @@ let find () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.find (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal 12
+    |> assertEqual 12
 
     // Test case for multiple matching values.
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.find (fun x ->
         x % 2 = 0 && x % 3 = 0)
-    |> should equal 18
+    |> assertEqual 18
 
 [<Test>]
 let tryFindIndex () : unit =
@@ -294,24 +294,24 @@ let tryFindIndex () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
     |> ArrayView.tryFindIndex (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal None
+    |> assertEqual None
 
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.tryFindIndex (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal (Some 6)
+    |> assertEqual (Some 6)
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.tryFindIndex (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal None
+    |> assertEqual None
 
     // Test case for multiple matching values.
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.tryFindIndex (fun x ->
         x % 2 = 0 && x % 3 = 0)
-    |> should equal (Some 6)
+    |> assertEqual (Some 6)
 
 [<Test>]
 let findIndex () : unit =
@@ -319,13 +319,13 @@ let findIndex () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.findIndex (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should equal 6
+    |> assertEqual 6
 
     // Test case for multiple matching values.
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.findIndex (fun x ->
         x % 2 = 0 && x % 3 = 0)
-    |> should equal 6
+    |> assertEqual 6
 
 [<Test>]
 let exists () : unit =
@@ -399,7 +399,7 @@ let iter () : unit =
             elements.Add (x * 3))
 
         ResizeArray.toArray elements
-        |> should equal
+        |> assertEqual
             [| 6; 51; 12; 36; |]
 
     do
@@ -411,7 +411,7 @@ let iter () : unit =
             elements.Add (x * 3))
 
         ResizeArray.toArray elements
-        |> should equal
+        |> assertEqual
             [| 33; 69; 141; |]
 
     do
@@ -423,7 +423,7 @@ let iter () : unit =
             elements.Add (x * 3))
 
         ResizeArray.toArray elements
-        |> should equal
+        |> assertEqual
             [| 21; 33; 54; |]
 
 [<Test>]
@@ -432,23 +432,23 @@ let fold () : unit =
     (String.empty, ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0)
     ||> ArrayView.fold (fun state x ->
         state + x.ToString())
-    |> should equal String.empty
+    |> assertEqual String.empty
 
     // Sample usage test cases.
     (String.empty, ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4)
     ||> ArrayView.fold (fun state x ->
         state + x.ToString())
-    |> should equal "217412"
+    |> assertEqual "217412"
 
     (String.empty, ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3)
     ||> ArrayView.fold (fun state x ->
         state + x.ToString())
-    |> should equal "112347"
+    |> assertEqual "112347"
 
     (String.empty, ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5)
     ||> ArrayView.fold (fun state x ->
         state + x.ToString())
-    |> should equal "711182948"
+    |> assertEqual "711182948"
 
 [<Test>]
 let foldBack () : unit =
@@ -456,23 +456,23 @@ let foldBack () : unit =
     (ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0, String.empty)
     ||> ArrayView.foldBack (fun x state ->
         state + x.ToString())
-    |> should equal String.empty
+    |> assertEqual String.empty
 
     // Sample usage test cases.
     (ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4, String.empty)
     ||> ArrayView.foldBack (fun x state ->
         state + x.ToString())
-    |> should equal "124172"
+    |> assertEqual "124172"
 
     (ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3, String.empty)
     ||> ArrayView.foldBack (fun x state ->
         state + x.ToString())
-    |> should equal "472311"
+    |> assertEqual "472311"
 
     (ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5, String.empty)
     ||> ArrayView.foldBack (fun x state ->
         state + x.ToString())
-    |> should equal "482918117"
+    |> assertEqual "482918117"
 
 [<Test>]
 let reduce () : unit =
@@ -480,17 +480,17 @@ let reduce () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.reduce (fun x y ->
         (x - y) * y)
-    |> should equal -12576
+    |> assertEqual -12576
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.reduce (fun x y ->
         (x - y) * y)
-    |> should equal -15181
+    |> assertEqual -15181
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.reduce (fun x y ->
         (x - y) * y)
-    |> should equal -1596144
+    |> assertEqual -1596144
 
 [<Test>]
 let reduceBack () : unit =
@@ -498,62 +498,62 @@ let reduceBack () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.reduceBack (fun x y ->
         (y - x) * x)
-    |> should equal 506
+    |> assertEqual 506
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.reduceBack (fun x y ->
         (y - x) * x)
-    |> should equal 5951
+    |> assertEqual 5951
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.reduceBack (fun x y ->
         (y - x) * x)
-    |> should equal 737842
+    |> assertEqual 737842
 
 [<Test>]
 let min () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.min
-    |> should equal 2
+    |> assertEqual 2
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.min
-    |> should equal 11
+    |> assertEqual 11
     
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 0 5
     |> ArrayView.min
-    |> should equal 1
+    |> assertEqual 1
 
 [<Test>]
 let max () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.max
-    |> should equal 17
+    |> assertEqual 17
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.max
-    |> should equal 47
+    |> assertEqual 47
     
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 0 5
     |> ArrayView.max
-    |> should equal 7
+    |> assertEqual 7
 
 [<Test>]
 let sum () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.sum
-    |> should equal 35
+    |> assertEqual 35
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.sum
-    |> should equal 81
+    |> assertEqual 81
     
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 0 5
     |> ArrayView.sum
-    |> should equal 17
+    |> assertEqual 17
 
 [<Test>]
 let mapInPlace () : unit =

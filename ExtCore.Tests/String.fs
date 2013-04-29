@@ -33,10 +33,10 @@ module Substring =
             let substr = substring ("Hello World!", 3, 5)
             
             Substring.get substr 1
-            |> should equal 'o'
+            |> assertEqual 'o'
 
             Substring.get substr 3
-            |> should equal 'W'
+            |> assertEqual 'W'
 
     [<Test>]
     let isEmpty () : unit =
@@ -55,52 +55,52 @@ module Substring =
 
             substr
             |> Substring.string
-            |> should equal ""
+            |> assertEqual ""
 
             substr
             |> Substring.offset
-            |> should equal 0
+            |> assertEqual 0
 
             substr
             |> Substring.length
-            |> should equal 0
+            |> assertEqual 0
 
         do
             let substr = Substring.ofString "Hello World!"
 
             substr
             |> Substring.string
-            |> should equal "Hello World!"
+            |> assertEqual "Hello World!"
 
             substr
             |> Substring.offset
-            |> should equal 0
+            |> assertEqual 0
 
             substr
             |> Substring.length
-            |> should equal 12
+            |> assertEqual 12
 
     [<Test>]
     let toString () : unit =
         // Test for empty substring.
         substring ("Hello World!", 3, 0)
         |> Substring.toString
-        |> should equal String.empty
+        |> assertEqual String.empty
 
         substring ("Hello World!", 3, 6)
         |> Substring.toString
-        |> should equal "lo Wor"
+        |> assertEqual "lo Wor"
 
     [<Test>]
     let toArray () : unit =
         // Test for empty substring.
         substring ("Hello World!", 3, 0)
         |> Substring.toArray
-        |> should equal Array.empty
+        |> assertEqual Array.empty
 
         substring ("Hello World!", 3, 6)
         |> Substring.toArray
-        |> should equal [| 'l'; 'o'; ' '; 'W'; 'o'; 'r'; |]
+        |> assertEqual [| 'l'; 'o'; ' '; 'W'; 'o'; 'r'; |]
 
     [<Test>]
     let sub () : unit =
@@ -111,7 +111,7 @@ module Substring =
             
             Substring.sub substr 6 5
             |> Substring.toString
-            |> should equal "brown"
+            |> assertEqual "brown"
 
     [<Test>]
     let concat () : unit =
@@ -126,7 +126,7 @@ module Substring =
             yield substring (str2, 0, 6)
             yield substring (str1, 35, 9) }
             |> Substring.concat
-            |> should equal "The quick brown fox jumps over the World! Hello lazy dog."
+            |> assertEqual "The quick brown fox jumps over the World! Hello lazy dog."
 
     [<Test>]
     let iter () : unit =
@@ -149,7 +149,7 @@ module Substring =
             |> Substring.iter (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
-            |> should equal
+            |> assertEqual
                 [| 'Q'; 'U'; 'I'; 'C'; 'K'; ' '; 'B'; 'R'; 'O'; 'W'; 'N'; ' '; 'F'; 'O'; 'X'; |]
 
     [<Test>]
@@ -177,7 +177,7 @@ module Substring =
                     if idx % 2 = 0 then System.Char.ToUpper c else c))
 
             elements.ToArray ()
-            |> should equal
+            |> assertEqual
                 [| 'Q'; 'u'; 'I'; 'c'; 'K'; ' '; 'B'; 'r'; 'O'; 'w'; 'N'; ' '; 'F'; 'o'; 'X'; |]
 
     [<Test>]
@@ -201,7 +201,7 @@ module Substring =
             |> Substring.iterBack (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
-            |> should equal
+            |> assertEqual
                 [| 'X'; 'O'; 'F'; ' '; 'N'; 'W'; 'O'; 'R'; 'B'; ' '; 'K'; 'C'; 'I'; 'U'; 'Q'; |]
 
     [<Test>]
@@ -213,7 +213,7 @@ module Substring =
                 (checksum + int64 index) * int64 c,
                 index + 1)
             |> fst  // Discard the index
-            |> should equal 0L
+            |> assertEqual 0L
 
         // Test case for "normal" usage of this function.
         do
@@ -222,7 +222,7 @@ module Substring =
                 (checksum + int64 index) * int64 c,
                 index + 1)
             |> fst  // Discard the index
-            |> should equal 8117010307721961272L
+            |> assertEqual 8117010307721961272L
 
     [<Test>]
     let foldi () : unit =
@@ -231,14 +231,14 @@ module Substring =
             (0L, substring ("The quick brown fox jumps over the lazy dog.", 4, 0))
             ||> Substring.foldi (fun checksum index c ->
                 (checksum + int64 index) * int64 c)
-            |> should equal 0L
+            |> assertEqual 0L
 
         // Test case for "normal" usage of this function.
         do
             (0L, substring ("The quick brown fox jumps over the lazy dog.", 4, 15))
             ||> Substring.foldi (fun checksum index c ->
                 (checksum + int64 index) * int64 c)
-            |> should equal 8117010307721961272L
+            |> assertEqual 8117010307721961272L
 
     [<Test>]
     let foldBack () : unit =
@@ -249,7 +249,7 @@ module Substring =
                 (checksum + int64 index) * int64 c,
                 index + 1)
             |> fst  // Discard the index
-            |> should equal 0L
+            |> assertEqual 0L
 
         // Test case for "normal" usage of this function.
         do
@@ -258,7 +258,7 @@ module Substring =
                 (checksum + int64 index) * int64 c,
                 index + 1)
             |> fst  // Discard the index
-            |> should equal -8792059055315210054L
+            |> assertEqual -8792059055315210054L
 
 
 /// Tests for the ExtCore.String module.
@@ -290,7 +290,7 @@ module String =
         // Test case for Some containing a non-empty string.
         Some "Hello World!"
         |> String.ofOption
-        |> should equal "Hello World!"
+        |> assertEqual "Hello World!"
 
     [<Test>]
     let ofArray () : unit =
@@ -303,7 +303,7 @@ module String =
         // Test case for a non-empty array.
         [| 'H'; 'e'; 'l'; 'l'; 'o'; ' '; 'W'; 'o'; 'r'; 'l'; 'd'; '!'; |]
         |> String.ofArray
-        |> should equal "Hello World!"
+        |> assertEqual "Hello World!"
 
     [<Test>]
     let toOption () : unit =
@@ -320,7 +320,7 @@ module String =
         // Test case for a non-empty string.
         "Hello World!"
         |> String.toOption
-        |> should equal (Some "Hello World!")
+        |> assertEqual (Some "Hello World!")
 
     [<Test>]
     let toArray () : unit =
@@ -333,7 +333,7 @@ module String =
         // Test case for a non-empty string.
         "Hello World!"
         |> String.toArray
-        |> should equal
+        |> assertEqual
             [| 'H'; 'e'; 'l'; 'l'; 'o'; ' '; 'W'; 'o'; 'r'; 'l'; 'd'; '!'; |]
 
     [<Test>]
@@ -347,19 +347,19 @@ module String =
         // Test case for a non-empty string which does not contain the specified characters.
         "Hello World!"
         |> String.split [| ','; |]
-        |> should equal [| "Hello World!"; |]
+        |> assertEqual [| "Hello World!"; |]
 
         // Test case for a string which does contain the specified characters.
         "Id,Title,First,MI,Last,DOB"
         |> String.split [| ','; |]
-        |> should equal
+        |> assertEqual
             [| "Id"; "Title"; "First"; "MI"; "Last"; "DOB"; |]
 
         // Test case for a string which does contain the specified characters,
         // and where there are adjacent occurrences of the characters.
         "3262,,John,Q,Doe,1970-Jan-01"
         |> String.split [| ','; |]
-        |> should equal
+        |> assertEqual
             [| "3262"; ""; "John"; "Q"; "Doe"; "1970-Jan-01"; |]
 
     [<Test>]
@@ -373,7 +373,7 @@ module String =
         // Test case for non-empty array.
         [| "The"; "quick"; "brown"; "fox"; "jumps"; "over"; "the"; "lazy"; "dog."; |]
         |> String.concatArray
-        |> should equal
+        |> assertEqual
             "Thequickbrownfoxjumpsoverthelazydog."
 
     [<Test>]
@@ -387,7 +387,7 @@ module String =
         // Sample usage test case.
         [| "Lorem"; "ipsum"; "dolor"; "sit"; "amet"; |]
         |> String.ofLines
-        |> should equal @"Lorem
+        |> assertEqual @"Lorem
 ipsum
 dolor
 sit
@@ -404,7 +404,7 @@ amet"
         // Test case for a single-line string.
         "The quick brown fox jumps over the lazy dog."
         |> String.toLines
-        |> should equal
+        |> assertEqual
             [| "The quick brown fox jumps over the lazy dog."; |]
 
         // Test case for a multi-line string.
@@ -414,7 +414,7 @@ dolor
 sit
 amet"
         |> String.toLines
-        |> should equal
+        |> assertEqual
             [| "Lorem"; "ipsum"; "dolor"; "sit"; "amet"; |]
 
     [<Test>]
@@ -433,41 +433,41 @@ amet"
         // Test case for a non-empty substring of a non-empty string.
         String.sub "The quick brown fox jumps over the lazy dog." 4 15
         |> ExtCore.Substring.toString
-        |> should equal "quick brown fox"
+        |> assertEqual "quick brown fox"
 
     [<Test>]
     let tryFindIndexOf () : unit =
         // Test case for empty string.
         String.empty
         |> String.tryFindIndexOf 'j'
-        |> should equal None
+        |> assertEqual None
 
         // Test case for a string which does not contain the specified character.
         "Hello World!"
         |> String.tryFindIndexOf 'j'
-        |> should equal None
+        |> assertEqual None
 
         // Test case for a string which contains exactly one (1) instance of the specified character.
         "The quick brown fox jumps over the lazy dog."
         |> String.tryFindIndexOf 'j'
-        |> should equal (Some 20)
+        |> assertEqual (Some 20)
 
         // Test case for a string which contains multiple instances of the specified character.
         "Hello World!"
         |> String.tryFindIndexOf 'l'
-        |> should equal (Some 2)
+        |> assertEqual (Some 2)
 
     [<Test>]
     let findIndexOf () : unit =
         // Test case for a string which contains exactly one (1) instance of the specified character.
         "The quick brown fox jumps over the lazy dog."
         |> String.findIndexOf 'j'
-        |> should equal 20
+        |> assertEqual 20
 
         // Test case for a string which contains multiple instances of the specified character.
         "Hello World!"
         |> String.findIndexOf 'l'
-        |> should equal 2
+        |> assertEqual 2
 
     [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
     let ``findIndexOf raises exn when the string does not contain the character`` () : unit =
@@ -484,7 +484,7 @@ amet"
             // Is this a vowel (in English)?
             let c = System.Char.ToLowerInvariant c
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
-        |> should equal None
+        |> assertEqual None
 
         // Test case for a non-empty string which does not contain a matching character.
         "Glyndyfrdwy"
@@ -492,7 +492,7 @@ amet"
             // Is this a vowel (in English)?
             let c = System.Char.ToLowerInvariant c
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
-        |> should equal None
+        |> assertEqual None
 
         // Test case for a string which contains exactly one (1) matching character.
         "Rhythmist"
@@ -500,7 +500,7 @@ amet"
             // Is this a vowel (in English)?
             let c = System.Char.ToLowerInvariant c
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
-        |> should equal (Some 6)
+        |> assertEqual (Some 6)
 
         // Test case for a string which contains multiple matching characters.
         "Hello World!"
@@ -508,7 +508,7 @@ amet"
             // Is this a vowel (in English)?
             let c = System.Char.ToLowerInvariant c
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
-        |> should equal (Some 1)
+        |> assertEqual (Some 1)
 
     [<Test>]
     let findIndex () : unit =
@@ -518,7 +518,7 @@ amet"
             // Is this a vowel (in English)?
             let c = System.Char.ToLowerInvariant c
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
-        |> should equal 6
+        |> assertEqual 6
 
         // Test case for a string which contains multiple matching characters.
         "Hello World!"
@@ -526,7 +526,7 @@ amet"
             // Is this a vowel (in English)?
             let c = System.Char.ToLowerInvariant c
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
-        |> should equal 1
+        |> assertEqual 1
 
     [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
     let ``findIndex raises exn when the string does not contain a matching character`` () : unit =
@@ -546,7 +546,7 @@ amet"
             (checksum + int64 index) * int64 c,
             index + 1)
         |> fst  // Discard the index
-        |> should equal 0L
+        |> assertEqual 0L
 
         // Test case for "normal" usage of this function.
         ((0L, 0), "The quick brown fox jumps over the lazy dog.")
@@ -554,7 +554,7 @@ amet"
             (checksum + int64 index) * int64 c,
             index + 1)
         |> fst  // Discard the index
-        |> should equal 1464868296444951516L
+        |> assertEqual 1464868296444951516L
 
     [<Test>]
     let foldBack () : unit =
@@ -564,7 +564,7 @@ amet"
             (checksum + int64 index) * int64 c,
             index + 1)
         |> fst  // Discard the index
-        |> should equal 0L
+        |> assertEqual 0L
 
         // Test case for "normal" usage of this function.
         ("The quick brown fox jumps over the lazy dog.", (0L, 0))
@@ -572,7 +572,7 @@ amet"
             (checksum + int64 index) * int64 c,
             index + 1)
         |> fst  // Discard the index
-        |> should equal 6529802340200151804L
+        |> assertEqual 6529802340200151804L
 
     [<Test>]
     let iter () : unit =
@@ -595,7 +595,7 @@ amet"
             |> String.iter (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
-            |> should equal
+            |> assertEqual
                 [| 'T'; 'H'; 'E'; ' '; 'Q'; 'U'; 'I'; 'C'; 'K'; ' '; 'B'; 'R'; 'O'; 'W'; 'N';
                    ' '; 'F'; 'O'; 'X'; ' '; 'J'; 'U'; 'M'; 'P'; 'S'; ' '; 'O'; 'V'; 'E'; 'R';
                    ' '; 'T'; 'H'; 'E'; ' '; 'L'; 'A'; 'Z'; 'Y'; ' '; 'D'; 'O'; 'G'; '.'; |]
@@ -625,7 +625,7 @@ amet"
                     if idx % 2 = 0 then System.Char.ToUpper c else c))
 
             elements.ToArray ()
-            |> should equal
+            |> assertEqual
                 [| 'T'; 'h'; 'E'; ' '; 'Q'; 'u'; 'I'; 'c'; 'K'; ' '; 'B'; 'r'; 'O'; 'w'; 'N';
                    ' '; 'F'; 'o'; 'X'; ' '; 'J'; 'u'; 'M'; 'p'; 'S'; ' '; 'O'; 'v'; 'E'; 'r';
                    ' '; 't'; 'H'; 'e'; ' '; 'l'; 'A'; 'z'; 'Y'; ' '; 'D'; 'o'; 'G'; '.'; |]
@@ -643,12 +643,12 @@ amet"
         // Test case for empty string.
         String.empty
         |> String.map System.Char.ToUpper
-        |> should equal String.empty
+        |> assertEqual String.empty
 
         // Test case for "normal" usage of this function.
         "The quick brown fox jumps over the lazy dog."
         |> String.map System.Char.ToUpper
-        |> should equal "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG."
+        |> assertEqual "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG."
 
     [<Test>]
     let mapi () : unit =
@@ -656,13 +656,13 @@ amet"
         String.empty
         |> String.mapi (fun idx c ->
             if idx % 2 = 0 then System.Char.ToUpper c else c)
-        |> should equal String.empty
+        |> assertEqual String.empty
 
         // Test case for "normal" usage of this function.
         "The quick brown fox jumps over the lazy dog."
         |> String.mapi (fun idx c ->
             if idx % 2 = 0 then System.Char.ToUpper c else c)
-        |> should equal "ThE QuIcK BrOwN FoX JuMpS OvEr tHe lAzY DoG."
+        |> assertEqual "ThE QuIcK BrOwN FoX JuMpS OvEr tHe lAzY DoG."
 
     [<Test>]
     let choose () : unit =
@@ -672,7 +672,7 @@ amet"
             if int c % 2 = 0 then
                 Some (System.Char.ToUpper c)
             else None)
-        |> should equal String.empty
+        |> assertEqual String.empty
 
         // Test case for "normal" usage of this function.
         "The quick brown fox jumps over the lazy dog."
@@ -680,7 +680,7 @@ amet"
             if int c % 2 = 0 then
                 Some (System.Char.ToUpper c)
             else None)
-        |> should equal "TH  BRN FX JP VR TH LZ D."
+        |> assertEqual "TH  BRN FX JP VR TH LZ D."
 
     [<Test>]
     let choosei () : unit =
@@ -690,7 +690,7 @@ amet"
             if (idx + int c) % 2 = 0 then
                 Some (System.Char.ToUpper c)
             else None)
-        |> should equal String.empty
+        |> assertEqual String.empty
 
         // Test case for "normal" usage of this function.
         "The quick brown fox jumps over the lazy dog."
@@ -698,7 +698,7 @@ amet"
             if (idx + int c) % 2 = 0 then
                 Some (System.Char.ToUpper c)
             else None)
-        |> should equal "TUCBWNFOXJU HE DO"
+        |> assertEqual "TUCBWNFOXJU HE DO"
 
     [<Test>]
     let foldPairwise () : unit =
@@ -706,7 +706,7 @@ amet"
         (0, "mississippi")
         ||> String.foldPairwise (fun count x y ->
             if x = y then count + 1 else count)
-        |> should equal 3
+        |> assertEqual 3
 
     [<Test>]
     let trimChars () : unit =
@@ -719,46 +719,46 @@ amet"
         // Test case for a string which DOES NOT start or end with any of the specified characters.
         "Hello World!"
         |> String.trim [| ' '; '.'; ','; |]
-        |> should equal "Hello World!"
+        |> assertEqual "Hello World!"
 
         // Test case for a string which DOES start AND end with one or more of the specified characters.
         "    ,, ,Hello World!"
         |> String.trim [| ' '; '.'; ','; |]
-        |> should equal "Hello World!"
+        |> assertEqual "Hello World!"
 
     [<Test>]
     let trimStart () : unit =
         // Test case for empty string.
         String.empty
         |> String.trimStart [| ' '; '.'; ','; |]
-        |> should equal String.empty
+        |> assertEqual String.empty
 
         // Test case for a string which DOES NOT start with any of the specified characters.
         "The quick brown fox jumps over the lazy dog."
         |> String.trimStart [| ' '; '.'; ','; |]
-        |> should equal "The quick brown fox jumps over the lazy dog."
+        |> assertEqual "The quick brown fox jumps over the lazy dog."
 
         // Test case for a string which DOES start with one or more of the specified characters.
         "    ,, ,Hello World!"
         |> String.trimStart [| ' '; '.'; ','; |]
-        |> should equal "Hello World!"
+        |> assertEqual "Hello World!"
 
     [<Test>]
     let trimEnd () : unit =
         // Test case for empty string.
         String.empty
         |> String.trimEnd [| ' '; '.'; ','; |]
-        |> should equal String.empty
+        |> assertEqual String.empty
 
         // Test case for when the string DOES NOT end with any of the specified characters.
         "The quick brown fox jumps over the lazy dog."
         |> String.trimEnd [| '!'; '?'; '*'; |]
-        |> should equal "The quick brown fox jumps over the lazy dog."
+        |> assertEqual "The quick brown fox jumps over the lazy dog."
 
         // Test case for when the string DOES end with one or more of the specified characters.
         "Hello World!1!?!!"
         |> String.trimEnd [| '!'; '?'; '*'; |]
-        |> should equal "Hello World!1"
+        |> assertEqual "Hello World!1"
 
     [<Test>]
     let trimStartWith () : unit =
@@ -772,7 +772,7 @@ amet"
         // don't match the predicate (i.e., they'll be filtered out of the string).
         "    ,, ,Hello World!"
         |> String.trimStartWith (not << System.Char.IsWhiteSpace)
-        |> should equal ",, ,Hello World!"
+        |> assertEqual ",, ,Hello World!"
 
     [<Test>]
     let trimEndWith () : unit =
@@ -786,7 +786,7 @@ amet"
         // don't match the predicate (i.e., they'll be filtered out of the string).
         "Hello World!1!?!!"
         |> String.trimEndWith (not << System.Char.IsPunctuation)
-        |> should equal "Hello World!1"
+        |> assertEqual "Hello World!1"
 
     [<Test>]
     let trimWith () : unit =
@@ -800,7 +800,7 @@ amet"
         // don't match the predicate (i.e., they'll be filtered out of the string).
         "    ,, ,Hello World!1!?!!"
         |> String.trimWith System.Char.IsLetterOrDigit
-        |> should equal "Hello World!1"
+        |> assertEqual "Hello World!1"
 
     [<Test>]
     let fold2 () : unit =
@@ -861,7 +861,7 @@ amet"
                     (Substring.length >> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 2; 5; 5; 2; 4; 3; |]
 
                 // Re-test using the option to remove empty strings.
@@ -872,7 +872,7 @@ amet"
                     (Substring.length >> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 2; 5; 5; 2; 4; 3; |]
 
             do
@@ -885,7 +885,7 @@ amet"
                     (Substring.length >> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 4; 0; 4; 1; 3; 11; |]
 
                 // Re-test using the option to remove empty strings.
@@ -896,7 +896,7 @@ amet"
                     (Substring.length >> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 4; 4; 1; 3; 11; |]
 
         [<Test>]
@@ -925,7 +925,7 @@ amet"
                         |> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 2; 6; 7; 5; 8; 8; |]
 
                 // Re-test using the option to remove empty strings.
@@ -938,7 +938,7 @@ amet"
                         |> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 2; 6; 7; 5; 8; 8; |]
 
             do
@@ -953,7 +953,7 @@ amet"
                         |> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 4; 1; 6; 4; 7; 16; |]
 
                 // Re-test using the option to remove empty strings.
@@ -966,7 +966,7 @@ amet"
                         |> elements.Add)
 
                 ResizeArray.toArray elements
-                |> should equal
+                |> assertEqual
                     [| 4; 6; 4; 7; 16; |]
 
         [<Test>]
@@ -987,14 +987,14 @@ amet"
                 ||> String.Split.fold ([| ','; |], StringSplitOptions.None)
                     (fun state substr ->
                         state + ExtCore.Substring.toString substr)
-                |> should equal "IdTitleFirstMILastDOB"
+                |> assertEqual "IdTitleFirstMILastDOB"
 
                 // Re-test using the option to remove empty strings.
                 (String.empty, "Id,Title,First,MI,Last,DOB")
                 ||> String.Split.fold ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
                     (fun state substr ->
                         state + ExtCore.Substring.toString substr)
-                |> should equal "IdTitleFirstMILastDOB"
+                |> assertEqual "IdTitleFirstMILastDOB"
 
             do
                 // Test case for a string which does contain the specified characters,
@@ -1005,7 +1005,7 @@ amet"
                         state + (
                             if ExtCore.Substring.isEmpty substr then "(NULL)"
                             else ExtCore.Substring.toString substr))
-                |> should equal "3262(NULL)JohnQDoe1970-Jan-01"
+                |> assertEqual "3262(NULL)JohnQDoe1970-Jan-01"
 
                 // Re-test using the option to remove empty strings.
                 (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
@@ -1014,7 +1014,7 @@ amet"
                         state + (
                             if ExtCore.Substring.isEmpty substr then "(NULL)"
                             else ExtCore.Substring.toString substr))
-                |> should equal "3262JohnQDoe1970-Jan-01"
+                |> assertEqual "3262JohnQDoe1970-Jan-01"
 
         [<Test>]
         let foldi () : unit =
@@ -1035,7 +1035,7 @@ amet"
                     (fun state index substr ->
                         state + (
                             index.ToString() + ExtCore.Substring.toString substr))
-                |> should equal "0Id1Title2First3MI4Last5DOB"
+                |> assertEqual "0Id1Title2First3MI4Last5DOB"
 
                 // Re-test using the option to remove empty strings.
                 (String.empty, "Id,Title,First,MI,Last,DOB")
@@ -1043,7 +1043,7 @@ amet"
                     (fun state index substr ->
                         state + (
                             index.ToString() + ExtCore.Substring.toString substr))
-                |> should equal "0Id1Title2First3MI4Last5DOB"
+                |> assertEqual "0Id1Title2First3MI4Last5DOB"
 
             do
                 // Test case for a string which does contain the specified characters,
@@ -1055,7 +1055,7 @@ amet"
                             index.ToString() + (
                                 if ExtCore.Substring.isEmpty substr then "(NULL)"
                                 else ExtCore.Substring.toString substr)))
-                |> should equal "032621(NULL)2John3Q4Doe51970-Jan-01"
+                |> assertEqual "032621(NULL)2John3Q4Doe51970-Jan-01"
 
                 // Re-test using the option to remove empty strings.
                 (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
@@ -1065,5 +1065,5 @@ amet"
                             index.ToString() + (
                                 if ExtCore.Substring.isEmpty substr then "(NULL)"
                                 else ExtCore.Substring.toString substr)))
-                |> should equal "032622John3Q4Doe51970-Jan-01"
+                |> assertEqual "032622John3Q4Doe51970-Jan-01"
 

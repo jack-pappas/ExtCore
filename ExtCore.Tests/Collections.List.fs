@@ -29,7 +29,7 @@ open FsUnit
 let indexed () : unit =
     ["Red"; "Green"; "Blue"; "Yellow"]
     |> List.indexed
-    |> should equal
+    |> assertEqual
        [0, "Red";
         1, "Green";
         2, "Blue";
@@ -39,35 +39,35 @@ let indexed () : unit =
 let revIntoArray () : unit =
     List.empty
     |> List.revIntoArray
-    |> should equal Array.empty
+    |> assertEqual Array.empty
 
     ["Red"; "Green"; "Blue"; "Yellow"]
     |> List.revIntoArray
-    |> should equal
+    |> assertEqual
        [| "Yellow"; "Blue"; "Green"; "Red" |]
 
 [<Test>]
 let revMapIntoArray () : unit =
     List.empty
     |> List.revMapIntoArray ignore
-    |> should equal Array.empty
+    |> assertEqual Array.empty
 
     ["Red"; "Green"; "Blue"; "Yellow"]
     |> List.revMapIntoArray String.length
-    |> should equal [| 6; 4; 5; 3 |]
+    |> assertEqual [| 6; 4; 5; 3 |]
 
 [<Test>]
 let projectValues () : unit =
     List.empty
     |> List.projectValues ignore
-    |> should equal List.empty
+    |> assertEqual List.empty
 
     [ ConsoleColor.Magenta;
       ConsoleColor.DarkGreen;
       ConsoleColor.Cyan;
       ConsoleColor.Black; ]
     |> List.projectValues (sprintf "%O")
-    |> should equal
+    |> assertEqual
        [ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -77,13 +77,13 @@ let projectValues () : unit =
 let projectKeys () : unit =
     List.empty
     |> List.projectKeys ignore
-    |> should equal List.empty
+    |> assertEqual List.empty
 
     ["Magenta"; "DarkGreen"; "Cyan"; "Black"]
     |> List.projectKeys (fun colorName ->
         Enum.Parse (typeof<ConsoleColor>, colorName)
         :?> System.ConsoleColor)
-    |> should equal
+    |> assertEqual
        [ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -96,10 +96,10 @@ let take () : unit =
         |> List.take 5
 
     taken
-    |> should equal [0; 1; 1; 2; 3]
+    |> assertEqual [0; 1; 1; 2; 3]
 
     remaining
-    |> should equal [5; 8; 13; 21; 34; 55; 89; 144]
+    |> assertEqual [5; 8; 13; 21; 34; 55; 89; 144]
 
 [<Test>]
 let takeArray () : unit =
@@ -108,10 +108,10 @@ let takeArray () : unit =
         |> List.takeArray 5
 
     taken
-    |> should equal [| 0; 1; 1; 2; 3 |]
+    |> assertEqual [| 0; 1; 1; 2; 3 |]
 
     remaining
-    |> should equal [5; 8; 13; 21; 34; 55; 89; 144]
+    |> assertEqual [5; 8; 13; 21; 34; 55; 89; 144]
 
 [<Test>]
 let foldPairwise () : unit =
@@ -119,12 +119,12 @@ let foldPairwise () : unit =
     (0, List.ofArray <| "mississippi".ToCharArray ())
     ||> List.foldPairwise (fun count x y ->
         if x = y then count + 1 else count)
-    |> should equal 3
+    |> assertEqual 3
 
     (0, [0; 1; 1; 2; 3; 5; 8; 13; 21; 34; 55; 89; 144])
     ||> List.foldPairwise (fun diffSum x y ->
         diffSum + (y - x))
-    |> should equal 144
+    |> assertEqual 144
 
 [<Test>]
 let foldBackPairwise () : unit =
@@ -132,7 +132,7 @@ let foldBackPairwise () : unit =
     (List.ofArray <| "mississippi".ToCharArray (), 0)
     ||> List.foldBackPairwise (fun x y count ->
         if x = y then count + 1 else count)
-    |> should equal 3
+    |> assertEqual 3
 
 [<Test>]
 let mapPartition () : unit =
@@ -145,10 +145,10 @@ let mapPartition () : unit =
                 Choice2Of2 <| x * x * x)
 
     left
-    |> should equal ["0"; "2"; "4"; "6"; "8"; "10"]
+    |> assertEqual ["0"; "2"; "4"; "6"; "8"; "10"]
 
     right
-    |> should equal [1; 27; 125; 343; 729]
+    |> assertEqual [1; 27; 125; 343; 729]
 
 [<Test>]
 let mapPartition3 () : unit =
@@ -164,13 +164,13 @@ let mapPartition3 () : unit =
                 Choice3Of3 <| x * x)
 
     left
-    |> should equal [1; 8; 64; 512; 4096; 32768]
+    |> assertEqual [1; 8; 64; 512; 4096; 32768]
 
     middle
-    |> should equal ["1"; "4"; "7"; "10"; "13"]
+    |> assertEqual ["1"; "4"; "7"; "10"; "13"]
 
     right
-    |> should equal [4; 25; 64; 121; 196]
+    |> assertEqual [4; 25; 64; 121; 196]
 
 [<Test>]
 let choose2 () : unit =
@@ -183,7 +183,7 @@ let choose2 () : unit =
         if (x + String.length colorName) % 2 = 0 then
             Some <| colorName.ToLower ()
         else None)
-    |> should equal
+    |> assertEqual
        ["cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow"]
 
 
@@ -194,7 +194,7 @@ let unfold () : unit =
         | 0 -> None
         | n ->
             Some (n.ToString(), n - 1))
-    |> should equal ["5"; "4"; "3"; "2"; "1"]
+    |> assertEqual ["5"; "4"; "3"; "2"; "1"]
 
 [<Test>]
 let unzipWith () : unit =
@@ -205,10 +205,10 @@ let unzipWith () : unit =
             Enum.Parse (typeof<ConsoleColor>, colorName) :?> ConsoleColor)
 
     left
-    |> should equal [5; 4; 4; 8; 8]
+    |> assertEqual [5; 4; 4; 8; 8]
 
     right
-    |> should equal [
+    |> assertEqual [
         ConsoleColor.Black;
         ConsoleColor.Blue;
         ConsoleColor.Cyan;
@@ -221,20 +221,20 @@ let countWith () : unit =
     List.empty
     |> List.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 0
+    |> assertEqual 0
 
     // Sample usage test cases.
     [0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16]
     |> List.countWith (fun x ->
         x < 0)
-    |> should equal 0
+    |> assertEqual 0
 
     [0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16]
     |> List.countWith (fun x ->
         x % 7 = 0)
-    |> should equal 1
+    |> assertEqual 1
 
     [0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16]
     |> List.countWith (fun x ->
         x % 3 = 0)
-    |> should equal 4
+    |> assertEqual 4

@@ -48,7 +48,7 @@ let iter () : unit =
             |> elements.Add)
 
         ResizeArray.toArray elements
-        |> should equal [| "AAAA"; |]
+        |> assertEqual [| "AAAA"; |]
 
     do
         // Sample usage test case.
@@ -60,7 +60,7 @@ let iter () : unit =
             |> elements.Add)
 
         ResizeArray.toArray elements
-        |> should equal
+        |> assertEqual
             [| "AA"; "AAA"; "AAAA"; "AAAAA"; "AAAAAA"; "AAAAAAA"; |]
 
 [<Test>]
@@ -78,7 +78,7 @@ let fold () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 1L
+        |> assertEqual 1L
 
     do
         // Test cases for a single-element range.
@@ -88,7 +88,7 @@ let fold () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 7L
+        |> assertEqual 7L
 
         (5, 5, 1L)
         |||> Range.fold (fun checksum x ->
@@ -96,7 +96,7 @@ let fold () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 5L
+        |> assertEqual 5L
 
     do
         // Sample usage test cases.
@@ -106,7 +106,7 @@ let fold () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 392L
+        |> assertEqual 392L
 
         (20, 30, 1L)
         |||> Range.fold (fun checksum x ->
@@ -114,7 +114,7 @@ let fold () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 46488L
+        |> assertEqual 46488L
 
 [<Test>]
 let foldBack () : unit =
@@ -131,7 +131,7 @@ let foldBack () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 1L
+        |> assertEqual 1L
 
     do
         // Test cases for a single-element range.
@@ -141,7 +141,7 @@ let foldBack () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 7L
+        |> assertEqual 7L
 
         (5, 5, 1L)
         |||> Range.foldBack (fun x checksum ->
@@ -149,7 +149,7 @@ let foldBack () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 5L
+        |> assertEqual 5L
 
     do
         // Sample usage test cases.
@@ -159,7 +159,7 @@ let foldBack () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 414L
+        |> assertEqual 414L
 
         (20, 30, 1L)
         |||> Range.foldBack (fun x checksum ->
@@ -167,7 +167,7 @@ let foldBack () : unit =
                 checksum * int64 x
             else
                 checksum + int64 x)
-        |> should equal 23730L
+        |> assertEqual 23730L
 
 [<Test>]
 let exists () : unit =

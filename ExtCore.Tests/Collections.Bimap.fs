@@ -33,11 +33,11 @@ let equality () : unit =
 
     Bimap.singleton "Hello" "World!"
     |> Bimap.remove "Hello"
-    |> should equal (Bimap.empty : Bimap<string, string>)
+    |> assertEqual (Bimap.empty : Bimap<string, string>)
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
-    |> should equal (
+    |> assertEqual (
         Bimap.empty
         |> Bimap.add "foo" 5
         |> Bimap.add "bar" 8
@@ -48,7 +48,7 @@ let equality () : unit =
 [<Test>]
 let singleton () : unit =
     Bimap.singleton "Hello" "World!"
-    |> should equal (
+    |> assertEqual (
         Bimap.empty
         |> Bimap.add "Hello" "World!")
 
@@ -66,16 +66,16 @@ let isEmpty () : unit =
 let count () : unit =
     Bimap.empty
     |> Bimap.count
-    |> should equal 0
+    |> assertEqual 0
 
     Bimap.singleton 'F' 123
     |> Bimap.count
-    |> should equal 1
+    |> assertEqual 1
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.count
-    |> should equal 5
+    |> assertEqual 5
 
 [<Test>]
 let containsKey () : unit =
@@ -157,19 +157,19 @@ let paired () : unit =
 let tryFind () : unit =
     Bimap.empty
     |> Bimap.tryFind "foo"
-    |> should equal None
+    |> assertEqual None
 
     // Test case for when the map does not contain the specified key.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryFind "Hello"
-    |> should equal None
+    |> assertEqual None
 
     // Test case for when the map does contain the specified key.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryFind "foo"
-    |> should equal (Some 5)
+    |> assertEqual (Some 5)
 
     // Test case for when the map does contain the specified key,
     // but it has been updated with a new value.
@@ -177,25 +177,25 @@ let tryFind () : unit =
     |> Bimap.ofArray
     |> Bimap.add "bar" 7
     |> Bimap.tryFind "bar"
-    |> should equal (Some 7)
+    |> assertEqual (Some 7)
 
 [<Test>]
 let tryFindValue () : unit =
     Bimap.empty
     |> Bimap.tryFindValue 5
-    |> should equal None
+    |> assertEqual None
 
     // Test case for when the map does not contain the specified value.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryFindValue 33
-    |> should equal None
+    |> assertEqual None
 
     // Test case for when the map does contain the specified value.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryFindValue 5
-    |> should equal (Some "foo")
+    |> assertEqual (Some "foo")
 
     // Test case for when the map did contain the specified value, but no longer
     // does because it has been overwritten/updated with a new value.
@@ -203,7 +203,7 @@ let tryFindValue () : unit =
     |> Bimap.ofArray
     |> Bimap.add "bar" 7
     |> Bimap.tryFindValue 8
-    |> should equal None
+    |> assertEqual None
 
     // Test case for when the map does contain the specified value,
     // and it overwrote/updated an existing value.
@@ -211,14 +211,14 @@ let tryFindValue () : unit =
     |> Bimap.ofArray
     |> Bimap.add "bar" 7
     |> Bimap.tryFindValue 7
-    |> should equal (Some "bar")
+    |> assertEqual (Some "bar")
 
 [<Test>]
 let find () : unit =
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.find "bar"
-    |> should equal 8
+    |> assertEqual 8
 
 [<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``find raises exn when key is not found`` () : unit =
@@ -232,7 +232,7 @@ let findValue () : unit =
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.findValue 2
-    |> should equal "baz"
+    |> assertEqual "baz"
 
 [<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``findValue raises exn when value is not found`` () : unit =
@@ -254,7 +254,7 @@ let remove () : unit =
     |> Bimap.remove "foo"
     |> Bimap.remove "bar"
     |> Bimap.count
-    |> should equal 3
+    |> assertEqual 3
 
     // If the Bimap does not contain a binding with the specified key,
     // the Bimap should be returned without altering it.
@@ -263,7 +263,7 @@ let remove () : unit =
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.remove "Hello"
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
 
 [<Test>]
@@ -279,7 +279,7 @@ let removeValue () : unit =
     |> Bimap.removeValue 5
     |> Bimap.removeValue 8
     |> Bimap.count
-    |> should equal 3
+    |> assertEqual 3
 
     // If the Bimap does not contain a binding with the specified value,
     // the Bimap should be returned without altering it.
@@ -288,7 +288,7 @@ let removeValue () : unit =
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.removeValue 33
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
 
 [<Test>]
@@ -303,7 +303,7 @@ let add () : unit =
     |> Bimap.ofArray
     |> Bimap.add "let" 11
     |> Bimap.count
-    |> should equal 6
+    |> assertEqual 6
 
     // Test case for when the key and value being added already exist in the Bimap,
     // and they are paired.
@@ -312,28 +312,28 @@ let add () : unit =
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.add "bar" 8
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
     
     // Test case for when the key and value already exist in the Bimap, but they aren't paired.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.add "bar" 2
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 2); ("cdr", 9); ("car", 6); |])
 
     // Test case for when the key already exists in the Bimap, but the value does not.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.add "bar" 7
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 7); ("baz", 2); ("cdr", 9); ("car", 6); |])
 
     // Test case for when the value already exists in the Bimap, but the key does not.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.add "let" 5
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("let", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
 
 [<Test>]
@@ -349,7 +349,7 @@ let tryAdd () : unit =
     |> Bimap.ofArray
     |> Bimap.tryAdd "let" 11
     |> Bimap.count
-    |> should equal 6
+    |> assertEqual 6
 
     // Test case for when the key and value being added already exist in the Bimap,
     // and they are paired.
@@ -358,28 +358,28 @@ let tryAdd () : unit =
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryAdd "bar" 8
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
     
     // Test case for when the key and value already exist in the Bimap, but they aren't paired.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryAdd "bar" 2
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
 
     // Test case for when the key already exists in the Bimap, but the value does not.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryAdd "bar" 7
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
 
     // Test case for when the value already exists in the Bimap, but the key does not.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.tryAdd "let" 5
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
 
 [<Test>]
@@ -392,13 +392,13 @@ let ofSeq () : unit =
     [| ("foo", 5) |]
     |> Seq.ofArray
     |> Bimap.ofSeq
-    |> should equal
+    |> assertEqual
         (Bimap.singleton "foo" 5)
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7); |]
     |> Seq.ofArray
     |> Bimap.ofSeq
-    |> should equal (
+    |> assertEqual (
         Bimap.empty
         |> Bimap.add "foo" 5
         |> Bimap.add "bar" 8
@@ -416,12 +416,12 @@ let ofList () : unit =
 
     [("foo", 5)]
     |> Bimap.ofList
-    |> should equal
+    |> assertEqual
         (Bimap.singleton "foo" 5)
 
     [("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7)]
     |> Bimap.ofList
-    |> should equal (
+    |> assertEqual (
         Bimap.empty
         |> Bimap.add "foo" 5
         |> Bimap.add "bar" 8
@@ -439,12 +439,12 @@ let ofArray () : unit =
 
     [| ("foo", 5) |]
     |> Bimap.ofArray
-    |> should equal
+    |> assertEqual
         (Bimap.singleton "foo" 5)
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7); |]
     |> Bimap.ofArray
-    |> should equal (
+    |> assertEqual (
         Bimap.empty
         |> Bimap.add "foo" 5
         |> Bimap.add "bar" 8
@@ -462,20 +462,20 @@ let ofMap () : unit =
 
     Map.singleton "foo" 5
     |> Bimap.ofMap
-    |> should equal
+    |> assertEqual
         (Bimap.singleton "foo" 5)
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7); |]
     |> Map.ofArray
     |> Bimap.ofMap
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("bar", 7); |])
 
     // Test case for when the map contains multiple keys with the same value.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); ("let", 9); |]
     |> Map.ofArray
     |> Bimap.ofMap
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("car", 6); ("let", 9); |])
 
 [<Test>]
@@ -488,7 +488,7 @@ let toSeq () : unit =
     Bimap.singleton "foo" 5
     |> Bimap.toSeq
     |> Seq.toArray
-    |> should equal [| ("foo", 5) |]
+    |> assertEqual [| ("foo", 5) |]
 
     Bimap.empty
     |> Bimap.add "foo" 5
@@ -499,7 +499,7 @@ let toSeq () : unit =
     |> Bimap.add "bar" 7
     |> Bimap.toSeq
     |> Seq.toArray
-    |> should equal
+    |> assertEqual
         [| ("bar", 7); ("baz", 2); ("car", 6); ("cdr", 9); ("foo", 5); |]
 
 [<Test>]
@@ -511,7 +511,7 @@ let toList () : unit =
 
     Bimap.singleton "foo" 5
     |> Bimap.toList
-    |> should equal [("foo", 5)]
+    |> assertEqual [("foo", 5)]
 
     Bimap.empty
     |> Bimap.add "foo" 5
@@ -521,7 +521,7 @@ let toList () : unit =
     |> Bimap.add "car" 6
     |> Bimap.add "bar" 7
     |> Bimap.toList
-    |> should equal
+    |> assertEqual
         [("bar", 7); ("baz", 2); ("car", 6); ("cdr", 9); ("foo", 5)]
 
 [<Test>]
@@ -533,7 +533,7 @@ let toArray () : unit =
 
     Bimap.singleton "foo" 5
     |> Bimap.toArray
-    |> should equal [| ("foo", 5) |]
+    |> assertEqual [| ("foo", 5) |]
 
     Bimap.empty
     |> Bimap.add "foo" 5
@@ -543,7 +543,7 @@ let toArray () : unit =
     |> Bimap.add "car" 6
     |> Bimap.add "bar" 7
     |> Bimap.toArray
-    |> should equal
+    |> assertEqual
         [| ("bar", 7); ("baz", 2); ("car", 6); ("cdr", 9); ("foo", 5); |]
 
 [<Test>]
@@ -555,7 +555,7 @@ let toMap () : unit =
 
     Bimap.singleton "foo" 5
     |> Bimap.toMap
-    |> should equal
+    |> assertEqual
         (Map.singleton "foo" 5)
 
     Bimap.empty
@@ -566,7 +566,7 @@ let toMap () : unit =
     |> Bimap.add "car" 6
     |> Bimap.add "bar" 7
     |> Bimap.toMap
-    |> should equal
+    |> assertEqual
         (Map.ofArray [| ("bar", 8); ("baz", 2); ("car", 6); ("cdr", 9); ("foo", 5); ("bar", 7); |])
 
 [<Test>]
@@ -592,7 +592,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [|'D'; 'G'; 'F'; 'B'; 'C'; 'A'|]
 
 [<Test>]
@@ -604,7 +604,7 @@ let fold () : unit =
         ||> Bimap.fold (fun counter k v ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal 0
+        |> assertEqual 0
 
         elements
         |> ResizeArray.isEmpty
@@ -621,11 +621,11 @@ let fold () : unit =
         ||> Bimap.fold (fun counter k v ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal (Bimap.count testMap)
+        |> assertEqual (Bimap.count testMap)
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [| 102; 76; 83; 113; 117; 119; |]
 
 [<Test>]
@@ -637,7 +637,7 @@ let foldBack () : unit =
         ||> Bimap.foldBack (fun counter k v ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal 0
+        |> assertEqual 0
 
         elements
         |> ResizeArray.isEmpty
@@ -654,11 +654,11 @@ let foldBack () : unit =
         ||> Bimap.foldBack (fun k v counter ->
             elements.Add (counter + k + int v)
             counter + 1)
-        |> should equal (Bimap.count testMap)
+        |> assertEqual (Bimap.count testMap)
 
         elements
         |> ResizeArray.toArray
-        |> should equal
+        |> assertEqual
             [| 114; 114; 112; 84; 79; 107; |]
 
 [<Test>]
@@ -667,7 +667,7 @@ let filter () : unit =
     |> Bimap.ofArray
     |> Bimap.filter (fun k v ->
         (k % 2 = 0) && System.Char.IsLower v)
-    |> should equal
+    |> assertEqual
         (Bimap.ofArray [| (2, 'd'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -694,11 +694,11 @@ let partition () : unit =
                 (k + int v) % 2 = 0)
 
         evens
-        |> should equal
+        |> assertEqual
             (Bimap.ofArray [| (2, 'd'); (12, 'b'); (17, 'a'); |])
 
         odds
-        |> should equal
+        |> assertEqual
             (Bimap.ofArray [| (4, 'G'); (11, 'F'); (14, 'c'); |])
 
 

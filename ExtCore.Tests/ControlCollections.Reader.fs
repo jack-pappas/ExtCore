@@ -50,7 +50,7 @@ module Array =
                     })
             Reader.run testFunc keywords
 
-            !keywordCount |> should equal 0
+            !keywordCount |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -66,7 +66,7 @@ module Array =
                     })
             Reader.run testFunc keywords
 
-            !keywordCount |> should equal 2
+            !keywordCount |> assertEqual 2
 
     [<Test>]
     let iteri () : unit =
@@ -84,7 +84,7 @@ module Array =
                     })
             Reader.run testFunc keywords
 
-            !keywordWeight |> should equal 0
+            !keywordWeight |> assertEqual 0
 
         // Sample usage test cases.
         do
@@ -100,7 +100,7 @@ module Array =
                     })
             Reader.run testFunc keywords
 
-            !keywordWeight |> should equal 6
+            !keywordWeight |> assertEqual 6
 
     [<Test>]
     let map () : unit =
@@ -128,7 +128,7 @@ module Array =
                     })
             keywords
             |> Reader.run testFunc
-            |> should equal
+            |> assertEqual
                 [| true; false; false; false; true; |]
 
     [<Test>]
@@ -160,6 +160,6 @@ module Array =
                     })
             keywords
             |> Reader.run testFunc
-            |> should equal
+            |> assertEqual
                 [| Some "0:if"; None; None; None; Some "4:then"; |]
 
