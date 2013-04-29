@@ -60,7 +60,22 @@ let projectKeys () : unit =
 
 [<Test>]
 let clear () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty array.
+    // Just checks to make sure an exn isn't raised.
+    do
+        let arr = Array.empty
+        Array.clear arr
+
+    // Sample usage test cases.
+    do
+        let arr = [| 2 |]
+        Array.clear arr
+        arr |> assertEqual (Array.zeroCreate arr.Length)
+
+    do
+        let arr = [| -2..7 |]
+        Array.clear arr
+        arr |> assertEqual (Array.zeroCreate arr.Length)
 
 [<Test>]
 let ``contains (value type)`` () : unit =
@@ -310,19 +325,130 @@ let choose2 () : unit =
 
 [<Test>]
 let mapInPlace () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty array.
+    do
+        let arr = Array.empty
+        arr
+        |> Array.mapInPlace (fun el ->
+            el * 2)
+        arr |> assertEqual Array.empty
+
+    // Sample usage test cases.
+    do
+        let arr = [| 0..4 |]
+        arr
+        |> Array.mapInPlace (fun el ->
+            el * 2)
+        arr |> assertEqual [| 0; 2; 4; 6; 8; |]
+
+    do
+        let colors =
+            [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+               "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"; |]
+        colors
+        |> Array.mapInPlace (fun colorName ->
+            colorName.ToLowerInvariant ())
+        colors |> assertEqual [|
+            "black"; "blue"; "cyan"; "darkblue"; "darkgray";
+            "darkgreen"; "darkmagenta"; "darkred"; "darkyellow"; "gray"; "green"; |]
 
 [<Test>]
 let mapiInPlace () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty array.
+    do
+        let arr = Array.empty
+        arr
+        |> Array.mapiInPlace (fun idx el ->
+            el * (2 + idx))
+        arr |> assertEqual Array.empty
+
+    // Sample usage test cases.
+    do
+        let arr = [| 0..4 |]
+        arr
+        |> Array.mapiInPlace (fun idx el ->
+            el * (2 + idx))
+        arr |> assertEqual [| 0; 3; 8; 15; 24; |]
+
+    do
+        let colors =
+            [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+               "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"; |]
+        colors
+        |> Array.mapiInPlace (fun idx colorName ->
+            if idx % 2 = 0 then
+                colorName.ToLowerInvariant ()
+            else
+                colorName.ToUpperInvariant ())
+        colors |> assertEqual [|
+            "black"; "BLUE"; "cyan"; "DARKBLUE"; "darkgray";
+            "DARKGREEN"; "darkmagenta"; "DARKRED"; "darkyellow"; "GRAY"; "green"; |]
 
 [<Test>]
 let chooseInPlace () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty array.
+    do
+        let arr = Array.empty
+        arr
+        |> Array.chooseInPlace (fun el ->
+            if el > 0 && el % 2 = 0 then Some (el * 2)
+            else None)
+        arr |> assertEqual Array.empty
+
+    // Sample usage test cases.
+    do
+        let arr = [| 0..4 |]
+        arr
+        |> Array.chooseInPlace (fun el ->
+            if el > 0 && el % 2 = 0 then Some (el * 2)
+            else None)
+        arr |> assertEqual [| 0; 1; 4; 3; 8; |]
+
+    do
+        let colors =
+            [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+               "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"; |]
+        colors
+        |> Array.chooseInPlace (fun colorName ->
+            if String.length colorName <= 5 then
+                Some <| colorName.ToLowerInvariant ()
+            else None)
+        colors |> assertEqual [|
+            "black"; "blue"; "cyan"; "DarkBlue"; "DarkGray";
+            "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "gray"; "green"; |]
 
 [<Test>]
 let chooseiInPlace () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty array.
+    do
+        let arr = Array.empty
+        arr
+        |> Array.chooseiInPlace (fun idx el ->
+            if idx % 2 = 0 then None
+            else Some (el * (2 + idx)))
+        arr |> assertEqual Array.empty
+
+    // Sample usage test cases.
+    do
+        let arr = [| 0..4 |]
+        arr
+        |> Array.chooseiInPlace (fun idx el ->
+            if idx % 2 = 0 then None
+            else Some (el * (2 + idx)))
+        arr |> assertEqual [| 0; 3; 2; 15; 4; |]
+
+    do
+        let colors =
+            [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+               "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"; |]
+        colors
+        |> Array.chooseiInPlace (fun idx colorName ->
+            if idx % 2 = 0 then
+                Some <| colorName.ToLowerInvariant ()
+            else None)
+        colors |> assertEqual [|
+            "black"; "Blue"; "cyan"; "DarkBlue"; "darkgray";
+            "DarkGreen"; "darkmagenta"; "DarkRed"; "darkyellow"; "Gray"; "green"; |]
 
 [<Test>]
 let countWith () : unit =
