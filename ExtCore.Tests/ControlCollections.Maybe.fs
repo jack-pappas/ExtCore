@@ -28,83 +28,254 @@ open FsUnit
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
+    let init () : unit =
+        // Test case for an empty array.
+        Maybe.Array.init 0 <| fun _ -> None
+        |> should equal (Some Array.empty)
+
+        // Sample usage test cases.
+        Maybe.Array.init 5 <| fun x ->
+            Some (x * 7)
+        |> should equal
+            <| Some [| 0; 7; 14; 21; 28; |]
+
+        Maybe.Array.init 5 <| fun x ->
+            if x > 0 && x % 5 = 0 then None
+            else Some (x * 2)
+        |> should equal
+            <| Some [| 0; 2; 4; 6; 8; |]
+
+        Maybe.Array.init 6 <| fun x ->
+            if x > 0 && x % 5 = 0 then None
+            else Some (x * 2)
+        |> should equal None
+
+    [<Test>]
+    let iter () : unit =
+        // Test case for an empty array.
+        Array.empty
+        |> Maybe.Array.iter (fun _ -> None)
+        |> should equal (Some ())
+
+        // Sample usage test cases.
+        do
+            let iterationCount = ref 0
+
+            [| 0..4 |]
+            |> Maybe.Array.iter (fun x ->
+                incr iterationCount
+                if x > 0 && x % 5 = 0 then None
+                else Some ())
+            |> Option.isSome
+            |> should be True
+
+            !iterationCount |> should equal 5
+
+        do
+            let iterationCount = ref 0
+
+            [| 0..5 |]
+            |> Maybe.Array.iter (fun x ->
+                incr iterationCount
+                if x > 0 && x % 5 = 0 then None
+                else Some ())
+            |> Option.isNone
+            |> should be True
+
+            !iterationCount |> should equal 6
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            [| 0..5 |]
+            |> Maybe.Array.iter (fun x ->
+                incr iterationCount
+                if x > 0 && x % 2 = 0 then None
+                else Some ())
+            |> Option.isNone
+            |> should be True
+
+            !iterationCount |> should equal 3
+
+    [<Test>]
+    let iteri () : unit =
+        // Test case for an empty array.
+        Array.empty
+        |> Maybe.Array.iteri (fun _ _ -> None)
+        |> should equal (Some ())
+
+        // Sample usage test cases.
+        do
+            let iterationCount = ref 0
+
+            [| 0..4 |]
+            |> Maybe.Array.iteri (fun idx x ->
+                incr iterationCount
+                let y = x * idx
+                if y > 0 && y % 5 = 0 then None
+                else Some ())
+            |> Option.isSome
+            |> should be True
+
+            !iterationCount |> should equal 5
+
+        do
+            let iterationCount = ref 0
+
+            [| 0..5 |]
+            |> Maybe.Array.iteri (fun idx x ->
+                incr iterationCount
+                let y = x * idx
+                if y > 0 && y % 5 = 0 then None
+                else Some ())
+            |> Option.isNone
+            |> should be True
+
+            !iterationCount |> should equal 6
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            [| 0..4 |]
+            |> Maybe.Array.iteri (fun idx x ->
+                incr iterationCount
+                let y = x * idx
+                if y > 0 && y % 2 = 0 then None
+                else Some ())
+            |> Option.isNone
+            |> should be True
+
+            !iterationCount |> should equal 3
+
+    [<Test>]
     let map () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        Array.empty
+        |> Maybe.Array.map (fun _ -> None)
+        |> should equal (Some Array.empty)
 
-    [<TestCase>]
+        // Sample usage test cases.
+        [| 0..4 |]
+        |> Maybe.Array.map (fun x ->
+            if x > 0 && x % 5 = 0 then None
+            else Some (x * 3))
+        |> should equal (Some [| 0; 3; 6; 9; 12; |])
+
+        [| 0..5 |]
+        |> Maybe.Array.map (fun x ->
+            if x > 0 && x % 5 = 0 then None
+            else Some (x * 3))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            [| 0..4 |]
+            |> Maybe.Array.map (fun x ->
+                incr iterationCount
+                if x > 0 && x % 2 = 0 then None
+                else Some (x * 3))
+            |> should equal None
+
+            !iterationCount |> should equal 3
+
+    [<Test>]
     let mapi () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        Array.empty
+        |> Maybe.Array.mapi (fun _ _ -> None)
+        |> should equal (Some Array.empty)
 
-    [<TestCase>]
+        // Sample usage test cases.
+        [| 0..4 |]
+        |> Maybe.Array.mapi (fun idx x ->
+            let y = x * idx
+            if y > 0 && y % 5 = 0 then None
+            else Some (y * 3))
+        |> should equal (Some [| 0; 3; 12; 27; 48; |])
+
+        [| 0..5 |]
+        |> Maybe.Array.mapi (fun idx x ->
+            let y = x * idx
+            if y > 0 && y % 5 = 0 then None
+            else Some (y * 3))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            [| 0..4 |]
+            |> Maybe.Array.mapi (fun idx x ->
+                incr iterationCount
+                let y = x * idx
+                if y > 0 && y % 2 = 0 then None
+                else Some (y * 3))
+            |> should equal None
+
+            !iterationCount |> should equal 3
+
+    [<Test>]
     let map2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
-    let init () : unit =
-        Assert.Ignore "Test not yet implemented."
-
-    [<TestCase>]
-    let iter () : unit =
-        Assert.Ignore "Test not yet implemented."
-
-    [<TestCase>]
-    let iteri () : unit =
-        Assert.Ignore "Test not yet implemented."
-
-    [<TestCase>]
+    [<Test>]
     let reduce () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.List module.
 module List =
-    [<TestCase>]
-    let fold () : unit =
+    [<Test>]
+    let iter2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
-    let iter2 () : unit =
+    [<Test>]
+    let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Seq module.
 module Seq =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Set module.
 module Set =
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapToArray () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.ArrayView module.
 module ArrayView =
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
