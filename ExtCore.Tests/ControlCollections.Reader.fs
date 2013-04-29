@@ -34,7 +34,7 @@ module private ReaderTestHelpers =
 
 /// Tests for the ExtCore.Control.Collections.Reader.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         // Test case for an empty array.
         do
@@ -68,7 +68,7 @@ module Array =
 
             !keywordCount |> should equal 2
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         // Test case for an empty array.
         do
@@ -102,7 +102,7 @@ module Array =
 
             !keywordWeight |> should equal 6
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         // Test case for an empty array.
         do
@@ -131,7 +131,7 @@ module Array =
             |> should equal
                 [| true; false; false; false; true; |]
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         // Test case for an empty array.
         do

@@ -42,12 +42,12 @@ let rec private IsNaN (x : obj) =
     | :? decimal as x -> Decimal.ToDouble(x) |> box |> IsNaN
     | _ -> failwith "Invalid input. Please provide a numeric type which could possibly be NaN"
 
-[<TestCase>]
+[<Test>]
 let empty () : unit =
     let emptyVector = Vector.empty
     if Vector.length emptyVector <> 0 then Assert.Fail()
 
-[<TestCase>]
+[<Test>]
 let append () : unit =
     // integer vector
     Vector.append
@@ -81,7 +81,7 @@ let append () : unit =
 
     ()
 
-[<TestCase>]
+[<Test>]
 let average () : unit =   
     // empty float32 vector
     let emptyFloatArray = Vector.empty<float32> 
@@ -116,7 +116,7 @@ let average () : unit =
 
     ()
         
-[<TestCase>]
+[<Test>]
 let averageBy () : unit =  
     
     // empty double vector   
@@ -155,7 +155,7 @@ let averageBy () : unit =
         
     ()
         
-[<TestCase>]
+[<Test>]
 let blit () : unit = 
     // int vector   
     let intSrc = vector [| 1..10 |]
@@ -215,7 +215,7 @@ let private ChooseTester chooseInt chooseString =
         
     () 
       
-[<TestCase>]
+[<Test>]
 let choose () : unit = 
     ChooseTester Vector.choose Vector.choose
 
@@ -244,11 +244,11 @@ let private CollectTester collectInt collectString =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let collect  () : unit =
     CollectTester Vector.collect Vector.collect
         
-[<TestCase>]
+[<Test>]
 let collectWithSideEffects  () : unit =
     let stamp = ref 0
     let f x = stamp := !stamp + 1; vector [| x |]
@@ -260,7 +260,7 @@ let collectWithSideEffects  () : unit =
     Vector.collect f (vector [|1;2;3|]) |> ignore
     Assert.AreEqual(3,!stamp)
         
-[<TestCase>]
+[<Test>]
 let concat () : unit =
     // integer vector
     let seqInt = 
@@ -293,7 +293,7 @@ let concat () : unit =
     () 
         
 
-[<TestCase>]
+[<Test>]
 let copy () : unit =
     // int vector
     let intSrc:vector<int> = vector [| 3;5;7 |]    
@@ -317,7 +317,7 @@ let copy () : unit =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let create () : unit =
     // int vector
     let intArr = Vector.create 3 8    
@@ -338,7 +338,7 @@ let create () : unit =
         
     ()
         
-[<TestCase>]
+[<Test>]
 let exists () : unit =
     // integer vector
     let intArr = vector [| 2;4;6;8 |]
@@ -363,7 +363,7 @@ let exists () : unit =
         
     ()
         
-[<TestCase>]
+[<Test>]
 let exists2 () : unit =
     // integer vector
     let intFir = vector [| 2;4;6;8 |]
@@ -396,7 +396,7 @@ let exists2 () : unit =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let fill () : unit =
     // integer vector
     let intArr = vector [|1..5|]
@@ -427,7 +427,7 @@ let fill () : unit =
          
     ()
 
-[<TestCase>] 
+[<Test>] 
 let filter () : unit =
     // integer vector
     let intArr = vector [| 1..20 |]
@@ -452,7 +452,7 @@ let filter () : unit =
         
     ()   
 
-[<TestCase>]
+[<Test>]
 let find () : unit =
     // integer vector
     let intArr = vector [| 1..20 |]
@@ -476,7 +476,7 @@ let find () : unit =
         
     () 
 
-[<TestCase>]
+[<Test>]
 let findIndex () : unit =
     // integer vector
     let intArr = vector [| 1..20 |]
@@ -501,7 +501,7 @@ let findIndex () : unit =
         
     () 
         
-[<TestCase>]
+[<Test>]
 let pick () : unit =
     // integers
     let intArr = vector [| 1..10 |]
@@ -514,14 +514,14 @@ let pick () : unit =
     // make it not found
     checkThrowsKeyNotFoundException (fun () -> Vector.pick (fun n -> None) intArr |> ignore)
         
-[<TestCase>]
+[<Test>]
 let toSeq () : unit =
     let intArr = vector [| 1..10 |]
     let seq = Vector.toSeq intArr
     let sum = Seq.sum seq
     Assert.AreEqual(55, sum)
         
-[<TestCase>]
+[<Test>]
 let tryPick () : unit =
     // integer vector
     let intArr = vector [| 1..10 |]    
@@ -552,7 +552,7 @@ let tryPick () : unit =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let fold () : unit =
     // integer vector
     let intArr = vector [| 1..5 |]    
@@ -578,7 +578,7 @@ let fold () : unit =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let fold2 () : unit =
     // integer vector  
     let funcInt x y z = x + y.ToString() + z.ToString()
@@ -606,7 +606,7 @@ let fold2 () : unit =
                 
     ()
 
-[<TestCase>]
+[<Test>]
 let foldBack () : unit =
     // integer vector
     let intArr = vector [| 1..5 |]    
@@ -632,7 +632,7 @@ let foldBack () : unit =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let foldBack2 () : unit =
     // integer vector  
     let funcInt x y z = x.ToString() + y.ToString() + z
@@ -660,7 +660,7 @@ let foldBack2 () : unit =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let forall () : unit =
     // integer vector
     let resultInt = Vector.forall (fun x -> x > 2) <| vector [| 3..2..10 |]
@@ -680,7 +680,7 @@ let forall () : unit =
         
     ()
         
-[<TestCase>]
+[<Test>]
 let forall2 () : unit =
     // integer vector
     let resultInt = Array.forall2 (fun x y -> x < y) [| 1..10 |] [|2..2..20|]
@@ -708,7 +708,7 @@ let forall2 () : unit =
         
     ()
         
-[<TestCase>]
+[<Test>]
 let get () : unit =
     // integer vector
     let intArr = vector [| 3;4;7;8;10 |]    
@@ -752,11 +752,11 @@ let private InitTester initInt initString =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let init () : unit = 
     InitTester Vector.init Vector.init
         
-[<TestCase>]
+[<Test>]
 let initWithSideEffects () : unit =
     let stamp = ref 0
     let f i = 
@@ -769,7 +769,7 @@ let initWithSideEffects () : unit =
     Vector.init 10 f |> ignore
     Assert.AreEqual (10, !stamp)
 
-[<TestCase>]
+[<Test>]
 let isEmpty () : unit =
     // integer vector
     let intArr = vector [| 3;4;7;8;10 |]    
@@ -792,7 +792,7 @@ let isEmpty () : unit =
         
     ()
 
-[<TestCase>]
+[<Test>]
 let iter () : unit =
     // integer vector
     let intArr = vector [| 1..10 |]  
@@ -824,7 +824,7 @@ let iter () : unit =
         
     ()
        
-[<TestCase>]
+[<Test>]
 let iter2 () : unit =
     // integer vector
     let resultInt = ref 0    
@@ -860,7 +860,7 @@ let iter2 () : unit =
     ()
         
         
-[<TestCase>]
+[<Test>]
 let iteri () : unit =
     // integer vector
     let intArr = vector [| 1..10 |]  
@@ -892,7 +892,7 @@ let iteri () : unit =
         
     ()
         
-[<TestCase>]
+[<Test>]
 let iteri2 () : unit =
     // integer vector
     let resultInt = ref 0    
@@ -947,11 +947,11 @@ let private MapTester mapInt (mapString : (string -> int) -> vector<string> -> v
         
     ()
         
-[<TestCase>]  
+[<Test>]  
 let map () : unit =
     MapTester Vector.map Vector.map
         
-[<TestCase>]
+[<Test>]
 let mapWithSideEffects  () : unit =
     let stamp = ref 0
     let f x = stamp := !stamp + 1; x + 1
@@ -982,10 +982,10 @@ let private MapiTester mapiInt mapiString =
     checkThrowsArgumentNullException (fun () -> mapiInt f nullArg |> ignore)        
     ()
 
-[<TestCase>]
+[<Test>]
 let mapi () : unit = MapiTester Vector.mapi Vector.mapi
 
-[<TestCase>]
+[<Test>]
 let mapiWithSideEffects  () : unit =
     let stamp = ref 0
     let f i x = stamp := !stamp + 1; (i, x + 1)
@@ -1031,11 +1031,11 @@ let private PartitionTester partInt partString =
     checkThrowsArgumentNullException (fun () -> partString funcString nullArr |> ignore)
 
 
-[<TestCase>]
+[<Test>]
 let partition () : unit =
     PartitionTester Vector.partition Vector.partition    
 
-[<TestCase>]
+[<Test>]
 let projectValues () : unit =
     Vector.empty
     |> Vector.projectValues ignore
@@ -1054,7 +1054,7 @@ let projectValues () : unit =
         ConsoleColor.Cyan, "Cyan";
         ConsoleColor.Black, "Black"; |]
 
-[<TestCase>]
+[<Test>]
 let projectKeys () : unit =
     Vector.empty
     |> Vector.projectKeys ignore
@@ -1072,7 +1072,7 @@ let projectKeys () : unit =
         ConsoleColor.Cyan, "Cyan";
         ConsoleColor.Black, "Black"; |]
 
-[<TestCase>]
+[<Test>]
 let ``contains (value type)`` () : unit =
     // Test the function with an array of value types.
     let ``0 to 10`` = vector [| 0 .. 10 |]
@@ -1085,7 +1085,7 @@ let ``contains (value type)`` () : unit =
     |> Vector.contains 15
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let ``contains (reference type with IEquatable<T>)`` () : unit =
     // Test the function with an array of reference types,
     // where the element type implements IEquatable<'T>.
@@ -1100,7 +1100,7 @@ let ``contains (reference type with IEquatable<T>)`` () : unit =
     |> Vector.contains "Aquamarine"
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let ``contains (reference type)`` () : unit =
     // Test the function with an array of reference types,
     // where the element type does NOT implement IEquatable<'T>.
@@ -1116,21 +1116,21 @@ let ``contains (reference type)`` () : unit =
     |> Vector.contains ex
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let foldi () : unit =
     ("", vector [| 'a' .. 'f' |])
     ||> Vector.foldi (fun str idx c ->
         str + (String (Array.create idx c)))
     |> should equal "bccdddeeeefffff"
 
-[<TestCase>]
+[<Test>]
 let foldiBack () : unit =
     (vector [| 'a' .. 'f' |], "")
     ||> Vector.foldiBack (fun idx c str ->
         str + (String (Array.create idx c)))
     |> should equal "fffffeeeedddccb"
 
-[<TestCase>]
+[<Test>]
 let split () : unit =
     /// The set of prime numbers less than 40.
     let primes =
@@ -1159,7 +1159,7 @@ let split () : unit =
         vector [| 31 .. 36 |];
         vector [| 37 .. 40 |]; |]
 
-//[<TestCase>]
+//[<Test>]
 //let segment () : unit =
 //    /// The set of prime numbers less than 40.
 //    let primes =
@@ -1176,7 +1176,7 @@ let split () : unit =
 //    |> should equal [|
 //        2; 1; 2; 2; 4; 2; 4; 2; 4; 6; 2; 6; 4; |]
 //
-//[<TestCase>]
+//[<Test>]
 //let segment2 () : unit =
 //    let vowels = Set.ofArray [| 'a'; 'e'; 'i'; 'o'; 'u' |]
 //
@@ -1197,7 +1197,7 @@ let split () : unit =
 //        view.Count)
 //    |> should equal [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
 
-[<TestCase>]
+[<Test>]
 let mapPartition () : unit =
     let left, right =
         vector [| 0 .. 10 |]
@@ -1215,7 +1215,7 @@ let mapPartition () : unit =
     |> should equal
         <| vector [| 1; 27; 125; 343; 729 |]
 
-[<TestCase>]
+[<Test>]
 let mapPartition3 () : unit =
     let left, middle, right =
         vector [| 0 .. 15 |]
@@ -1240,7 +1240,7 @@ let mapPartition3 () : unit =
     |> should equal
         <| vector [| 4; 25; 64; 121; 196 |]
 
-[<TestCase>]
+[<Test>]
 let mapReduce () : unit =
     let expected =
         Map.ofArray [| 'i', 4; 'm', 1; 'p', 2; 's', 4 |]
@@ -1261,7 +1261,7 @@ let mapReduce () : unit =
                         Map.add c (existingCount + count) charCounts) }
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let findIndices () : unit =
     let primeArray = [| 2; 3; 5; 7; 11; 13; 17; 19; 23; 29; 31; 37; |]
 
@@ -1278,7 +1278,7 @@ let findIndices () : unit =
         Set.contains x primes)
     |> should equal (Array.empty : int[])
 
-[<TestCase>]
+[<Test>]
 let choosei () : unit =
     let colors =
         vector [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
@@ -1292,7 +1292,7 @@ let choosei () : unit =
     |> should equal [|
         "darkred"; "gray"; "green" |]
 
-[<TestCase>]
+[<Test>]
 let choose2 () : unit =
     let colors =
         vector [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
@@ -1306,130 +1306,130 @@ let choose2 () : unit =
     |> should equal
        <| vector [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
 
-[<TestCase>]
+[<Test>]
 let countWith () : unit =
     Assert.Ignore "Test not yet implemented."
 
 
 (* TODO : Implement tests which are missing from the ArrayModule tests in FSharp.Core. *)
 
-[<TestCase>]
+[<Test>]
 let length () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let map2 () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let mapi2 () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let max () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let maxBy () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let min () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let minBy () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let ofList () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let ofSeq () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let permute () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let reduce () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let reduceBack () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let rev () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let scan () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let scanBack () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let set () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let sort () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let sortBy () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let sortWith () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let sub () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let sum () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let sumBy () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let toList () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let tryFind () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let tryFindIndex () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let unzip () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let unzip3 () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let zeroCreate () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let zip () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let zip3 () : unit =
     Assert.Ignore "Test not yet implemented."
 
@@ -1438,27 +1438,27 @@ let zip3 () : unit =
 #if FX_NO_TPL_PARALLEL
 #else
 module Parallel =
-    [<TestCase>]
+    [<Test>]
     let choose () : unit = 
         ChooseTester Vector.Parallel.choose Vector.Parallel.choose
 
-    [<TestCase>]
+    [<Test>]
     let collect () : unit =
         CollectTester Vector.Parallel.collect Vector.Parallel.collect
 
-    [<TestCase>]
+    [<Test>]
     let init () : unit = 
         InitTester Vector.Parallel.init Vector.Parallel.init
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         MapTester Vector.Parallel.map Vector.Parallel.map
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         MapiTester Vector.Parallel.mapi Vector.Parallel.mapi
         
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         // integer vector
         let intArr = vector [| 1..10 |]  
@@ -1490,7 +1490,7 @@ module Parallel =
         
         ()
         
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =   
         // integer vector
         let intArr = vector [| 1..10 |] 
@@ -1523,7 +1523,7 @@ module Parallel =
         
         ()
 
-    [<TestCase>]
+    [<Test>]
     let partition () : unit =
         PartitionTester Vector.Parallel.partition Vector.Parallel.partition    
 #endif

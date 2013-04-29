@@ -28,83 +28,83 @@ open FsUnit
 
 /// Tests for the ExtCore.Control.Collections.Choice.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let init () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let reduce () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.List module.
 module List =
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iter2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.Seq module.
 module Seq =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.Set module.
 module Set =
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapToArray () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.ArrayView module.
 module ArrayView =
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 

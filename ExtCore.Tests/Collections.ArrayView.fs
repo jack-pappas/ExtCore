@@ -24,7 +24,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let isEmpty () : unit =
     (2, 0)
     ||> ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |]
@@ -36,7 +36,7 @@ let isEmpty () : unit =
     |> ArrayView.isEmpty
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let ofArray () : unit =
     Array.empty
     |> ArrayView.ofArray
@@ -48,7 +48,7 @@ let ofArray () : unit =
     |> ArrayView.count
     |> should equal 8
 
-[<TestCase>]
+[<Test>]
 let create () : unit =
     // Create an empty ArrayView of an empty array.
     ArrayView.create Array.empty 0 0
@@ -68,7 +68,7 @@ let create () : unit =
     |> should equal
         [| 11; 2; 17; |]
 
-[<TestCase>]
+[<Test>]
 let get () : unit =
     do
         let view = ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -79,7 +79,7 @@ let get () : unit =
         ArrayView.get view 3
         |> should equal 12
 
-[<TestCase>]
+[<Test>]
 let set () : unit =
     do
         let arr = [| 5; 3; 11; 2; 17; 4; 12; 14; |]
@@ -95,7 +95,7 @@ let set () : unit =
         // Confirm the new element value by directly checking the underlying array.
         arr.[4] |> should equal 9
 
-[<TestCase>]
+[<Test>]
 let first () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -110,7 +110,7 @@ let first () : unit =
     |> ArrayView.first
     |> should equal 7
 
-[<TestCase>]
+[<Test>]
 let lastIndex () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -125,7 +125,7 @@ let lastIndex () : unit =
     |> ArrayView.lastIndex
     |> should equal 6
 
-[<TestCase>]
+[<Test>]
 let last () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -140,11 +140,11 @@ let last () : unit =
     |> ArrayView.last
     |> should equal 18
 
-[<TestCase>]
+[<Test>]
 let clear () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let toList () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -162,7 +162,7 @@ let toList () : unit =
     |> should equal
         [7; 11; 18]
 
-[<TestCase>]
+[<Test>]
 let toArray () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -180,7 +180,7 @@ let toArray () : unit =
     |> should equal
         [| 7; 11; 18; |]
 
-[<TestCase>]
+[<Test>]
 let mapToArray () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -198,7 +198,7 @@ let mapToArray () : unit =
     |> should equal
         [| 21; 33; 54; |]
 
-[<TestCase>]
+[<Test>]
 let tryPick () : unit =
     // Test case for an empty ArrayView.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
@@ -231,7 +231,7 @@ let tryPick () : unit =
         else None)
     |> should equal (Some "Match: 18")
 
-[<TestCase>]
+[<Test>]
 let pick () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -249,7 +249,7 @@ let pick () : unit =
         else None)
     |> should equal "Match: 18"
 
-[<TestCase>]
+[<Test>]
 let tryFind () : unit =
     // Test case for an empty ArrayView.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
@@ -274,7 +274,7 @@ let tryFind () : unit =
         x % 2 = 0 && x % 3 = 0)
     |> should equal (Some 18)
 
-[<TestCase>]
+[<Test>]
 let find () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -288,7 +288,7 @@ let find () : unit =
         x % 2 = 0 && x % 3 = 0)
     |> should equal 18
 
-[<TestCase>]
+[<Test>]
 let tryFindIndex () : unit =
     // Test case for an empty ArrayView.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
@@ -313,7 +313,7 @@ let tryFindIndex () : unit =
         x % 2 = 0 && x % 3 = 0)
     |> should equal (Some 6)
 
-[<TestCase>]
+[<Test>]
 let findIndex () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -327,7 +327,7 @@ let findIndex () : unit =
         x % 2 = 0 && x % 3 = 0)
     |> should equal 6
 
-[<TestCase>]
+[<Test>]
 let exists () : unit =
     // Test case for an empty ArrayView.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
@@ -352,7 +352,7 @@ let exists () : unit =
         x % 2 = 0 && x % 3 = 0)
     |> should be True
 
-[<TestCase>]
+[<Test>]
 let forall () : unit =
     // Test case for an empty ArrayView.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
@@ -377,7 +377,7 @@ let forall () : unit =
         x % 2 = 0 && x % 3 = 0)
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let iter () : unit =
     do
         // Test case for an empty ArrayView.
@@ -426,7 +426,7 @@ let iter () : unit =
         |> should equal
             [| 21; 33; 54; |]
 
-[<TestCase>]
+[<Test>]
 let fold () : unit =
     // Test case for an empty ArrayView.
     (String.empty, ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0)
@@ -450,7 +450,7 @@ let fold () : unit =
         state + x.ToString())
     |> should equal "711182948"
 
-[<TestCase>]
+[<Test>]
 let foldBack () : unit =
     // Test case for an empty ArrayView.
     (ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0, String.empty)
@@ -474,7 +474,7 @@ let foldBack () : unit =
         state + x.ToString())
     |> should equal "482918117"
 
-[<TestCase>]
+[<Test>]
 let reduce () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -492,7 +492,7 @@ let reduce () : unit =
         (x - y) * y)
     |> should equal -1596144
 
-[<TestCase>]
+[<Test>]
 let reduceBack () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -510,7 +510,7 @@ let reduceBack () : unit =
         (y - x) * x)
     |> should equal 737842
 
-[<TestCase>]
+[<Test>]
 let min () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -525,7 +525,7 @@ let min () : unit =
     |> ArrayView.min
     |> should equal 1
 
-[<TestCase>]
+[<Test>]
 let max () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -540,7 +540,7 @@ let max () : unit =
     |> ArrayView.max
     |> should equal 7
 
-[<TestCase>]
+[<Test>]
 let sum () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
@@ -555,38 +555,38 @@ let sum () : unit =
     |> ArrayView.sum
     |> should equal 17
 
-[<TestCase>]
+[<Test>]
 let mapInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let mapiInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let chooseInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let chooseiInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let average () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let averageBy () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let maxBy () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let minBy () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let sumBy () : unit =
     Assert.Ignore "Test not yet implemented."

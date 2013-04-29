@@ -26,7 +26,7 @@ open FsUnit
 
 // TODO : Implement tests for equality/comparison.
 
-[<TestCase>]
+[<Test>]
 let equality () : unit =
     IntBimap.empty = IntBimap.empty
     |> should be True
@@ -45,14 +45,14 @@ let equality () : unit =
         |> IntBimap.add 9 "cdr"
         |> IntBimap.add 6 "car")
 
-[<TestCase>]
+[<Test>]
 let singleton () : unit =
     IntBimap.singleton 11 "Hello"
     |> should equal (
         IntBimap.empty
         |> IntBimap.add 11 "Hello")
 
-[<TestCase>]
+[<Test>]
 let isEmpty () : unit =
     IntBimap.empty
     |> IntBimap.isEmpty
@@ -62,7 +62,7 @@ let isEmpty () : unit =
     |> IntBimap.isEmpty
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let count () : unit =
     IntBimap.empty
     |> IntBimap.count
@@ -77,7 +77,7 @@ let count () : unit =
     |> IntBimap.count
     |> should equal 5
 
-[<TestCase>]
+[<Test>]
 let containsKey () : unit =
     IntBimap.empty
     |> IntBimap.containsKey 77
@@ -93,7 +93,7 @@ let containsKey () : unit =
     |> IntBimap.containsKey 8
     |> should be True
 
-[<TestCase>]
+[<Test>]
 let containsValue () : unit =
     IntBimap.empty
     |> IntBimap.containsValue 5
@@ -123,7 +123,7 @@ let containsValue () : unit =
     |> IntBimap.containsValue "Hello"
     |> should be True
 
-[<TestCase>]
+[<Test>]
 let paired () : unit =
     IntBimap.empty
     |> IntBimap.paired 5 "foo"
@@ -153,7 +153,7 @@ let paired () : unit =
     |> IntBimap.paired 8 "bar"
     |> should be True
 
-[<TestCase>]
+[<Test>]
 let tryFind () : unit =
     IntBimap.empty
     |> IntBimap.tryFind 6
@@ -179,7 +179,7 @@ let tryFind () : unit =
     |> IntBimap.tryFind 8
     |> should equal (Some "Hello")
 
-[<TestCase>]
+[<Test>]
 let tryFindValue () : unit =
     IntBimap.empty
     |> IntBimap.tryFindValue 5
@@ -213,35 +213,35 @@ let tryFindValue () : unit =
     |> IntBimap.tryFindValue "Hello"
     |> should equal (Some 8)
 
-[<TestCase>]
+[<Test>]
 let find () : unit =
     [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |]
     |> IntBimap.ofArray
     |> IntBimap.find 8
     |> should equal "bar"
 
-[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``find raises exn when key is not found`` () : unit =
     [(5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car")]
     |> IntBimap.ofList
     |> IntBimap.find 3
     |> ignore
 
-[<TestCase>]
+[<Test>]
 let findValue () : unit =
     [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |]
     |> IntBimap.ofArray
     |> IntBimap.findValue "baz"
     |> should equal 2
 
-[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``findValue raises exn when value is not found`` () : unit =
     [(5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car")]
     |> IntBimap.ofList
     |> IntBimap.findValue "Hello"
     |> ignore
 
-[<TestCase>]
+[<Test>]
 let remove () : unit =
     [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |]
     |> IntBimap.ofArray
@@ -266,7 +266,7 @@ let remove () : unit =
     |> should equal
         (IntBimap.ofArray [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |])
 
-[<TestCase>]
+[<Test>]
 let removeValue () : unit =
     [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |]
     |> IntBimap.ofArray
@@ -291,7 +291,7 @@ let removeValue () : unit =
     |> should equal
         (IntBimap.ofArray [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |])
 
-[<TestCase>]
+[<Test>]
 let add () : unit =
     IntBimap.empty
     |> IntBimap.add 5 "foo"
@@ -336,7 +336,7 @@ let add () : unit =
     |> should equal
         (IntBimap.ofArray [| (3, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |])
 
-[<TestCase>]
+[<Test>]
 let tryAdd () : unit =
     // The empty map can always be added to.
     IntBimap.empty
@@ -382,7 +382,7 @@ let tryAdd () : unit =
     |> should equal
         (IntBimap.ofArray [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |])
 
-[<TestCase>]
+[<Test>]
 let ofSeq () : unit =
     Seq.empty
     |> IntBimap.ofSeq
@@ -407,7 +407,7 @@ let ofSeq () : unit =
         |> IntBimap.add 6 "car"
         |> IntBimap.add 8 "Hello")
 
-[<TestCase>]
+[<Test>]
 let ofList () : unit =
     List.empty
     |> IntBimap.ofList
@@ -430,7 +430,7 @@ let ofList () : unit =
         |> IntBimap.add 6 "car"
         |> IntBimap.add 8 "Hello")
 
-[<TestCase>]
+[<Test>]
 let ofArray () : unit =
     Array.empty
     |> IntBimap.ofArray
@@ -453,7 +453,7 @@ let ofArray () : unit =
         |> IntBimap.add 6 "car"
         |> IntBimap.add 8 "Hello")
 
-//[<TestCase>]
+//[<Test>]
 //let ofMap () : unit =
 //    Map.empty
 //    |> IntBimap.ofMap
@@ -478,7 +478,7 @@ let ofArray () : unit =
 //    |> should equal
 //        (IntBimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("car", 6); ("let", 9); |])
 
-[<TestCase>]
+[<Test>]
 let toSeq () : unit =
     IntBimap.empty
     |> IntBimap.toSeq
@@ -502,7 +502,7 @@ let toSeq () : unit =
     |> should equal
         [| (2, "baz"); (5, "foo"); (6, "car"); (8, "Hello"); (9, "cdr"); |]
 
-[<TestCase>]
+[<Test>]
 let toList () : unit =
     IntBimap.empty
     |> IntBimap.toList
@@ -524,7 +524,7 @@ let toList () : unit =
     |> should equal
         [(2, "baz"); (5, "foo"); (6, "car"); (8, "Hello"); (9, "cdr")]
 
-[<TestCase>]
+[<Test>]
 let toArray () : unit =
     IntBimap.empty
     |> IntBimap.toArray
@@ -546,7 +546,7 @@ let toArray () : unit =
     |> should equal
         [| (2, "baz"); (5, "foo"); (6, "car"); (8, "Hello"); (9, "cdr"); |]
 
-//[<TestCase>]
+//[<Test>]
 //let toMap () : unit =
 //    IntBimap.empty
 //    |> IntBimap.toMap
@@ -569,7 +569,7 @@ let toArray () : unit =
 //    |> should equal
 //        (Map.ofArray [| ("bar", 8); ("baz", 2); ("car", 6); ("cdr", 9); ("foo", 5); ("bar", 7); |])
 
-[<TestCase>]
+[<Test>]
 let iter () : unit =
     do
         let elements = ResizeArray ()
@@ -595,7 +595,7 @@ let iter () : unit =
         |> should equal
             [|'D'; 'G'; 'F'; 'B'; 'C'; 'A'|]
 
-[<TestCase>]
+[<Test>]
 let fold () : unit =
     do
         let elements = ResizeArray ()
@@ -628,7 +628,7 @@ let fold () : unit =
         |> should equal
             [| 102; 76; 83; 113; 117; 119; |]
 
-[<TestCase>]
+[<Test>]
 let foldBack () : unit =
     do
         let elements = ResizeArray ()
@@ -661,7 +661,7 @@ let foldBack () : unit =
         |> should equal
             [| 114; 114; 112; 84; 79; 107; |]
 
-[<TestCase>]
+[<Test>]
 let filter () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntBimap.ofArray
@@ -670,7 +670,7 @@ let filter () : unit =
     |> should equal
         (IntBimap.ofArray [| (2, 'd'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let partition () : unit =
     do
         let evens, odds =

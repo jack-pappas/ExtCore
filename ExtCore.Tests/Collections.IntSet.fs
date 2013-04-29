@@ -24,7 +24,7 @@ open NUnit.Framework
 open FsUnit
 
 
-[<TestCase>]
+[<Test>]
 let isEmpty () : unit =
     IntSet.empty
     |> IntSet.isEmpty
@@ -34,7 +34,7 @@ let isEmpty () : unit =
     |> IntSet.isEmpty
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let count () : unit =
     IntSet.empty
     |> IntSet.count
@@ -49,14 +49,14 @@ let count () : unit =
     |> IntSet.count
     |> should equal 8
 
-[<TestCase>]
+[<Test>]
 let singleton () : unit =
     IntSet.singleton 6
     |> should equal (
         IntSet.empty
         |> IntSet.add 6)
 
-[<TestCase>]
+[<Test>]
 let contains () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
@@ -68,7 +68,7 @@ let contains () : unit =
     |> IntSet.contains 6
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let minElement () : unit =
     // Simple test case.
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
@@ -88,11 +88,11 @@ let minElement () : unit =
     |> IntSet.minElement
     |> should equal -17
 
-[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``minElement raises exn for empty set`` () : unit =
     IntSet.minElement IntSet.empty |> ignore
 
-[<TestCase>]
+[<Test>]
 let minElementSigned () : unit =
     // Simple test case.
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
@@ -112,11 +112,11 @@ let minElementSigned () : unit =
     |> IntSet.minElementSigned
     |> should equal -17
 
-[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``minElementSigned raises exn for empty set`` () : unit =
     IntSet.minElementSigned IntSet.empty |> ignore
 
-[<TestCase>]
+[<Test>]
 let maxElement () : unit =
     // Simple test case.
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
@@ -136,11 +136,11 @@ let maxElement () : unit =
     |> IntSet.maxElement
     |> should equal -2
 
-[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``maxElement raises exn for empty set`` () : unit =
     IntSet.maxElement IntSet.empty |> ignore
 
-[<TestCase>]
+[<Test>]
 let maxElementSigned () : unit =
     // Simple test case.
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
@@ -160,11 +160,11 @@ let maxElementSigned () : unit =
     |> IntSet.maxElementSigned
     |> should equal -2
 
-[<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test; ExpectedException(typeof<System.ArgumentException>)>]
 let ``maxElementSigned raises exn for empty set`` () : unit =
     IntSet.maxElementSigned IntSet.empty |> ignore
 
-[<TestCase>]
+[<Test>]
 let add () : unit =
     IntSet.empty
     |> IntSet.add 5
@@ -183,7 +183,7 @@ let add () : unit =
     |> should equal (IntSet.ofArray
         [| 5; 3; 11; 2; 17; 4; 12; 14; 8 |])
 
-[<TestCase>]
+[<Test>]
 let remove () : unit =
     IntSet.singleton 6
     |> IntSet.remove 6
@@ -201,7 +201,7 @@ let remove () : unit =
     |> should equal (IntSet.ofArray
         [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
-[<TestCase>]
+[<Test>]
 let union () : unit =
     IntSet.union
         (IntSet.ofArray [| 3; 11; 2; 4; 12 |])
@@ -209,11 +209,11 @@ let union () : unit =
     |> should equal
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
-[<TestCase>]
+[<Test>]
 let unionMany () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let intersect () : unit =
     IntSet.intersect
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
@@ -226,11 +226,11 @@ let intersect () : unit =
     |> should equal
         (IntSet.ofArray [| 5; 11; 17; 4; 14 |])
 
-[<TestCase>]
+[<Test>]
 let intersectMany () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let difference () : unit =
     IntSet.difference
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
@@ -244,7 +244,7 @@ let difference () : unit =
     |> should equal
         (IntSet.ofArray [| 3; 2; 12 |])
 
-[<TestCase>]
+[<Test>]
 let isSubset () : unit =
     // The empty set is always a subset of any other set.
     IntSet.isSubset
@@ -285,7 +285,7 @@ let isSubset () : unit =
         (IntSet.ofArray [| 6..10 |])
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let isProperSubset () : unit =
     // The empty set is a proper subset of any set except itself.
     IntSet.isProperSubset
@@ -326,7 +326,7 @@ let isProperSubset () : unit =
         (IntSet.ofArray [| 6..10 |])
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let isSuperset () : unit =
     // The empty set is never a superset of any other set except itself.
     IntSet.isSuperset
@@ -367,7 +367,7 @@ let isSuperset () : unit =
         (IntSet.ofArray [| 6..10 |])
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let isProperSuperset () : unit =
     // The empty set is never a proper superset of any set.
     IntSet.isProperSuperset
@@ -408,7 +408,7 @@ let isProperSuperset () : unit =
         (IntSet.ofArray [| 6..10 |])
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let ofSeq () : unit =
     Seq.empty
     |> IntSet.ofSeq
@@ -424,7 +424,7 @@ let ofSeq () : unit =
     |> should equal (
         IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
-[<TestCase>]
+[<Test>]
 let ofList () : unit =
     List.empty
     |> IntSet.ofList
@@ -435,7 +435,7 @@ let ofList () : unit =
     |> should equal (
         IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
-[<TestCase>]
+[<Test>]
 let ofArray () : unit =
     Array.empty
     |> IntSet.ofArray
@@ -454,7 +454,7 @@ let ofArray () : unit =
         |> IntSet.add 14
         |> IntSet.add 17)
 
-[<TestCase>]
+[<Test>]
 let ofSet () : unit =
     Set.empty
     |> IntSet.ofSet
@@ -466,7 +466,7 @@ let ofSet () : unit =
     |> should equal (
         IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
-[<TestCase>]
+[<Test>]
 let toSeq () : unit =
     IntSet.empty
     |> IntSet.toSeq
@@ -480,7 +480,7 @@ let toSeq () : unit =
     |> should equal
         [|2; 3; 4; 5; 11; 12; 14; 17|]
 
-[<TestCase>]
+[<Test>]
 let toList () : unit =
     IntSet.empty
     |> IntSet.toList
@@ -492,7 +492,7 @@ let toList () : unit =
     |> should equal
         [2; 3; 4; 5; 11; 12; 14; 17]
 
-[<TestCase>]
+[<Test>]
 let toArray () : unit =
     IntSet.empty
     |> IntSet.toArray
@@ -504,7 +504,7 @@ let toArray () : unit =
     |> should equal
         [|2; 3; 4; 5; 11; 12; 14; 17|]
 
-[<TestCase>]
+[<Test>]
 let toSet () : unit =
     IntSet.empty
     |> IntSet.toSet
@@ -516,7 +516,7 @@ let toSet () : unit =
     |> should equal
         (Set.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
 
-[<TestCase>]
+[<Test>]
 let iter () : unit =
     let elements = ResizeArray ()
 
@@ -530,7 +530,7 @@ let iter () : unit =
     |> should equal
         [|4; 5; 6; 7; 13; 14; 16; 19|]
 
-[<TestCase>]
+[<Test>]
 let iterBack () : unit =
     let elements = ResizeArray ()
 
@@ -544,7 +544,7 @@ let iterBack () : unit =
     |> should equal
         [|19; 16; 14; 13; 7; 6; 5; 4|]
 
-[<TestCase>]
+[<Test>]
 let fold () : unit =
     do
         let elements = ResizeArray ()
@@ -577,7 +577,7 @@ let fold () : unit =
         |> should equal
             [|4; 6; 8; 10; 17; 19; 22; 26|]
 
-[<TestCase>]
+[<Test>]
 let foldBack () : unit =
     do
         let elements = ResizeArray ()
@@ -610,7 +610,7 @@ let foldBack () : unit =
         |> should equal
             [|19; 17; 16; 16; 11; 11; 11; 11|]
 
-[<TestCase>]
+[<Test>]
 let choose () : unit =
     IntSet.empty
     |> IntSet.choose (fun el ->
@@ -628,7 +628,7 @@ let choose () : unit =
     |> should equal
         (IntSet.ofArray [|3; 5; 13; 15|])
 
-[<TestCase>]
+[<Test>]
 let filter () : unit =
     IntSet.empty
     |> IntSet.filter (fun el ->
@@ -643,7 +643,7 @@ let filter () : unit =
     |> should equal
         (IntSet.ofArray [|5; 3; 11; 17|])
 
-[<TestCase>]
+[<Test>]
 let map () : unit =
     IntSet.empty
     |> IntSet.map (fun el ->
@@ -662,7 +662,7 @@ let map () : unit =
             el * 2)
         |> IntSet.ofArray)
 
-[<TestCase>]
+[<Test>]
 let partition () : unit =
     do
         let evens, odds =
@@ -693,7 +693,7 @@ let partition () : unit =
         |> should equal
             (IntSet.ofArray [|5; 3; 11; 17|])
 
-[<TestCase>]
+[<Test>]
 let exists () : unit =
     IntSet.empty
     |> IntSet.exists (fun el ->
@@ -712,7 +712,7 @@ let exists () : unit =
         el % 7 = 0)
     |> should be True
 
-[<TestCase>]
+[<Test>]
 let forall () : unit =
     IntSet.empty
     |> IntSet.forall (fun el ->
@@ -731,7 +731,7 @@ let forall () : unit =
         el % 2 = 0)
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let tryPick () : unit =
     // Test against an empty set.
     IntSet.empty
@@ -768,7 +768,7 @@ let tryPick () : unit =
         else None)
     |> should equal (Some 3)
 
-[<TestCase>]
+[<Test>]
 let pick () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
@@ -778,7 +778,7 @@ let pick () : unit =
         else None)
     |> should equal 3
 
-[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``pick raises exn on empty input`` () : unit =
     IntSet.empty
     |> IntSet.pick (fun el ->

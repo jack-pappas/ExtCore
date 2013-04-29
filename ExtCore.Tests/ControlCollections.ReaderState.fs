@@ -28,77 +28,77 @@ open FsUnit
 
 /// Tests for the ExtCore.Control.Collections.ReaderState.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapBack () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapiBack () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderState.TaggedArray module.
 module TaggedArray =
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapiBack () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.ReaderState.ArrayView module.
 module ArrayView =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         Assert.Ignore "Test not yet implemented."
 

@@ -24,7 +24,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let isEmpty () : unit =
     Queue.empty
     |> Queue.isEmpty
@@ -36,7 +36,7 @@ let isEmpty () : unit =
     |> Queue.isEmpty
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let length () : unit =
     Queue.empty
     |> Queue.length
@@ -49,7 +49,7 @@ let length () : unit =
     |> Queue.length
     |> should equal 3
 
-[<TestCase>]
+[<Test>]
 let enqueue () : unit =
     Queue.empty
     |> Queue.enqueue "Hello"
@@ -85,7 +85,7 @@ let enqueue () : unit =
         |> should equal
             [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
 
-[<TestCase>]
+[<Test>]
 let enqueueFront () : unit =
     Queue.empty
     |> Queue.enqueueFront "Hello"
@@ -121,7 +121,7 @@ let enqueueFront () : unit =
         |> should equal
             [| "car"; "cdr"; "foo"; "bar"; "baz"; |]
 
-[<TestCase>]
+[<Test>]
 let dequeue () : unit =
     do
         let queue = Queue.ofArray [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
@@ -185,13 +185,13 @@ let dequeue () : unit =
         result |> should equal "cdr"
         Queue.length queue |> should equal 0
 
-[<TestCase; ExpectedException(typeof<System.InvalidOperationException>)>]
+[<Test; ExpectedException(typeof<System.InvalidOperationException>)>]
 let ``dequeue raises exn when queue is empty`` () : unit =
     Queue.empty
     |> Queue.dequeue
     |> ignore
 
-[<TestCase>]
+[<Test>]
 let ofList () : unit =
     List.empty
     |> Queue.ofList
@@ -205,7 +205,7 @@ let ofList () : unit =
     |> should equal
         [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
 
-[<TestCase>]
+[<Test>]
 let ofArray () : unit =
     List.empty
     |> Queue.ofList
@@ -219,7 +219,7 @@ let ofArray () : unit =
     |> should equal
         [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
 
-[<TestCase>]
+[<Test>]
 let toSeq () : unit =
     Queue.empty
     |> Queue.toSeq
@@ -239,7 +239,7 @@ let toSeq () : unit =
     |> should equal
         [| "bar"; "baz"; "cdr"; "car"; |]
 
-[<TestCase>]
+[<Test>]
 let toList () : unit =
     Queue.empty
     |> Queue.toList
@@ -258,7 +258,7 @@ let toList () : unit =
     |> should equal
         ["bar"; "baz"; "cdr"; "car"]
 
-[<TestCase>]
+[<Test>]
 let toArray () : unit =
     Queue.empty
     |> Queue.toArray

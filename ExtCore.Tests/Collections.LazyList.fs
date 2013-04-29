@@ -160,7 +160,7 @@ let ``Active Patterns`` () : unit =
     check "we09wek" (LazyList.scan (+) 0 (LazyList.ofList [1;2])  |> LazyList.toList)  [0;1;3]
     check "we09wek" (LazyList.scan (+) 0 (LazyList.ofList [])  |> LazyList.toList)  [0]
 
-[<TestCase>]
+[<Test>]
 let ``Basic Test #4`` () : unit =
     let lazyList =
         LazyList.empty
@@ -184,7 +184,7 @@ let ``Basic Test #4`` () : unit =
     |> LazyList.head
     |> should equal 3
 
-[<TestCase>]
+[<Test>]
 let ``Basic Test #5`` () : unit =
     let lmn =
         LazyList.empty

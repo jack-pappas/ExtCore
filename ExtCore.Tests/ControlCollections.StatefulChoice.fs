@@ -28,7 +28,7 @@ open FsUnit
 
 /// Tests for the ExtCore.Control.Collections.StatefulChoice.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         Assert.Ignore "Test not yet implemented."
 

@@ -28,11 +28,11 @@ open FsUnit
 
 /// Tests for the ExtCore.Control.Collections.Cps.StateCont.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         Assert.Ignore "Test not yet implemented."
 

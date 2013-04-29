@@ -25,7 +25,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let projectValues () : unit =
     Array.empty
     |> Array.projectValues ignore
@@ -42,7 +42,7 @@ let projectValues () : unit =
         ConsoleColor.Cyan, "Cyan";
         ConsoleColor.Black, "Black"; |]
 
-[<TestCase>]
+[<Test>]
 let projectKeys () : unit =
     Array.empty
     |> Array.projectKeys ignore
@@ -58,11 +58,11 @@ let projectKeys () : unit =
         ConsoleColor.Cyan, "Cyan";
         ConsoleColor.Black, "Black"; |]
 
-[<TestCase>]
+[<Test>]
 let clear () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let ``contains (value type)`` () : unit =
     // Test the function with an array of value types.
     let ``0 to 10`` = [| 0 .. 10 |]
@@ -75,7 +75,7 @@ let ``contains (value type)`` () : unit =
     |> Array.contains 15
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let ``contains (reference type with IEquatable<T>)`` () : unit =
     // Test the function with an array of reference types,
     // where the element type implements IEquatable<'T>.
@@ -90,7 +90,7 @@ let ``contains (reference type with IEquatable<T>)`` () : unit =
     |> Array.contains "Aquamarine"
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let ``contains (reference type)`` () : unit =
     // Test the function with an array of reference types,
     // where the element type does NOT implement IEquatable<'T>.
@@ -104,21 +104,21 @@ let ``contains (reference type)`` () : unit =
     |> Array.contains ex
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let foldi () : unit =
     ("", [| 'a' .. 'f' |])
     ||> Array.foldi (fun str idx c ->
         str + (String (Array.create idx c)))
     |> should equal "bccdddeeeefffff"
 
-[<TestCase>]
+[<Test>]
 let foldiBack () : unit =
     ([| 'a' .. 'f' |], "")
     ||> Array.foldiBack (fun idx c str ->
         str + (String (Array.create idx c)))
     |> should equal "fffffeeeedddccb"
 
-[<TestCase>]
+[<Test>]
 let split () : unit =
     /// The set of prime numbers less than 40.
     let primes =
@@ -145,7 +145,7 @@ let split () : unit =
         [| 31 .. 36 |];
         [| 37 .. 40 |]; |]
 
-[<TestCase>]
+[<Test>]
 let segment () : unit =
     /// The set of prime numbers less than 40.
     let primes =
@@ -162,7 +162,7 @@ let segment () : unit =
     |> should equal [|
         2; 1; 2; 2; 4; 2; 4; 2; 4; 6; 2; 6; 4; |]
 
-[<TestCase>]
+[<Test>]
 let segment2 () : unit =
     let vowels = Set.ofArray [| 'a'; 'e'; 'i'; 'o'; 'u' |]
 
@@ -183,7 +183,7 @@ let segment2 () : unit =
         view.Count)
     |> should equal [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
         
-[<TestCase>]
+[<Test>]
 let expandRight () : unit =
     (Array.empty : int[])
     |> Array.expandRight 10
@@ -194,7 +194,7 @@ let expandRight () : unit =
     |> should equal [|
         0; 1; 1; 2; 3; 5; 8; 13; 0; 0; 0; 0 |]
 
-[<TestCase>]
+[<Test>]
 let expandLeft () : unit =
     (Array.empty : int[])
     |> Array.expandLeft 10
@@ -205,7 +205,7 @@ let expandLeft () : unit =
     |> should equal [|
         0; 0; 0; 0; 0; 1; 1; 2; 3; 5; 8; 13 |]
 
-[<TestCase>]
+[<Test>]
 let mapPartition () : unit =
     let left, right =
         [| 0 .. 10 |]
@@ -221,7 +221,7 @@ let mapPartition () : unit =
     right
     |> should equal [| 1; 27; 125; 343; 729 |]
 
-[<TestCase>]
+[<Test>]
 let mapPartition3 () : unit =
     let left, middle, right =
         [| 0 .. 15 |]
@@ -243,7 +243,7 @@ let mapPartition3 () : unit =
     right
     |> should equal [| 4; 25; 64; 121; 196 |]
 
-[<TestCase>]
+[<Test>]
 let mapReduce () : unit =
     let expected =
         Map.ofArray [| 'i', 4; 'm', 1; 'p', 2; 's', 4 |]
@@ -263,7 +263,7 @@ let mapReduce () : unit =
                         Map.add c (existingCount + count) charCounts) }
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let findIndices () : unit =
     let primeArray = [| 2; 3; 5; 7; 11; 13; 17; 19; 23; 29; 31; 37; |]
 
@@ -280,7 +280,7 @@ let findIndices () : unit =
         Set.contains x primes)
     |> should equal (Array.empty : int[])
 
-[<TestCase>]
+[<Test>]
 let choosei () : unit =
     let colors =
         [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
@@ -294,7 +294,7 @@ let choosei () : unit =
     |> should equal [|
         "darkred"; "gray"; "green" |]
 
-[<TestCase>]
+[<Test>]
 let choose2 () : unit =
     let colors =
         [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
@@ -308,23 +308,23 @@ let choose2 () : unit =
     |> should equal
        [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
 
-[<TestCase>]
+[<Test>]
 let mapInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let mapiInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let chooseInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let chooseiInPlace () : unit =
     Assert.Ignore "Test not yet implemented."
 
-[<TestCase>]
+[<Test>]
 let countWith () : unit =
     // Test case for an empty array.
     Array.empty
@@ -348,7 +348,7 @@ let countWith () : unit =
         x % 3 = 0)
     |> should equal 4
 
-[<TestCase>]
+[<Test>]
 let foldPairwise () : unit =
     // Count the number of occurrences where adjacent characters are the same.
     (0, "mississippi".ToCharArray ())
@@ -361,7 +361,7 @@ let foldPairwise () : unit =
         diffSum + (y - x))
     |> should equal 144
 
-[<TestCase>]
+[<Test>]
 let foldBackPairwise () : unit =
     // Count the number of occurrences where adjacent characters are the same.
     ("mississippi".ToCharArray (), 0)

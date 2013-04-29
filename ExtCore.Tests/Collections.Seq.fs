@@ -24,7 +24,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let appendSingleton () : unit =
     Seq.empty
     |> Seq.appendSingleton 123
@@ -35,7 +35,7 @@ let appendSingleton () : unit =
     |> Seq.appendSingleton 10
     |> should equal [0; 1; 2; 3; 4; 10]
 
-[<TestCase>]
+[<Test>]
 let projectValues () : unit =
     seq { 'a' .. 'e' }
     |> Seq.projectValues (fun asciiChar ->
@@ -48,7 +48,7 @@ let projectValues () : unit =
         'd', "D";
         'e', "E"]
 
-[<TestCase>]
+[<Test>]
 let projectKeys () : unit =
     seq {
         yield "Red"
@@ -63,7 +63,7 @@ let projectKeys () : unit =
         5, "Green";
         6, "Yellow"]
 
-[<TestCase>]
+[<Test>]
 let replicate () : unit =
     // Replicating an empty sequence should return an empty sequence.
     Seq.replicate 4 Seq.empty
@@ -108,7 +108,7 @@ let replicate () : unit =
         !elementEvalCount
         |> should equal 4
 
-[<TestCase>]
+[<Test>]
 let repeat () : unit =
     // Basic usage test.
     Seq.repeat "Hello World!"
@@ -117,7 +117,7 @@ let repeat () : unit =
     |> should equal
         [| "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; |]
 
-[<TestCase>]
+[<Test>]
 let cycle () : unit =
     // Basic usage test.
     Seq.cycle 5 (fun i ->
@@ -150,7 +150,7 @@ let cycle () : unit =
         !elementEvalCount
         |> should equal 5
 
-[<TestCase>]
+[<Test>]
 let countWith () : unit =
     // Test case for an empty sequence.
     Array.empty

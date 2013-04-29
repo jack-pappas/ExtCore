@@ -25,7 +25,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let dummy () : unit =
     Assert.Ignore "Test not yet implemented."
 

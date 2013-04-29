@@ -27,7 +27,7 @@ open FsUnit
 
 /// Tests for the ExtCore.Control.Collections.Async.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
     let lift () : unit =
         // Sample usage test cases.
         [| 1; 1; 2; 3; 5; 8; 13; 21; |]
@@ -36,7 +36,7 @@ module Array =
         |> should equal
             [| 1; 1; 2; 3; 5; 8; 13; 21; |]
 
-    [<TestCase>]
+    [<Test>]
     let init () : unit =
         // Test case for creating an empty array.
         Async.Array.init 0 <| fun x ->
@@ -56,7 +56,7 @@ module Array =
         |> should equal
             [| 0; 17; 34; 51; |]
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         // Sample usage test cases.
         [| 1; 1; 2; 3; 5; 8; 13; 21; |]
@@ -68,7 +68,7 @@ module Array =
         |> should equal
             [| 3; 3; 6; 9; 15; 24; 39; 63; |]
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         // Sample usage test cases.
         [| 1; 1; 2; 3; 5; 8; 13; 21; |]
@@ -80,7 +80,7 @@ module Array =
         |> should equal
             [1; 2; 4; 6; 9; 13; 19; 28]
 
-    [<TestCase>]
+    [<Test>]
     let map2 () : unit =
         // Sample usage test cases.
         ([| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |],
@@ -93,7 +93,7 @@ module Array =
         |> should equal
             [| "1:Red"; "1:Orange"; "2:Yellow"; "3:Green"; "5:Blue"; "8:Violet"; |]
 
-    [<TestCase>]
+    [<Test>]
     let mapi2 () : unit =
         // Sample usage test cases.
         ([| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |],
@@ -107,7 +107,7 @@ module Array =
             [| "1:(1, Red)"; "2:(1, Orange)"; "3:(2, Yellow)";
                "4:(3, Green)"; "5:(5, Blue)"; "6:(8, Violet)"; |]
 
-    [<TestCase>]
+    [<Test>]
     let mapPartition () : unit =
         // Sample usage test cases.
         do
@@ -129,7 +129,7 @@ module Array =
             right
             |> should equal [| "red"; "green" |]
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         // Sample usage test cases.
         (String.empty, [| 2; 17; 4; 12; |])
@@ -140,7 +140,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal "217412"
 
-    [<TestCase>]
+    [<Test>]
     let foldBack () : unit =
         // Sample usage test cases.
         ([| 2; 17; 4; 12; |], String.empty)
@@ -151,7 +151,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal "124172"
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         // Sample usage test cases.
         (String.empty, [| 2; 17; 4; 12; |])
@@ -162,7 +162,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal "218615"
 
-    [<TestCase>]
+    [<Test>]
     let foldiBack () : unit =
         // Sample usage test cases.
         ([| 2; 17; 4; 12; |], String.empty)
@@ -173,7 +173,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal "156182"
 
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         do
             // Test case for an empty array.
@@ -234,7 +234,7 @@ module Array =
             |> should equal
                 [| 21; 33; 54; |]
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         do
             // Test case for an empty ArrayView.
@@ -295,7 +295,7 @@ module Array =
             |> should equal
                 [| 21; 36; 60; |]
 
-    [<TestCase>]
+    [<Test>]
     let exists () : unit =
         // Test case for an empty array.
         Array.empty
@@ -332,7 +332,7 @@ module Array =
         |> Async.RunSynchronously
         |> should be True
 
-    [<TestCase>]
+    [<Test>]
     let find () : unit =
         // Sample usage test cases.
         [| 2; 17; 4; 12; |]
@@ -352,7 +352,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal 18
 
-    [<TestCase>]
+    [<Test>]
     let findIndex () : unit =
         // Sample usage test cases.
         [| 2; 17; 4; 12; |]
@@ -372,7 +372,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal 2
 
-    [<TestCase>]
+    [<Test>]
     let forall () : unit =
         // Test case for an empty array.
         Array.empty
@@ -409,7 +409,7 @@ module Array =
         |> Async.RunSynchronously
         |> should be False
 
-    [<TestCase>]
+    [<Test>]
     let pick () : unit =
         // Sample usage test cases.
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -422,7 +422,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal 5
 
-    [<TestCase>]
+    [<Test>]
     let reduce () : unit =
         // Sample usage test cases.
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -436,7 +436,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal "GreenYellowOrangeRedBlueViolet"
 
-    [<TestCase>]
+    [<Test>]
     let reduceBack () : unit =
         // Sample usage test cases.
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -450,7 +450,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal "OrangeYellowBlueVioletGreenRed"
 
-    [<TestCase>]
+    [<Test>]
     let tryFind () : unit =
         // Test case for an empty array.
         Array.empty
@@ -487,7 +487,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal (Some 18)
 
-    [<TestCase>]
+    [<Test>]
     let tryFindIndex () : unit =
         // Test case for an empty array.
         Array.empty
@@ -524,7 +524,7 @@ module Array =
         |> Async.RunSynchronously
         |> should equal (Some 2)
 
-    [<TestCase>]
+    [<Test>]
     let tryPick () : unit =
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
         |> Async.Array.tryPick (fun colorName ->
@@ -549,7 +549,7 @@ module Array =
 
 /// Tests for the ExtCore.Control.Collections.Async.List module.
 module List =
-    [<TestCase>]
+    [<Test>]
     let lift () : unit =
         // Sample usage test cases.
         [1; 1; 2; 3; 5; 8; 13; 21]
@@ -558,7 +558,7 @@ module List =
         |> should equal
             [1; 1; 2; 3; 5; 8; 13; 21]
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         // Sample usage test cases.
         [1; 1; 2; 3; 5; 8; 13; 21]
@@ -569,7 +569,7 @@ module List =
         |> should equal
             [3; 3; 6; 9; 15; 24; 39; 63]
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         // Sample usage test cases.
         [1; 1; 2; 3; 5; 8; 13; 21]
@@ -580,7 +580,7 @@ module List =
         |> should equal
             [1; 2; 4; 6; 9; 13; 19; 28]
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         // Sample usage test cases.
         (String.empty, [2; 17; 4; 12])
@@ -590,7 +590,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal "217412"
 
-    [<TestCase>]
+    [<Test>]
     let foldBack () : unit =
         // Sample usage test cases.
         ([2; 17; 4; 12], String.empty)
@@ -600,7 +600,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal "124172"
 
-    [<TestCase>]
+    [<Test>]
     let choose () : unit =
         // Test case for an empty list.
         List.empty
@@ -651,7 +651,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal ["18"; "48"]
 
-    [<TestCase>]
+    [<Test>]
     let collect () : unit =
         // Sample usage test cases.
         [0; 1; 1; 2; 3; 5; 8]
@@ -663,7 +663,7 @@ module List =
         |> should equal
             [0; 1; 0; 1; 2; 2; 1; 2; 2; 2; 3; 4; 3; 4; 6; 5; 6; 10; 8; 9; 16]
 
-    [<TestCase>]
+    [<Test>]
     let exists () : unit =
         // Test case for an empty list.
         List.empty
@@ -700,7 +700,7 @@ module List =
         |> Async.RunSynchronously
         |> should be True
 
-    [<TestCase>]
+    [<Test>]
     let forall () : unit =
         // Test case for an empty list.
         List.empty
@@ -737,7 +737,7 @@ module List =
         |> Async.RunSynchronously
         |> should be False
 
-    [<TestCase>]
+    [<Test>]
     let filter () : unit =
         // Test case for an empty list.
         List.empty
@@ -776,7 +776,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal [18; 48]
 
-    [<TestCase>]
+    [<Test>]
     let tryFind () : unit =
         // Test case for an empty list.
         List.empty
@@ -813,7 +813,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal (Some 18)
 
-    [<TestCase>]
+    [<Test>]
     let find () : unit =
         // Sample usage test cases.
         [2; 17; 4; 12]
@@ -833,7 +833,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal 18
 
-    [<TestCase>]
+    [<Test>]
     let tryFindIndex () : unit =
         // Test case for an empty ArrayView.
         List.empty
@@ -870,7 +870,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal (Some 2)
 
-    [<TestCase>]
+    [<Test>]
     let findIndex () : unit =
         // Sample usage test cases.
         [2; 17; 4; 12]
@@ -890,7 +890,7 @@ module List =
         |> Async.RunSynchronously
         |> should equal 2
 
-    [<TestCase>]
+    [<Test>]
     let init () : unit =
         // Test case for creating an empty list.
         Async.List.init 0 <| fun x ->
@@ -910,7 +910,7 @@ module List =
         |> should equal
             [0; 17; 34; 51]
 
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         do
             // Test case for an empty ArrayView.
@@ -971,7 +971,7 @@ module List =
             |> should equal
                 [| 21; 33; 54; |]
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         do
             // Test case for an empty ArrayView.
@@ -1035,7 +1035,7 @@ module List =
 
 /// Tests for the ExtCore.Control.Collections.Async.Seq module.
 module Seq =
-    [<TestCase>]
+    [<Test>]
     let lift () : unit =
         [| 1; 1; 2; 3; 5; 8; 13; 21; |]
         |> Seq.ofArray
@@ -1048,7 +1048,7 @@ module Seq =
 
     /// Tests for the ExtCore.Control.Collections.Async.Seq.Parallel module.
     module Parallel =
-        [<TestCase>]
+        [<Test>]
         let batch () : unit =
             Assert.Ignore "Test not yet implemented."
 

@@ -26,7 +26,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let keys () : unit =
     Map.empty
     |> Map.keys
@@ -40,7 +40,7 @@ let keys () : unit =
     |> Map.keys
     |> should equal (Set.ofArray [| "Red"; "Green"; "Blue"; "Black" |])
 
-[<TestCase>]
+[<Test>]
 let values () : unit =
     Map.empty
     |> Map.values
@@ -54,7 +54,7 @@ let values () : unit =
     |> Map.values
     |> should equal (Set.ofArray [| ConsoleColor.Red; ConsoleColor.Green; ConsoleColor.Blue |])
 
-[<TestCase>]
+[<Test>]
 let ofKvpSeq () : unit =
     Seq.empty
     |> Map.ofKvpSeq
@@ -75,7 +75,7 @@ let ofKvpSeq () : unit =
     |> Map.ofKvpSeq
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let ofKeys () : unit =
     let expected =
         Map.empty
@@ -89,7 +89,7 @@ let ofKeys () : unit =
     |> Map.ofKeys (sprintf "%O")
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let ofValues () : unit =
     let expected =
         Map.empty
@@ -103,7 +103,7 @@ let ofValues () : unit =
         Enum.Parse (typeof<System.ConsoleColor>, colorName) :?> System.ConsoleColor)
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let removeKeys () : unit =
     let initial =
         Map.empty
@@ -138,7 +138,7 @@ let removeKeys () : unit =
     |> Map.removeKeys rgb
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let filterKeys () : unit =
     let initial =
         Map.empty
@@ -171,7 +171,7 @@ let filterKeys () : unit =
     |> Map.filterKeys rgb
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let choose () : unit =
     let initial =
         Map.empty
@@ -202,7 +202,7 @@ let choose () : unit =
         | _ -> None)
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let mapPartition () : unit =
     let initial =
         Map.empty
@@ -238,7 +238,7 @@ let mapPartition () : unit =
            ConsoleColor.Black, 5;
            ConsoleColor.White, 5; |])
         
-[<TestCase>]
+[<Test>]
 let union () : unit =
     let initial1 =
         Map.empty
@@ -270,7 +270,7 @@ let union () : unit =
     Map.union initial1 initial2
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let join () : unit =
     let initial1 =
         Map.empty
@@ -306,7 +306,7 @@ let join () : unit =
         else "(Unknown)")
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let inverse () : unit =
     // Test case for an empty map.
     Map.empty
@@ -335,7 +335,7 @@ let inverse () : unit =
         |> Map.inverse
         |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let pivot () : unit =
     // Test case for an empty map.
     Map.empty
@@ -370,7 +370,7 @@ let pivot () : unit =
         |> Map.pivot
         |> should equal expected
         
-[<TestCase>]
+[<Test>]
 let pivotKeySet () : unit =
     let colorCategory = function
         | ConsoleColor.Black ->
@@ -424,7 +424,7 @@ let pivotKeySet () : unit =
     |> Map.pivotWith colorCategory
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let tryAdd () : unit =
     // Adding to an empty map should always succeed.
     Map.empty
@@ -458,7 +458,7 @@ let tryAdd () : unit =
     |> Map.tryAdd ConsoleColor.Blue "DarkBlue"
     |> should equal initial
 
-[<TestCase>]
+[<Test>]
 let tryUpdate () : unit =
     // An empty map can't be updated (the result should always be an empty map).
     Map.empty
@@ -491,7 +491,7 @@ let tryUpdate () : unit =
     |> Map.tryUpdate ConsoleColor.Blue "DarkBlue"
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let update () : unit =
     let initial =
         Map.empty
@@ -514,7 +514,7 @@ let update () : unit =
     |> Map.update ConsoleColor.Blue "DarkBlue"
     |> should equal expected
 
-[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``update raises exn when map doesn't contain key`` () : unit =
     let initial =
         Map.empty
@@ -529,7 +529,7 @@ let ``update raises exn when map doesn't contain key`` () : unit =
     |> Map.update ConsoleColor.White "White"
     |> should equal initial
 
-[<TestCase>]
+[<Test>]
 let countWith () : unit =
     Assert.Ignore "Test not yet implemented."
 

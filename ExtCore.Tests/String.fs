@@ -27,7 +27,7 @@ open FsUnit
 module Substring =
     // TODO : Implement equality/comparison tests for substring.
 
-    [<TestCase>]
+    [<Test>]
     let get () : unit =
         do
             let substr = substring ("Hello World!", 3, 5)
@@ -38,7 +38,7 @@ module Substring =
             Substring.get substr 3
             |> should equal 'W'
 
-    [<TestCase>]
+    [<Test>]
     let isEmpty () : unit =
         substring ("Hello World!", 4, 0)
         |> Substring.isEmpty
@@ -48,7 +48,7 @@ module Substring =
         |> Substring.isEmpty
         |> should be False
 
-    [<TestCase>]
+    [<Test>]
     let ofString () : unit =
         do
             let substr = Substring.ofString ""
@@ -80,7 +80,7 @@ module Substring =
             |> Substring.length
             |> should equal 12
 
-    [<TestCase>]
+    [<Test>]
     let toString () : unit =
         // Test for empty substring.
         substring ("Hello World!", 3, 0)
@@ -91,7 +91,7 @@ module Substring =
         |> Substring.toString
         |> should equal "lo Wor"
 
-    [<TestCase>]
+    [<Test>]
     let toArray () : unit =
         // Test for empty substring.
         substring ("Hello World!", 3, 0)
@@ -102,7 +102,7 @@ module Substring =
         |> Substring.toArray
         |> should equal [| 'l'; 'o'; ' '; 'W'; 'o'; 'r'; |]
 
-    [<TestCase>]
+    [<Test>]
     let sub () : unit =
         do
             let str = "The quick brown fox jumps over the lazy dog."
@@ -113,7 +113,7 @@ module Substring =
             |> Substring.toString
             |> should equal "brown"
 
-    [<TestCase>]
+    [<Test>]
     let concat () : unit =
         do
             let str1 = "The quick brown fox jumps over the lazy dog."
@@ -128,7 +128,7 @@ module Substring =
             |> Substring.concat
             |> should equal "The quick brown fox jumps over the World! Hello lazy dog."
 
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         // Test case for empty substring.
         do
@@ -152,7 +152,7 @@ module Substring =
             |> should equal
                 [| 'Q'; 'U'; 'I'; 'C'; 'K'; ' '; 'B'; 'R'; 'O'; 'W'; 'N'; ' '; 'F'; 'O'; 'X'; |]
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         // Test case for empty substring.
         do
@@ -180,7 +180,7 @@ module Substring =
             |> should equal
                 [| 'Q'; 'u'; 'I'; 'c'; 'K'; ' '; 'B'; 'r'; 'O'; 'w'; 'N'; ' '; 'F'; 'o'; 'X'; |]
 
-    [<TestCase>]
+    [<Test>]
     let iterBack () : unit =
         // Test case for empty substring.
         do
@@ -204,7 +204,7 @@ module Substring =
             |> should equal
                 [| 'X'; 'O'; 'F'; ' '; 'N'; 'W'; 'O'; 'R'; 'B'; ' '; 'K'; 'C'; 'I'; 'U'; 'Q'; |]
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         // Test case for empty substring.
         do
@@ -224,7 +224,7 @@ module Substring =
             |> fst  // Discard the index
             |> should equal 8117010307721961272L
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         // Test case for empty substring.
         do
@@ -240,7 +240,7 @@ module Substring =
                 (checksum + int64 index) * int64 c)
             |> should equal 8117010307721961272L
 
-    [<TestCase>]
+    [<Test>]
     let foldBack () : unit =
         // Test case for empty substring.
         do
@@ -263,7 +263,7 @@ module Substring =
 
 /// Tests for the ExtCore.String module.
 module String =
-    [<TestCase>]
+    [<Test>]
     let isEmpty () : unit =
         // Test case for empty string.
         String.isEmpty String.empty
@@ -274,7 +274,7 @@ module String =
         |> String.isEmpty
         |> should be False
 
-    [<TestCase>]
+    [<Test>]
     let ofOption () : unit =
         // Test case for None.
         String.ofOption None
@@ -292,7 +292,7 @@ module String =
         |> String.ofOption
         |> should equal "Hello World!"
 
-    [<TestCase>]
+    [<Test>]
     let ofArray () : unit =
         // Test case for empty array.
         Array.empty
@@ -305,7 +305,7 @@ module String =
         |> String.ofArray
         |> should equal "Hello World!"
 
-    [<TestCase>]
+    [<Test>]
     let toOption () : unit =
         // Test case for null.
         String.toOption null
@@ -322,7 +322,7 @@ module String =
         |> String.toOption
         |> should equal (Some "Hello World!")
 
-    [<TestCase>]
+    [<Test>]
     let toArray () : unit =
         // Test case for an empty string.
         String.empty
@@ -336,7 +336,7 @@ module String =
         |> should equal
             [| 'H'; 'e'; 'l'; 'l'; 'o'; ' '; 'W'; 'o'; 'r'; 'l'; 'd'; '!'; |]
 
-    [<TestCase>]
+    [<Test>]
     let split () : unit =
         // Test case for an empty string.
         String.empty
@@ -362,7 +362,7 @@ module String =
         |> should equal
             [| "3262"; ""; "John"; "Q"; "Doe"; "1970-Jan-01"; |]
 
-    [<TestCase>]
+    [<Test>]
     let concatArray () : unit =
         // Test case for empty array.
         Array.empty
@@ -376,7 +376,7 @@ module String =
         |> should equal
             "Thequickbrownfoxjumpsoverthelazydog."
 
-    [<TestCase>]
+    [<Test>]
     let ofLines () : unit =
         // Test case for empty array.
         Array.empty
@@ -393,7 +393,7 @@ dolor
 sit
 amet"
 
-    [<TestCase>]
+    [<Test>]
     let toLines () : unit =
         // Test case for empty string.
         String.empty
@@ -417,7 +417,7 @@ amet"
         |> should equal
             [| "Lorem"; "ipsum"; "dolor"; "sit"; "amet"; |]
 
-    [<TestCase>]
+    [<Test>]
     let sub () : unit =
         // Test case for empty substring of an empty string.
         String.sub String.empty 0 0
@@ -435,7 +435,7 @@ amet"
         |> ExtCore.Substring.toString
         |> should equal "quick brown fox"
 
-    [<TestCase>]
+    [<Test>]
     let tryFindIndexOf () : unit =
         // Test case for empty string.
         String.empty
@@ -457,7 +457,7 @@ amet"
         |> String.tryFindIndexOf 'l'
         |> should equal (Some 2)
 
-    [<TestCase>]
+    [<Test>]
     let findIndexOf () : unit =
         // Test case for a string which contains exactly one (1) instance of the specified character.
         "The quick brown fox jumps over the lazy dog."
@@ -469,14 +469,14 @@ amet"
         |> String.findIndexOf 'l'
         |> should equal 2
 
-    [<TestCase; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
+    [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
     let ``findIndexOf raises exn when the string does not contain the character`` () : unit =
         // Test case for a string which does not contain the specified character.
         "Hello World!"
         |> String.findIndexOf 'j'
         |> ignore
 
-    [<TestCase>]
+    [<Test>]
     let tryFindIndex () : unit =
         // Test case for empty string.
         String.empty
@@ -510,7 +510,7 @@ amet"
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
         |> should equal (Some 1)
 
-    [<TestCase>]
+    [<Test>]
     let findIndex () : unit =
         // Test case for a string which contains exactly one (1) matching character.
         "Rhythmist"
@@ -528,7 +528,7 @@ amet"
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
         |> should equal 1
 
-    [<TestCase; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
+    [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
     let ``findIndex raises exn when the string does not contain a matching character`` () : unit =
         // Test case for a non-empty string which does not contain a matching character.
         "Glyndyfrdwy"
@@ -538,7 +538,7 @@ amet"
             c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
         |> ignore
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         // Test case for empty string.
         ((0L, 0), String.empty)
@@ -556,7 +556,7 @@ amet"
         |> fst  // Discard the index
         |> should equal 1464868296444951516L
 
-    [<TestCase>]
+    [<Test>]
     let foldBack () : unit =
         // Test case for empty string.
         (String.empty, (0L, 0))
@@ -574,7 +574,7 @@ amet"
         |> fst  // Discard the index
         |> should equal 6529802340200151804L
 
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         // Test case for empty substring.
         do
@@ -600,7 +600,7 @@ amet"
                    ' '; 'F'; 'O'; 'X'; ' '; 'J'; 'U'; 'M'; 'P'; 'S'; ' '; 'O'; 'V'; 'E'; 'R';
                    ' '; 'T'; 'H'; 'E'; ' '; 'L'; 'A'; 'Z'; 'Y'; ' '; 'D'; 'O'; 'G'; '.'; |]
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         // Test case for empty substring.
         do
@@ -630,15 +630,15 @@ amet"
                    ' '; 'F'; 'o'; 'X'; ' '; 'J'; 'u'; 'M'; 'p'; 'S'; ' '; 'O'; 'v'; 'E'; 'r';
                    ' '; 't'; 'H'; 'e'; ' '; 'l'; 'A'; 'z'; 'Y'; ' '; 'D'; 'o'; 'G'; '.'; |]
 
-    [<TestCase>]
+    [<Test>]
     let iter2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iteri2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         // Test case for empty string.
         String.empty
@@ -650,7 +650,7 @@ amet"
         |> String.map System.Char.ToUpper
         |> should equal "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG."
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         // Test case for empty string.
         String.empty
@@ -664,7 +664,7 @@ amet"
             if idx % 2 = 0 then System.Char.ToUpper c else c)
         |> should equal "ThE QuIcK BrOwN FoX JuMpS OvEr tHe lAzY DoG."
 
-    [<TestCase>]
+    [<Test>]
     let choose () : unit =
         // Test case for empty string.
         String.empty
@@ -682,7 +682,7 @@ amet"
             else None)
         |> should equal "TH  BRN FX JP VR TH LZ D."
 
-    [<TestCase>]
+    [<Test>]
     let choosei () : unit =
         // Test case for empty string.
         String.empty
@@ -700,7 +700,7 @@ amet"
             else None)
         |> should equal "TUCBWNFOXJU HE DO"
 
-    [<TestCase>]
+    [<Test>]
     let foldPairwise () : unit =
         // Count the number of occurrences where adjacent characters are the same.
         (0, "mississippi")
@@ -708,7 +708,7 @@ amet"
             if x = y then count + 1 else count)
         |> should equal 3
 
-    [<TestCase>]
+    [<Test>]
     let trimChars () : unit =
         // Test case for empty string.
         String.empty
@@ -726,7 +726,7 @@ amet"
         |> String.trim [| ' '; '.'; ','; |]
         |> should equal "Hello World!"
 
-    [<TestCase>]
+    [<Test>]
     let trimStart () : unit =
         // Test case for empty string.
         String.empty
@@ -743,7 +743,7 @@ amet"
         |> String.trimStart [| ' '; '.'; ','; |]
         |> should equal "Hello World!"
 
-    [<TestCase>]
+    [<Test>]
     let trimEnd () : unit =
         // Test case for empty string.
         String.empty
@@ -760,7 +760,7 @@ amet"
         |> String.trimEnd [| '!'; '?'; '*'; |]
         |> should equal "Hello World!1"
 
-    [<TestCase>]
+    [<Test>]
     let trimStartWith () : unit =
         // Test case for empty string.
         String.empty
@@ -774,7 +774,7 @@ amet"
         |> String.trimStartWith (not << System.Char.IsWhiteSpace)
         |> should equal ",, ,Hello World!"
 
-    [<TestCase>]
+    [<Test>]
     let trimEndWith () : unit =
         // Test case for empty string.
         String.empty
@@ -788,7 +788,7 @@ amet"
         |> String.trimEndWith (not << System.Char.IsPunctuation)
         |> should equal "Hello World!1"
 
-    [<TestCase>]
+    [<Test>]
     let trimWith () : unit =
         // Test case for empty string.
         String.empty
@@ -802,35 +802,35 @@ amet"
         |> String.trimWith System.Char.IsLetterOrDigit
         |> should equal "Hello World!1"
 
-    [<TestCase>]
+    [<Test>]
     let fold2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let foldBack2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let tryFind () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let find () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let tryPick () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let pick () : unit =
         Assert.Ignore "Test not yet implemented."
 
@@ -838,7 +838,7 @@ amet"
     module Split =
         open System
 
-        [<TestCase>]
+        [<Test>]
         let iter () : unit =
             do
                 // Test case for the empty string.
@@ -899,7 +899,7 @@ amet"
                 |> should equal
                     [| 4; 4; 1; 3; 11; |]
 
-        [<TestCase>]
+        [<Test>]
         let iteri () : unit =
             do
                 // Test case for the empty string.
@@ -969,7 +969,7 @@ amet"
                 |> should equal
                     [| 4; 6; 4; 7; 16; |]
 
-        [<TestCase>]
+        [<Test>]
         let fold () : unit =
             do
                 // Test case for the empty string.
@@ -1016,7 +1016,7 @@ amet"
                             else ExtCore.Substring.toString substr))
                 |> should equal "3262JohnQDoe1970-Jan-01"
 
-        [<TestCase>]
+        [<Test>]
         let foldi () : unit =
             do
                 // Test case for the empty string.

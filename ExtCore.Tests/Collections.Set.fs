@@ -25,7 +25,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let foldi () : unit =
     let colors =
         Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -41,7 +41,7 @@ let foldi () : unit =
         1, "Green";
         0, "Blue"; ]
 
-[<TestCase>]
+[<Test>]
 let mapToArray () : unit =
     let colors =
         Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -51,7 +51,7 @@ let mapToArray () : unit =
     |> should equal [|
         4; 5; 6; 3; 6; 6 |]
 
-[<TestCase>]
+[<Test>]
 let init () : unit =
     let expected =
         Set.ofArray [| 'a' .. 'z' |]
@@ -60,7 +60,7 @@ let init () : unit =
         char (int 'a' + i)
     |> should equal expected
 
-[<TestCase>]
+[<Test>]
 let tryExtractMin () : unit =
     do
         let initialSet = Set.empty
@@ -84,7 +84,7 @@ let tryExtractMin () : unit =
         remaining
         |> should equal (Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Violet" |])
 
-[<TestCase>]
+[<Test>]
 let tryExtractMax () : unit =
     do
         let initialSet = Set.empty
@@ -109,7 +109,7 @@ let tryExtractMax () : unit =
         remaining
         |> should equal (Set.ofArray [| "Red"; "Orange"; "Green"; "Blue"; "Violet" |])
     
-[<TestCase>]
+[<Test>]
 let extractMin () : unit =
     let minElement, remaining =
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -122,7 +122,7 @@ let extractMin () : unit =
     remaining
     |> should equal (Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Violet" |])
 
-[<TestCase>]
+[<Test>]
 let extractMax () : unit =
     let maxElement, remaining =
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -135,21 +135,21 @@ let extractMax () : unit =
     remaining
     |> should equal (Set.ofArray [| "Red"; "Orange"; "Green"; "Blue"; "Violet" |])
 
-[<TestCase>]
+[<Test>]
 let reduce () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
     |> Set.reduce (+)
     |> should equal "BlueGreenOrangeRedVioletYellow"
 
-[<TestCase>]
+[<Test>]
 let reduceBack () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
     |> Set.reduceBack (+)
     |> should equal "BlueGreenOrangeRedVioletYellow"
 
-[<TestCase>]
+[<Test>]
 let choose () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
@@ -159,7 +159,7 @@ let choose () : unit =
     |> should equal [|
         3; 4; 5 |]
 
-[<TestCase>]
+[<Test>]
 let tryPick () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
@@ -173,7 +173,7 @@ let tryPick () : unit =
         if colorName.StartsWith "G" then Some (String.length colorName) else None)
     |> should equal (Some 5)
 
-[<TestCase>]
+[<Test>]
 let pick () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
@@ -181,7 +181,7 @@ let pick () : unit =
         if colorName.StartsWith "G" then Some (String.length colorName) else None)
     |> should equal 5
 
-[<TestCase>]
+[<Test>]
 let tryFind () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
@@ -195,7 +195,7 @@ let tryFind () : unit =
         colorName.StartsWith "G")
     |> should equal (Some "Green")
 
-[<TestCase>]
+[<Test>]
 let find () : unit =
     [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
     |> Set.ofArray
@@ -203,7 +203,7 @@ let find () : unit =
         colorName.StartsWith "G")
     |> should equal "Green"
 
-[<TestCase>]
+[<Test>]
 let mapPartition () : unit =
     let left, right =
         [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -221,7 +221,7 @@ let mapPartition () : unit =
     right
     |> should equal (Set.ofArray [| "red"; "green" |])
 
-[<TestCase>]
+[<Test>]
 let symmetricDifference () : unit =
     Set.symmetricDifference Set.empty Set.empty
     |> should equal Set.empty
@@ -229,7 +229,7 @@ let symmetricDifference () : unit =
     Set.symmetricDifference (Set.ofArray [| 0..2..20 |]) (Set.ofArray [| 0..3..20 |])
     |> should equal (Set.ofArray [| 2; 3; 4; 8; 9; 10; 14; 15; 16; 20 |])
 
-[<TestCase>]
+[<Test>]
 let cartesian () : unit =
     Set.cartesian Set.empty Set.empty
     |> should equal Set.empty
@@ -246,7 +246,7 @@ let cartesian () : unit =
         "Red", 20;
         "Red", 30; |])
 
-[<TestCase>]
+[<Test>]
 let collect () : unit =
     [| 0; 1; 1; 2; 3; 5; 8 |]
     |> Set.ofArray
@@ -256,7 +256,7 @@ let collect () : unit =
     |> should equal (Set.ofArray
         [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |])
 
-[<TestCase>]
+[<Test>]
 let condense () : unit =
     [| 7; 11; 13; 17; 19 |]
     |> Set.ofArray
@@ -264,7 +264,7 @@ let condense () : unit =
         Set.ofArray [| 0 .. el |])
     |> should equal (Set.ofArray [| 0; 1; 2; 3; 4; 5; 6; 7 |])
 
-[<TestCase>]
+[<Test>]
 let disjoint () : unit =
     Set.disjoint Set.empty Set.empty
     |> should be True
@@ -277,7 +277,7 @@ let disjoint () : unit =
         (Set.ofArray [| 0..20 |] |> Set.filter (fun el -> el % 3 = 0))
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let countWith () : unit =
     // Test case for an empty set.
     Set.empty
@@ -306,23 +306,23 @@ let countWith () : unit =
 
 
 module Cartesian =
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let foldBack () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let choose () : unit =
         Assert.Ignore "Test not yet implemented."
 

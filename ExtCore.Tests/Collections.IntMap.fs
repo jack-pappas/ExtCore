@@ -31,7 +31,7 @@ open NUnit.Framework
 open FsUnit
 
 
-[<TestCase>]
+[<Test>]
 let isEmpty () : unit =
     IntMap.empty
     |> IntMap.isEmpty
@@ -41,7 +41,7 @@ let isEmpty () : unit =
     |> IntMap.isEmpty
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let count () : unit =
     IntMap.empty
     |> IntMap.count
@@ -57,7 +57,7 @@ let count () : unit =
     |> IntMap.count
     |> should equal 8
 
-[<TestCase>]
+[<Test>]
 let singleton () : unit =
     IntMap.singleton 1 'a'
     |> should equal (
@@ -67,7 +67,7 @@ let singleton () : unit =
     |> IntMap.count
     |> should equal 1
 
-[<TestCase>]
+[<Test>]
 let containsKey () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
@@ -81,7 +81,7 @@ let containsKey () : unit =
     |> IntMap.containsKey 1
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let tryFind () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
@@ -93,21 +93,21 @@ let tryFind () : unit =
     |> IntMap.tryFind 7
     |> should equal None
 
-[<TestCase>]
+[<Test>]
 let find () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
     |> IntMap.find 5
     |> should equal 'a'
 
-[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``find raises exn when key is not found`` () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
     |> IntMap.find 9
     |> ignore
 
-[<TestCase>]
+[<Test>]
 let findOrDefault () : unit =
     [(5, 'a'); (3, 'b')]
     |> IntMap.ofList
@@ -119,7 +119,7 @@ let findOrDefault () : unit =
     |> IntMap.findOrDefault 'z' 7
     |> should equal 'z'
 
-[<TestCase>]
+[<Test>]
 let tryFindKey () : unit =
     (IntMap.empty : IntMap<string>)
     |> IntMap.tryFindKey (fun k v ->
@@ -140,7 +140,7 @@ let tryFindKey () : unit =
         (k + int v) % 289 = 0)
     |> should equal None
 
-[<TestCase>]
+[<Test>]
 let add () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
@@ -163,7 +163,7 @@ let add () : unit =
     |> should equal (
         IntMap.singleton 5 'x')
 
-[<TestCase>]
+[<Test>]
 let remove () : unit =
     (IntMap.empty : IntMap<string>)
     |> IntMap.remove 5
@@ -184,7 +184,7 @@ let remove () : unit =
        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let union () : unit =
     IntMap.union
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
@@ -192,7 +192,7 @@ let union () : unit =
     |> should equal
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let intersect () : unit =
     IntMap.intersect
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
@@ -206,7 +206,7 @@ let intersect () : unit =
     |> should equal
         (IntMap.ofArray [| (11, 'F'); (4, 'G'); |])
 
-[<TestCase>]
+[<Test>]
 let difference () : unit =
     IntMap.difference
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
@@ -220,7 +220,7 @@ let difference () : unit =
     |> should equal
         (IntMap.ofArray [| (5, 'a'); (17, 'a'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let isSubmapOfBy () : unit =
     let map1 = IntMap.ofList [(1,1);(2,2)]
         
@@ -251,7 +251,7 @@ let isSubmapOfBy () : unit =
     |> should be False
 
 
-[<TestCase>]
+[<Test>]
 let ofSeq () : unit =
     (Seq.empty : seq<int * string>)
     |> IntMap.ofSeq
@@ -264,7 +264,7 @@ let ofSeq () : unit =
     |> should equal
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let ofList () : unit =
     IntMap.ofList []
     |> IntMap.isEmpty
@@ -275,7 +275,7 @@ let ofList () : unit =
     |> should equal
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let ofArray () : unit =
     Array.empty
     |> IntMap.ofArray
@@ -287,7 +287,7 @@ let ofArray () : unit =
     |> should equal
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let ofMap () : unit =
     Map.empty
     |> IntMap.ofMap
@@ -300,7 +300,7 @@ let ofMap () : unit =
     |> should equal
         (IntMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let toSeq () : unit =
     IntMap.empty
     |> IntMap.toSeq
@@ -314,7 +314,7 @@ let toSeq () : unit =
     |> should equal
         [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
 
-[<TestCase>]
+[<Test>]
 let toList () : unit =
     IntMap.empty
     |> IntMap.toList
@@ -327,7 +327,7 @@ let toList () : unit =
     |> should equal
         [(2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a')]
 
-[<TestCase>]
+[<Test>]
 let toArray () : unit =
     IntMap.empty
     |> IntMap.toArray
@@ -340,7 +340,7 @@ let toArray () : unit =
     |> should equal
         [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
 
-[<TestCase>]
+[<Test>]
 let toMap () : unit =
     IntMap.empty
     |> IntMap.toMap
@@ -353,7 +353,7 @@ let toMap () : unit =
     |> should equal
         (Map.ofArray [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |])
 
-[<TestCase>]
+[<Test>]
 let tryPick () : unit =
     // Test case for empty input.
     IntMap.empty
@@ -390,7 +390,7 @@ let tryPick () : unit =
         else None)
     |> should equal (Some 'd')
 
-[<TestCase>]
+[<Test>]
 let pick () : unit =
     // Test case where a single binding matches the 'picker' function.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -410,7 +410,7 @@ let pick () : unit =
         else None)
     |> should equal 'd'
 
-[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``pick raises exn on empty input`` () : unit =
     IntMap.empty
     |> IntMap.pick (fun k v ->
@@ -419,7 +419,7 @@ let ``pick raises exn on empty input`` () : unit =
         else None)
     |> ignore
 
-[<TestCase; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
 let ``pick raises exn when no match is found`` () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -429,7 +429,7 @@ let ``pick raises exn when no match is found`` () : unit =
         else None)
     |> ignore
 
-[<TestCase>]
+[<Test>]
 let map () : unit =
     IntMap.empty
     |> IntMap.map (sprintf "%i:%c")
@@ -443,7 +443,7 @@ let map () : unit =
         [| (5, "5:a"); (3, "3:b"); (11, "11:f"); (2, "2:d");
             (17, "17:a"); (4, "4:g"); (12, "12:b"); (14, "14:c"); |])
 
-[<TestCase>]
+[<Test>]
 let filter () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -452,7 +452,7 @@ let filter () : unit =
     |> should equal
         (IntMap.ofArray [| (2, 'd'); (12, 'b'); (14, 'c'); |])
 
-[<TestCase>]
+[<Test>]
 let choose () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -463,7 +463,7 @@ let choose () : unit =
     |> should equal
         (IntMap.ofArray [| (5, 'A'); (3, 'B'); (17, 'A'); (11, 'F'); |])
 
-[<TestCase>]
+[<Test>]
 let iter () : unit =
     do
         let elements = ResizeArray ()
@@ -489,7 +489,7 @@ let iter () : unit =
         |> should equal
             [| 'D'; 'B'; 'G'; 'A'; 'F'; 'B'; 'C'; 'A'; |]
 
-[<TestCase>]
+[<Test>]
 let iterBack () : unit =
     do
         let elements = ResizeArray ()
@@ -515,7 +515,7 @@ let iterBack () : unit =
         |> should equal
             [| 'A'; 'C'; 'B'; 'F'; 'A'; 'G'; 'B'; 'D'; |]
 
-[<TestCase>]
+[<Test>]
 let fold () : unit =
     do
         let elements = ResizeArray ()
@@ -548,7 +548,7 @@ let fold () : unit =
         |> should equal
             [| 102; 102; 77; 105; 85; 115; 119; 121; |]
 
-[<TestCase>]
+[<Test>]
 let foldBack () : unit =
     do
         let elements = ResizeArray ()
@@ -581,7 +581,7 @@ let foldBack () : unit =
         |> should equal
             [| 114; 114; 112; 84; 106; 80; 107; 109; |]
 
-[<TestCase>]
+[<Test>]
 let exists () : unit =
     IntMap.empty
     |> IntMap.exists (fun k v ->
@@ -600,7 +600,7 @@ let exists () : unit =
         (k + int v) % 2 = 0)
     |> should be True
 
-[<TestCase>]
+[<Test>]
 let forall () : unit =
     IntMap.empty
     |> IntMap.forall (fun k v ->
@@ -619,7 +619,7 @@ let forall () : unit =
         (k + int v) % 2 = 0)
     |> should be False
 
-[<TestCase>]
+[<Test>]
 let partition () : unit =
     do
         let evens, odds =
@@ -651,7 +651,7 @@ let partition () : unit =
             (IntMap.ofArray [| (3, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |])
 
 
-[<TestCase>]
+[<Test>]
 let mapPartition () : unit =
     do
         let evens, odds =

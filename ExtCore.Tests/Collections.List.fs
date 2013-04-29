@@ -25,7 +25,7 @@ open FsUnit
 //open FsCheck
 
 
-[<TestCase>]
+[<Test>]
 let indexed () : unit =
     ["Red"; "Green"; "Blue"; "Yellow"]
     |> List.indexed
@@ -35,7 +35,7 @@ let indexed () : unit =
         2, "Blue";
         3, "Yellow"]
 
-[<TestCase>]
+[<Test>]
 let revIntoArray () : unit =
     List.empty
     |> List.revIntoArray
@@ -46,7 +46,7 @@ let revIntoArray () : unit =
     |> should equal
        [| "Yellow"; "Blue"; "Green"; "Red" |]
 
-[<TestCase>]
+[<Test>]
 let revMapIntoArray () : unit =
     List.empty
     |> List.revMapIntoArray ignore
@@ -56,7 +56,7 @@ let revMapIntoArray () : unit =
     |> List.revMapIntoArray String.length
     |> should equal [| 6; 4; 5; 3 |]
 
-[<TestCase>]
+[<Test>]
 let projectValues () : unit =
     List.empty
     |> List.projectValues ignore
@@ -73,7 +73,7 @@ let projectValues () : unit =
         ConsoleColor.Cyan, "Cyan";
         ConsoleColor.Black, "Black"; ]
 
-[<TestCase>]
+[<Test>]
 let projectKeys () : unit =
     List.empty
     |> List.projectKeys ignore
@@ -89,7 +89,7 @@ let projectKeys () : unit =
         ConsoleColor.Cyan, "Cyan";
         ConsoleColor.Black, "Black"; ]
 
-[<TestCase>]
+[<Test>]
 let take () : unit =
     let taken, remaining =
         [0; 1; 1; 2; 3; 5; 8; 13; 21; 34; 55; 89; 144]
@@ -101,7 +101,7 @@ let take () : unit =
     remaining
     |> should equal [5; 8; 13; 21; 34; 55; 89; 144]
 
-[<TestCase>]
+[<Test>]
 let takeArray () : unit =
     let taken, remaining =
         [0; 1; 1; 2; 3; 5; 8; 13; 21; 34; 55; 89; 144]
@@ -113,7 +113,7 @@ let takeArray () : unit =
     remaining
     |> should equal [5; 8; 13; 21; 34; 55; 89; 144]
 
-[<TestCase>]
+[<Test>]
 let foldPairwise () : unit =
     // Count the number of occurrences where adjacent characters are the same.
     (0, List.ofArray <| "mississippi".ToCharArray ())
@@ -126,7 +126,7 @@ let foldPairwise () : unit =
         diffSum + (y - x))
     |> should equal 144
 
-[<TestCase>]
+[<Test>]
 let foldBackPairwise () : unit =
     // Count the number of occurrences where adjacent characters are the same.
     (List.ofArray <| "mississippi".ToCharArray (), 0)
@@ -134,7 +134,7 @@ let foldBackPairwise () : unit =
         if x = y then count + 1 else count)
     |> should equal 3
 
-[<TestCase>]
+[<Test>]
 let mapPartition () : unit =
     let left, right =
         [0 .. 10]
@@ -150,7 +150,7 @@ let mapPartition () : unit =
     right
     |> should equal [1; 27; 125; 343; 729]
 
-[<TestCase>]
+[<Test>]
 let mapPartition3 () : unit =
     let left, middle, right =
         [0 .. 15]
@@ -172,7 +172,7 @@ let mapPartition3 () : unit =
     right
     |> should equal [4; 25; 64; 121; 196]
 
-[<TestCase>]
+[<Test>]
 let choose2 () : unit =
     let colors =
        ["Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
@@ -187,7 +187,7 @@ let choose2 () : unit =
        ["cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow"]
 
 
-[<TestCase>]
+[<Test>]
 let unfold () : unit =
     5
     |> List.unfold (function
@@ -196,7 +196,7 @@ let unfold () : unit =
             Some (n.ToString(), n - 1))
     |> should equal ["5"; "4"; "3"; "2"; "1"]
 
-[<TestCase>]
+[<Test>]
 let unzipWith () : unit =
     let left, right =
         ["Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";]
@@ -215,7 +215,7 @@ let unzipWith () : unit =
         ConsoleColor.DarkBlue;
         ConsoleColor.DarkGray; ]
 
-[<TestCase>]
+[<Test>]
 let countWith () : unit =
     // Test case for an empty list.
     List.empty

@@ -47,7 +47,7 @@ module private StateTestHelpers =
 
 /// Tests for the ExtCore.Control.Collections.State.Array module.
 module Array =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         // Test case for an empty array.
         do
@@ -72,7 +72,7 @@ module Array =
 
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         // Test case for an empty array.
         do
@@ -103,7 +103,7 @@ module Array =
             !initials |> should equal "ROOYYYGGGGBBBBBVVVVVV"
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         // Test case for an empty array.
         do
@@ -137,7 +137,7 @@ module Array =
                 [| "red"; "orange"; "yellow"; "green"; "blue"; "violet"; |]
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         // Test case for an empty array.
         do
@@ -175,7 +175,7 @@ module Array =
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let mapBack () : unit =
         // Test case for an empty array.
         do
@@ -209,7 +209,7 @@ module Array =
                 [| "red"; "orange"; "yellow"; "green"; "blue"; "violet"; |]
             finalState |> should equal 99
 
-    [<TestCase>]
+    [<Test>]
     let mapiBack () : unit =
         // Test case for an empty array.
         do
@@ -247,7 +247,7 @@ module Array =
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
             finalState |> should equal 99
 
-    [<TestCase>]
+    [<Test>]
     let map2 () : unit =
         // Test case for an empty array.
         do
@@ -282,7 +282,7 @@ module Array =
                 [| "1:red"; "1:orange"; "2:yellow"; "3:green"; "5:blue"; "8:violet"; |]
             finalState |> should equal 122
             
-    [<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``map2 raises exn when arrays have different lengths`` () : unit =
         let testFunc =
             ([| 1..3 |], [| 2..10 |])
@@ -293,7 +293,7 @@ module Array =
         State.run testFunc 15
         |> ignore
 
-    [<TestCase>]
+    [<Test>]
     let mapi2 () : unit =
         // Test case for an empty array.
         do
@@ -331,7 +331,7 @@ module Array =
                 [| "1:red"; "1:ORANGE"; "2:yellow"; "3:GREEN"; "5:blue"; "8:VIOLET"; |]
             finalState |> should equal 122
 
-    [<TestCase; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
     let ``mapi2 raises exn when arrays have different lengths`` () : unit =
         let testFunc =
             ([| 1..3 |], [| 2..10 |])
@@ -342,7 +342,7 @@ module Array =
         State.run testFunc 15
         |> ignore
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         // Test case for an empty array.
         do
@@ -374,7 +374,7 @@ module Array =
             foldResult |> should equal "ROYGBV"
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         // Test case for an empty array.
         do
@@ -409,7 +409,7 @@ module Array =
 
 /// Tests for the ExtCore.Control.Collections.State.List module.
 module List =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         // Test case for an empty list.
         do
@@ -434,7 +434,7 @@ module List =
 
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         // Test case for an empty list.
         do
@@ -465,7 +465,7 @@ module List =
             !initials |> should equal "ROOYYYGGGGBBBBBVVVVVV"
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         // Test case for an empty list.
         do
@@ -499,7 +499,7 @@ module List =
                 ["red"; "orange"; "yellow"; "green"; "blue"; "violet"]
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         // Test case for an empty list.
         do
@@ -537,7 +537,7 @@ module List =
                 ["red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"]
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let fold () : unit =
         // Test case for an empty list.
         do
@@ -574,7 +574,7 @@ module List =
 module TaggedArray =
     [<Measure>] type Foo
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         // Test case for an empty array.
         do
@@ -612,7 +612,7 @@ module TaggedArray =
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
             finalState |> should equal 122
 
-    [<TestCase>]
+    [<Test>]
     let mapiBack () : unit =
         // Test case for an empty array.
         do
@@ -650,7 +650,7 @@ module TaggedArray =
                 [| "red"; "ORANGE"; "yellow"; "GREEN"; "blue"; "VIOLET"; |]
             finalState |> should equal 99
 
-    [<TestCase>]
+    [<Test>]
     let foldi () : unit =
         // Test case for an empty array.
         do
@@ -685,30 +685,30 @@ module TaggedArray =
 
 /// Tests for the ExtCore.Control.Collections.State.ArrayView module.
 module ArrayView =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iteri () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let map () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let mapi () : unit =
         Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.State.Set module.
 module Set =
-    [<TestCase>]
+    [<Test>]
     let iter () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<TestCase>]
+    [<Test>]
     let iterBack () : unit =
         Assert.Ignore "Test not yet implemented."
 

@@ -23,7 +23,7 @@ open NUnit.Framework
 open FsUnit
 
 
-[<TestCase>]
+[<Test>]
 let iter () : unit =
     do
         // Test case for an inverted range (this should
@@ -63,7 +63,7 @@ let iter () : unit =
         |> should equal
             [| "AA"; "AAA"; "AAAA"; "AAAAA"; "AAAAAA"; "AAAAAAA"; |]
 
-[<TestCase>]
+[<Test>]
 let fold () : unit =
     /// The set of prime numbers less than 40.
     let primes =
@@ -116,7 +116,7 @@ let fold () : unit =
                 checksum + int64 x)
         |> should equal 46488L
 
-[<TestCase>]
+[<Test>]
 let foldBack () : unit =
     /// The set of prime numbers less than 40.
     let primes =
@@ -169,7 +169,7 @@ let foldBack () : unit =
                 checksum + int64 x)
         |> should equal 23730L
 
-[<TestCase>]
+[<Test>]
 let exists () : unit =
     /// The set of prime numbers less than 40.
     let primes =
@@ -202,7 +202,7 @@ let exists () : unit =
             Set.contains x primes)
         |> should be True
 
-[<TestCase>]
+[<Test>]
 let forall () : unit =
     /// The set of prime numbers less than 40.
     let primes =
