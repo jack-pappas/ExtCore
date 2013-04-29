@@ -27,6 +27,16 @@ open NUnit.Framework
 open FsCheck
 
 
+/// Asserts that two values are equal.
+let assertEqual<'T when 'T : equality> (expected : 'T) (actual : 'T) =
+    Assert.AreEqual (expected, actual)
+
+
+
+
+(*  Test helpers from the F# PowerPack.
+    TODO : Get rid of most of these -- they can be replaced with FsUnit and built-in NUnit functions. *)
+
 let test msg b = Assert.IsTrue (b, "MiniTest '" + msg + "'")
 let logMessage msg = 
     System.Console.WriteLine("LOG:" + msg)
