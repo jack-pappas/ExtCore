@@ -27,99 +27,6 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Thread-safe functional programming operators for mutable instances of System.Collections.Generic.IDictionary.
-module Safe =
-    /// Attempts to retrieve the value associated with the specified key.
-    [<CompiledName("TryFind")>]
-    let tryFind key (dict : IDictionary<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "dict" dict
-
-        match lock dict <| fun () -> dict.TryGetValue key with
-        | false, _ ->
-            None
-        | true, value ->
-            Some value
-        
-    /// Lookup an element in the Dictionary, raising KeyNotFoundException if
-    /// the Dictionary does not contain an element with the specified key.
-    [<CompiledName("Find")>]
-    let inline find key (dict : IDictionary<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "dict" dict
-
-        lock dict <| fun () -> dict.[key]
-
-    /// Adds a new entry to the Dictionary.
-    [<CompiledName("Add")>]
-    let add key value (dict : IDictionary<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "dict" dict
-
-        if dict.IsReadOnly then
-            invalidOp "Cannot add an entry to a read-only dictionary."
-        lock dict <| fun () ->
-            dict.Add (key, value)
-
-    /// Updates an existing entry in the dictionary with a new value,
-    /// raising KeyNotFoundException if the Dictionary does not
-    /// contain an element with the specified key.
-    [<CompiledName("Update")>]
-    let update key value (dict : IDictionary<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "dict" dict
-
-        if dict.IsReadOnly then
-            invalidOp "Cannot update an entry in a read-only dictionary."
-        lock dict <| fun () ->
-            if dict.ContainsKey key then
-                dict.[key] <- value
-            else
-                // TODO : Return a better error message
-                //keyNotFound ""
-                raise <| System.Collections.Generic.KeyNotFoundException ()
-
-    /// Removes the entry with the specified key from the Dictionary,
-    /// returning a value indicating the success of the operation.
-    [<CompiledName("Remove")>]
-    let remove (key : 'Key) (dict : IDictionary<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "dict" dict
-
-        if dict.IsReadOnly then
-            invalidOp "Cannot remove an entry from a read-only dictionary."
-        lock dict <| fun () ->
-            dict.Remove key
-
-    /// Updates the value of an entry (which has the specified key)
-    /// in the Dictionary, or creates a new entry if one doesn't exist.
-    /// If the Dictionary is read-only, an InvalidOperationException is raised.
-    [<CompiledName("UpdateOrAdd")>]
-    let updateOrAdd key value (dict : IDictionary<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "dict" dict
-            
-        if dict.IsReadOnly then
-            invalidOp "Cannot update or add an entry to a read-only dictionary."
-        lock dict <| fun () ->
-            dict.[key] <- value
-
-    /// Creates an immutable copy of a Dictionary.
-    /// The entries are shallow-copied to the created Dictionary; that is,
-    /// reference-typed keys and values will reference the same instances as
-    /// in the mutable Dictionary, so care should be taken when using mutable keys and values.
-    [<CompiledName("Immutable")>]
-    let immutable (dictionary : IDictionary<'Key, 'T>) =
-        // Preconditions
-        checkNonNull "dictionary" dictionary
-
-        lock dictionary <| fun () ->
-            dictionary
-            |> Seq.map (fun kvp ->
-                kvp.Key, kvp.Value)
-            |> dict
-
-
 /// Views the keys of the Dictionary as a sequence.
 [<CompiledName("Keys")>]
 let inline keys (dictionary : IDictionary<'Key, 'T>) =
@@ -351,3 +258,95 @@ let partition partitioner (dictionary : IDictionary<'Key, 'T>) =
 let readonly (dictionary : IDictionary<'Key, 'T>) =
     dict <| toSeq dictionary
 
+
+/// Thread-safe functional programming operators for mutable instances of System.Collections.Generic.IDictionary.
+module Safe =
+    /// Attempts to retrieve the value associated with the specified key.
+    [<CompiledName("TryFind")>]
+    let tryFind key (dict : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dict" dict
+
+        match lock dict <| fun () -> dict.TryGetValue key with
+        | false, _ ->
+            None
+        | true, value ->
+            Some value
+        
+    /// Lookup an element in the Dictionary, raising KeyNotFoundException if
+    /// the Dictionary does not contain an element with the specified key.
+    [<CompiledName("Find")>]
+    let inline find key (dict : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dict" dict
+
+        lock dict <| fun () -> dict.[key]
+
+    /// Adds a new entry to the Dictionary.
+    [<CompiledName("Add")>]
+    let add key value (dict : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dict" dict
+
+        if dict.IsReadOnly then
+            invalidOp "Cannot add an entry to a read-only dictionary."
+        lock dict <| fun () ->
+            dict.Add (key, value)
+
+    /// Updates an existing entry in the dictionary with a new value,
+    /// raising KeyNotFoundException if the Dictionary does not
+    /// contain an element with the specified key.
+    [<CompiledName("Update")>]
+    let update key value (dict : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dict" dict
+
+        if dict.IsReadOnly then
+            invalidOp "Cannot update an entry in a read-only dictionary."
+        lock dict <| fun () ->
+            if dict.ContainsKey key then
+                dict.[key] <- value
+            else
+                // TODO : Return a better error message
+                //keyNotFound ""
+                raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    /// Removes the entry with the specified key from the Dictionary,
+    /// returning a value indicating the success of the operation.
+    [<CompiledName("Remove")>]
+    let remove (key : 'Key) (dict : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dict" dict
+
+        if dict.IsReadOnly then
+            invalidOp "Cannot remove an entry from a read-only dictionary."
+        lock dict <| fun () ->
+            dict.Remove key
+
+    /// Updates the value of an entry (which has the specified key)
+    /// in the Dictionary, or creates a new entry if one doesn't exist.
+    /// If the Dictionary is read-only, an InvalidOperationException is raised.
+    [<CompiledName("UpdateOrAdd")>]
+    let updateOrAdd key value (dict : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dict" dict
+            
+        if dict.IsReadOnly then
+            invalidOp "Cannot update or add an entry to a read-only dictionary."
+        lock dict <| fun () ->
+            dict.[key] <- value
+
+    /// Creates an immutable copy of a Dictionary.
+    /// The entries are shallow-copied to the created Dictionary; that is,
+    /// reference-typed keys and values will reference the same instances as
+    /// in the mutable Dictionary, so care should be taken when using mutable keys and values.
+    [<CompiledName("Immutable")>]
+    let immutable (dictionary : IDictionary<'Key, 'T>) =
+        // Preconditions
+        checkNonNull "dictionary" dictionary
+
+        lock dictionary <| fun () ->
+            dictionary
+            |> Seq.map (fun kvp ->
+                kvp.Key, kvp.Value)
+            |> dict
