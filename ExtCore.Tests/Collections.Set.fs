@@ -279,7 +279,30 @@ let disjoint () : unit =
 
 [<TestCase>]
 let countWith () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty set.
+    Set.empty
+    |> Set.countWith (fun x ->
+        x % 7 = 0)
+    |> should equal 0
+
+    // Sample usage test cases.
+    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+    |> Set.ofArray
+    |> Set.countWith (fun x ->
+        x < 0)
+    |> should equal 0
+
+    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+    |> Set.ofArray
+    |> Set.countWith (fun x ->
+        x % 7 = 0)
+    |> should equal 1
+
+    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+    |> Set.ofArray
+    |> Set.countWith (fun x ->
+        x % 3 = 0)
+    |> should equal 4
 
 
 module Cartesian =

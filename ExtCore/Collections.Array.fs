@@ -524,8 +524,8 @@ let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) (state : 'State) (array
 
 /// Applies a function to each character in the string and the character which
 /// proceeds it, threading an accumulator argument through the computation.
-[<CompiledName("FoldPairwiseBack")>]
-let foldPairwiseBack (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
+[<CompiledName("FoldBackPairwise")>]
+let foldBackPairwise (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
     // Preconditions
     checkNonNull "array" array
 
@@ -538,7 +538,7 @@ let foldPairwiseBack (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (sta
 
         // Fold over each pair of elements in the array.
         for i = len - 1 downto 1 do
-            state <- folder.Invoke (array.[i], array.[i + 1], state)
+            state <- folder.Invoke (array.[i], array.[i - 1], state)
 
         // Return the final state value.
         state

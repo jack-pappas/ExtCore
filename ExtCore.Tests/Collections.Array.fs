@@ -326,12 +326,45 @@ let chooseiInPlace () : unit =
 
 [<TestCase>]
 let countWith () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty array.
+    Array.empty
+    |> Array.countWith (fun x ->
+        x % 7 = 0)
+    |> should equal 0
+
+    // Sample usage test cases.
+    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+    |> Array.countWith (fun x ->
+        x < 0)
+    |> should equal 0
+
+    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+    |> Array.countWith (fun x ->
+        x % 7 = 0)
+    |> should equal 1
+
+    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+    |> Array.countWith (fun x ->
+        x % 3 = 0)
+    |> should equal 4
 
 [<TestCase>]
 let foldPairwise () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Count the number of occurrences where adjacent characters are the same.
+    (0, "mississippi".ToCharArray ())
+    ||> Array.foldPairwise (fun count x y ->
+        if x = y then count + 1 else count)
+    |> should equal 3
+
+    (0, [| 0; 1; 1; 2; 3; 5; 8; 13; 21; 34; 55; 89; 144; |])
+    ||> Array.foldPairwise (fun diffSum x y ->
+        diffSum + (y - x))
+    |> should equal 144
 
 [<TestCase>]
-let foldPairwiseBack () : unit =
-    Assert.Ignore "Test not yet implemented."
+let foldBackPairwise () : unit =
+    // Count the number of occurrences where adjacent characters are the same.
+    ("mississippi".ToCharArray (), 0)
+    ||> Array.foldBackPairwise (fun x y count ->
+        if x = y then count + 1 else count)
+    |> should equal 3
