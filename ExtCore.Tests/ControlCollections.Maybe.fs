@@ -221,19 +221,151 @@ module Array =
 
     [<Test>]
     let map2 () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        (Array.empty, Array.empty)
+        ||> Maybe.Array.map2 (fun _ _ -> None)
+        |> should equal (Some Array.empty)
+
+        // Sample usage test cases.
+        ([| 0..4 |], [| 1; 1; 2; 3; 5; |])
+        ||> Maybe.Array.map2 (fun nat fibo ->
+            let x = nat + fibo
+            if x >= 10 then None
+            else Some x)
+        |> should equal (Some [| 1; 2; 4; 6; 9; |])
+
+        ([| 0..5 |], [| 1; 1; 2; 3; 5; 8; |])
+        ||> Maybe.Array.map2 (fun nat fibo ->
+            let x = nat + fibo
+            if x >= 10 then None
+            else Some x)
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ([| 0..5 |], [| 1; 1; 2; 3; 5; 8; |])
+            ||> Maybe.Array.map2 (fun nat fibo ->
+                incr iterationCount
+                let x = nat + fibo
+                if x >= 2 then None
+                else Some x)
+            |> should equal None
+
+            !iterationCount |> should equal 2
+
+    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    let ``map2 raises exn when arrays have different lengths`` () : unit =
+        ([| 0..4 |], [| 0..7|])
+        ||> Maybe.Array.map2 (fun _ _ -> None)
+        |> ignore
 
     [<Test>]
     let fold () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        ("", Array.empty)
+        ||> Maybe.Array.fold (fun _ _ -> None)
+        |> should equal (Some "")
+
+        // Sample usage test cases.
+        ("", [| 0..4 |])
+        ||> Maybe.Array.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal (Some "abcde")
+
+        ("", [| 0..5 |])
+        ||> Maybe.Array.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ("", [| 0..5 |])
+            ||> Maybe.Array.fold (fun str x ->
+                incr iterationCount
+                if x <> 0 && x % 2 = 0 then None
+                else Some (str + ((char (int 'a' + x)).ToString ())))
+            |> should equal None
+
+            !iterationCount |> should equal 3
 
     [<Test>]
     let foldi () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        ("", Array.empty)
+        ||> Maybe.Array.foldi (fun _ _ _ -> None)
+        |> should equal (Some "")
+
+        // Sample usage test cases.
+        ("", [| 0..4 |])
+        ||> Maybe.Array.foldi (fun idx str x ->
+            let y = x * idx
+            if y <> 0 && y % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal (Some "abcde")
+
+        ("", [| 0..5 |])
+        ||> Maybe.Array.foldi (fun idx str x ->
+            let y = x * idx
+            if y <> 0 && y % 5 = 0 then None
+            else Some (str + ((char (int 'a' + x)).ToString ())))
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ("", [| 0..5 |])
+            ||> Maybe.Array.foldi (fun idx str x ->
+                incr iterationCount
+                let y = x * idx
+                if y <> 0 && y % 2 = 0 then None
+                else Some (str + ((char (int 'a' + x)).ToString ())))
+            |> should equal None
+
+            !iterationCount |> should equal 3
 
     [<Test>]
     let reduce () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Sample usage test cases.
+        [| 0..4 |]
+        |> Maybe.Array.reduce (fun x y ->
+            let z = x + y
+            if z > 10 then None
+            else Some z)
+        |> should equal (Some 10)
+
+        [| 0..5 |]
+        |> Maybe.Array.reduce (fun x y ->
+            let z = x + y
+            if z > 10 then None
+            else Some z)
+        |> should equal None
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            [| 0..5 |]
+            |> Maybe.Array.reduce (fun x y ->
+                incr iterationCount
+                let z = x + y
+                if z > 5 then None
+                else Some z)
+            |> should equal None
+
+            !iterationCount |> should equal 3
+
+    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    let ``reduce raises exn for empty array`` () : unit =
+        Array.empty
+        |> Maybe.Array.reduce (fun _ _ -> None)
+        |> ignore
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.List module.
