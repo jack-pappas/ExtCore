@@ -424,6 +424,20 @@ module Option =
 /// Additional functional operators on Choice<_,_> values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
+    //
+    [<CompiledName("IsResult")>]
+    let inline isResult (choice : Choice<'T, 'Error>) : bool =
+        match choice with
+        | Choice1Of2 _ -> true
+        | Choice2Of2 _ -> false
+
+    //
+    [<CompiledName("IsError")>]
+    let inline isError (choice : Choice<'T, 'Error>) : bool =
+        match choice with
+        | Choice1Of2 _ -> false
+        | Choice2Of2 _ -> true
+
     /// <summary>
     /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
     /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
