@@ -1243,7 +1243,7 @@ module IntSet =
         
         set.Contains key
 
-    //
+    /// Returns the lowest element in the set according to an unsigned integer comparison.
     [<CompiledName("MinElement")>]
     let inline minElement (set : IntSet) : int =
         // Preconditions
@@ -1251,7 +1251,7 @@ module IntSet =
 
         set.MinElement
 
-    //
+    /// Returns the lowest element in the set according to a signed integer comparison.
     [<CompiledName("MinElementSigned")>]
     let inline minElementSigned (set : IntSet) : int =
         // Preconditions
@@ -1259,7 +1259,7 @@ module IntSet =
 
         set.MinElementSigned
 
-    //
+    /// Returns the highest element in the set according to an unsigned integer comparison.
     [<CompiledName("MaxElement")>]
     let inline maxElement (set : IntSet) : int =
         // Preconditions
@@ -1267,7 +1267,7 @@ module IntSet =
 
         set.MaxElement
 
-    //
+    /// Returns the highest element in the set according to a signed integer comparison.
     [<CompiledName("MaxElementSigned")>]
     let inline maxElementSigned (set : IntSet) : int =
         // Preconditions
@@ -1622,6 +1622,54 @@ module TagSet =
         checkNonNull "set" set
 
         set.Contains (int key)
+
+    /// Returns the lowest element in the set according to an unsigned integer comparison.
+    [<CompiledName("MinElement")>]
+    let inline minElement (set : TagSet<'Tag>) : int<'Tag> =
+        // Retype as IntSet
+        let set : IntSet = retype set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MinElement
+        |> retype
+
+    /// Returns the lowest element in the set according to a signed integer comparison.
+    [<CompiledName("MinElementSigned")>]
+    let inline minElementSigned (set : TagSet<'Tag>) : int<'Tag> =
+        // Retype as IntSet
+        let set : IntSet = retype set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MinElementSigned
+        |> retype
+
+    /// Returns the highest element in the set according to an unsigned integer comparison.
+    [<CompiledName("MaxElement")>]
+    let inline maxElement (set : TagSet<'Tag>) : int<'Tag> =
+        // Retype as IntSet
+        let set : IntSet = retype set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MaxElement
+        |> retype
+
+    /// Returns the highest element in the set according to a signed integer comparison.
+    [<CompiledName("MaxElementSigned")>]
+    let inline maxElementSigned (set : TagSet<'Tag> : int<'Tag> =
+        // Retype as IntSet
+        let set : IntSet = retype set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.MaxElementSigned
+        |> retype
 
     /// Computes the union of the two sets.
     [<CompiledName("Union")>]
