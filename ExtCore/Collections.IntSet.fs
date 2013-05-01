@@ -1661,7 +1661,7 @@ module TagSet =
 
     /// Returns the highest element in the set according to a signed integer comparison.
     [<CompiledName("MaxElementSigned")>]
-    let inline maxElementSigned (set : TagSet<'Tag> : int<'Tag> =
+    let inline maxElementSigned (set : TagSet<'Tag>) : int<'Tag> =
         // Retype as IntSet
         let set : IntSet = retype set
 
