@@ -106,14 +106,14 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         Map.find value inverseMap
 
     //
-    member __.Paired (x, y) =
+    member __.Paired (key, value) =
         // NOTE : We only need to check one of the maps, because all
         // Bimap functions maintain the invariant.
-        match Map.tryFind x map with
+        match Map.tryFind key map with
         | None ->
             false
-        | Some value ->
-            value = y
+        | Some v ->
+            v = value
 
     //
     member this.Remove key =
@@ -150,13 +150,13 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         Map.tryFind value inverseMap
 
     //
-    static member Singleton (x, y) : Bimap<'Key, 'Value> =
+    static member Singleton (key, value) : Bimap<'Key, 'Value> =
         Bimap (
-            Map.singleton x y,
-            Map.singleton y x)
+            Map.singleton key value,
+            Map.singleton value key)
 
     //
-    member this.Add (x, y) =
+    member this.Add (key, value) =
         // Add the values to both maps.
         // As in Map, we overwrite any existing entry; however, we have to be
         // a bit more thorough here to ensure the invariant is maintained.
@@ -165,18 +165,20 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         // It'd also be nice if we could do this in a way that detects if the values
         // are already present and bound to each other, so we don't need to alter the Bimap at all...
         // TODO : Create a private "AddUnsafe" method to avoid the lookups in TryAdd
-        this.Remove(x).RemoveValue(y).TryAdd (x, y)
+        this.Remove(key)
+            .RemoveValue(value)
+            .TryAdd (key, value)
 
     //
-    member this.TryAdd (x, y) =
+    member this.TryAdd (key, value) =
         // Check that neither value is already bound in the Bimap
         // before adding them; if either already belongs to the map
         // return the original Bimap.
-        match Map.tryFind x map, Map.tryFind y inverseMap with
+        match Map.tryFind key map, Map.tryFind value inverseMap with
         | None, None ->
             Bimap (
-                Map.add x y map,
-                Map.add y x inverseMap)
+                Map.add key value map,
+                Map.add value key inverseMap)
 
         | _, _ ->
             // NOTE : We also return the original map when *both* values already
@@ -200,11 +202,11 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
     member this.Filter (predicate : 'Key -> 'Value -> bool) =
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
-        this.Fold ((fun (bimap : Bimap<_,_>) x y ->
-            if predicate.Invoke (x, y) then
+        this.Fold ((fun (bimap : Bimap<_,_>) key value ->
+            if predicate.Invoke (key, value) then
                 bimap
             else
-                bimap.Remove x), this)
+                bimap.Remove key), this)
 
     //
     member this.Partition (predicate : 'Key -> 'Value -> bool) =
@@ -213,12 +215,12 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         // Partition efficiently by removing elements from the original map
         // and adding them to a new map when the predicate returns false
         // (instead of creating two new maps).
-        this.Fold ((fun (trueBimap : Bimap<_,_>, falseBimap : Bimap<_,_>) x y ->
-            if predicate.Invoke (x, y) then
+        this.Fold ((fun (trueBimap : Bimap<_,_>, falseBimap : Bimap<_,_>) key value ->
+            if predicate.Invoke (key, value) then
                 trueBimap, falseBimap
             else
-                trueBimap.Remove x,
-                falseBimap.Add (x, y)), (this, empty))
+                trueBimap.Remove key,
+                falseBimap.Add (key, value)), (this, empty))
 
     //
     static member OfSeq sequence : Bimap<'Key, 'Value> =
@@ -226,8 +228,8 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         //checkNonNull "sequence" sequence
 
         (empty, sequence)
-        ||> Seq.fold (fun bimap (x, y) ->
-            bimap.Add (x, y))
+        ||> Seq.fold (fun bimap (key, value) ->
+            bimap.Add (key, value))
 
     //
     static member OfList list : Bimap<'Key, 'Value> =
@@ -235,8 +237,8 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         checkNonNull "list" list
 
         (empty, list)
-        ||> List.fold (fun bimap (x, y) ->
-            bimap.Add (x, y))
+        ||> List.fold (fun bimap (key, value) ->
+            bimap.Add (key, value))
 
     //
     static member OfArray array : Bimap<'Key, 'Value> =
@@ -244,8 +246,8 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
         checkNonNull "array" array
 
         (empty, array)
-        ||> Array.fold (fun bimap (x, y) ->
-            bimap.Add (x, y))
+        ||> Array.fold (fun bimap (key, value) ->
+            bimap.Add (key, value))
 
     //
     static member OfMap map : Bimap<'Key, 'Value> =
@@ -288,9 +290,9 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
     member internal this.LeftKvpArray () : KeyValuePair<'Key, 'Value>[] =
         let elements = ResizeArray (1024)
 
-        this.Iterate <| fun x y ->
+        this.Iterate <| fun key value ->
             elements.Add (
-                KeyValuePair (x, y))
+                KeyValuePair (key, value))
 
         elements.ToArray ()
 
@@ -298,9 +300,9 @@ type Bimap<'Key, 'Value when 'Key : comparison and 'Value : comparison>
     member internal this.RightKvpArray () : KeyValuePair<'Value, 'Key>[] =
         let elements = ResizeArray (1024)
 
-        this.Iterate <| fun x y ->
+        this.Iterate <| fun key value ->
             elements.Add (
-                KeyValuePair (y, x))
+                KeyValuePair (value, key))
 
         elements.ToArray ()
 
@@ -338,12 +340,12 @@ module Bimap =
         and 'T : comparison> : Bimap<'Key, 'T> =
         Bimap<'Key, 'T>.Empty
 
-    //
+    /// The map containing the given binding.
     [<CompiledName("Singleton")>]
-    let inline singleton x y : Bimap<'Key, 'T> =
-        Bimap.Singleton (x, y)
+    let inline singleton key value : Bimap<'Key, 'T> =
+        Bimap.Singleton (key, value)
 
-    //
+    /// Is the map empty?
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (bimap : Bimap<'Key, 'T>) : bool =
         // Preconditions
@@ -351,7 +353,7 @@ module Bimap =
 
         bimap.IsEmpty
 
-    //
+    /// Returns the number of bindings in the map.
     [<CompiledName("Count")>]
     let inline count (bimap : Bimap<'Key, 'T>) : int =
         // Preconditions
@@ -359,7 +361,7 @@ module Bimap =
 
         bimap.Count
 
-    //
+    /// Tests if an element is in the domain of the map.
     [<CompiledName("ContainsKey")>]
     let inline containsKey key (bimap : Bimap<'Key, 'T>) : bool =
         // Preconditions
@@ -367,7 +369,7 @@ module Bimap =
 
         bimap.ContainsKey key
 
-    //
+    /// Tests if a value is in the range of the map.
     [<CompiledName("ContainsValue")>]
     let inline containsValue value (bimap : Bimap<'Key, 'T>) : bool =
         // Preconditions
@@ -375,7 +377,7 @@ module Bimap =
 
         bimap.ContainsValue value
 
-    //
+    /// Tests if an element and a value are bound to each other in the map.
     [<CompiledName("Paired")>]
     let inline paired key value (bimap : Bimap<'Key, 'T>) : bool =
         // Preconditions
@@ -383,7 +385,8 @@ module Bimap =
 
         bimap.Paired (key, value)
 
-    //
+    /// Lookup an element in the map, returning a Some value if the
+    /// element is in the domain of the map and None if not.
     [<CompiledName("TryFind")>]
     let inline tryFind key (bimap : Bimap<'Key, 'T>) : 'T option =
         // Preconditions
@@ -391,7 +394,8 @@ module Bimap =
 
         bimap.TryFind key
 
-    //
+    /// Lookup a value in the map, returning a Some value if the
+    /// element is in the range of the map and None if not.
     [<CompiledName("TryFindValue")>]
     let inline tryFindValue value (bimap : Bimap<'Key, 'T>) : 'Key option =
         // Preconditions
@@ -399,7 +403,8 @@ module Bimap =
 
         bimap.TryFindValue value
 
-    //
+    /// Lookup an element in the map, raising KeyNotFoundException
+    /// if no binding exists in the map.
     [<CompiledName("Find")>]
     let inline find key (bimap : Bimap<'Key, 'T>) : 'T =
         // Preconditions
@@ -407,7 +412,8 @@ module Bimap =
         
         bimap.Find key
 
-    //
+    /// Lookup a value in the map, raising KeyNotFoundException
+    /// if no binding exists in the map.
     [<CompiledName("FindValue")>]
     let inline findValue value (bimap : Bimap<'Key, 'T>) : 'Key =
         // Preconditions
@@ -415,7 +421,8 @@ module Bimap =
 
         bimap.FindValue value
 
-    //
+    /// Removes an element from the domain of the map.
+    /// No exception is raised if the element is not present.
     [<CompiledName("Remove")>]
     let inline remove key (bimap : Bimap<'Key, 'T>) : Bimap<'Key, 'T> =
         // Preconditions
@@ -423,7 +430,8 @@ module Bimap =
 
         bimap.Remove key
 
-    //
+    /// Removes a value from the range of the map.
+    /// No exception is raised if the value is not present.
     [<CompiledName("RemoveValue")>]
     let inline removeValue value (bimap : Bimap<'Key, 'T>) : Bimap<'Key, 'T> =
         // Preconditions
@@ -431,47 +439,50 @@ module Bimap =
 
         bimap.RemoveValue value
 
-    //
+    /// Returns a new map with the binding added to the given map.
     [<CompiledName("Add")>]
-    let inline add x y (bimap : Bimap<'Key, 'T>) : Bimap<'Key, 'T> =
+    let inline add key value (bimap : Bimap<'Key, 'T>) : Bimap<'Key, 'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.Add (x, y)
+        bimap.Add (key, value)
 
-    //
+    /// Returns a new map with the binding added to the given map, but only when
+    /// neither the key nor the value are already bound. If the key and/or value
+    /// are already bound, the map is returned unchanged.
     [<CompiledName("TryAdd")>]
-    let inline tryAdd x y (bimap : Bimap<'Key, 'T>) : Bimap<'Key, 'T> =
+    let inline tryAdd key value (bimap : Bimap<'Key, 'T>) : Bimap<'Key, 'T> =
         // Preconditions
         checkNonNull "bimap" bimap
 
-        bimap.TryAdd (x, y)
+        bimap.TryAdd (key, value)
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq sequence : Bimap<'Key, 'T> =
         // Preconditions checked by the member.
         Bimap<_,_>.OfSeq sequence
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfList")>]
     let inline ofList list : Bimap<'Key, 'T> =
         // Preconditions checked by the member.
         Bimap<_,_>.OfList list
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfArray")>]
     let inline ofArray array : Bimap<'Key, 'T> =
         // Preconditions checked by the member.
         Bimap<_,_>.OfArray array
 
-    //
+    /// Returns a new map made from the given bindings.
     [<CompiledName("OfMap")>]
     let inline ofMap map : Bimap<'Key, 'T> =
         // Preconditions checked by the member.
         Bimap<_,_>.OfMap map
 
-    //
+    /// Views the collection as an enumerable sequence of pairs.
+    /// The sequence will be ordered by the keys of the map.
     [<CompiledName("ToSeq")>]
     let inline toSeq (bimap : Bimap<'Key, 'T>) : seq<'Key * 'T> =
         // Preconditions
@@ -479,7 +490,8 @@ module Bimap =
 
         bimap.ToSeq ()
 
-    //
+    /// Returns a list of all key-value pairs in the mapping.
+    /// The list will be ordered by the keys of the map.
     [<CompiledName("ToList")>]
     let inline toList (bimap : Bimap<'Key, 'T>) : ('Key * 'T) list =
         // Preconditions
@@ -487,7 +499,8 @@ module Bimap =
 
         bimap.ToList ()
 
-    //
+    /// Returns an array of all key-value pairs in the mapping.
+    /// The array will be ordered by the keys of the map.
     [<CompiledName("ToArray")>]
     let inline toArray (bimap : Bimap<'Key, 'T>) : ('Key * 'T)[] =
         // Preconditions
@@ -495,7 +508,7 @@ module Bimap =
 
         bimap.ToArray ()
 
-    //
+    /// Returns a Map containing the same key-value pairs as the given Bimap.
     [<CompiledName("ToMap")>]
     let inline toMap (bimap : Bimap<'Key, 'T>) : Map<'Key, 'T> =
         // Preconditions
@@ -503,7 +516,7 @@ module Bimap =
 
         bimap.ToMap ()
 
-    //
+    /// Applies the given function to each binding in the map.
     [<CompiledName("Iterate")>]
     let inline iter (action : 'Key -> 'T -> unit) (bimap : Bimap<'Key, 'T>) : unit =
         // Preconditions
@@ -511,7 +524,7 @@ module Bimap =
 
         bimap.Iterate action
 
-    //
+    /// Folds over the bindings in the map.
     [<CompiledName("Fold")>]
     let inline fold (folder : 'State -> 'Key -> 'T -> 'State)
             (state : 'State) (bimap : Bimap<'Key, 'T>) : 'State =
@@ -520,7 +533,7 @@ module Bimap =
 
         bimap.Fold (folder, state)
 
-    //
+    /// Folds over the bindings in the map.
     [<CompiledName("FoldBack")>]
     let inline foldBack (folder : 'Key -> 'T -> 'State -> 'State)
             (bimap : Bimap<'Key, 'T>) (state : 'State) : 'State =
@@ -529,7 +542,8 @@ module Bimap =
 
         bimap.FoldBack (folder, state)
 
-    //
+    /// Builds a new map containing only the bindings for which
+    /// the given predicate returns 'true'.
     [<CompiledName("Filter")>]
     let inline filter (predicate : 'Key -> 'T -> bool) (bimap : Bimap<'Key, 'T>) : Bimap<'Key, 'T> =
         // Preconditions
@@ -537,7 +551,8 @@ module Bimap =
 
         bimap.Filter predicate
 
-    //
+    /// Builds two new maps, one containing the bindings for which the given predicate
+    /// returns 'true', and the other the remaining bindings.
     [<CompiledName("Partition")>]
     let inline partition (predicate : 'Key -> 'T -> bool) (bimap : Bimap<'Key, 'T>)
             : Bimap<'Key, 'T> * Bimap<'Key, 'T> =
