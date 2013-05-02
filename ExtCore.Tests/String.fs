@@ -1024,7 +1024,8 @@ amet"
                 ||> String.Split.foldi
                     ([| ','; |], StringSplitOptions.None)
                     (fun state index substr ->
-                        state + ExtCore.Substring.toString substr)
+                        state + (
+                            index.ToString() + ExtCore.Substring.toString substr))
                 |> String.isEmpty
                 |> should be True
 

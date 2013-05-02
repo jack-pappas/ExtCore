@@ -17,6 +17,8 @@ limitations under the License.
 
 *)
 
+(* NOTE : This file has been modified from it's original form in the F# PowerPack. *)
+
 /// Unit tests for the ExtCore.Collections.ResizeArray module.
 module Tests.ExtCore.Collections.ResizeArray
 
@@ -24,9 +26,10 @@ open NUnit.Framework
 open FsUnit
 //open FsCheck
 
-(* NOTES :
-    - Some unit tests have been imported from the F# PowerPack.
-*)
+
+// TODO : Remove this ASAP, replacing any uses with direct calls to Assert.IsTrue.
+let private test msg condition =
+    Assert.IsTrue (condition, sprintf "MiniTest '%s'" msg)
 
 
 [<Test>]

@@ -17,6 +17,8 @@ limitations under the License.
 
 *)
 
+(* Attribution :    The NUnitRunner class was adapted from some test code in the FSharpx project. *)
+
 /// Helper functions for implementing unit tests.
 [<AutoOpen>]
 module TestHelpers
@@ -25,137 +27,168 @@ open System
 open System.Collections.Generic
 open NUnit.Framework
 open FsUnit
+open FsCheck
 
+
+(* Fluent test helpers for use with NUnit and FsUnit. *)
 
 /// Asserts that two values are equal.
 let inline assertEqual<'T when 'T : equality> (expected : 'T) (actual : 'T) =
     Assert.AreEqual (expected, actual)
 
+/// Asserts that two objects are identical.
+let inline assertSame<'T when 'T : not struct> (expected : 'T) (actual : 'T) =
+    Assert.AreSame (expected, actual)
 
+/// Tests that the specified condition is true.
+/// If not, calls Assert.Fail with a formatted string.
+let inline assertf (condition : bool) format : 'T =
+    Printf.ksprintf (fun str -> if not condition then Assert.Fail str) format
+
+
+(* Fluent test helpers for use with NUnit and FsCheck. *)
+
+/// An FsCheck runner which reports FsCheck test results to NUnit.
+type private NUnitRunner () =
+    interface IRunner with
+        member x.OnStartFixture _ = ()
+        member x.OnArguments (_,_,_) = ()
+        member x.OnShrink (_,_) = ()
+        member x.OnFinished (name, result) =
+            match result with
+            | TestResult.True data ->
+                // TODO : Log the result data.
+                Runner.onFinishedToString name result
+                |> stdout.WriteLine
+
+            | TestResult.Exhausted data ->
+                // TODO : Log the result data.
+                Runner.onFinishedToString name result
+                |> Assert.Inconclusive
+
+            | TestResult.False (_,_,_,_,_) ->
+                // TODO : Log more information about the test failure.
+                Runner.onFinishedToString name result
+                |> Assert.Fail
+
+/// An FsCheck configuration which logs test results to NUnit.
+let private nUnitConfig = {
+    Config.Default with
+        Runner = NUnitRunner (); }
+
+/// Tests that the specified property is correct.
+let assertProp testName (property : 'Testable) =
+    Check.One (testName, nUnitConfig, property)
 
 
 (*  Test helpers from the F# PowerPack.
     TODO : Get rid of most of these -- they can be replaced with FsUnit and built-in NUnit functions. *)
 
-let test msg b = Assert.IsTrue (b, "MiniTest '" + msg + "'")
-let logMessage msg =
-    System.Console.WriteLine("LOG:" + msg)
-//    System.Diagnostics.Trace.WriteLine("LOG:" + msg)
-let check msg v1 v2 = test msg (v1 = v2)
-let reportFailure msg = Assert.Fail msg
-
-let throws (f : unit -> 'T) =
-    Assert.Throws (TestDelegate (f >> ignore))
-
 let numActiveEnumerators = ref 0
 
-let countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd (seq: seq<'a>) =
-    let enumerator () = 
-        numActiveEnumerators := !numActiveEnumerators + 1;
-        let disposed = ref false in
-        let endReached = ref false in
-        let ie = seq.GetEnumerator() in
-        { new System.Collections.Generic.IEnumerator<'a> with 
-            member x.Current =
-                test "rvlrve0" (not !endReached);
-                test "rvlrve1" (not !disposed);
+let countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd (seq : seq<'T>) =
+    let enumerator () =
+        numActiveEnumerators := !numActiveEnumerators + 1
+        let disposed = ref false
+        let endReached = ref false
+        let ie = seq.GetEnumerator ()
+        { new System.Collections.Generic.IEnumerator<'T> with
+            member __.Current =
+                Assert.IsFalse (!endReached, "MiniTest 'rvlrve0'")
+                Assert.IsFalse (!disposed, "MiniTest 'rvlrve1'")
                 ie.Current
-            member x.Dispose() = 
-                test "rvlrve2" !endReached;
-                test "rvlrve4" (not !disposed);
-                numActiveEnumerators := !numActiveEnumerators - 1;
-                disposed := true;
-                ie.Dispose() 
-        interface System.Collections.IEnumerator with 
-            member x.MoveNext() = 
-                test "rvlrve0" (not !endReached);
-                test "rvlrve3" (not !disposed);
-                endReached := not (ie.MoveNext());
+            member __.Dispose () =
+                Assert.IsTrue (!endReached, "MiniTest 'rvlrve2'")
+                Assert.IsFalse (!disposed, "MiniTest 'rvlrve4'")
+                numActiveEnumerators := !numActiveEnumerators - 1
+                disposed := true
+                ie.Dispose ()
+        interface System.Collections.IEnumerator with
+            member __.MoveNext () =
+                Assert.IsFalse (!endReached, "MiniTest 'rvlrve0'")
+                Assert.IsFalse (!disposed, "MiniTest 'rvlrve3'")
+                endReached := not <| ie.MoveNext ()
                 not !endReached
-            member x.Current = 
-                test "qrvlrve0" (not !endReached);
-                test "qrvlrve1" (not !disposed);
+            member __.Current =
+                Assert.IsFalse (!endReached, "MiniTest 'qrvlrve0'")
+                Assert.IsFalse (!disposed, "MiniTest 'qrvlrve1'")
                 box ie.Current
-            member x.Reset() = 
+            member __.Reset () =
                 ie.Reset()
-                } in
+                }
 
-    { new seq<'a> with 
-            member x.GetEnumerator() =  enumerator() 
+    { new seq<'T> with 
+            member __.GetEnumerator () = enumerator () 
         interface System.Collections.IEnumerable with 
-            member x.GetEnumerator() =  (enumerator() :> _) }
+            member __.GetEnumerator () = enumerator () :> _ }
 
-let countEnumeratorsAndCheckedDisposedAtMostOnce (seq: seq<'a>) =
-    let enumerator() = 
-        let disposed = ref false in
-        let endReached = ref false in
-        let ie = seq.GetEnumerator() in
-        numActiveEnumerators := !numActiveEnumerators + 1;
-        { new System.Collections.Generic.IEnumerator<'a> with 
+let countEnumeratorsAndCheckedDisposedAtMostOnce (seq : seq<'T>) =
+    let enumerator () =
+        let disposed = ref false
+        let endReached = ref false
+        let ie = seq.GetEnumerator ()
+        numActiveEnumerators := !numActiveEnumerators + 1
+        { new System.Collections.Generic.IEnumerator<'T> with
             member x.Current =
-                test "qrvlrve0" (not !endReached);
-                test "qrvlrve1" (not !disposed);
+                Assert.IsFalse (!endReached, "MiniTest 'qrvlrve0'")
+                Assert.IsFalse (!disposed, "MiniTest 'qrvlrve1'")
                 ie.Current
-            member x.Dispose() = 
-                test "qrvlrve4" (not !disposed);
-                numActiveEnumerators := !numActiveEnumerators - 1;
-                disposed := true;
-                ie.Dispose() 
-        interface System.Collections.IEnumerator with 
-            member x.MoveNext() = 
-                test "qrvlrve0" (not !endReached);
-                test "qrvlrve3" (not !disposed);
-                endReached := not (ie.MoveNext());
+            member x.Dispose () =
+                Assert.IsFalse (!disposed, "MiniTest 'qrvlrve4'")
+                numActiveEnumerators := !numActiveEnumerators - 1
+                disposed := true
+                ie.Dispose ()
+        interface System.Collections.IEnumerator with
+            member x.MoveNext () =
+                Assert.IsFalse (!endReached, "MiniTest 'qrvlrve0'")
+                Assert.IsFalse (!disposed, "MiniTest 'qrvlrve3'")
+                endReached := not <| ie.MoveNext ()
                 not !endReached
-            member x.Current = 
-                test "qrvlrve0" (not !endReached);
-                test "qrvlrve1" (not !disposed);
+            member x.Current =
+                Assert.IsFalse (!endReached, "MiniTest 'qrvlrve0'")
+                Assert.IsFalse (!disposed, "MiniTest 'qrvlrve1'")
                 box ie.Current
-            member x.Reset() = 
+            member __.Reset() =
                 ie.Reset()
-                } in
+                }
 
-    { new seq<'a> with 
-            member x.GetEnumerator() =  enumerator() 
+    { new seq<'T> with
+            member __.GetEnumerator () = enumerator () 
         interface System.Collections.IEnumerable with 
-            member x.GetEnumerator() =  (enumerator() :> _) }
+            member __.GetEnumerator () = enumerator () :> _ }
         
-/// Check that the lamda throws an exception of the given type. Otherwise
-/// calls Assert.Fail()
-let private checkThrowsExn<'a when 'a :> exn> (f : unit -> unit) : unit =
-    let funcThrowsAsExpected =
-        try
-            do f ()
+/// Check that the lambda throws an exception of the given type.
+/// Otherwise calls Assert.Fail().
+let private checkThrowsExn<'Exn when 'Exn :> exn> (f : unit -> unit) : unit =
+    try
+        do f ()
 
-            // Did not throw -- return an error message explaining this.
-            let msg = sprintf "The function did not throw an exception. (Expected: %s)" typeof<'a>.FullName
-            Some msg
-        with
-        | :? 'a ->
-            // The expected exception type was raised.
-            None
-        | ex ->
-            // The expected exception type was not raised.
-            let msg =
-                sprintf "The function raised an exception of type '%s'. (Expected: %s)"
-                    (ex.GetType().FullName) typeof<'a>.FullName
-            Some msg
-
-    match funcThrowsAsExpected with
-    | None -> ()
-    | Some msg ->
+        // Did not throw -- return an error message explaining this.
+        let msg = sprintf "The function did not throw an exception. (Expected: %s)" typeof<'Exn>.FullName
+        Assert.Fail msg
+    with
+    | :? 'Exn ->
+        // The expected exception type was raised, so there's nothing to do.
+        Assert.Pass ()
+    | ex ->
+        // The expected exception type was not raised.
+        let msg =
+            sprintf "The function raised an exception of type '%s'. (Expected: %s)"
+                (ex.GetType().FullName) typeof<'Exn>.FullName
         Assert.Fail msg
 
 // Illegitimate exceptions. Once we've scrubbed the library, we should add an
 // attribute to flag these exception's usage as a bug.
-let checkThrowsNullRefException      f = checkThrowsExn<NullReferenceException>   f
-let checkThrowsIndexOutRangException f = checkThrowsExn<IndexOutOfRangeException> f
+[<Obsolete>]
+let checkThrowsNullRefException = checkThrowsExn<NullReferenceException>
+[<Obsolete>]
+let checkThrowsIndexOutRangException = checkThrowsExn<IndexOutOfRangeException>
 
 // Legit exceptions
-let checkThrowsNotSupportedException f = checkThrowsExn<NotSupportedException>    f
-let checkThrowsArgumentException     f = checkThrowsExn<ArgumentException>        f
-let checkThrowsArgumentNullException f = checkThrowsExn<ArgumentNullException>    f
-let checkThrowsKeyNotFoundException  f = checkThrowsExn<KeyNotFoundException>     f
-let checkThrowsDivideByZeroException f = checkThrowsExn<DivideByZeroException>    f
-let checkThrowsInvalidOperationExn   f = checkThrowsExn<InvalidOperationException> f
+let checkThrowsNotSupportedException = checkThrowsExn<NotSupportedException>
+let checkThrowsArgumentException = checkThrowsExn<ArgumentException>
+let checkThrowsArgumentNullException = checkThrowsExn<ArgumentNullException>
+let checkThrowsKeyNotFoundException = checkThrowsExn<KeyNotFoundException>
+let checkThrowsDivideByZeroException = checkThrowsExn<DivideByZeroException>
+let checkThrowsInvalidOperationExn = checkThrowsExn<InvalidOperationException>
 
