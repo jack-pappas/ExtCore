@@ -467,58 +467,24 @@ type private PatriciaSet =
         | Empty, _ ->
             Empty
 
-    /// Is 'set1' a subset of 'set2'?
-    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
-        match set1, set2 with
-        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
-            if shorter (m1, m2) then
-                false
-            elif shorter (m2, m1) then
-                matchPrefix (p1, p2, m2) && (
-                    if zeroBit (p1, m2) then
-                        PatriciaSet.IsSubset (t1, l2)
-                    else
-                        PatriciaSet.IsSubset (t1, r2))
-            else
-                p1 = p2
-                && PatriciaSet.IsSubset (l1, l2)
-                && PatriciaSet.IsSubset (r1, r2)
-                
-        | Br (_,_,_,_), _ ->
-            false
-        | Lf k1, Lf k2 ->
-            k1 = k2
-        | (Lf k as t1), Br (p, m, l, r) ->
-            if not <| matchPrefix (k, p, m) then
-                false
-            elif zeroBit (k, m) then
-                PatriciaSet.IsSubset (t1, l)
-            else
-                PatriciaSet.IsSubset (t1, r)
-        | Lf _, Empty ->
-            false
-        | Empty, _ ->
-            true
-
-    /// Is 'set1' a superset of 'set2'?
-    static member IsSuperset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
-        PatriciaSet.IsSubset (set2, set1)
-
-    //
-    static member private SubmapCmp (t1 : PatriciaSet, t2 : PatriciaSet) : int =
+    /// Computes the containment ordering for two sets (i.e., determines if one set includes the other).
+    // Return values:
+    //  -1 : All values in 't1' are in 't2', and at least one value of 't2' is not in 't1'.
+    //   0 : The sets contain _exactly_ the same values.
+    //   1 : The sets are disjoint, i.e., 't1' contains at least one value which is not in 't2'.
+    static member private SubsetCompare (t1 : PatriciaSet, t2 : PatriciaSet) : int =
         match t1, t2 with
-        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+        | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then 1
             elif shorter (m2, m1) then
                 if not <| matchPrefix (p1, p2, m2) then 1
                 elif zeroBit (p1, m2) then
-                    PatriciaSet.SubmapCmp (t1, l2)
+                    PatriciaSet.SubsetCompare (t1, l2)
                 else
-                    PatriciaSet.SubmapCmp (t1, r2)
+                    PatriciaSet.SubsetCompare (t1, r2)
             elif p1 = p2 then
-                let left = PatriciaSet.SubmapCmp (l1, l2)
-                let right = PatriciaSet.SubmapCmp (r1, r2)
+                let left = PatriciaSet.SubsetCompare (l1, l2)
+                let right = PatriciaSet.SubsetCompare (r1, r2)
                 match left, right with
                 | 1, _
                 | _, 1 -> 1
@@ -528,27 +494,40 @@ type private PatriciaSet =
                 // The maps are disjoint.
                 1
 
-        | Br (_,_,_,_), _ -> 1
+        | Br (_,_,_,_), (Empty | Lf _) -> 1
         | Lf x, Lf y ->
             if x = y then 0
             else 1  // The maps are disjoint.
-        | Lf x, t ->
-            if PatriciaSet.Contains (x, t) then -1
-            else 1  // The maps are disjoint.
+
+        | Lf x, Br (p, m, l, r) ->
+            if not <| matchPrefix (x, p, m) then 1
+            elif zeroBit (x, m) then
+                match PatriciaSet.SubsetCompare (t1, l) with
+                | 1 -> 1
+                | _ -> -1
+            else
+                match PatriciaSet.SubsetCompare (t1, r) with
+                | 1 -> 1
+                | _ -> -1
+
+        | Lf _, Empty ->
+            // The maps are disjoint.
+            1
 
         | Empty, Empty -> 0
         | Empty, _ -> -1
 
-    /// Is 'set1' a proper subset of 'set2'?
-    static member IsProperSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
-        match PatriciaSet.SubmapCmp (set1, set2) with
-        | -1 -> true
+    /// Is 'set1' a subset of 'set2'?
+    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
+    static member IsSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+        match PatriciaSet.SubsetCompare (set1, set2) with
+        | -1 | 0 -> true
         | _ -> false
 
-    /// Is 'set1' a proper superset of 'set2'?
-    static member IsProperSuperset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
-        match PatriciaSet.SubmapCmp (set2, set1) with
-        | 1 -> true
+    /// Is 'set1' a proper subset of 'set2'?
+    static member IsProperSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+        match PatriciaSet.SubsetCompare (set1, set2) with
+        | -1 -> true
         | _ -> false
 
     //
@@ -944,23 +923,21 @@ type IntSet private (trie : PatriciaSet) =
         // Preconditions
         checkNonNull "sets" sets
 
-        Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
+        // If the sequence is empty, return an empty set;
+        // this also avoids Seq.reduce raising an exception.
+        if Seq.isEmpty sets then
+            IntSet.Empty
+        else
+            Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
 
-    /// Determines if the given set is a subset of this set.
-    member this.IsSubset (otherSet : IntSet) : bool =
-        PatriciaSet.IsSubset (otherSet.Trie, trie)
+    /// Determines if set1 is a subset of set2.
+    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
+    static member IsSubset (set1 : IntSet, set2 : IntSet) : bool =
+        PatriciaSet.IsSubset (set1.Trie, set2.Trie)
 
-    /// Determines if the given set is a proper subset of this set.
-    member this.IsProperSubset (otherSet : IntSet) : bool =
-        PatriciaSet.IsProperSubset (otherSet.Trie, trie)
-
-    /// Determines if the given set is a superset of this set.
-    member this.IsSuperset (otherSet : IntSet) : bool =
-        PatriciaSet.IsSuperset (otherSet.Trie, trie)
-
-    /// Determines if the given set is a proper superset of this set.
-    member this.IsProperSuperset (otherSet : IntSet) : bool =
-        PatriciaSet.IsProperSuperset (otherSet.Trie, trie)
+    /// Determines if set1 is a proper subset of set2.
+    static member IsProperSubset (set1 : IntSet, set2 : IntSet) : bool =
+        PatriciaSet.IsProperSubset (set1.Trie, set2.Trie)
 
     /// Returns a new IntSet made from the given elements.
     static member internal OfSeq (source : seq<int>) : IntSet =
@@ -1322,8 +1299,8 @@ module IntSet =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-        
-        set1.IsSubset set2
+
+        IntSet.IsSubset (set1, set2)
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
@@ -1335,7 +1312,7 @@ module IntSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
         
-        set1.IsProperSubset set2
+        IntSet.IsProperSubset (set1, set2)
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
@@ -1346,7 +1323,7 @@ module IntSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
         
-        set1.IsSuperset set2
+        IntSet.IsSubset (set2, set1)
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
@@ -1358,7 +1335,7 @@ module IntSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        set1.IsProperSuperset set2
+        IntSet.IsProperSubset (set2, set1)
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
