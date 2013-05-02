@@ -31,6 +31,10 @@ module State =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
+    let ``bindChoice raises exn when given Choice2Of2`` () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let evaluate () : unit =
         Assert.Ignore "Test not yet implemented."
 
@@ -61,13 +65,47 @@ module State =
 
 /// Tests for the ExtCore.Control.Reader module.
 module Reader =
+    /// A subset of the F# language keywords.
+    let private keywords =
+        Set.ofArray [| "if"; "then"; "elif"; "else"; "do"; "while"; "let"; "for"; |]
+
     [<Test>]
     let run () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Sample usage test cases.
+        do
+            let testFunc =
+                reader {
+                return! Set.contains "else"
+                }
+
+            keywords
+            |> Reader.run testFunc
+            |> should be True
+
+        do
+            let testFunc =
+                reader {
+                let! kwd = Set.minElement
+                return String.length kwd
+                }
+
+            keywords
+            |> Reader.run testFunc
+            |> assertEqual 2
 
     [<Test>]
     let read () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Sample usage test cases.
+        do
+            let testFunc =
+                reader {
+                let! kwds = Reader.read
+                return Set.maxElement kwds
+                }
+
+            keywords
+            |> Reader.run testFunc
+            |> assertEqual "while"
 
 
 /// Tests for the ExtCore.Control.ReaderState module.
