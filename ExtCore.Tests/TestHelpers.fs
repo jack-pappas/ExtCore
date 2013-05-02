@@ -24,11 +24,11 @@ module TestHelpers
 open System
 open System.Collections.Generic
 open NUnit.Framework
-open FsCheck
+open FsUnit
 
 
 /// Asserts that two values are equal.
-let assertEqual<'T when 'T : equality> (expected : 'T) (actual : 'T) =
+let inline assertEqual<'T when 'T : equality> (expected : 'T) (actual : 'T) =
     Assert.AreEqual (expected, actual)
 
 
@@ -38,13 +38,16 @@ let assertEqual<'T when 'T : equality> (expected : 'T) (actual : 'T) =
     TODO : Get rid of most of these -- they can be replaced with FsUnit and built-in NUnit functions. *)
 
 let test msg b = Assert.IsTrue (b, "MiniTest '" + msg + "'")
-let logMessage msg = 
+let logMessage msg =
     System.Console.WriteLine("LOG:" + msg)
 //    System.Diagnostics.Trace.WriteLine("LOG:" + msg)
 let check msg v1 v2 = test msg (v1 = v2)
 let reportFailure msg = Assert.Fail msg
+
+let throws (f : unit -> 'T) =
+    Assert.Throws (TestDelegate (f >> ignore))
+
 let numActiveEnumerators = ref 0
-let throws f = try f() |> ignore; false with e -> true
 
 let countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd (seq: seq<'a>) =
     let enumerator () = 
@@ -116,17 +119,6 @@ let countEnumeratorsAndCheckedDisposedAtMostOnce (seq: seq<'a>) =
             member x.GetEnumerator() =  enumerator() 
         interface System.Collections.IEnumerable with 
             member x.GetEnumerator() =  (enumerator() :> _) }
-
-// Verifies two sequences are equal (same length, equiv elements)
-let verifySeqsEqual seq1 seq2 =
-    if Seq.length seq1 <> Seq.length seq2 then
-        // TODO : Provide an error message here.
-        Assert.Fail()
-        
-    let zippedElements = Seq.zip seq1 seq2
-    if zippedElements |> Seq.exists (fun (a, b) -> a <> b) then
-        // TODO : Provide an error message here.
-        Assert.Fail()
         
 /// Check that the lamda throws an exception of the given type. Otherwise
 /// calls Assert.Fail()
