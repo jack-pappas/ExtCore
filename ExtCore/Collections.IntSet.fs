@@ -122,7 +122,7 @@ type private PatriciaSet =
         match set with
         | Empty ->
             false
-        | (Lf j) ->
+        | Lf j ->
             key = j
         | Br (_, m, t0, t1) ->
             PatriciaSet.Contains
@@ -215,11 +215,11 @@ type private PatriciaSet =
         match set with
         | Empty ->
             Empty
-        | (Lf j) as t ->
+        | Lf j ->
             if j = key then Empty
-            else t
+            else set
         
-        | Br (p, m, t0, t1) as t ->
+        | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     match PatriciaSet.Remove (key, t0) with
@@ -231,7 +231,7 @@ type private PatriciaSet =
                     | Empty -> t0
                     | t1 ->
                         Br (p, m, t0, t1)
-            else t
+            else set
 
     //
     static member inline private Join (p0, t0 : PatriciaSet, p1, t1) =
@@ -247,15 +247,15 @@ type private PatriciaSet =
         match set with
         | Empty ->
             Lf key
-        | (Lf j) as t ->
+        | Lf j ->
             if j = key then
                 // The value already exists in the set, so return the
                 // existing set without modifying it.
-                t
+                set
             else
-                PatriciaSet.Join (key, Lf key, j, t)
+                PatriciaSet.Join (key, Lf key, j, set)
 
-        | Br (p, m, t0, t1) as t ->
+        | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     let left = PatriciaSet.Add (key, t0)
@@ -264,12 +264,12 @@ type private PatriciaSet =
                     let right = PatriciaSet.Add (key, t1)
                     Br (p, m, t0, right)
             else
-                PatriciaSet.Join (key, Lf key, p, t)
+                PatriciaSet.Join (key, Lf key, p, set)
 
     //
     static member Union (s, t) : PatriciaSet =
         match s, t with
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
                 if p = q then
                     // The trees have the same prefix. Merge the subtrees.
@@ -310,7 +310,7 @@ type private PatriciaSet =
                     // The prefixes disagree.
                     PatriciaSet.Join (p, s, q, t)
 
-        | (Br (p, m, s0, s1) as s), (Lf k as t) ->
+        | Br (p, m, s0, s1), Lf k ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
                     let left = PatriciaSet.Add (k, s0)
@@ -321,7 +321,7 @@ type private PatriciaSet =
             else
                 PatriciaSet.Join (k, t, p, s)
 
-        | (Br (_,_,_,_) as s), Empty ->
+        | Br (_,_,_,_), Empty ->
             s
         | Lf k, t ->
             PatriciaSet.Add (k, t)
@@ -333,7 +333,7 @@ type private PatriciaSet =
     /// the first map will be used.
     static member Intersect (s, t) : PatriciaSet =
         match s, t with
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
                 if p <> q then Empty
                 else
@@ -367,7 +367,7 @@ type private PatriciaSet =
                 else
                     Empty
 
-        | Br (_, m, s0, s1), (Lf k as t) ->
+        | Br (_, m, s0, s1), Lf k ->
             let s' = if zeroBit (k, m) then s0 else s1
             if PatriciaSet.Contains (k, s') then t
             else Empty
@@ -375,7 +375,7 @@ type private PatriciaSet =
         | Br (_,_,_,_), Empty ->
             Empty
             
-        | (Lf k as s), t ->
+        | Lf k, t ->
             if PatriciaSet.Contains (k, t) then s
             else Empty
 
@@ -383,14 +383,14 @@ type private PatriciaSet =
             Empty
 
     //
-    static member private Delete (key, map) : PatriciaSet =
-        match map with
+    static member private Delete (key, t) : PatriciaSet =
+        match t with
         | Empty ->
             Empty
-        | Lf j as t ->
+        | Lf j ->
             if key = j then Empty
             else t
-        | Br (p, m, t0, t1) as t ->
+        | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     match PatriciaSet.Delete (key, t0) with
@@ -407,7 +407,7 @@ type private PatriciaSet =
     /// Compute the difference of two PatriciaMaps.
     static member Difference (s, t) : PatriciaSet =
         match s, t with
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
                 if p <> q then s
                 else
@@ -459,9 +459,9 @@ type private PatriciaSet =
                         Br (p, m, s0, right)
             else s
             
-        | Br (_,_,_,_) as s, Empty ->
+        | Br (_,_,_,_), Empty ->
             s
-        | (Lf k as s), t ->
+        | Lf k, t ->
             if PatriciaSet.Contains (k, t) then Empty
             else s
         | Empty, _ ->
@@ -497,18 +497,14 @@ type private PatriciaSet =
         | Br (_,_,_,_), (Empty | Lf _) -> 1
         | Lf x, Lf y ->
             if x = y then 0
-            else 1  // The maps are disjoint.
+            else 1
 
         | Lf x, Br (p, m, l, r) ->
             if not <| matchPrefix (x, p, m) then 1
             elif zeroBit (x, m) then
-                match PatriciaSet.SubsetCompare (t1, l) with
-                | 1 -> 1
-                | _ -> -1
+                if PatriciaSet.Contains (x, l) then -1 else 1
             else
-                match PatriciaSet.SubsetCompare (t1, r) with
-                | 1 -> 1
-                | _ -> -1
+                if PatriciaSet.Contains (x, r) then -1 else 1
 
         | Lf _, Empty ->
             // The maps are disjoint.
@@ -518,13 +514,15 @@ type private PatriciaSet =
         | Empty, _ -> -1
 
     /// Is 'set1' a subset of 'set2'?
-    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
+    /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
     static member IsSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
         match PatriciaSet.SubsetCompare (set1, set2) with
         | -1 | 0 -> true
         | _ -> false
 
     /// Is 'set1' a proper subset of 'set2'?
+    /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
+    /// and at least one element in set2 is not in set1.
     static member IsProperSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
         match PatriciaSet.SubsetCompare (set1, set2) with
         | -1 -> true
@@ -1754,7 +1752,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        set1.IsSuperset set2
+        set2.IsSubset set1
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
@@ -1770,7 +1768,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        set1.IsProperSuperset set2
+        set2.IsProperSubset set1
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
