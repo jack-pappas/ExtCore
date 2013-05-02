@@ -111,7 +111,10 @@ type vector<'T> private (elements : 'T[]) =
             if this.IsNull then
                 invalidOp "Cannot get an enumerator for a null-equivalent vector."
 
-            elements.GetEnumerator () :?> IEnumerator<'T>
+            // Use the built-in generic array enumerator -- the one implicitly provided
+            // by the array type is non-generic and can't be cast to a generic form.
+            let enum = Array.toSeq elements
+            enum.GetEnumerator ()
 
 
 namespace ExtCore.Collections
@@ -157,9 +160,6 @@ module Vector =
     /// <returns>The length of the vector.</returns>
     [<CompiledName("Length")>]
     let inline length (vec : vector<'T>) : int =
-        // Preconditions
-        checkInitialized "vec" vec
-        
         vec.Length
 
     /// <summary>Returns true if the given vector is empty, otherwise false.</summary>
@@ -167,9 +167,6 @@ module Vector =
     /// <returns>True if the vector is empty.</returns>
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (vec : vector<'T>) : bool =
-        // Preconditions
-        checkInitialized "vec" vec
-    
         vec.IsEmpty
 
     /// Given an element, creates a vector containing just that element.
@@ -306,25 +303,25 @@ module Vector =
         // Preconditions
         checkNonNull "vectors" vectors
 
-        // OPTIMIZATION : If the sequence is empty, return the empty vector instance.
-        if Seq.isEmpty vectors then
-            ExtCore.vector.Empty
-        else
-            // Check a couple of specific cases so we can use an
-            // optimized codepath when possible.
-            match vectors with
-//            | :? (vector<'T>[]) as vecArray ->
-//                // NOTE : Array.map and Array.concat must be used here; if Array.collect is used
-//                // some unit tests fail because Array.collect doesn't raise an exception if an
-//                // vector returned by the mapping function is null.
-//                Array.map elements vecArray
-//                |> Array.concat
-//                |> ExtCore.vector.UnsafeCreate
+        // Check a couple of specific cases so we can use an
+        // optimized codepath when possible.
+        match vectors with
+//        | :? (vector<'T>[]) as vecArray ->
+//            // NOTE : Array.map and Array.concat must be used here; if Array.collect is used
+//            // some unit tests fail because Array.collect doesn't raise an exception if an
+//            // vector returned by the mapping function is null.
+//            Array.map elements vecArray
+//            |> Array.concat
+//            |> ExtCore.vector.UnsafeCreate
 
-//            | :? (vector<vector<'T>>) as vecVector ->
-//                notImpl ""
+//        | :? (vector<vector<'T>>) as vecVector ->
+//            notImpl ""
 
-            | _ ->
+        | _ ->
+            // OPTIMIZATION : If the sequence is empty, return the empty vector instance.
+            if Seq.isEmpty vectors then
+                ExtCore.vector.Empty
+            else
                 vectors
                 |> Seq.map elements
                 |> Array.concat

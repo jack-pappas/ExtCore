@@ -119,27 +119,40 @@ let countEnumeratorsAndCheckedDisposedAtMostOnce (seq: seq<'a>) =
 
 // Verifies two sequences are equal (same length, equiv elements)
 let verifySeqsEqual seq1 seq2 =
-    if Seq.length seq1 <> Seq.length seq2 then Assert.Fail()
+    if Seq.length seq1 <> Seq.length seq2 then
+        // TODO : Provide an error message here.
+        Assert.Fail()
         
     let zippedElements = Seq.zip seq1 seq2
-    if zippedElements |> Seq.forall (fun (a, b) -> a = b) 
-    then ()
-    else Assert.Fail()
+    if zippedElements |> Seq.exists (fun (a, b) -> a <> b) then
+        // TODO : Provide an error message here.
+        Assert.Fail()
         
 /// Check that the lamda throws an exception of the given type. Otherwise
 /// calls Assert.Fail()
-let private checkThrowsExn<'a when 'a :> exn> (f : unit -> unit) =
+let private checkThrowsExn<'a when 'a :> exn> (f : unit -> unit) : unit =
     let funcThrowsAsExpected =
         try
-            let _ = f ()
-            false // Did not throw!
+            do f ()
+
+            // Did not throw -- return an error message explaining this.
+            let msg = sprintf "The function did not throw an exception. (Expected: %s)" typeof<'a>.FullName
+            Some msg
         with
-        | :? 'a
-            -> true   // Thew null ref, OK
-        | _ -> false  // Did now throw a null ref exception!
-    if funcThrowsAsExpected
-    then ()
-    else Assert.Fail()
+        | :? 'a ->
+            // The expected exception type was raised.
+            None
+        | ex ->
+            // The expected exception type was not raised.
+            let msg =
+                sprintf "The function raised an exception of type '%s'. (Expected: %s)"
+                    (ex.GetType().FullName) typeof<'a>.FullName
+            Some msg
+
+    match funcThrowsAsExpected with
+    | None -> ()
+    | Some msg ->
+        Assert.Fail msg
 
 // Illegitimate exceptions. Once we've scrubbed the library, we should add an
 // attribute to flag these exception's usage as a bug.
