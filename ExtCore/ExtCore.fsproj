@@ -92,7 +92,6 @@
     <Compile Include="Collections.LazyList.fs" />
     <Compile Include="Collections.Queue.fs" />
     <Compile Include="Collections.PriorityQueue.fs" />
-    <Compile Include="ControlCollections.Async.fs" />
     <Compile Include="ControlCollections.State.fs" />
     <Compile Include="ControlCollections.Reader.fs" />
     <Compile Include="ControlCollections.ReaderState.fs" />
@@ -103,6 +102,11 @@
     <Compile Include="ControlCollections.ProtectedState.fs" />
     <Compile Include="ControlCollections.ReaderProtectedState.fs" />
     <Compile Include="ControlCollections.StatefulChoice.fs" />
+    <Compile Include="ControlCollections.Async.fs" />
+    <Compile Include="ControlCollections.AsyncState.fs" />
+    <Compile Include="ControlCollections.AsyncMaybe.fs" />
+    <Compile Include="ControlCollections.AsyncChoice.fs" />
+    <Compile Include="ControlCollections.AsyncProtectedState.fs" />
     <Compile Include="ControlCollections.Cps.fs" />
     <Compile Include="NativeInterop.fs" />
     <Compile Include="Args.fs" />
