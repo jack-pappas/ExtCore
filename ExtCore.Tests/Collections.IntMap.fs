@@ -698,16 +698,30 @@ let mapPartition () : unit =
 
 open FsCheck
 
-//
-let arbIntMap<'T> : Arbitrary<IntMap<'T>> =
-    gen {
-    let! ks = Arb.generate<int list>
-    let! xs = Arb.generate<'T list>
+/// FsCheck generators for IntMap.
+type IntMapGenerator =
+    /// Generates an arbitrary IntMap instance.
+    static member IntMap () : Arbitrary<IntMap<_>> =
+        gen {
+            let! keys = Arb.generate
+            let! values = Arb.generate
+            
+            // It seems FsCheck requires the use of sequences here --
+            // using List.fold2 to build the IntMap causes FsCheck to crash.
+            let kvpSeq = (Seq.ofList keys, Seq.ofList values) ||> Seq.zip
+            return IntMap.ofSeq kvpSeq
+        } |> Arb.fromGen
 
-    return IntMap.ofList <| List.zip ks xs
-    
-    } |> Arb.fromGen
+/// Registers the FsCheck generators so they're already loaded
+/// when NUnit runs the tests in this fixture.
+[<TestFixtureSetUp>]
+let registerFsCheckGenerators =
+    Arb.register<IntMapGenerator> () |> ignore
 
-type UMap = IntMap<unit>
-type IMap = IntMap<int>
-type SMap = IntMap<string>
+
+[<Test>]
+let ``prop addLookup``() =
+    assertProp "addLookup" <| fun k map ->
+        IntMap.add k () map
+        |> IntMap.containsKey k
+
