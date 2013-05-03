@@ -91,6 +91,10 @@ let repeat () : unit =
 let append () : unit =
     test "append" (LazyList.toList (LazyList.take 4 (LazyList.append (LazyList.cons 77 (LazyList.empty)) nats)) = [77;0;1;2])
 
+    // Test the append (++) operator.
+    let lzylst = LazyList.cons 77 (LazyList.empty)
+    test "append" (LazyList.toList (LazyList.take 4 (lzylst ++ nats)) = [77;0;1;2])
+
 [<Test>]
 let zip () : unit =
     test "zip"  (LazyList.toList (LazyList.take 3 (LazyList.zip nats (LazyList.skip 6 nats))) = [0,6;1,7; 2,8])

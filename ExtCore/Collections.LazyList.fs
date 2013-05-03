@@ -180,6 +180,7 @@ and [<NoEquality; NoComparison; Sealed; CompiledName("FSharpLazyList`1")>]
             this.ToSeq().GetEnumerator ()
             :> System.Collections.IEnumerator
 
+
 /// Functional operators on LazyLists.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LazyList =
@@ -564,6 +565,16 @@ module LazyList =
         ResizeArray.toArray elements
 
 
+type LazyList<'T> with
+    /// Appends the second LazyList to the end of the first.
+    static member op_PlusPlus (list1 : LazyList<'T>, list2 : LazyList<'T>) : LazyList<'T> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        LazyList.append list1 list2
+
+
 /// Active patterns for deconstructing lazy lists.
 [<AutoOpen>]
 module LazyListPatterns =
@@ -574,4 +585,3 @@ module LazyListPatterns =
             Nil
         | Some hd_tl ->
             Cons hd_tl
-
