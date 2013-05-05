@@ -27,7 +27,7 @@ open ExtCore.Collections
 open ExtCore.Control
 
 
-/// The standard F# Array module, lifted into the Async monad.
+/// The standard F# Array module, adapted for use within 'async' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     open System.Collections
@@ -542,7 +542,7 @@ module Array =
         }
 
 
-/// Functions for manipulating lists within 'async' workflows.
+/// The standard F# List module, adapted for use within 'async' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
     (* NOTE :   Many of the functions below are implemented with a simple public "wrapper"
@@ -984,7 +984,7 @@ module List =
         iteriImpl (action, list, 0)
 
 
-/// Functions for manipulating sequences within 'async' workflows.
+/// The standard F# Seq module, adapted for use within 'async' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     /// Returns a new sequence created by transforming each element of an
