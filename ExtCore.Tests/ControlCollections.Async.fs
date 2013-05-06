@@ -570,6 +570,14 @@ module List =
             [3; 3; 6; 9; 15; 24; 39; 63]
 
     [<Test>]
+    let map2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let map3 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let mapi () : unit =
         // Sample usage test cases.
         [1; 1; 2; 3; 5; 8; 13; 21]
@@ -579,6 +587,10 @@ module List =
         |> Async.RunSynchronously
         |> assertEqual
             [1; 2; 4; 6; 9; 13; 19; 28]
+
+    [<Test>]
+    let mapi2 () : unit =
+        Assert.Ignore "Test not yet implemented."
 
     [<Test>]
     let fold () : unit =
@@ -591,6 +603,10 @@ module List =
         |> assertEqual "217412"
 
     [<Test>]
+    let fold2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let foldBack () : unit =
         // Sample usage test cases.
         ([2; 17; 4; 12], String.empty)
@@ -599,6 +615,10 @@ module List =
             return state + x.ToString() })
         |> Async.RunSynchronously
         |> assertEqual "124172"
+
+    [<Test>]
+    let foldBack2 () : unit =
+        Assert.Ignore "Test not yet implemented."
 
     [<Test>]
     let choose () : unit =
@@ -652,6 +672,10 @@ module List =
         |> assertEqual ["18"; "48"]
 
     [<Test>]
+    let choose2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let collect () : unit =
         // Sample usage test cases.
         [0; 1; 1; 2; 3; 5; 8]
@@ -701,6 +725,10 @@ module List =
         |> should be True
 
     [<Test>]
+    let exists2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let forall () : unit =
         // Test case for an empty list.
         List.empty
@@ -736,6 +764,10 @@ module List =
             })
         |> Async.RunSynchronously
         |> should be False
+
+    [<Test>]
+    let forall2 () : unit =
+        Assert.Ignore "Test not yet implemented."
 
     [<Test>]
     let filter () : unit =
@@ -972,6 +1004,10 @@ module List =
                 [| 21; 33; 54; |]
 
     [<Test>]
+    let iter2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let iteri () : unit =
         do
             // Test case for an empty ArrayView.
@@ -1031,6 +1067,10 @@ module List =
             ResizeArray.toArray elements
             |> assertEqual
                 [| 21; 36; 60; |]
+
+    [<Test>]
+    let iteri2 () : unit =
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Control.Collections.Async.Seq module.

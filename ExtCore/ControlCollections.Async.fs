@@ -586,6 +586,75 @@ module List =
         // Call the recursive implementation.
         mapImpl (mapping, [], list)
 
+    /// Async implementation of List.map2.
+    let rec private map2Impl (mapping : FSharpFunc<_,_,_>, mapped : 'U list, list1 : 'T1 list, list2 : 'T2 list) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            // Reverse the list of mapped values before returning it.
+            return List.rev mapped
+
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the current list elements to the mapping function.
+            let! mappedEl = mapping.Invoke (el1, el2)
+
+            // Cons the result to the list of mapped values, then continue
+            // mapping the rest of the pending list elements.
+            return! map2Impl (mapping, mappedEl :: mapped, list1, list2)
+
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.map2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("Map2")>]
+    let map2 (mapping : 'T1 -> 'T2 -> Async<'U>) (list1 : 'T1 list) (list2 : 'T2 list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+        map2Impl (mapping, [], list1, list2)
+
+    /// Async implementation of List.map3.
+    let rec private map3Impl (mapping : FSharpFunc<_,_,_,_>, mapped : 'U list, list1 : 'T1 list, list2 : 'T2 list, list3 : 'T3 list) =
+        async {
+        match list1, list2, list3 with
+        | [], [], [] ->
+            // Reverse the list of mapped values before returning it.
+            return List.rev mapped
+
+        | el1 :: list1, el2 :: list2, el3 :: list3 ->
+            // Apply the current list elements to the mapping function.
+            let! mappedEl = mapping.Invoke (el1, el2, el3)
+
+            // Cons the result to the list of mapped values, then continue
+            // mapping the rest of the pending list elements.
+            return! map3Impl (mapping, mappedEl :: mapped, list1, list2, list3)
+
+        | _, _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list3" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.map3.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("Map3")>]
+    let map3 (mapping : 'T1 -> 'T2 -> 'T3 -> Async<'U>) (list1 : 'T1 list) (list2 : 'T2 list) (list3 : 'T3 list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+        checkNonNull "list3" list3
+
+        // Call the recursive implementation.
+        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+        map3Impl (mapping, [], list1, list2, list3)
+
     /// Async implementation of List.mapi.
     let rec private mapiImpl (mapping : FSharpFunc<_,_,_>, mapped : 'U list, pending : 'T list, currentIndex) =
         async {
@@ -613,6 +682,40 @@ module List =
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
         mapiImpl (mapping, [], list, 0)
 
+    /// Async implementation of List.mapi2.
+    let rec private mapi2Impl (mapping : FSharpFunc<_,_,_,_>, mapped : 'U list, list1 : 'T1 list, list2 : 'T2 list, currentIndex) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            // Reverse the list of mapped values before returning it.
+            return List.rev mapped
+
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the current list elements to the mapping function.
+            let! mappedEl = mapping.Invoke (currentIndex, el1, el2)
+
+            // Cons the result to the list of mapped values, then continue
+            // mapping the rest of the pending list elements.
+            return! mapi2Impl (mapping, mappedEl :: mapped, list1, list2, currentIndex + 1)
+
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.mapi2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("MapIndexed2")>]
+    let mapi2 (mapping : int -> 'T1 -> 'T2 -> Async<'U>) (list1 : 'T1 list) (list2 : 'T2 list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+        mapi2Impl (mapping, [], list1, list2, 0)
+
     /// Async implementation of List.fold.
     let rec private foldImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) =
         async {
@@ -638,6 +741,39 @@ module List =
         // Call the recursive implementation.
         let folder = FSharpFunc<_,_,_>.Adapt folder
         foldImpl (folder, list, state)
+
+    /// Async implementation of List.fold2.
+    let rec private fold2Impl (folder : FSharpFunc<_,_,_,_>, list1 : 'T1 list, list2 : 'T2 list, state : 'State) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            // Return the final state value.
+            return state
+
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the folder to the current list element and state value.
+            let! state = folder.Invoke (state, el1, el2)
+
+            // Continue folding over the rest of the list.
+            return! fold2Impl (folder, list1, list2, state)
+
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.fold2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("Fold2")>]
+    let fold2 (folder : 'State -> 'T1 -> 'T2 -> Async<'State>) (state : 'State) (list1 : 'T1 list) (list2 : 'T2 list) : Async<'State> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        fold2Impl (folder, list1, list2, state)
 
     /// Async implementation of List.foldBack.
     let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) =
@@ -665,6 +801,40 @@ module List =
         // Call the recursive implementation.
         let folder = FSharpFunc<_,_,_>.Adapt folder
         foldBackImpl (folder, list, state)
+
+    /// Async implementation of List.foldBack2.
+    let rec private foldBack2Impl (folder : FSharpFunc<_,_,_,_>, list1 : 'T1 list, list2 : 'T2 list, state : 'State) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            // Return the final state value.
+            return state
+
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the folder to the rest of the list before processing the
+            // current element (because we're folding backwards).
+            let! state = foldBack2Impl (folder, list1, list2, state)
+
+            // Apply the folder to the current list element and state value.
+            return! folder.Invoke (el1, el2, state)
+
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.foldBack2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("FoldBack2")>]
+    let foldBack2 (folder : 'T1 -> 'T2 -> 'State -> Async<'State>) (list1 : 'T1 list) (list2 : 'T2 list) (state : 'State) : Async<'State> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        foldBack2Impl (folder, list1, list2, state)
 
     /// Async implementation of List.choose.
     let rec private chooseImpl (chooser, chosen : 'U list, pending : 'T list) =
@@ -697,6 +867,45 @@ module List =
 
         // Call the recursive implementation.
         chooseImpl (chooser, [], list)
+
+    /// Async implementation of List.choose2.
+    let rec private choose2Impl (chooser : FSharpFunc<_,_,_>, chosen : 'U list, list1 : 'T1 list, list2 : 'T2 list) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            // Reverse the list of chosen values before returning it.
+            return List.rev chosen
+
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the current list elements to the chooser function.
+            let! result = chooser.Invoke (el1, el2)
+            
+            match result with
+            | None ->
+                // Continue processing the remaining elements.
+                return! choose2Impl (chooser, chosen, list1, list2)
+
+            | Some result ->
+                // Cons the result to the list of chosen values, then continue
+                // mapping the rest of the pending list elements.
+                return! choose2Impl (chooser, result :: chosen, list1, list2)
+
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.choose2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("Choose2")>]
+    let choose2 (chooser : 'T1 -> 'T2 -> Async<'U option>) (list1 : 'T1 list) (list2 : 'T2 list) : Async<'U list> =
+        // Preconditions
+        checkNonNull "list1" list1
+
+        // Call the recursive implementation.
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+        choose2Impl (chooser, [], list1, list2)
 
     /// Async implementation of List.collect.
     // OPTIMIZE : It may be possible to reduce memory usage by processing the "outer" list
@@ -757,6 +966,43 @@ module List =
         // Call the recursive implementation.
         existsImpl (predicate, list)
 
+    /// Async implementation of List.exists2.
+    let rec private exists2Impl (predicate : FSharpFunc<_,_,_>, list1 : 'T1 list, list2 : 'T2 list) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            // None of the list elements matched the predicate.
+            return false
+
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the current list element to the predicate.
+            let! result = predicate.Invoke (el1, el2)
+
+            // If the element matched, short-circuit (return immediately);
+            // otherwise, continue processing the rest of the list.
+            if result then
+                return true
+            else
+                return! exists2Impl (predicate, list1, list2)
+
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.exists2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("Exists2")>]
+    let exists2 (predicate : 'T1 -> 'T2 -> Async<bool>) (list1 : 'T1 list) (list2 : 'T2 list) : Async<bool> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+        exists2Impl (predicate, list1, list2)
+
     /// Async implementation of List.forall.
     let rec private forallImpl (predicate, pending : 'T list) =
         async {
@@ -785,6 +1031,43 @@ module List =
 
         // Call the recursive implementation.
         forallImpl (predicate, list)
+
+    /// Async implementation of List.forall2.
+    let rec private forall2Impl (predicate : FSharpFunc<_,_,_>, list1 : 'T1 list, list2 : 'T2 list) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            // All of the list elements matched the predicate.
+            return true
+
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the current list element to the predicate.
+            let! result = predicate.Invoke (el1, el2)
+
+            // If the element didn't match, short-circuit (return immediately);
+            // otherwise, continue processing the rest of the list.
+            if result then
+                return! forall2Impl (predicate, list1, list2)
+            else
+                return false
+
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.forall2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("Forall2")>]
+    let forall2 (predicate : 'T1 -> 'T2 -> Async<bool>) (list1 : 'T1 list) (list2 : 'T2 list) : Async<bool> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+        forall2Impl (predicate, list1, list2)
 
     /// Async implementation of List.filter.
     let rec private filterImpl (predicate, filtered : 'T list, pending : 'T list) =
@@ -959,6 +1242,36 @@ module List =
         // Call the recursive implementation.
         iterImpl (action, list)
 
+    /// Async implementation of Async.iter2.
+    let rec private iter2Impl (action : FSharpFunc<_,_,_>, list1 : 'T1 list, list2 : 'T2 list) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            return ()
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the action to the current element.
+            do! action.Invoke (el1, el2)
+
+            // Continue processing the rest of the list.
+            return! iter2Impl (action, list1, list2)
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.iter2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("Iterate2")>]
+    let iter2 (action : 'T1 -> 'T2 -> Async<unit>) (list1 : 'T1 list) (list2 : 'T2 list) : Async<unit> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let action = FSharpFunc<_,_,_>.Adapt action
+        iter2Impl (action, list1, list2)
+
     /// Async implementation of Async.iteri.
     let rec private iteriImpl (action : FSharpFunc<_,_,_>, pending : 'T list, index) =
         async {
@@ -982,6 +1295,36 @@ module List =
         // Call the recursive implementation.
         let action = FSharpFunc<_,_,_>.Adapt action
         iteriImpl (action, list, 0)
+
+    /// Async implementation of Async.iteri2.
+    let rec private iteri2Impl (action : FSharpFunc<_,_,_,_>, list1 : 'T1 list, list2 : 'T2 list, index) =
+        async {
+        match list1, list2 with
+        | [], [] ->
+            return ()
+        | el1 :: list1, el2 :: list2 ->
+            // Apply the action to the current element.
+            do! action.Invoke (index, el1, el2)
+
+            // Continue processing the rest of the list.
+            return! iteri2Impl (action, list1, list2, index + 1)
+        | _, _ ->
+            // Raise an exception because the lists have different lengths.
+            // NOTE : The return keyword is needed here for type-inference reasons.
+            return invalidArg "list2" "The lists have different lengths."
+        }
+
+    /// <summary>Async implementation of List.iteri2.</summary>
+    /// <exception cref="System.ArgumentException">Thrown when the input lists differ in length.</exception>
+    [<CompiledName("IterateIndexed2")>]
+    let iteri2 (action : int -> 'T1 -> 'T2 -> Async<unit>) (list1 : 'T1 list) (list2 : 'T2 list) : Async<unit> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        // Call the recursive implementation.
+        let action = FSharpFunc<_,_,_,_>.Adapt action
+        iteri2Impl (action, list1, list2, 0)
 
 
 /// The standard F# Seq module, adapted for use within 'async' workflows.
@@ -1122,8 +1465,7 @@ module Seq =
 
             // OPTIMIZATION : If the batch size is one, there's no need to bother with Async.Parallel.
             if size = 1 then
-                sequence
-                |> Seq.map Async.RunSynchronously
+                Seq.map Async.RunSynchronously sequence
             else
                 sequence
                 |> Seq.windowed size
