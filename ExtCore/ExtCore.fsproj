@@ -107,7 +107,8 @@
     <Compile Include="ControlCollections.AsyncMaybe.fs" />
     <Compile Include="ControlCollections.AsyncChoice.fs" />
     <Compile Include="ControlCollections.AsyncProtectedState.fs" />
-    <Compile Include="ControlCollections.Cps.fs" />
+    <Compile Include="ControlCollections.Cont.fs" />
+    <Compile Include="ControlCollections.StateCont.fs" />
     <Compile Include="NativeInterop.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="ExtraPervasives.fs" />
