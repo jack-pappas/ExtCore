@@ -31,97 +31,55 @@ open ExtCore.Control.Cps
 /// The standard F# Array module, adapted for use within 'stateCont' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
-    //
+    /// StateCont implementation of Array.map.
+    let rec private mapImpl mapping (results : 'U[]) (array : 'T[]) currentIndex : StateContFunc<'State, 'U[], 'K> =
+        stateCont {
+        if currentIndex >= array.Length then
+            // Return the mapped array and the final state value.
+            return results
+        else
+            // Map the current array element, then store the result into the results array.
+            let! result = mapping array.[currentIndex]
+            results.[currentIndex] <- result
+
+            // Map the remaining elements.
+            return! mapImpl mapping results array (currentIndex + 1)
+        }
+
+    /// StateCont implementation of Array.map.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'State -> ('U * 'State -> 'K) -> 'K)
-            (array : 'T[]) (state : 'State) (cont : 'U[] * 'State -> 'K) : 'K =
+    let map (mapping : 'T -> StateContFunc<'State, 'U, 'K>) (array : 'T[]) : StateContFunc<'State, 'U[], 'K> =
         // Preconditions
         checkNonNull "array" array
 
-        // OPTIMIZATION : If the array is empty return immediately.
-        if Array.isEmpty array then
-            cont (Array.empty, state)
+        let result = Array.zeroCreate <| Array.length array
+
+        // Call the recursive implementation.
+        mapImpl mapping result array 0
+
+    /// StateCont implementation of Array.mapi.
+    let rec private mapiImpl mapping (results : 'U[]) (array : 'T[]) currentIndex : StateContFunc<'State, 'U[], 'K> =
+        stateCont {
+        if currentIndex >= array.Length then
+            // Return the mapped array and the final state value.
+            return results
         else
-            /// The number of array elements.
-            let len = Array.length array
+            // Map the current array element, then store the result into the results array.
+            let! result = mapping currentIndex array.[currentIndex]
+            results.[currentIndex] <- result
 
-            /// The mapped elements.
-            let results = Array.zeroCreate len
+            // Map the remaining elements.
+            return! mapiImpl mapping results array (currentIndex + 1)
+        }
 
-            let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
-
-            /// Iterates backwards over the array elements, creating a chain of continuations
-            /// which'll process them in order (from left-to-right) when executed.
-            let rec buildCont idx cont =
-                // The first element needs to be handled specially.
-                if idx = 0 then
-                    // Pass the initial state to the mapping function when processing the first element.
-                    mapping.Invoke (array.[0], state, cont)
-
-                else
-                    // Pass a continuation which'll be called once the previous element
-                    // (at index = (argIdx - 1)) is mapped and stored in the results array.
-                    buildCont (idx - 1) <| fun (prevElementResult, state : 'State) ->
-                        // Save the _previous_ element's accumulator into the array
-                        results.[idx - 1] <- prevElementResult
-
-                        // Call the continuation to process the next element.
-                        mapping.Invoke (array.[idx], state, cont)
-
-            // Create and return a continuation will map the array elements when called.
-            // The function passed to 'buildCont' here is used to store the mapped
-            // last element of the array, then call the original continuation with the results.
-            buildCont (len - 1) <| fun (prevElementResult : 'U, state : 'State) ->
-                // Save the last argument's accumulator value.
-                results.[len - 1] <- prevElementResult
-
-                // Call the continuation with the mapped elements and the final state value.
-                cont (results, state)
-
-    //
+    /// StateCont implementation of Array.mapi.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> 'State -> ('U * 'State -> 'K) -> 'K)
-            (array : 'T[]) (state : 'State) (cont : 'U[] * 'State -> 'K) : 'K =
+    let mapi (mapping : int -> 'T -> StateContFunc<'State, 'U, 'K>) (array : 'T[]) : StateContFunc<'State, 'U[], 'K> =
         // Preconditions
         checkNonNull "array" array
 
-        // OPTIMIZATION : If the array is empty return immediately.
-        if Array.isEmpty array then
-            cont (Array.empty, state)
-        else
-            /// The number of array elements.
-            let len = Array.length array
+        let result = Array.zeroCreate <| Array.length array
 
-            /// The mapped elements.
-            let results = Array.zeroCreate len
-
-            let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
-
-            /// Iterates backwards over the array elements, creating a chain of continuations
-            /// which'll process them in order (from left-to-right) when executed.
-            let rec buildCont idx cont =
-                // The first element needs to be handled specially.
-                if idx = 0 then
-                    // Pass the initial state to the mapping function when processing the first element.
-                    mapping.Invoke (idx, array.[0], state, cont)
-
-                else
-                    // Pass a continuation which'll be called once the previous element
-                    // (at index = (argIdx - 1)) is mapped and stored in the results array.
-                    buildCont (idx - 1) <| fun (prevElementResult, state : 'State) ->
-                        // Save the _previous_ element's accumulator into the array
-                        results.[idx - 1] <- prevElementResult
-
-                        // Call the continuation to process the next element.
-                        mapping.Invoke (idx, array.[idx], state, cont)
-
-            // Create and return a continuation will map the array elements when called.
-            // The function passed to 'buildCont' here is used to store the mapped
-            // last element of the array, then call the original continuation with the results.
-            buildCont (len - 1) <| fun (prevElementResult : 'U, state : 'State) ->
-                // Save the last argument's accumulator value.
-                results.[len - 1] <- prevElementResult
-
-                // Call the continuation with the mapped elements and the final state value.
-                cont (results, state)
+        // Call the recursive implementation.
+        mapiImpl mapping result array 0
 

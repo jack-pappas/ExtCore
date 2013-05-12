@@ -31,38 +31,27 @@ open ExtCore.Control.Cps
 /// The standard F# Array module, adapted for use within 'cont' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
-    //
+    /// Cont implementation of Array.fold.
+    let rec private foldImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) : ContFunc<'State, 'K> =
+        cont {
+        if currentIndex >= array.Length then
+            // We've reached the end of the array so return the final state value.
+            return state
+        else
+            // Invoke the folder with the current array element and state value.
+            let! state = folder.Invoke (state, array.[currentIndex])
+
+            // Continue folding over the remaining array elements.
+            return! foldImpl (folder, array, state, currentIndex + 1)
+        }
+
+    /// Cont implementation of Array.fold.
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> ('State -> 'K) -> 'K)
-            (state : 'State) (array : 'T[]) (cont : 'State -> 'K) : 'K =
+    let fold (folder : 'State -> 'T -> ContFunc<'State, 'K>) (state : 'State) (array : 'T[]) : ContFunc<'State, 'K> =
         // Preconditions
         checkNonNull "array" array
 
-        // OPTIMIZATION : If the array is empty return immediately.
-        if Array.isEmpty array then
-            cont state
-        else
-            /// The number of array elements.
-            let len = Array.length array
-
-            let folder = FSharpFunc<_,_,_,_>.Adapt folder
-
-            /// Iterates backwards over the array elements, creating a chain of continuations
-            /// which'll process them in order (from left-to-right) when executed.
-            let rec buildCont idx cont =
-                // The first element needs to be handled specially.
-                if idx = 0 then
-                    // Pass the initial state to the mapping function when processing the first element.
-                    folder.Invoke (state, array.[0], cont)
-
-                else
-                    // Pass a continuation which'll be called once the previous element
-                    // (at index = (argIdx - 1)) is mapped and stored in the results array.
-                    buildCont (idx - 1) <| fun (state : 'State) ->
-                        // Call the continuation to process the next element.
-                        folder.Invoke (state, array.[idx], cont)
-
-            // Create and return a continuation which performs a CPS-style
-            // fold over the array elements when called.
-            buildCont (len - 1) cont
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+        foldImpl (folder, array, state, 0)
 

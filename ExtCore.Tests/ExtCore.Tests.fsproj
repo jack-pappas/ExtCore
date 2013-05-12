@@ -80,8 +80,8 @@
     <Compile Include="ControlCollections.AsyncMaybe.fs" />
     <Compile Include="ControlCollections.AsyncChoice.fs" />
     <Compile Include="ControlCollections.AsyncProtectedState.fs" />
-    <Compile Include="ControlCollections.Cps.Cont.fs" />
-    <Compile Include="ControlCollections.Cps.StateCont.fs" />
+    <Compile Include="ControlCollections.Cont.fs" />
+    <Compile Include="ControlCollections.StateCont.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">
