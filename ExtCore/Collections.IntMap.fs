@@ -48,7 +48,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Lf (j, x) ->
             if j = key then Some x
             else None
-        | Br (p, m, t0, t1) ->
+        | Br (_, m, t0, t1) ->
             PatriciaMap.TryFind (
                 key, (if zeroBit (key, m) then t0 else t1))
 

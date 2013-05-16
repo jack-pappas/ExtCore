@@ -61,11 +61,180 @@ type private ListMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T
     //
     static member ContainsKey (key : 'Key, listMap : ListMap<'Key, 'T>) : bool =
         match listMap with
-        | Tail (k, v) ->
+        | Tail (k, _) ->
             k = key
-        | Element (listMap, k, v) ->
+        | Element (listMap, k, _) ->
             k = key || ListMap.ContainsKey (key, listMap)
 
+    //
+    static member private Rewind (stack : KeyValuePair<'Key, 'T> list, listMap : ListMap<'Key, 'T>) : ListMap<'Key, 'T> =
+        match stack with
+        | [] ->
+            listMap
+        | kvp :: stack ->
+            ListMap.Rewind (
+                stack,
+                Element (listMap, kvp.Key, kvp.Value))
+
+    //
+    static member RemoveImpl (stack : KeyValuePair<'Key, 'T> list, listMap : ListMap<'Key, 'T>, original, key : 'Key) : ListMap<'Key, 'T> option =
+        match listMap with
+        | Tail (k, _) ->
+            if k = key then
+                match stack with
+                | [] -> None
+                | kvp :: stack ->
+                    ListMap.Rewind (stack, Tail (kvp.Key, kvp.Value))
+                    |> Some
+            else
+                // The specified key isn't in the map, so return the original map without changing it.
+                Some original
+
+        | Element (listMap, k, v) ->
+            if k = key then
+                Some <| ListMap.Rewind (stack, listMap)
+            else
+                ListMap.RemoveImpl (KeyValuePair (k, v) :: stack, listMap, original, key)
+
+    //
+    static member Remove (key : 'Key, listMap : ListMap<'Key, 'T>) : ListMap<'Key, 'T> option =
+        match listMap with
+        | Tail (k, _) ->
+            if k = key then None
+            else Some listMap
+
+        | Element (listMap, k, v) ->
+            if k = key then Some listMap
+            else
+                ListMap.RemoveImpl ([KeyValuePair (k, v)], listMap, listMap, key)
+
+    //
+    static member private AddImpl (stack : KeyValuePair<'Key, 'T> list, listMap : ListMap<'Key, 'T>, original, key, value) : ListMap<'Key, 'T> =
+        match listMap with
+        | Tail (k, v) ->
+            let c = Unchecked.compare k key
+            if c = 0 then 
+                // If the new value is the same as the existing value,
+                // return the original map since it doesn't need to be modified.
+                if Unchecked.equals v value then original
+                else
+                    ListMap.Rewind (stack, Tail (k, value))
+            elif c < 0 then
+                // Add the new binding to the end of the listMap.
+                let listMap = Element (Tail (key, value), k, v)
+                ListMap.Rewind (stack, listMap)
+
+            else
+                // Insert the new binding before the tail.
+                let listMap = Element (listMap, k, v)
+                ListMap.Rewind (stack, listMap)
+
+        | Element (listMap, k, v) ->
+            let c = Unchecked.compare k key
+            if c = 0 then
+                // If the new value is the same as the existing value,
+                // return the original map since it doesn't need to be modified.
+                if Unchecked.equals v value then original
+                else
+                    ListMap.Rewind (stack, Element (listMap, k, value))
+            elif c < 0 then
+                // The new binding is inserted at some "later" point in the list.
+                ListMap.AddImpl (KeyValuePair (k, v) :: stack, listMap, original, key, value)
+
+            else
+                // Add the new binding prior to this binding, then rewind the stack onto
+                // the result to produce the new map.
+                let listMap = Element (listMap, key, value)
+                ListMap.Rewind (stack, listMap)
+
+    //
+    static member Add (key : 'Key, value : 'T, listMap : ListMap<'Key, 'T>) : ListMap<'Key, 'T> =
+        ListMap.AddImpl ([], listMap, listMap, key, value)
+
+    //
+    static member TryAdd (key : 'Key, value : 'T, listMap : ListMap<'Key, 'T>) : ListMap<'Key, 'T> =
+        notImpl "ListMap.TryAdd"
+
+    //
+    static member ToSeq (listMap : ListMap<'Key, 'T>) =
+        seq {
+        match listMap with
+        | Tail (k, v) ->
+            yield (k, v)
+        | Element (listMap, k, v) ->
+            yield (k, v)
+            yield! ListMap.ToSeq listMap
+        }
+
+    //
+    static member private Reverse (reversed : ListMap<'Key, 'T>, listMap : ListMap<'Key, 'T>) =
+        match listMap with
+        | Tail (k, v) ->
+            Element (reversed, k, v)
+        | Element (listMap, k, v) ->
+            ListMap.Reverse (Element (reversed, k, v), listMap)
+
+    //
+    static member private Reverse (listMap : ListMap<'Key, 'T>) =
+        match listMap with
+        | Tail (_,_) ->
+            listMap
+        | Element (listMap, k, v) ->
+            ListMap.Reverse (Tail (k, v), listMap)
+
+    //
+    static member Iterate (action : FSharpFunc<_,_,_>, listMap : ListMap<'Key, 'T>) =
+        match listMap with
+        | Tail (k, v) ->
+            action.Invoke (k, v)
+        | Element (listMap, k, v) ->
+            action.Invoke (k, v)
+            ListMap.Iterate (action, listMap)
+
+    //
+    static member IterateBack (action : FSharpFunc<_,_,_>, listMap : ListMap<'Key, 'T>) =
+        ListMap.Iterate (action, ListMap.Reverse listMap)
+
+    //
+    static member Fold (folder : FSharpFunc<_,_,_,_>, listMap : ListMap<'Key, 'T>, state : 'State) =
+        match listMap with
+        | Tail (k, v) ->
+            folder.Invoke (state, k, v)
+        | Element (listMap, k, v) ->
+            let state = folder.Invoke (state, k, v)
+            ListMap.Fold (folder, listMap, state)
+
+    //
+    static member FoldBack (folder : FSharpFunc<_,_,_,_>, listMap : ListMap<'Key, 'T>, state : 'State) =
+        let folder state k v =
+            folder.Invoke (k, v, state)
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        ListMap.Fold (folder, ListMap.Reverse listMap, state)
+
+    //
+    static member TryFindKey (predicate : FSharpFunc<_,_,_>, listMap : ListMap<'Key, 'T>) =
+        match listMap with
+        | Tail (k, v) ->
+            if predicate.Invoke (k, v) then
+                Some k
+            else None
+        | Element (listMap, k, v) ->
+            if predicate.Invoke (k, v) then
+                Some k
+            else
+                ListMap.TryFindKey (predicate, listMap)
+
+    //
+    static member TryPick (picker : FSharpFunc<_,_,_>, listMap : ListMap<'Key, 'T>) : 'U option =
+        match listMap with
+        | Tail (k, v) ->
+            picker.Invoke (k, v)
+        | Element (listMap, k, v) ->
+            match picker.Invoke (k, v) with
+            | None ->
+                ListMap.TryPick (picker, listMap)
+            | result ->
+                result
 
 
 (* OPTIMIZE :   Some of the functional-style operations on PatriciaHashMap use direct non-tail-recursion;
@@ -91,7 +260,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             if j = keyHash then
                 ListMap.TryFind (key, listMap)
             else None
-        | Br (p, m, t0, t1) ->
+        | Br (_, m, t0, t1) ->
             PatriciaHashMap.TryFind (
                 keyHash, key, (if zeroBit (keyHash, m) then t0 else t1))
 
@@ -113,12 +282,12 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty -> 0
         | Lf (_, listMap) ->
             ListMap.Count listMap
-        | Br (_,_,_,_) as t ->
+        | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push map
 
             // Traverse the tree, counting the elements by using the mutable stack.
             let mutable count = 0u
@@ -158,7 +327,16 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty ->
             Empty
         | Lf (j, listMap) ->
-            if j = keyHash then Empty
+            if j = keyHash then
+                match ListMap.Remove (key, listMap) with
+                | None ->
+                    Empty
+                | Some result ->
+                    // OPTIMIZATION : If the result is the same as the input, return the
+                    // original map since it wasn't modified.
+                    if result === listMap then map
+                    else
+                        Lf (j, result)
             else map
         
         | Br (p, m, t0, t1) ->
@@ -166,13 +344,15 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                 if zeroBit (keyHash, m) then
                     match PatriciaHashMap.Remove (keyHash, key, t0) with
                     | Empty -> t1
-                    | t0 ->
-                        Br (p, m, t0, t1)
+                    | left ->
+                        // OPTIMIZE : If left === t0 then return the original map instead of creating a new one.
+                        Br (p, m, left, t1)
                 else
                     match PatriciaHashMap.Remove (keyHash, key, t1) with
                     | Empty -> t0
-                    | t1 ->
-                        Br (p, m, t0, t1)
+                    | right ->
+                        // OPTIMIZE : If right === t1 then return the original map instead of creating a new one.
+                        Br (p, m, t0, right)
             else map
 
     //
@@ -191,23 +371,26 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             Lf (keyHash, Tail (key, value))
         | Lf (j, listMap) ->
             if j = keyHash then
-                // A binding already exists with the given key.
-                // This method 'overwrites' the existing value, by returning
-                // a new node with the inserted value.
-                // OPTIMIZE : Try calling Object.Equals or similar -- if the existing
-                // value is the same as the new value, we can return this node instead
-                // of creating a new one.
-                notImpl "Add"   // TODO : Need to modify the code so it actually inserts the value into the listMap.
-                Lf (keyHash, Tail (key, value))
+                let result = ListMap.Add (key, value, listMap)
+
+                // OPTIMIZATION : If the result is the same as the input, return the original
+                // map instead since it wasn't modified.
+                if result === listMap then map
+                else
+                    Lf (j, result)
             else
                 PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), j, map)
         | Br (p, m, t0, t1) ->
             if matchPrefix (keyHash, p, m) then
                 if zeroBit (keyHash, m) then
                     let left = PatriciaHashMap.Add (keyHash, key, value, t0)
+
+                    // OPTIMIZE : If left === t0 then return the original map instead of creating a new one.
                     Br (p, m, left, t1)
                 else
                     let right = PatriciaHashMap.Add (keyHash, key, value, t1)
+
+                    // OPTIMIZE : If right === t1 then return the original map instead of creating a new one.
                     Br (p, m, t0, right)
             else
                 PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), p, map)
@@ -220,10 +403,13 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             Lf (keyHash, Tail (key, value))
         | Lf (j, listMap) ->
             if j = keyHash then
-                // A binding already exists with the given key.
-                // This method does not overwrite the existing value, so we can
-                // just return the existing map instead of creating an identical new one.
-                map
+                let result = ListMap.TryAdd (key, value, listMap)
+
+                // OPTIMIZATION : If the result is the same as the input, return the original
+                // map instead since it wasn't modified.
+                if result === listMap then map
+                else
+                    Lf (j, result)
             else
                 PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), j, map)
         | Br (p, m, t0, t1) ->
@@ -493,13 +679,13 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 *)
 (*
     //
-    static member OfSeq (source : seq<int * 'T>) : PatriciaHashMap<'Key, 'T> =
+    static member OfSeq (source : seq<'Key * 'T>) : PatriciaHashMap<'Key, 'T> =
         (Empty, source)
         ||> Seq.fold (fun trie (key, value) ->
             PatriciaHashMap.Add (uint32 key, value, trie))
 
     //
-    static member OfList (source : (int * 'T) list) : PatriciaHashMap<'Key, 'T> =
+    static member OfList (source : ('Key * 'T) list) : PatriciaHashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
@@ -508,7 +694,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             PatriciaHashMap.Add (uint32 key, value, trie))
 
     //
-    static member OfArray (source : (int * 'T)[]) : PatriciaHashMap<'Key, 'T> =
+    static member OfArray (source : ('Key * 'T)[]) : PatriciaHashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
@@ -517,7 +703,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             PatriciaHashMap.Add (uint32 key, value, trie))
 
     //
-    static member OfMap (source : Map<int, 'T>) : PatriciaHashMap<'Key, 'T> =
+    static member OfMap (source : Map<'Key, 'T>) : PatriciaHashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
@@ -525,39 +711,39 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         ||> Map.fold (fun trie key value ->
             PatriciaHashMap.Add (uint32 key, value, trie))
 *)
-(*
     //
-    static member Iterate (action : int -> 'T -> unit, map) : unit =
+    static member Iterate (action : 'Key -> 'T -> unit, map) : unit =
         match map with
         | Empty -> ()
-        | Lf (k, x) ->
-            action (int k) x
-        | Br (_,_,_,_) as t ->
+        | Lf (_, listMap) ->
+            let action = FSharpFunc<_,_,_>.Adapt action
+            ListMap.Iterate (action, listMap)
+        | Br (_,_,_,_) ->
             let action = FSharpFunc<_,_,_>.Adapt action
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push map
 
             // Loop until we've processed the entire tree.
             while stack.Count <> 0 do
                 match stack.Pop () with
                 | Empty -> ()
-                | Lf (k, x) ->
-                    action.Invoke (int k, x)
+                | Lf (_, listMap) ->
+                    ListMap.Iterate (action, listMap)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    action.Invoke (int k, x)
-                    action.Invoke (int j, y)
+                | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
+                    ListMap.Iterate (action, listMap1)
+                    ListMap.Iterate (action, listMap2)
                     
-                | Br (_, _, Lf (k, x), right) ->
+                | Br (_, _, Lf (_, listMap), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    action.Invoke (int k, x)
+                    ListMap.Iterate (action, listMap)
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -567,37 +753,38 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     stack.Push left
 
     //
-    static member IterateBack (action : int -> 'T -> unit, map) : unit =
+    static member IterateBack (action : 'Key -> 'T -> unit, map) : unit =
         match map with
         | Empty -> ()
-        | Lf (k, x) ->
-            action (int k) x
-        | Br (_,_,_,_) as t ->
+        | Lf (_, listMap) ->
+            let action = FSharpFunc<_,_,_>.Adapt action
+            ListMap.IterateBack (action, listMap)
+        | Br (_,_,_,_) ->
             let action = FSharpFunc<_,_,_>.Adapt action
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push map
 
             // Loop until we've processed the entire tree.
             while stack.Count <> 0 do
                 match stack.Pop () with
                 | Empty -> ()
-                | Lf (k, x) ->
-                    action.Invoke (int k, x)
+                | Lf (_, listMap) ->
+                    ListMap.IterateBack (action, listMap)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    action.Invoke (int j, y)
-                    action.Invoke (int k, x)
+                | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
+                    ListMap.IterateBack (action, listMap1)
+                    ListMap.IterateBack (action, listMap2)
                     
-                | Br (_, _, left, Lf (k, x)) ->
+                | Br (_, _, left, Lf (_, listMap)) ->
                     // Only handle the case where the right child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    action.Invoke (int k, x)
+                    ListMap.IterateBack (action, listMap)
                     stack.Push left
 
                 | Br (_, _, left, right) ->
@@ -607,39 +794,40 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     stack.Push right
 
     //
-    static member Fold (folder : 'State -> int -> 'T -> 'State, state : 'State, map) : 'State =
+    static member Fold (folder : 'State -> 'Key -> 'T -> 'State, state : 'State, map) : 'State =
         match map with
         | Empty ->
             state
-        | Lf (k, x) ->
-            folder state (int k) x
-        | Br (_,_,_,_) as t ->
+        | Lf (_, listMap) ->
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            ListMap.Fold (folder, listMap, state)
+        | Br (_,_,_,_) ->
             let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push map
 
             /// Loop until we've processed the entire tree.
             let mutable state = state
             while stack.Count <> 0 do
                 match stack.Pop () with
                 | Empty -> ()
-                | Lf (k, x) ->
-                    state <- folder.Invoke (state, int k, x)
+                | Lf (_, listMap) ->
+                    state <- ListMap.Fold (folder, listMap, state)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    state <- folder.Invoke (state, int k, x)
-                    state <- folder.Invoke (state, int j, y)
+                | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
+                    state <- ListMap.Fold (folder, listMap1, state)
+                    state <- ListMap.Fold (folder, listMap2, state)
                     
-                | Br (_, _, Lf (k, x), right) ->
+                | Br (_, _, Lf (_, listMap), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (state, int k, x)
+                    state <- ListMap.Fold (folder, listMap, state)
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -652,39 +840,40 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             state
 
     //
-    static member FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State, map) : 'State =
+    static member FoldBack (folder : 'Key -> 'T -> 'State -> 'State, state : 'State, map) : 'State =
         match map with
         | Empty ->
             state
-        | Lf (k, x) ->
-            folder (int k) x state
-        | Br (_,_,_,_) as t ->
+        | Lf (_, listMap) ->
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            ListMap.FoldBack (folder, listMap, state)
+        | Br (_,_,_,_) ->
             let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push map
 
             /// Loop until we've processed the entire tree.
             let mutable state = state
             while stack.Count <> 0 do
                 match stack.Pop () with
                 | Empty -> ()
-                | Lf (k, x) ->
-                    state <- folder.Invoke (int k, x, state)
+                | Lf (_, listMap) ->
+                    state <- ListMap.FoldBack (folder, listMap, state)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    state <- folder.Invoke (int j, y, state)
-                    state <- folder.Invoke (int k, x, state)
+                | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
+                    state <- ListMap.FoldBack (folder, listMap1, state)
+                    state <- ListMap.FoldBack (folder, listMap2, state)
                     
-                | Br (_, _, left, Lf (k, x)) ->
+                | Br (_, _, left, Lf (_, listMap)) ->
                     // Only handle the case where the right child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (int k, x, state)
+                    state <- ListMap.FoldBack (folder, listMap, state)
                     stack.Push left
 
                 | Br (_, _, left, right) ->
@@ -697,23 +886,21 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             state
 
     //
-    static member TryFindKey (predicate : int -> 'T -> bool, map) : int option =
+    static member TryFindKey (predicate : 'Key -> 'T -> bool, map) : 'Key option =
         match map with
         | Empty ->
             None
-        | Lf (k, x) ->
-            if predicate (int k) x then
-                Some (int k)
-            else
-                None
-        | Br (_,_,_,_) as t ->
+        | Lf (_, listMap) ->
+            let predicate = FSharpFunc<_,_,_>.Adapt predicate
+            ListMap.TryFindKey (predicate, listMap)
+        | Br (_,_,_,_) ->
             let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push map
 
             /// Loop until we find a key/value that matches the predicate,
             /// or until we've processed the entire tree.
@@ -721,24 +908,20 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             while stack.Count <> 0 && Option.isNone matchingKey do
                 match stack.Pop () with
                 | Empty -> ()
-                | Lf (k, x) ->
-                    if predicate.Invoke (int k, x) then
-                        matchingKey <- Some (int k)
+                | Lf (_, listMap) ->
+                    matchingKey <- ListMap.TryFindKey (predicate, listMap)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    if predicate.Invoke (int k, x) then
-                        matchingKey <- Some (int k)
-                    elif predicate.Invoke (int j, y) then
-                        matchingKey <- Some (int j)
+                | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
+                    matchingKey <- ListMap.TryFindKey (predicate, listMap1)
+                    if Option.isNone matchingKey then
+                        matchingKey <- ListMap.TryFindKey (predicate, listMap2)
                     
-                | Br (_, _, Lf (k, x), right) ->
+                | Br (_, _, Lf (_, listMap), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    if predicate.Invoke (int k, x) then
-                        matchingKey <- Some (int k)
-
+                    matchingKey <- ListMap.TryFindKey (predicate, listMap)
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -751,20 +934,21 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             matchingKey
 
     //
-    static member TryPick (picker : int -> 'T -> 'U option, map) : 'U option =
+    static member TryPick (picker : 'Key -> 'T -> 'U option, map) : 'U option =
         match map with
         | Empty ->
             None
-        | Lf (k, x) ->
-            picker (int k) x
-        | Br (_,_,_,_) as t ->
+        | Lf (_, listMap) ->
+            let picker = FSharpFunc<_,_,_>.Adapt picker
+            ListMap.TryPick (picker, listMap)
+        | Br (_,_,_,_) ->
             let picker = FSharpFunc<_,_,_>.Adapt picker
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push map
 
             /// Loop until we find a key/value that matches the picker,
             /// or until we've processed the entire tree.
@@ -772,23 +956,23 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             while stack.Count <> 0 && Option.isNone pickedValue do
                 match stack.Pop () with
                 | Empty -> ()
-                | Lf (k, x) ->
-                    pickedValue <- picker.Invoke (int k, x)
+                | Lf (_, listMap) ->
+                    pickedValue <- ListMap.TryPick (picker, listMap)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
+                | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
                     pickedValue <-
-                        match picker.Invoke (int k, x) with
+                        match ListMap.TryPick (picker, listMap1) with
                         | (Some _) as value ->
                             value
                         | None ->
-                            picker.Invoke (int j, y)
+                            ListMap.TryPick (picker, listMap2)
                     
-                | Br (_, _, Lf (k, x), right) ->
+                | Br (_, _, Lf (_, listMap), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    pickedValue <- picker.Invoke (int k, x)
+                    pickedValue <- ListMap.TryPick (picker, listMap)
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -805,19 +989,19 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         seq {
         match map with
         | Empty -> ()
-        | Lf (k, x) ->
-            yield (int k, x)
+        | Lf (_, listMap) ->
+            yield! ListMap.ToSeq listMap
         
         (* OPTIMIZATION :   When one or both children of this node are leaves,
                             we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            yield (int k, x)
-            yield (int j, y)
-                    
-        | Br (_, _, Lf (k, x), right) ->
+        | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
+            yield! ListMap.ToSeq listMap1
+            yield! ListMap.ToSeq listMap2
+
+        | Br (_, _, Lf (_, listMap), right) ->
             // Only handle the case where the left child is a leaf
             // -- otherwise the traversal order would be altered.
-            yield (int k, x)
+            yield! ListMap.ToSeq listMap
             yield! PatriciaHashMap.ToSeq right
 
         | Br (_, _, left, right) ->
@@ -825,7 +1009,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             yield! PatriciaHashMap.ToSeq left
             yield! PatriciaHashMap.ToSeq right
         }
-*)
+
 (*
 /// <summary>Immutable, unordered maps.</summary>
 /// <typeparam name="Key">The type of key used by the map.</typeparam>
@@ -1227,7 +1411,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         member __.Remove item : bool =
             notSupported "HashMaps cannot be mutated."
 
-    interface IDictionary<int, 'T> with
+    interface IDictionary<'Key, 'T> with
         /// <inherit />
         member __.Item
             with get key =
