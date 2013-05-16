@@ -677,12 +677,13 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty, Empty -> 0
         | Empty, _ -> -1
 *)
-(*
+
     //
     static member OfSeq (source : seq<'Key * 'T>) : PatriciaHashMap<'Key, 'T> =
         (Empty, source)
         ||> Seq.fold (fun trie (key, value) ->
-            PatriciaHashMap.Add (uint32 key, value, trie))
+            let keyHash = uint32 <| hash key
+            PatriciaHashMap.Add (keyHash, key, value, trie))
 
     //
     static member OfList (source : ('Key * 'T) list) : PatriciaHashMap<'Key, 'T> =
@@ -691,7 +692,8 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
         (Empty, source)
         ||> List.fold (fun trie (key, value) ->
-            PatriciaHashMap.Add (uint32 key, value, trie))
+            let keyHash = uint32 <| hash key
+            PatriciaHashMap.Add (keyHash, key, value, trie))
 
     //
     static member OfArray (source : ('Key * 'T)[]) : PatriciaHashMap<'Key, 'T> =
@@ -700,17 +702,19 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
         (Empty, source)
         ||> Array.fold (fun trie (key, value) ->
-            PatriciaHashMap.Add (uint32 key, value, trie))
+            let keyHash = uint32 <| hash key
+            PatriciaHashMap.Add (keyHash, key, value, trie))
 
-    //
-    static member OfMap (source : Map<'Key, 'T>) : PatriciaHashMap<'Key, 'T> =
-        // Preconditions
-        checkNonNull "source" source
+//    //
+//    static member OfMap (source : Map<'Key, 'T>) : PatriciaHashMap<'Key, 'T> =
+//        // Preconditions
+//        checkNonNull "source" source
+//
+//        (Empty, source)
+//        ||> Map.fold (fun trie key value ->
+//            let keyHash = uint32 <| hash key
+//            PatriciaHashMap.Add (keyHash, key, value, trie))
 
-        (Empty, source)
-        ||> Map.fold (fun trie key value ->
-            PatriciaHashMap.Add (uint32 key, value, trie))
-*)
     //
     static member Iterate (action : 'Key -> 'T -> unit, map) : unit =
         match map with
@@ -1010,14 +1014,14 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             yield! PatriciaHashMap.ToSeq right
         }
 
-(*
+
 /// <summary>Immutable, unordered maps.</summary>
 /// <typeparam name="Key">The type of key used by the map.</typeparam>
 /// <typeparam name="T">The type of the values stored in the map.</typeparam>
 [<Sealed; CompiledName("FSharpHashMap`1")>]
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
-//[<DebuggerTypeProxy(typedefof<HashMapDebuggerProxy<int,int>>)>]
+[<DebuggerTypeProxy(typedefof<HashMapDebuggerProxy<int,int>>)>]
 type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'Key : equality>
     private (trie : PatriciaHashMap<'Key, 'T>) =
     /// The empty HashMap instance.
@@ -1098,13 +1102,15 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     /// Returns a new HashMap with the binding added to this HashMap.
     member this.Add (key : 'Key, value : 'T) : HashMap<'Key, 'T> =
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
-        let trie' = PatriciaHashMap.Add (key, value, trie)
+        let keyHash = uint32 <| hash key
+        let trie' = PatriciaHashMap.Add (keyHash, key, value, trie)
         if trie === trie' then this
         else HashMap (trie')
 
     /// Returns a new HashMap with the binding added to this HashMap.
     member this.TryAdd (key : 'Key, value : 'T) : HashMap<'Key, 'T> =
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
+        //let keyHash = uint32 <| hash key
         let trie' = PatriciaHashMap.TryAdd (key, value, trie)
         if trie === trie' then this
         else HashMap (trie')
@@ -1113,10 +1119,11 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     /// No exception is raised if the element is not present.
     member this.Remove (key : 'Key) : HashMap<'Key, 'T> =
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
-        let trie' = PatriciaHashMap.Remove (key, trie)
+        let keyHash = uint32 <| hash key
+        let trie' = PatriciaHashMap.Remove (keyHash, key, trie)
         if trie === trie' then this
         else HashMap (trie')
-
+(*
     /// Returns a new HashMap created by merging the two specified HashMaps.
     member this.Union (otherMap : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
         // If the result is the same (physical equality) to one of the inputs,
@@ -1147,11 +1154,12 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     /// Returns true if 'other' is a submap of this map.
     member this.IsSubmapOfBy (predicate, other : HashMap<'Key, 'T>) : bool =
         PatriciaHashMap.IsSubmapOfBy predicate other.Trie trie
-
+*)
     /// The HashMap containing the given binding.
     static member Singleton (key : 'Key, value : 'T) : HashMap<'Key, 'T> =
+        let keyHash = uint32 <| hash key
         HashMap (
-            Lf (uint32 key, value))
+            Lf (keyHash, Tail (key, value)))
 
     /// Returns a new HashMap made from the given bindings.
     static member OfSeq (source : seq<'Key * 'T>) : HashMap<'Key, 'T> =
@@ -1357,13 +1365,13 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
                 System.Collections.DictionaryEntry (k, v))).GetEnumerator ()
             :> System.Collections.IEnumerator
 
-    interface IEnumerable<KeyValuePair<int, 'T>> with
+    interface IEnumerable<KeyValuePair<'Key, 'T>> with
         /// <inherit />
         member __.GetEnumerator () =
             (PatriciaHashMap.ToSeq trie |> Seq.map (fun (k, v) ->
                 KeyValuePair (k, v))).GetEnumerator ()
 
-    interface ICollection<KeyValuePair<int, 'T>> with
+    interface ICollection<KeyValuePair<'Key, 'T>> with
         /// <inherit />
         member __.Count
             with get () =
@@ -1382,8 +1390,9 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
             notSupported "HashMaps cannot be mutated."
 
         /// <inherit />
-        member __.Contains (item : KeyValuePair<int, 'T>) =
-            match PatriciaHashMap.TryFind (uint32 item.Key, trie) with
+        member __.Contains (item : KeyValuePair<'Key, 'T>) =
+            let keyHash = uint32 <| hash item.Key
+            match PatriciaHashMap.TryFind (keyHash, item.Key, trie) with
             | None ->
                 false
             | Some value ->
@@ -1415,7 +1424,8 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         /// <inherit />
         member __.Item
             with get key =
-                match PatriciaHashMap.TryFind (uint32 key, trie) with
+                let keyHash = uint32 <| hash key
+                match PatriciaHashMap.TryFind (keyHash, key, trie) with
                 | Some value ->
                     value
                 | None ->
@@ -1452,7 +1462,8 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
 
         /// <inherit />
         member __.TryGetValue (key, value) =
-            match PatriciaHashMap.TryFind (uint32 key, trie) with
+            let keyHash = uint32 <| hash key
+            match PatriciaHashMap.TryFind (keyHash, key, trie) with
             | None ->
                 false
             | Some v ->
@@ -1467,14 +1478,14 @@ and [<Sealed>]
     member __.Items
         with get () : KeyValuePair<'Key, 'T>[] =
             map.ToKvpArray ()
-*)
-(*
+
+
 /// Functional programming operators related to the HashMap type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module HashMap =
     /// The empty map.
     [<CompiledName("Empty")>]
-    let empty<'T> =
+    let empty<'Key, 'T when 'Key : equality> =
         HashMap<'Key, 'T>.Empty
 
     /// Is the map empty?
@@ -1541,7 +1552,7 @@ module HashMap =
 
     /// Returns a new map with the binding added to this map.
     [<CompiledName("Add")>]
-    let inline add (key : int) (value : 'T) (map : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
+    let inline add (key : 'Key) (value : 'T) (map : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "map" map
 
@@ -1549,7 +1560,7 @@ module HashMap =
 
     //
     [<CompiledName("TryAdd")>]
-    let inline tryAdd (key : int) (value : 'T) (map : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
+    let inline tryAdd (key : 'Key) (value : 'T) (map : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "map" map
 
@@ -1558,12 +1569,12 @@ module HashMap =
     /// Removes an element from the domain of the map.
     /// No exception is raised if the element is not present.
     [<CompiledName("Remove")>]
-    let inline remove (key : int) (map : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
+    let inline remove (key : 'Key) (map : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "map" map
 
         map.Remove key
-
+(*
     /// Returns a new map created by merging the two specified maps.
     [<CompiledName("Union")>]
     let inline union (map1 : HashMap<'Key, 'T>) (map2 : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
@@ -1590,7 +1601,7 @@ module HashMap =
         checkNonNull "map2" map2
 
         map1.Difference map2
-
+*)
     /// Returns a new map made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : HashMap<'Key, 'T> =
@@ -1608,13 +1619,13 @@ module HashMap =
     let inline ofArray source : HashMap<'Key, 'T> =
         // Preconditions are checked by the member.
         HashMap.OfArray source
-
+(*
     /// Returns a new map made from the given bindings.
     [<CompiledName("OfMap")>]
     let inline ofMap source : HashMap<'Key, 'T> =
         // Preconditions are checked by the member.
         HashMap.OfMap source
-
+*)
     /// Views the collection as an enumerable sequence of pairs.
     /// The sequence will be ordered by the keys of the map.
     [<CompiledName("ToSeq")>]
@@ -1641,7 +1652,7 @@ module HashMap =
         checkNonNull "map" map
 
         map.ToArray ()
-
+(*
     /// Returns a new Map created from the given HashMap.
     [<CompiledName("ToMap")>]
     let inline toMap (map : HashMap<'Key, 'T>) =
@@ -1649,7 +1660,7 @@ module HashMap =
         checkNonNull "map" map
 
         map.ToMap ()
-
+*)
     /// Searches the map looking for the first element where the given function
     /// returns a Some value. If no such element is found, returns None.
     [<CompiledName("TryPick")>]
@@ -1770,4 +1781,3 @@ module HashMap =
 
         map.MapPartition partitioner
 
-*)
