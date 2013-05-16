@@ -141,27 +141,35 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         match map with
         | Empty ->
             Lf (key, value)
-        | Lf (j, y) as t ->
+        | Lf (j, y) ->
             if j = key then
                 // A binding already exists with the given key.
                 // This method 'overwrites' the existing value, by returning
                 // a new node with the inserted value.
-                // OPTIMIZE : Try calling Object.Equals or similar -- if the existing
-                // value is the same as the new value, we can return this node instead
-                // of creating a new one.
-                Lf (key, value)
+                // OPTIMIZATION : If the existing value is the same as the new value,
+                // we just return the existing node instead of creating a new one.
+                if Unchecked.equals y value then map
+                else Lf (key, value)
             else
-                PatriciaMap.Join (key, Lf (key, value), j, t)
-        | Br (p, m, t0, t1) as t ->
+                PatriciaMap.Join (key, Lf (key, value), j, map)
+        | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     let left = PatriciaMap.Add (key, value, t0)
-                    Br (p, m, left, t1)
+
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if left === t0 then map
+                    else Br (p, m, left, t1)
                 else
                     let right = PatriciaMap.Add (key, value, t1)
-                    Br (p, m, t0, right)
+                    
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if right === t1 then map
+                    else Br (p, m, t0, right)
             else
-                PatriciaMap.Join (key, Lf (key, value), p, t)
+                PatriciaMap.Join (key, Lf (key, value), p, map)
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
     /// If a binding already exists for the same key, the map is not altered.
@@ -169,29 +177,37 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         match map with
         | Empty ->
             Lf (key, value)
-        | Lf (j, y) as t ->
+        | Lf (j, _) ->
             if j = key then
                 // A binding already exists with the given key.
                 // This method does not overwrite the existing value, so we can
                 // just return the existing map instead of creating an identical new one.
-                t
+                map
             else
-                PatriciaMap.Join (key, Lf (key, value), j, t)
-        | Br (p, m, t0, t1) as t ->
+                PatriciaMap.Join (key, Lf (key, value), j, map)
+        | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     let left = PatriciaMap.TryAdd (key, value, t0)
-                    Br (p, m, left, t1)
+
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if left === t0 then map
+                    else Br (p, m, left, t1)
                 else
                     let right = PatriciaMap.TryAdd (key, value, t1)
-                    Br (p, m, t0, right)
+                    
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if right === t1 then map
+                    else Br (p, m, t0, right)
             else
-                PatriciaMap.Join (key, Lf (key, value), p, t)
+                PatriciaMap.Join (key, Lf (key, value), p, map)
 
     /// Computes the union of two PatriciaMaps.
     static member Union (s, t) : PatriciaMap<'T> =
         match s, t with
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
                 if p = q then
                     // The trees have the same prefix. Merge the subtrees.
@@ -211,9 +227,15 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
                         let left = PatriciaMap.Union (s0, t)
+
+                        // OPTIMIZE : If left === s0, we should be able to return this map
+                        // without modifying it.
                         Br (p, m, left, s1)
                     else
                         let right = PatriciaMap.Union (s1, t)
+
+                        // OPTIMIZE : If right === s1, we should be able to return this map
+                        // without modifying it.
                         Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
@@ -224,37 +246,49 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     // p contains q. Merge s with a subtree of t.
                     if zeroBit (p, n) then
                         let left = PatriciaMap.Union (s, t0)
+
+                        // OPTIMIZE : If left === t0, we should be able to return this map
+                        // without modifying it.
                         Br (q, n, left, t1)
                     else
                         let right = PatriciaMap.Union (s, t1)
+
+                        // OPTIMIZE : If right === t1, we should be able to return this map
+                        // without modifying it.
                         Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
                     PatriciaMap.Join (p, s, q, t)
 
-        | (Br (p, m, s0, s1) as s), Lf (k, x) ->
+        | Br (p, m, s0, s1), Lf (k, x) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
                     let left = PatriciaMap.TryAdd (k, x, s0)
+
+                    // OPTIMIZE : If left === s0, we should be able to return this map
+                    // without modifying it.
                     Br (p, m, left, s1)
                 else
                     let right = PatriciaMap.TryAdd (k, x, s1)
+
+                    // OPTIMIZE : If right === s1, we should be able to return this map
+                    // without modifying it.
                     Br (p, m, s0, right)
             else
                 PatriciaMap.Join (k, Lf (k, x), p, s)
 
-        | (Br (_,_,_,_) as s), Empty ->
+        | Br (_,_,_,_), Empty ->
             s
-        | Lf (k, x), t ->
+        | Lf (k, x), _ ->
             PatriciaMap.Add (k, x, t)
-        | Empty, t -> t
+        | Empty, _ -> t
 
     /// Compute the intersection of two PatriciaMaps.
     /// If both maps contain a binding with the same key, the binding from
     /// the first map will be used.
     static member Intersect (s, t) : PatriciaMap<'T> =
         match s, t with
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
                 if p <> q then Empty
                 else
@@ -299,7 +333,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Br (_,_,_,_), Empty ->
             Empty
             
-        | (Lf (k, x) as s), t ->
+        | Lf (k, x), _ ->
             // Here, we always use the value from the left tree, so as long as the
             // right tree contains a binding with the same key, we just return the left tree.
             if PatriciaMap.ContainsKey (k, t) then s
@@ -313,10 +347,10 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         match map with
         | Empty ->
             Empty
-        | Lf (j, _) as t ->
+        | Lf (j, _) ->
             if key = j then Empty
-            else t
-        | Br (p, m, t0, t1) as t ->
+            else map
+        | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     match PatriciaMap.Delete (key, t0) with
@@ -328,12 +362,12 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     | Empty -> t0
                     | right ->
                         Br (p, m, t0, right)
-            else t
+            else map
 
     /// Compute the difference of two PatriciaMaps.
     static member Difference (s, t) : PatriciaMap<'T> =
         match s, t with
-        | (Br (p, m, s0, s1) as s), (Br (q, n, t0, t1) as t) ->
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
                 if p <> q then s
                 else
@@ -355,11 +389,13 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                         match PatriciaMap.Difference (s0, t) with
                         | Empty -> s1
                         | left ->
+                            // OPTIMIZE : If left === s0 then return the map as-is instead of creating a new one.
                             Br (p, m, left, s1)
                     else
                         match PatriciaMap.Difference (s1, t) with
                         | Empty -> s0
                         | right ->
+                            // OPTIMIZE : If right === s1 then return the map as-is instead of creating a new one.
                             Br (p, m, s0, right)
                 else s
 
@@ -377,17 +413,19 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     match PatriciaMap.Delete (k, s0) with
                     | Empty -> s1
                     | left ->
+                        // OPTIMIZE : If left === s0 then return the map as-is instead of creating a new one.
                         Br (p, m, left, s1)
                 else
                     match PatriciaMap.Delete (k, s1) with
                     | Empty -> s0
                     | right ->
+                        // OPTIMIZE : If right === s1 then return the map as-is instead of creating a new one.
                         Br (p, m, s0, right)
             else s
             
-        | Br (_,_,_,_) as s, Empty ->
+        | Br (_,_,_,_), Empty ->
             s
-        | (Lf (k, x) as s), t ->
+        | Lf (k, x), _ ->
             if PatriciaMap.ContainsKey (k, t) then Empty
             else s
         | Empty, _ ->
@@ -425,7 +463,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
     //
     static member private SubmapCmp (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap<'T>) (t2 : PatriciaMap<'T>) : int =
         match t1, t2 with
-        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+        | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then 1
             elif shorter (m2, m1) then
                 if not <| matchPrefix (p1, p2, m2) then 1
