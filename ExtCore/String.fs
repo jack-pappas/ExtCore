@@ -163,6 +163,16 @@ module Substring =
     let inline toArray (substr : substring) : char[] =
         substr.ToArray ()
 
+    /// Extracts the first (left-most) character from a substring, returning a Some value
+    /// containing the character and the remaining substring. Returns None if the given
+    /// substring is empty.
+    [<CompiledName("Read")>]
+    let read (substr : substring) : (char * substring) option =
+        if substr.Length = 0 then None
+        else
+            // "Extract" the first (left-most) character from the substring.
+            Some (substr.[0], substr.[1..])
+
     /// Gets a substring of a substring.
     [<CompiledName("Sub")>]
     let sub (substr : substring) offset count : substring =
