@@ -333,7 +333,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Br (_,_,_,_), Empty ->
             Empty
             
-        | Lf (k, x), _ ->
+        | Lf (k, _), _ ->
             // Here, we always use the value from the left tree, so as long as the
             // right tree contains a binding with the same key, we just return the left tree.
             if PatriciaMap.ContainsKey (k, t) then s
@@ -341,28 +341,6 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
 
         | Empty, _ ->
             Empty
-
-    //
-    static member private Delete (key, map) : PatriciaMap<'T> =
-        match map with
-        | Empty ->
-            Empty
-        | Lf (j, _) ->
-            if key = j then Empty
-            else map
-        | Br (p, m, t0, t1) ->
-            if matchPrefix (key, p, m) then
-                if zeroBit (key, m) then
-                    match PatriciaMap.Delete (key, t0) with
-                    | Empty -> t1
-                    | left ->
-                        Br (p, m, left, t1)
-                else
-                    match PatriciaMap.Delete (key, t1) with
-                    | Empty -> t0
-                    | right ->
-                        Br (p, m, t0, right)
-            else map
 
     /// Compute the difference of two PatriciaMaps.
     static member Difference (s, t) : PatriciaMap<'T> =
@@ -410,13 +388,13 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Br (p, m, s0, s1), Lf (k, y) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    match PatriciaMap.Delete (k, s0) with
+                    match PatriciaMap.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
                         // OPTIMIZE : If left === s0 then return the map as-is instead of creating a new one.
                         Br (p, m, left, s1)
                 else
-                    match PatriciaMap.Delete (k, s1) with
+                    match PatriciaMap.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
                         // OPTIMIZE : If right === s1 then return the map as-is instead of creating a new one.
@@ -425,7 +403,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             
         | Br (_,_,_,_), Empty ->
             s
-        | Lf (k, x), _ ->
+        | Lf (k, _), _ ->
             if PatriciaMap.ContainsKey (k, t) then Empty
             else s
         | Empty, _ ->
