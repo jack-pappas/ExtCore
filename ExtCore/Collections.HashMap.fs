@@ -29,32 +29,42 @@ open BitOps
 
 /// An association list implementing a simple map-like data structure.
 /// This is used within PatriciaHashMap to handle hash collisions in a manner reminiscent of a hashtable.
-type private NonEmptyAssociationList<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'Key : equality> =
+type private ListMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'Key : equality> =
     /// The tail (last element) in the list.
     | Tail of 'Key * 'T
     /// A list element (key-value pair) along with the rest of the list.
-    | Element of NonEmptyAssociationList<'Key, 'T> * 'Key * 'T
+    | Element of ListMap<'Key, 'T> * 'Key * 'T
 
     /// Returns the number of bindings in the map.
-    static member private CountImpl (listMap : NonEmptyAssociationList<'Key, 'T>, acc) : int =
+    static member private CountImpl (listMap : ListMap<'Key, 'T>, acc) : int =
         match listMap with
         | Tail (_,_) ->
             acc + 1
         | Element (listMap,_,_) ->
-            NonEmptyAssociationList.CountImpl (listMap, acc + 1)
+            ListMap.CountImpl (listMap, acc + 1)
 
     /// Returns the number of bindings in the map.
-    static member Count (listMap : NonEmptyAssociationList<'Key, 'T>) : int =
+    static member Count (listMap : ListMap<'Key, 'T>) : int =
         // Call the recursive implementation.
-        NonEmptyAssociationList.CountImpl (listMap, 0)
+        ListMap.CountImpl (listMap, 0)
 
     //
-    static member TryFind (key : 'Key, listMap : NonEmptyAssociationList<'Key, 'T>) : 'T option =
-        notImpl "NonEmptyAssociationList.ContainsKey"
+    static member TryFind (key : 'Key, listMap : ListMap<'Key, 'T>) : 'T option =
+        match listMap with
+        | Tail (k, v) ->
+            if k = key then Some v
+            else None
+        | Element (listMap, k, v) ->
+            if k = key then Some v
+            else ListMap.TryFind (key, listMap)
 
     //
-    static member ContainsKey (key : 'Key, listMap : NonEmptyAssociationList<'Key, 'T>) : bool =
-        notImpl "NonEmptyAssociationList.ContainsKey"
+    static member ContainsKey (key : 'Key, listMap : ListMap<'Key, 'T>) : bool =
+        match listMap with
+        | Tail (k, v) ->
+            k = key
+        | Element (listMap, k, v) ->
+            k = key || ListMap.ContainsKey (key, listMap)
 
 
 
@@ -68,7 +78,7 @@ type private NonEmptyAssociationList<'Key, [<EqualityConditionalOn; ComparisonCo
 type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'Key : equality> =
     | Empty
     // Key-HashCode * Value
-    | Lf of uint32 * NonEmptyAssociationList<'Key, 'T>
+    | Lf of uint32 * ListMap<'Key, 'T>
     // Prefix * Mask * Left-Child * Right-Child
     | Br of uint32 * uint32 * PatriciaHashMap<'Key, 'T> * PatriciaHashMap<'Key, 'T>
 
@@ -79,7 +89,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             None
         | Lf (j, listMap) ->
             if j = keyHash then
-                NonEmptyAssociationList.TryFind (key, listMap)
+                ListMap.TryFind (key, listMap)
             else None
         | Br (p, m, t0, t1) ->
             PatriciaHashMap.TryFind (
@@ -92,7 +102,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             false
         | Lf (j, listMap) ->
             j = keyHash
-            && NonEmptyAssociationList.ContainsKey (key, listMap)
+            && ListMap.ContainsKey (key, listMap)
         | Br (_, m, t0, t1) ->
             PatriciaHashMap.ContainsKey (
                 keyHash, key, (if zeroBit (keyHash, m) then t0 else t1))
@@ -102,7 +112,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         match map with
         | Empty -> 0
         | Lf (_, listMap) ->
-            NonEmptyAssociationList.Count listMap
+            ListMap.Count listMap
         | Br (_,_,_,_) as t ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
@@ -117,16 +127,19 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listMap) ->
-                    count <- count + (uint32 <| NonEmptyAssociationList.Count listMap)
+                    count <- count + (uint32 <| ListMap.Count listMap)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_,_), Lf (_,_)) ->
-                    count <- count + 2u
+                | Br (_, _, Lf (_, listMap1), Lf (_, listMap2)) ->
+                    count <-
+                        count
+                        + (uint32 <| ListMap.Count listMap1)
+                        + (uint32 <| ListMap.Count listMap2)
                     
-                | Br (_, _, Lf (_,_), child)
-                | Br (_, _, child, Lf (_,_)) ->
-                    count <- count + 1u
+                | Br (_, _, Lf (_, listMap), child)
+                | Br (_, _, child, Lf (_, listMap)) ->
+                    count <- count + (uint32 <| ListMap.Count listMap)
                     stack.Push child
 
                 | Br (_, _, left, right) ->
@@ -140,23 +153,23 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
     /// Remove the binding with the specified key from the map.
     /// No exception is thrown if the map does not contain a binding for the key.
-    static member Remove (key, map : PatriciaHashMap<'Key, 'T>) =
+    static member Remove (keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
         match map with
         | Empty ->
             Empty
-        | Lf (j, _) ->
-            if j = key then Empty
+        | Lf (j, listMap) ->
+            if j = keyHash then Empty
             else map
         
         | Br (p, m, t0, t1) ->
-            if matchPrefix (key, p, m) then
-                if zeroBit (key, m) then
-                    match PatriciaHashMap.Remove (key, t0) with
+            if matchPrefix (keyHash, p, m) then
+                if zeroBit (keyHash, m) then
+                    match PatriciaHashMap.Remove (keyHash, key, t0) with
                     | Empty -> t1
                     | t0 ->
                         Br (p, m, t0, t1)
                 else
-                    match PatriciaHashMap.Remove (key, t1) with
+                    match PatriciaHashMap.Remove (keyHash, key, t1) with
                     | Empty -> t0
                     | t1 ->
                         Br (p, m, t0, t1)
@@ -184,45 +197,52 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                 // OPTIMIZE : Try calling Object.Equals or similar -- if the existing
                 // value is the same as the new value, we can return this node instead
                 // of creating a new one.
-                Lf (key, value)
+                notImpl "Add"   // TODO : Need to modify the code so it actually inserts the value into the listMap.
+                Lf (keyHash, Tail (key, value))
             else
-                PatriciaHashMap.Join (key, Lf (key, value), j, map)
+                PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), j, map)
         | Br (p, m, t0, t1) ->
-            if matchPrefix (key, p, m) then
-                if zeroBit (key, m) then
-                    let left = PatriciaHashMap.Add (key, value, t0)
+            if matchPrefix (keyHash, p, m) then
+                if zeroBit (keyHash, m) then
+                    let left = PatriciaHashMap.Add (keyHash, key, value, t0)
                     Br (p, m, left, t1)
                 else
-                    let right = PatriciaHashMap.Add (key, value, t1)
+                    let right = PatriciaHashMap.Add (keyHash, key, value, t1)
                     Br (p, m, t0, right)
             else
-                PatriciaHashMap.Join (keyHash, Lf (key, Tail (key, value)), p, map)
+                PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), p, map)
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
     /// If a binding already exists for the same key, the map is not altered.
-    static member TryAdd (key, value : 'T, map) =
+    static member TryAdd (keyHash, key : 'Key, value : 'T, map) =
         match map with
         | Empty ->
-            Lf (key, value)
+            Lf (keyHash, Tail (key, value))
         | Lf (j, listMap) ->
-            if j = key then
+            if j = keyHash then
                 // A binding already exists with the given key.
                 // This method does not overwrite the existing value, so we can
                 // just return the existing map instead of creating an identical new one.
                 map
             else
-                PatriciaHashMap.Join (key, Lf (key, value), j, t)
+                PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), j, map)
         | Br (p, m, t0, t1) ->
-            if matchPrefix (key, p, m) then
-                if zeroBit (key, m) then
-                    let left = PatriciaHashMap.TryAdd (key, value, t0)
+            if matchPrefix (keyHash, p, m) then
+                if zeroBit (keyHash, m) then
+                    let left = PatriciaHashMap.TryAdd (keyHash, key, value, t0)
                     Br (p, m, left, t1)
                 else
-                    let right = PatriciaHashMap.TryAdd (key, value, t1)
+                    let right = PatriciaHashMap.TryAdd (keyHash, key, value, t1)
                     Br (p, m, t0, right)
             else
-                PatriciaHashMap.Join (key, Lf (key, value), p, map)
+                PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), p, map)
 
+    /// Insert a binding (key-value pair) into a map, returning a new, updated map.
+    /// If a binding already exists for the same key, the map is not altered.
+    static member TryAdd (key : 'Key, value : 'T, map) =
+        let keyHash = uint32 <| hash key
+        PatriciaHashMap.TryAdd (keyHash, key, value, map)
+(*
     /// Computes the union of two PatriciaHashMaps.
     static member Union (s, t) : PatriciaHashMap<'Key, 'T> =
         match s, t with
@@ -343,28 +363,6 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty, _ ->
             Empty
 
-    //
-    static member private Delete (key, map) : PatriciaHashMap<'Key, 'T> =
-        match map with
-        | Empty ->
-            Empty
-        | Lf (j, _) ->
-            if key = j then Empty
-            else map
-        | Br (p, m, t0, t1) ->
-            if matchPrefix (key, p, m) then
-                if zeroBit (key, m) then
-                    match PatriciaHashMap.Delete (key, t0) with
-                    | Empty -> t1
-                    | left ->
-                        Br (p, m, left, t1)
-                else
-                    match PatriciaHashMap.Delete (key, t1) with
-                    | Empty -> t0
-                    | right ->
-                        Br (p, m, t0, right)
-            else map
-
     /// Compute the difference of two PatriciaMaps.
     static member Difference (s, t) : PatriciaHashMap<'Key, 'T> =
         match s, t with
@@ -409,12 +407,12 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Br (p, m, s0, s1), Lf (k, y) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    match PatriciaHashMap.Delete (k, s0) with
+                    match PatriciaHashMap.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
                         Br (p, m, left, s1)
                 else
-                    match PatriciaHashMap.Delete (k, s1) with
+                    match PatriciaHashMap.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
                         Br (p, m, s0, right)
@@ -427,6 +425,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             else s
         | Empty, _ ->
             Empty
+*)
 (*
     /// <c>IsSubmapOfBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
     /// and when 'f' returns <c>true</c> when applied to their respective values.
