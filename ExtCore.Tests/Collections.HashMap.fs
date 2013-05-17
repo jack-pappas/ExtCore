@@ -25,6 +25,38 @@ open FsUnit
 //open FsCheck
 
 
+/// A type which uses the same hash value for every instance.
+/// This is used to test how HashMap handles collisions.
+[<Struct; CustomEquality; NoComparison>]
+type SameHash<'T when 'T : equality> =
+    val Value : 'T
+
+    override this.Equals (other : obj) =
+        match other with
+        | :? SameHash<'T> as other ->
+            this.Value = other.Value
+        | _ ->
+            false
+
+    override __.GetHashCode () = 1234
+
+/// A type which wraps an instance of another type, and restricts
+/// it's hash code values to some smaller range of values.
+[<Struct; CustomEquality; NoComparison>]
+type RestrictHash<'T when 'T : equality> =
+    val Value : 'T
+
+    override this.Equals (other : obj) =
+        match other with
+        | :? RestrictHash<'T> as other ->
+            this.Value = other.Value
+        | _ ->
+            false
+
+    override this.GetHashCode () =
+        (hash this.Value) / 10
+
+
 [<Test>]
 let isEmpty () : unit =
     HashMap.empty
