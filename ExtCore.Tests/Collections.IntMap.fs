@@ -840,8 +840,8 @@ let ObjectGetHashCode() =
     
 [<Test>]
 let ObjectToString() =
-    Assert.AreEqual("map [(1, 1); (2, 4); (3, 9)]", (IntMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
-    Assert.AreEqual("map []", ([] |> IntMap.ofList).ToString())
+    Assert.AreEqual("intMap [(1, 1); (2, 4); (3, 9)]", (IntMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
+    Assert.AreEqual("intMap []", ([] |> IntMap.ofList).ToString())
     
 [<Test>]
 let ObjectEquals() =

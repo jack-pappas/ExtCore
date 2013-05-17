@@ -866,9 +866,9 @@ let ObjectGetHashCode() =
     
 [<Test>]
 let ObjectToString() =
-    Assert.AreEqual("map [(1, 1); (2, 4); (3, 9)]", (HashMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
-    Assert.AreEqual("map []", ([] |> HashMap.ofList).ToString())
-    Assert.AreEqual("map []", 
+    Assert.AreEqual("hashMap [(1, 1); (2, 4); (3, 9)]", (HashMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
+    Assert.AreEqual("hashMap []", ([] |> HashMap.ofList).ToString())
+    Assert.AreEqual("hashMap []", 
                     (([] :(decimal*decimal)list) |> HashMap.ofList).ToString())
     
 [<Test>]
