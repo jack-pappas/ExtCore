@@ -62,6 +62,30 @@ let inline assertFalse condition =
     Assert.IsFalse (condition)
 
 
+/// Assertion functions for collections.
+[<RequireQualifiedAccess>]
+module Collection =
+    open System.Collections
+
+    /// Asserts that two collections are exactly equal.
+    /// The collections must have the same count, and contain the exact same objects in the same order.
+    let inline assertEqual<'T, 'U when 'T :> seq<'U>> (expected : 'T) (actual : 'T) =
+        CollectionAssert.AreEqual (expected, actual)
+
+    /// Asserts that two collections are not exactly equal.
+    let inline assertNotEqual<'T, 'U when 'T :> seq<'U>> (expected : 'T) (actual : 'T) =
+        CollectionAssert.AreNotEqual (expected, actual)
+
+    /// Asserts that two collections are exactly equal.
+    /// The collections must have the same count, and contain the exact same objects but the match may be in any order.
+    let inline assertEquiv<'T, 'U when 'T :> seq<'U>> (expected : 'T) (actual : 'T) =
+        CollectionAssert.AreEquivalent (expected, actual)
+
+    /// Asserts that two collections are not exactly equal.
+    let inline assertNotEquiv<'T, 'U when 'T :> seq<'U>> (expected : 'T) (actual : 'T) =
+        CollectionAssert.AreNotEquivalent (expected, actual)
+
+
 (* Fluent test helpers for use with NUnit and FsCheck. *)
 
 /// An FsCheck runner which reports FsCheck test results to NUnit.

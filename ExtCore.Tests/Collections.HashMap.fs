@@ -307,7 +307,7 @@ let ofSeq () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> Seq.ofArray
     |> HashMap.ofSeq
-    |> assertEqual
+    |> Collection.assertEquiv
         (HashMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -320,7 +320,7 @@ let ofList () : unit =
     // Sample usage test cases.
     [(5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G')]
     |> HashMap.ofList
-    |> assertEqual
+    |> Collection.assertEquiv
         (HashMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 
 [<Test>]
@@ -334,7 +334,7 @@ let ofArray () : unit =
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
-    |> assertEqual
+    |> Collection.assertEquiv
         (HashMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 (*
 [<Test>]
@@ -349,7 +349,7 @@ let ofMap () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
     |> Map.ofArray
     |> HashMap.ofMap
-    |> assertEqual
+    |> Collection.assertEquiv
         (HashMap.ofArray [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |])
 *)
 [<Test>]
@@ -365,7 +365,7 @@ let toSeq () : unit =
     |> HashMap.ofArray
     |> HashMap.toSeq
     |> Seq.toArray
-    |> assertEqual
+    |> Collection.assertEquiv
         [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
 
 [<Test>]
@@ -380,7 +380,7 @@ let toList () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.toList
-    |> assertEqual
+    |> Collection.assertEquiv
         [(2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a')]
 
 [<Test>]
@@ -395,7 +395,7 @@ let toArray () : unit =
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.toArray
-    |> assertEqual
+    |> Collection.assertEquiv
         [| (2, 'd'); (3, 'b'); (4, 'G'); (5, 'a'); (11, 'F'); (12, 'b'); (14, 'c'); (17, 'a'); |]
 (*
 [<Test>]
@@ -580,7 +580,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEquiv
             [| 'A'; 'C'; 'B'; 'F'; 'A'; 'G'; 'B'; 'D'; |]
 
 [<Test>]
@@ -615,7 +615,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEquiv
             [| 102; 102; 77; 105; 85; 115; 119; 121; |]
 
 [<Test>]
@@ -650,7 +650,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEquiv
             [| 114; 114; 112; 84; 106; 80; 107; 109; |]
 
 [<Test>]
@@ -1245,18 +1245,18 @@ module MapModule =
         
         // reference keys
         let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
-        let resultRefMap =   refMap |> HashMap.fold  (fun x y z -> x + y + z.ToString())  "*"      
-        Assert.AreEqual(resultRefMap,"*.1..2...3....4")
+        let resultRefMap = refMap |> HashMap.fold  (fun x y z -> x + y + z.ToString())  "*"      
+        Assert.AreEqual("*....4...3..2.1", resultRefMap)
         
         // One-element HashMap
         let oeleMap = HashMap.ofSeq [(1, "one")]
         let resultOele =   oeleMap |> HashMap.fold  (fun x y z -> x + y.ToString() + z)  "got"      
-        Assert.AreEqual(resultOele,"got1one")
+        Assert.AreEqual("got1one", resultOele)
         
         // empty HashMap
         let eptMap = HashMap.empty
         let resultEpt = eptMap |> HashMap.fold (fun x y z -> 1) 1         
-        Assert.AreEqual(resultEpt,1)
+        Assert.AreEqual(1,resultEpt)
                
         ()
 
@@ -1265,22 +1265,22 @@ module MapModule =
         // value keys
         let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
         let resultValueMap = HashMap.foldBack (fun x y z -> x.ToString() + y + z.ToString()) valueKeyMap "*"     
-        Assert.AreEqual(resultValueMap,"2b3c4d5e*")
+        Assert.AreEqual("2b3c4d5e*", resultValueMap)
         
         // reference keys
         let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
         let resultRefMap = HashMap.foldBack  (fun x y z -> x + y.ToString() + z) refMap "right"         
-        Assert.AreEqual(resultRefMap,".1..2...3....4right")
+        Assert.AreEqual(".1..2...3....4right", resultRefMap)
         
         // One-element HashMap
         let oeleMap = HashMap.ofSeq [(1, "one")]
         let resultOele = HashMap.foldBack  (fun x y z -> x.ToString() + y + z) oeleMap "right"         
-        Assert.AreEqual(resultOele,"1oneright")
+        Assert.AreEqual("1oneright", resultOele)
         
         // empty HashMap
         let eptMap = HashMap.empty
         let resultEpt = HashMap.foldBack (fun x y z -> 1) eptMap 1         
-        Assert.AreEqual(resultEpt,1)
+        Assert.AreEqual(1, resultEpt)
                
         ()
         
@@ -1351,7 +1351,7 @@ module MapModule =
             resultRefMap := !resultRefMap + x + y.ToString()
             ()
         HashMap.iter funStr refMap        
-        Assert.AreEqual(!resultRefMap,".1..2...3....4")
+        Assert.AreEqual("....4...3..2.1", !resultRefMap)
         
         // One-element HashMap
         let oeleMap = HashMap.ofSeq [(1, "one")]
