@@ -659,13 +659,14 @@ module List =
         let action = FSharpFunc<_,_,_>.Adapt action
         iteriImpl (action, list, 0)
 
-(*
+
 /// The standard F# Seq module, adapted for use within 'asyncMaybe' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
+(*
     //
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> Async<'U>) (sequence : seq<'T>) : Async<seq<'U>> =
+    let map (mapping : 'T -> Async<'U option>) (sequence : seq<'T>) : Async<seq<'U> option> =
         // Preconditions
         checkNonNull "sequence" sequence
 
@@ -681,7 +682,7 @@ module Seq =
 
     //
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> Async<'U>) (sequence : 'T[]) : Async<seq<'U>> =
+    let mapi (mapping : int -> 'T -> Async<'U option>) (sequence : seq<'T>) : Async<seq<'U> option> =
         // Preconditions
         checkNonNull "sequence" sequence
 
@@ -702,7 +703,7 @@ module Seq =
 
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> Async<'State>) (state : 'State) (sequence : 'T[]) : Async<'State> =
+    let fold (folder : 'State -> 'T -> Async<'State option>) (state : 'State) (sequence : seq<'T>) : Async<'State option> =
         // Preconditions
         checkNonNull "sequence" sequence
 
@@ -720,7 +721,7 @@ module Seq =
 
     //
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : int -> 'State -> 'T -> Async<'State>) (state : 'State) (sequence : 'T[]) : Async<'State> =
+    let foldi (folder : int -> 'State -> 'T -> Async<'State option>) (state : 'State) (sequence : seq<'T>) : Async<'State option> =
         // Preconditions
         checkNonNull "sequence" sequence
 
@@ -735,64 +736,33 @@ module Seq =
             // Invoke the folder and return the result.
             return! folder.Invoke (index, state, el)
             })
-
+*)
     //
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> Async<unit>) (sequence : 'T[]) : Async<unit> =
+    let iter (action : 'T -> Async<unit option>) (sequence : seq<'T>) : Async<unit option> =
         // Preconditions
         checkNonNull "sequence" sequence
 
-        (async.Zero (), array)
-        ||> Array.fold (fun iterPrevious el ->
-            asyncMaybe {
-            // Execute the workflow for the preceeding elements.
-            do! iterPrevious
-
-            // Asynchronously invoke the action for this element.
+        asyncMaybe {
+        for el in sequence do
             do! action el
-            })
+        }
 
     //
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> Async<unit>) (sequence : 'T[]) : Async<unit> =
+    let iteri (action : int -> 'T -> Async<unit option>) (sequence : seq<'T>) : Async<unit option> =
         // Preconditions
         checkNonNull "sequence" sequence
 
         let action = FSharpFunc<_,_,_>.Adapt action
+        let indexedSequence =
+            Seq.mapi (fun i x -> i, x) sequence
 
-        (async.Zero (), array)
-        ||> Array.foldi (fun index iterPrevious el ->
-            asyncMaybe {
-            // Execute the workflow for the preceeding elements.
-            do! iterPrevious
+        asyncMaybe {
+        for idx, el in indexedSequence do
+            do! action.Invoke (idx, el)
+        }
 
-            // Asynchronously invoke the action for this element.
-            do! action.Invoke (index, el)
-            })
-*)
 
-    //
-    [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Parallel =
-        /// Segments a sequence of asynchronously-computed values into batches; the values
-        /// within each batch are computed in parallel while the batches are computed
-        /// sequentially. Computing the values in batches makes it possible to take advantage
-        /// of parallelism when processing a large collection while also avoiding the need
-        /// to wait for the entire dataset to be processed before returning.
-        [<CompiledName("Batch")>]
-        let batch size (sequence : seq<Async<'T>>) : seq<'T> =
-            // Preconditions
-            checkNonNull "sequence" sequence
-            if size < 1 then
-                invalidArg "size" "The batch size cannot be less than one (1)."
-
-            // OPTIMIZATION : If the batch size is one, there's no need to bother with Async.Parallel.
-            if size = 1 then
-                sequence
-                |> Seq.map Async.RunSynchronously
-            else
-                sequence
-                |> Seq.windowed size
-                |> Seq.collect (Async.Parallel >> Async.RunSynchronously)
 
 

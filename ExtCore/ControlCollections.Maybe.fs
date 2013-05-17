@@ -251,6 +251,25 @@ module Array =
         if foundError then None
         else Some state
 
+//#if FX_NO_TPL_PARALLEL
+//#else
+//    //
+//    module Parallel =
+//        open System.Collections.Concurrent
+//        open System.Threading.Tasks
+//
+//        //
+//        [<CompiledName("Reduce")>]
+//        let reduce (reduction : 'T -> 'T -> 'T option) (array : 'T[]) : 'T option =
+//            // Preconditions
+//            checkNonNull "array" array
+//            if Array.isEmpty array then
+//                invalidArg "array" "The array is empty."
+//
+//            notImpl "Maybe.Array.Parallel.reduce"
+//
+//#endif
+
 
 /// The standard F# List module, lifted into the Maybe monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
