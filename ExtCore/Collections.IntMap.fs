@@ -1146,16 +1146,16 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     override this.ToString () =
         (* NOTE :   Like Map, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
         match List.ofSeq (Seq.truncate 4 this) with
-        | [] -> "hashMap []"
+        | [] -> "intMap []"
         | [KeyValue h1] ->
             System.Text.StringBuilder()
-                .Append("hashMap [")
+                .Append("intMap [")
                 .Append(IntMap<_>.ElementString h1)
                 .Append("]")
                 .ToString()
         | [KeyValue h1; KeyValue h2] ->
             System.Text.StringBuilder()
-                .Append("hashMap [")
+                .Append("intMap [")
                 .Append(IntMap<_>.ElementString h1)
                 .Append("; ")
                 .Append(IntMap<_>.ElementString h2)
@@ -1163,7 +1163,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
                 .ToString()
         | [KeyValue h1; KeyValue h2; KeyValue h3] ->
             System.Text.StringBuilder()
-                .Append("hashMap [")
+                .Append("intMap [")
                 .Append(IntMap<_>.ElementString h1)
                 .Append("; ")
                 .Append(IntMap<_>.ElementString h2)
@@ -1173,7 +1173,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
                 .ToString()
         | KeyValue h1 :: KeyValue h2 :: KeyValue h3 :: _ ->
             System.Text.StringBuilder()
-                .Append("hashMap [")
+                .Append("intMap [")
                 .Append(IntMap<_>.ElementString h1)
                 .Append("; ")
                 .Append(IntMap<_>.ElementString h2)
