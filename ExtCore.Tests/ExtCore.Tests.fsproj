@@ -65,6 +65,7 @@
     <Compile Include="Collections.LazyList.fs" />
     <Compile Include="Collections.Queue.fs" />
     <Compile Include="Collections.PriorityQueue.fs" />
+    <Compile Include="Collections.HashMap.fs" />
     <Compile Include="ControlCollections.State.fs" />
     <Compile Include="ControlCollections.Reader.fs" />
     <Compile Include="ControlCollections.ReaderState.fs" />
