@@ -1447,14 +1447,22 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         /// <inherit />
         member __.Keys
             with get () =
-                // TODO : Return the keys as an ICollection<'Key>
-                notImpl "IDictionary`2.Keys"
+                // OPTIMIZE : Change this to use HashSet instead so it'll be faster to test set membership.
+                let keys = ResizeArray ()
+                PatriciaHashMap.Iterate ((fun k _ -> keys.Add k), trie)
+                
+                System.Collections.ObjectModel.ReadOnlyCollection (keys)
+                :> ICollection<'Key>
 
         /// <inherit />
         member __.Values
             with get () =
-                // TODO : Return the values as an ICollection<'T>
-                notImpl "IDictionary`2.Values"
+                // OPTIMIZE : Change this to use HashSet instead so it'll be faster to test set membership.
+                let values = ResizeArray ()
+                PatriciaHashMap.Iterate ((fun _ v -> values.Add v), trie)
+                
+                System.Collections.ObjectModel.ReadOnlyCollection (values)
+                :> ICollection<'T>
 
         /// <inherit />
         member __.Add (key, value) =

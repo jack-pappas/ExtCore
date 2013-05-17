@@ -770,8 +770,8 @@ module MapType =
         Assert.IsFalse(id.ContainsKey(5))  
         Assert.AreEqual(id.[1], 1)  
         Assert.AreEqual(id.[3], 9) 
-        Assert.AreEqual(id.Keys,   [| 1; 2; 3|] :> ICollection<_>)
-        Assert.AreEqual(id.Values, [| 1; 4; 9|] :> ICollection<_>)
+        CollectionAssert.AreEqual(id.Keys,   [| 1; 2; 3|] :> ICollection<_>)
+        CollectionAssert.AreEqual(id.Values, [| 1; 4; 9|] :> ICollection<_>)
         
         checkThrowsNotSupportedException(fun () -> id.[2] <-88)
 
@@ -784,8 +784,8 @@ module MapType =
         let id = IntMap.empty :> IDictionary<int, int>   // Note no type args  
         Assert.IsFalse(id.ContainsKey(5))
         checkThrowsKeyNotFoundException(fun () -> id.[1] |> ignore)  
-        Assert.AreEqual(id.Keys,   [| |] :> ICollection<_>)
-        Assert.AreEqual(id.Values, [| |] :> ICollection<_>) 
+        CollectionAssert.AreEqual(id.Keys,   [| |] :> ICollection<_>)
+        CollectionAssert.AreEqual(id.Values, [| |] :> ICollection<_>) 
     
     [<Test>]
     let ICollection() =        

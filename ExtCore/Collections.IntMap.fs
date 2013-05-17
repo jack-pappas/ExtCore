@@ -1226,14 +1226,22 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         /// <inherit />
         member __.Keys
             with get () =
-                // TODO : Return the keys as an ICollection<int>
-                notImpl "IDictionary`2.Keys"
+                // OPTIMIZE : Change this to use IntSet instead so it'll be faster to test set membership.
+                let keys = ResizeArray ()
+                PatriciaMap.Iterate ((fun k _ -> keys.Add k), trie)
+                
+                System.Collections.ObjectModel.ReadOnlyCollection (keys)
+                :> ICollection<int>
 
         /// <inherit />
         member __.Values
             with get () =
-                // TODO : Return the values as an ICollection<'T>
-                notImpl "IDictionary`2.Values"
+                // OPTIMIZE : Change this to use HashSet instead so it'll be faster to test set membership.
+                let values = ResizeArray ()
+                PatriciaMap.Iterate ((fun _ v -> values.Add v), trie)
+                
+                System.Collections.ObjectModel.ReadOnlyCollection (values)
+                :> ICollection<'T>
 
         /// <inherit />
         member __.Add (key, value) =
