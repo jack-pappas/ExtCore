@@ -1352,6 +1352,55 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
                 map1,
                 map2.Add (key, value)), (HashMap.Empty, HashMap.Empty))
 
+    /// Formats an element value for use within the ToString() method.
+    static member (*inline*) private ElementString (element : obj) =
+        match box element with
+        | null -> "null"
+        | :? System.IFormattable as formattable ->
+            formattable.ToString (
+                null, System.Globalization.CultureInfo.InvariantCulture)
+        | _ ->
+            element.ToString ()
+
+    override this.ToString () =
+        (* NOTE :   Like Map, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
+        match List.ofSeq (Seq.truncate 4 this) with
+        | [] -> "hashMap []"
+        | [KeyValue h1] ->
+            System.Text.StringBuilder()
+                .Append("hashMap [")
+                .Append(HashMap<_,_>.ElementString h1)
+                .Append("]")
+                .ToString()
+        | [KeyValue h1; KeyValue h2] ->
+            System.Text.StringBuilder()
+                .Append("hashMap [")
+                .Append(HashMap<_,_>.ElementString h1)
+                .Append("; ")
+                .Append(HashMap<_,_>.ElementString h2)
+                .Append("]")
+                .ToString()
+        | [KeyValue h1; KeyValue h2; KeyValue h3] ->
+            System.Text.StringBuilder()
+                .Append("hashMap [")
+                .Append(HashMap<_,_>.ElementString h1)
+                .Append("; ")
+                .Append(HashMap<_,_>.ElementString h2)
+                .Append("; ")
+                .Append(HashMap<_,_>.ElementString h3)
+                .Append("]")
+                .ToString()
+        | KeyValue h1 :: KeyValue h2 :: KeyValue h3 :: _ ->
+            System.Text.StringBuilder()
+                .Append("hashMap [")
+                .Append(HashMap<_,_>.ElementString h1)
+                .Append("; ")
+                .Append(HashMap<_,_>.ElementString h2)
+                .Append("; ")
+                .Append(HashMap<_,_>.ElementString h3)
+                .Append("; ... ]")
+                .ToString()
+
     interface System.IEquatable<HashMap<'Key, 'T>> with
         /// <inherit />
         member this.Equals other =
@@ -1412,7 +1461,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
             // Preconditions
             checkNonNull "array" array
             if arrayIndex < 0 then
-                raise <| System.ArgumentOutOfRangeException "arrayIndex"
+                argOutOfRange "arrayIndex" "The target array index cannot be negative."
 
             let count = PatriciaHashMap.Count trie
             if arrayIndex + count > Array.length array then
