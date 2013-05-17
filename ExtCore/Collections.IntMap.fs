@@ -821,6 +821,15 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     static member Empty
         with get () = empty
 
+    //
+    new (elements : seq<int * 'T>) =
+        // Preconditions
+        // TODO : Check for null input.
+
+        // OPTIMIZE : Try to cast the sequence to array or list;
+        // if it succeeds use the specialized method for that type for better performance.
+        IntMap (PatriciaMap.OfSeq elements)
+
     /// The internal representation of the IntMap.
     member private __.Trie
         with get () = trie
@@ -848,7 +857,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     //
     member __.Item
         with get key =
-            match PatriciaMap.TryFind (key, trie) with
+            match PatriciaMap.TryFind (uint32 key, trie) with
             | Some v -> v
             | None ->
                 keyNotFound "The map does not contain a binding for the specified key."

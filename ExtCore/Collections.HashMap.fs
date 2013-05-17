@@ -1032,6 +1032,15 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     static member Empty
         with get () = empty
 
+    //
+    new (elements : seq<'Key * 'T>) =
+        // Preconditions
+        // TODO : Check for null input.
+
+        // OPTIMIZE : Try to cast the sequence to array or list;
+        // if it succeeds use the specialized method for that type for better performance.
+        HashMap (PatriciaHashMap.OfSeq elements)
+
     /// The internal representation of the HashMap.
     member private __.Trie
         with get () = trie

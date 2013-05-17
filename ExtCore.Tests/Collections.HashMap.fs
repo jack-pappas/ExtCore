@@ -1,5 +1,6 @@
 ﻿(*
 
+Copyright 2005-2009 Microsoft Corporation
 Copyright 2013 Jack Pappas
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,8 @@ limitations under the License.
 /// Unit tests for the ExtCore.Collections.HashMap type and module.
 module Tests.ExtCore.Collections.HashMap
 
+open System
+open System.Collections
 open System.Collections.Generic
 open NUnit.Framework
 open FsUnit
@@ -717,6 +720,279 @@ let mapPartition () : unit =
         evens |> assertEqual (HashMap.ofArray evensExpected)
 
         odds |> assertEqual (HashMap.ofArray oddsExpected)
+
+
+(* MapModule and MapType tests from the F# distribution. *)
+
+// Interfaces
+[<Test>]
+let IEnumerable() =        
+    // Legit IE
+    let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable
+    let enum = ie.GetEnumerator()
+        
+    let testStepping() =
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+        Assert.AreEqual(enum.MoveNext(), true)
+        Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(1,1))
+            
+        Assert.AreEqual(enum.MoveNext(), true)
+        Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(2,4))
+        Assert.AreEqual(enum.MoveNext(), true)
+        Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(3,9))
+        Assert.AreEqual(enum.MoveNext(), false)
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+    
+    testStepping()
+    enum.Reset()
+    testStepping()
+    
+    // Empty IE
+    let ie = [] |> HashMap.ofList :> IEnumerable  // Note no type args
+    let enum = ie.GetEnumerator()
+        
+    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+    Assert.AreEqual(enum.MoveNext(), false)
+    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
+    
+[<Test>]
+let IEnumerable_T() =        
+    // Legit IE
+    let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable<KeyValuePair<_,_>>
+    let enum = ie.GetEnumerator()
+        
+    let testStepping() =
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+        Assert.AreEqual(enum.MoveNext(), true)
+        Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(1,1))
+            
+        Assert.AreEqual(enum.MoveNext(), true)
+        Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(2,4))
+        Assert.AreEqual(enum.MoveNext(), true)
+        Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(3,9))
+        Assert.AreEqual(enum.MoveNext(), false)
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+    
+    testStepping()
+    enum.Reset()
+    testStepping()
+    
+    // Empty IE
+    let ie = [] |> HashMap.ofList :> IEnumerable  // Note no type args
+    let enum = ie.GetEnumerator()
+        
+    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+    Assert.AreEqual(enum.MoveNext(), false)
+    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
+    
+    
+[<Test>]
+let IDictionary() =        
+    // Legit ID
+    let id = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IDictionary<_,_> 
+        
+    Assert.IsTrue(id.ContainsKey(1))   
+    Assert.IsFalse(id.ContainsKey(5))  
+    Assert.AreEqual(id.[1], 1)  
+    Assert.AreEqual(id.[3], 9) 
+    Assert.AreEqual(id.Keys,   [| 1; 2; 3|] :> ICollection<_>)
+    Assert.AreEqual(id.Values, [| 1; 4; 9|] :> ICollection<_>)
+        
+    checkThrowsNotSupportedException(fun () -> id.[2] <-88)
+
+    checkThrowsNotSupportedException(fun () -> id.Add(new KeyValuePair<int,int>(4,16)))
+    Assert.IsTrue(id.TryGetValue(1, ref 1))
+    Assert.IsFalse(id.TryGetValue(100, ref 1))
+    checkThrowsNotSupportedException(fun () -> id.Remove(1) |> ignore)
+        
+    // Empty ID
+    let id = HashMap.empty :> IDictionary<int, int>   // Note no type args  
+    Assert.IsFalse(id.ContainsKey(5))
+    checkThrowsKeyNotFoundException(fun () -> id.[1] |> ignore)  
+    Assert.AreEqual(id.Keys,   [| |] :> ICollection<_>)
+    Assert.AreEqual(id.Values, [| |] :> ICollection<_>) 
+    
+[<Test>]
+let ICollection() =        
+    // Legit IC
+    let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> ICollection<KeyValuePair<_,_>>
+        
+    Assert.AreEqual(ic.Count, 3)
+    Assert.IsTrue(ic.Contains(new KeyValuePair<int,int>(3,9))) 
+    let newArr = Array.create 5 (new KeyValuePair<int,int>(3,9))
+    ic.CopyTo(newArr,0) 
+    Assert.IsTrue(ic.IsReadOnly)
+        
+        
+    // raise ReadOnlyCollection exception
+    checkThrowsNotSupportedException(fun () -> ic.Add(new KeyValuePair<int,int>(3,9)) |> ignore)
+    checkThrowsNotSupportedException(fun () -> ic.Clear() |> ignore)
+    checkThrowsNotSupportedException(fun () -> ic.Remove(new KeyValuePair<int,int>(3,9)) |> ignore) 
+        
+            
+    // Empty IC
+    let ic = HashMap.empty :> ICollection<KeyValuePair<int, int>>   
+    Assert.IsFalse(ic.Contains(new KeyValuePair<int,int>(3,9)))      
+    let newArr = Array.create 5 (new KeyValuePair<int,int>(0,0))
+    ic.CopyTo(newArr,0) 
+    
+[<Test>]
+let IComparable() =        
+    // Legit IC
+    let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IComparable    
+    Assert.AreEqual(ic.CompareTo([(1,1);(2,4);(3,9)]|> HashMap.ofList),0) 
+    Assert.AreEqual(ic.CompareTo([(1,1);(3,9);(2,4)]|> HashMap.ofList),0) 
+    Assert.AreEqual(ic.CompareTo([(1,1);(9,81);(2,4)]|> HashMap.ofList),-1) 
+    Assert.AreEqual(ic.CompareTo([(1,1);(0,0);(2,4)]|> HashMap.ofList),1)      
+    checkThrowsArgumentException(fun() -> ic.CompareTo([(1,1);(2,4);(3,9)]) |> ignore)
+                  
+    // Empty IC
+    let ic = [] |> HashMap.ofList :> IComparable   
+    Assert.AreEqual(ic.CompareTo([]|> HashMap.ofList),0)
+    
+    
+// Base class methods
+[<Test>]
+let ObjectGetHashCode() =
+    // Works on empty maps
+    let e = HashMap.ofList (List.empty<int * decimal>)
+    let m = HashMap.ofList [ (1, -1.0M) ]
+    Assert.AreNotEqual(e.GetHashCode(), m.GetHashCode())
+        
+    // Should be order independent
+    let x = HashMap.ofList [(1, -1.0M); (2, -2.0M)]
+    let y = HashMap.ofList [(2, -2.0M); (1, -1.0M)]
+    Assert.AreEqual(x.GetHashCode(), y.GetHashCode())
+    
+[<Test>]
+let ObjectToString() =
+    Assert.AreEqual("map [(1, 1); (2, 4); (3, 9)]", (HashMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
+    Assert.AreEqual("map []", ([] |> HashMap.ofList).ToString())
+    Assert.AreEqual("map []", 
+                    (([] :(decimal*decimal)list) |> HashMap.ofList).ToString())
+    
+[<Test>]
+let ObjectEquals() =
+    // All three are different references, but equality has been
+    // provided by the F# compiler.
+    let a = [(1,1);(2,4);(3,9)] |> HashMap.ofList
+    let b = (1,1) :: [(2,4);(3,9)] |> HashMap.ofList
+    Assert.IsTrue( (a = b) )
+
+    Assert.IsTrue( a.Equals(b) ); Assert.IsTrue( b.Equals(a) )
+
+    // Equality between types
+    let a = ([] : (int*int) list)  |> HashMap.ofList
+    let b = ([] : (string*string) list ) |> HashMap.ofList
+    Assert.IsFalse( b.Equals(a) )
+    Assert.IsFalse( a.Equals(b) )
+        
+    // Co/contra varience not supported
+    let a = ([] : (string*string) list) |> HashMap.ofList
+    let b = ([] : (System.IComparable*System.IComparable) list)    |> HashMap.ofList
+    Assert.IsFalse(a.Equals(b))
+    Assert.IsFalse(b.Equals(a))
+        
+    // Self equality
+    let a = [(1,1)] |> HashMap.ofList
+    Assert.IsTrue( (a = a) )
+    Assert.IsTrue(a.Equals(a))
+        
+    // Null
+    Assert.IsFalse(a.Equals(null))
+
+// Instance methods
+[<Test>]
+let New() =    
+    let newHashMap = new HashMap<int,int>([|(1,1);(2,4);(3,9)|])
+    let b = newHashMap.Add(4,16)
+    Assert.AreEqual(b.[4], 16)
+    Assert.AreEqual(b.[2], 4)
+    
+    let e  = new  HashMap<int,string>([])
+    let ae = e.Add(1,"Monday")
+    Assert.AreEqual(ae.[1], "Monday")
+        
+let Add() =
+    
+    let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+    let b = a.Add(4,16)
+    Assert.AreEqual(b.[4], 16)
+    Assert.AreEqual(b.[2], 4)
+    
+    let e  = HashMap.empty<int,string>
+    let ae = e.Add(1,"Monday")
+    Assert.AreEqual(ae.[1], "Monday")
+    
+[<Test>]
+let ContainsKey() =
+    
+    let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])        
+    Assert.IsTrue(a.ContainsKey(3))
+    
+    let e  = HashMap.empty<int,string>
+    Assert.IsFalse(e.ContainsKey(3)) 
+    
+    
+[<Test>]
+let Count() =
+    
+    let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+    Assert.AreEqual(a.Count, 3)
+    
+    let e  = HashMap.empty<int,string>
+    Assert.AreEqual(e.Count, 0) 
+    
+[<Test>]
+let IsEmpty() =
+    
+    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+    Assert.IsFalse(l.IsEmpty)
+    
+    let e = HashMap.empty<int,int>
+    Assert.IsTrue(e.IsEmpty)        
+    
+[<Test>]
+let Item() =
+
+    let mutable l = [(1,1)] |> HashMap.ofList
+    Assert.AreEqual(l.[1], 1)
+    l <- l.Add(100,8)
+    Assert.AreEqual(l.[100], 8)
+        
+    for testidx = 0 to 20 do
+        let l = HashMap.ofSeq (seq { for i in 0..testidx do yield (i,i*i)})
+        for i = 0 to l.Count - 1 do
+            Assert.AreEqual(i*i, l.[i])
+            Assert.AreEqual(i*i, l.Item(i))
+        
+    // Invalid index
+    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+    checkThrowsKeyNotFoundException(fun () -> l.[ -1 ] |> ignore)
+    checkThrowsKeyNotFoundException(fun () -> l.[1000] |> ignore)
+    
+[<Test>]
+let Remove() =
+    
+    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+    let rem = l.Remove(2)
+    Assert.AreEqual(rem.Count, 2) 
+    checkThrowsKeyNotFoundException(fun () -> rem.[ 2 ] |> ignore)
+    
+    let e  = HashMap.empty<int,string>
+    let ae = e.Remove(2)
+    Assert.AreEqual(ae.Count, 0)
+        
+[<Test>]
+let TryFind() =
+    
+    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+    let rem = l.TryFind(2)
+    Assert.AreEqual(l.TryFind(2),Some 4)         
+    
+    let e  = HashMap.empty<int,string>
+    
+    Assert.AreEqual(e.TryFind(2), None)    
 
 
 (* TODO : Implement FsCheck tests. *)
