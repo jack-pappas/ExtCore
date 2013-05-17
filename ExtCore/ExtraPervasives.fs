@@ -24,11 +24,7 @@ namespace ExtCore
 [<AutoOpen>]
 module ExtraTopLevelOperators =
     open LanguagePrimitives
-
-    /// Creates an immutable vector from an array.
-    [<CompiledName("Vector")>]
-    let inline vector (array : 'T[]) : vector<'T> =
-        vector.Create array
+    open ExtCore.Collections
 
     /// Creates a tagged integer from an integer value.
     [<CompiledName("Tag")>]
@@ -39,4 +35,24 @@ module ExtraTopLevelOperators =
     [<CompiledName("Untag")>]
     let inline untag<[<Measure>] 'Tag> (tag : int<'Tag>) : int =
         int tag
+
+    /// Builds a map from a sequence of key-value pairs.
+    [<CompiledName("Map")>]
+    let inline map (elements : seq<_>) : Map<'Key, 'T> =
+        Map (elements)
+
+    /// Creates an immutable vector from an array.
+    [<CompiledName("Vector")>]
+    let inline vector (array : 'T[]) : vector<'T> =
+        vector.Create array
+
+    /// Builds a map from a sequence of key-value pairs.
+    [<CompiledName("IntMap")>]
+    let inline intMap (elements : seq<_>) : IntMap<'T> =
+        IntMap (elements)
+
+    /// Builds a map from a sequence of key-value pairs.
+    [<CompiledName("HashMap")>]
+    let inline hashMap (elements : seq<_>) : HashMap<'Key, 'T> =
+        HashMap (elements)
 
