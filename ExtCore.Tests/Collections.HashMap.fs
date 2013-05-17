@@ -724,275 +724,872 @@ let mapPartition () : unit =
 
 (* MapModule and MapType tests from the F# distribution. *)
 
-// Interfaces
-[<Test>]
-let IEnumerable() =        
-    // Legit IE
-    let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable
-    let enum = ie.GetEnumerator()
+module MapType =
+    // Interfaces
+    [<Test>]
+    let IEnumerable() =        
+        // Legit IE
+        let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable
+        let enum = ie.GetEnumerator()
         
-    let testStepping() =
-        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-        Assert.AreEqual(enum.MoveNext(), true)
-        Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(1,1))
+        let testStepping() =
+            checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+            Assert.AreEqual(enum.MoveNext(), true)
+            Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(1,1))
             
-        Assert.AreEqual(enum.MoveNext(), true)
-        Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(2,4))
-        Assert.AreEqual(enum.MoveNext(), true)
-        Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(3,9))
+            Assert.AreEqual(enum.MoveNext(), true)
+            Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(2,4))
+            Assert.AreEqual(enum.MoveNext(), true)
+            Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(3,9))
+            Assert.AreEqual(enum.MoveNext(), false)
+            checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+    
+        testStepping()
+        enum.Reset()
+        testStepping()
+    
+        // Empty IE
+        let ie = [] |> HashMap.ofList :> IEnumerable  // Note no type args
+        let enum = ie.GetEnumerator()
+        
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
         Assert.AreEqual(enum.MoveNext(), false)
-        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
     
-    testStepping()
-    enum.Reset()
-    testStepping()
-    
-    // Empty IE
-    let ie = [] |> HashMap.ofList :> IEnumerable  // Note no type args
-    let enum = ie.GetEnumerator()
+    [<Test>]
+    let IEnumerable_T() =        
+        // Legit IE
+        let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable<KeyValuePair<_,_>>
+        let enum = ie.GetEnumerator()
         
-    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-    Assert.AreEqual(enum.MoveNext(), false)
-    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
-    
-[<Test>]
-let IEnumerable_T() =        
-    // Legit IE
-    let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable<KeyValuePair<_,_>>
-    let enum = ie.GetEnumerator()
-        
-    let testStepping() =
-        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-        Assert.AreEqual(enum.MoveNext(), true)
-        Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(1,1))
+        let testStepping() =
+            checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+            Assert.AreEqual(enum.MoveNext(), true)
+            Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(1,1))
             
-        Assert.AreEqual(enum.MoveNext(), true)
-        Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(2,4))
-        Assert.AreEqual(enum.MoveNext(), true)
-        Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(3,9))
-        Assert.AreEqual(enum.MoveNext(), false)
+            Assert.AreEqual(enum.MoveNext(), true)
+            Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(2,4))
+            Assert.AreEqual(enum.MoveNext(), true)
+            Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(3,9))
+            Assert.AreEqual(enum.MoveNext(), false)
+            checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+    
+        testStepping()
+        enum.Reset()
+        testStepping()
+    
+        // Empty IE
+        let ie = [] |> HashMap.ofList :> IEnumerable  // Note no type args
+        let enum = ie.GetEnumerator()
+        
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+        Assert.AreEqual(enum.MoveNext(), false)
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
     
-    testStepping()
-    enum.Reset()
-    testStepping()
     
-    // Empty IE
-    let ie = [] |> HashMap.ofList :> IEnumerable  // Note no type args
-    let enum = ie.GetEnumerator()
+    [<Test>]
+    let IDictionary() =        
+        // Legit ID
+        let id = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IDictionary<_,_> 
         
-    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-    Assert.AreEqual(enum.MoveNext(), false)
-    checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
-    
-    
-[<Test>]
-let IDictionary() =        
-    // Legit ID
-    let id = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IDictionary<_,_> 
+        Assert.IsTrue(id.ContainsKey(1))   
+        Assert.IsFalse(id.ContainsKey(5))  
+        Assert.AreEqual(id.[1], 1)  
+        Assert.AreEqual(id.[3], 9) 
+        Assert.AreEqual(id.Keys,   [| 1; 2; 3|] :> ICollection<_>)
+        Assert.AreEqual(id.Values, [| 1; 4; 9|] :> ICollection<_>)
         
-    Assert.IsTrue(id.ContainsKey(1))   
-    Assert.IsFalse(id.ContainsKey(5))  
-    Assert.AreEqual(id.[1], 1)  
-    Assert.AreEqual(id.[3], 9) 
-    Assert.AreEqual(id.Keys,   [| 1; 2; 3|] :> ICollection<_>)
-    Assert.AreEqual(id.Values, [| 1; 4; 9|] :> ICollection<_>)
-        
-    checkThrowsNotSupportedException(fun () -> id.[2] <-88)
+        checkThrowsNotSupportedException(fun () -> id.[2] <-88)
 
-    checkThrowsNotSupportedException(fun () -> id.Add(new KeyValuePair<int,int>(4,16)))
-    Assert.IsTrue(id.TryGetValue(1, ref 1))
-    Assert.IsFalse(id.TryGetValue(100, ref 1))
-    checkThrowsNotSupportedException(fun () -> id.Remove(1) |> ignore)
+        checkThrowsNotSupportedException(fun () -> id.Add(new KeyValuePair<int,int>(4,16)))
+        Assert.IsTrue(id.TryGetValue(1, ref 1))
+        Assert.IsFalse(id.TryGetValue(100, ref 1))
+        checkThrowsNotSupportedException(fun () -> id.Remove(1) |> ignore)
         
-    // Empty ID
-    let id = HashMap.empty :> IDictionary<int, int>   // Note no type args  
-    Assert.IsFalse(id.ContainsKey(5))
-    checkThrowsKeyNotFoundException(fun () -> id.[1] |> ignore)  
-    Assert.AreEqual(id.Keys,   [| |] :> ICollection<_>)
-    Assert.AreEqual(id.Values, [| |] :> ICollection<_>) 
+        // Empty ID
+        let id = HashMap.empty :> IDictionary<int, int>   // Note no type args  
+        Assert.IsFalse(id.ContainsKey(5))
+        checkThrowsKeyNotFoundException(fun () -> id.[1] |> ignore)  
+        Assert.AreEqual(id.Keys,   [| |] :> ICollection<_>)
+        Assert.AreEqual(id.Values, [| |] :> ICollection<_>) 
     
-[<Test>]
-let ICollection() =        
-    // Legit IC
-    let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> ICollection<KeyValuePair<_,_>>
+    [<Test>]
+    let ICollection() =        
+        // Legit IC
+        let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> ICollection<KeyValuePair<_,_>>
         
-    Assert.AreEqual(ic.Count, 3)
-    Assert.IsTrue(ic.Contains(new KeyValuePair<int,int>(3,9))) 
-    let newArr = Array.create 5 (new KeyValuePair<int,int>(3,9))
-    ic.CopyTo(newArr,0) 
-    Assert.IsTrue(ic.IsReadOnly)
+        Assert.AreEqual(ic.Count, 3)
+        Assert.IsTrue(ic.Contains(new KeyValuePair<int,int>(3,9))) 
+        let newArr = Array.create 5 (new KeyValuePair<int,int>(3,9))
+        ic.CopyTo(newArr,0) 
+        Assert.IsTrue(ic.IsReadOnly)
         
         
-    // raise ReadOnlyCollection exception
-    checkThrowsNotSupportedException(fun () -> ic.Add(new KeyValuePair<int,int>(3,9)) |> ignore)
-    checkThrowsNotSupportedException(fun () -> ic.Clear() |> ignore)
-    checkThrowsNotSupportedException(fun () -> ic.Remove(new KeyValuePair<int,int>(3,9)) |> ignore) 
+        // raise ReadOnlyCollection exception
+        checkThrowsNotSupportedException(fun () -> ic.Add(new KeyValuePair<int,int>(3,9)) |> ignore)
+        checkThrowsNotSupportedException(fun () -> ic.Clear() |> ignore)
+        checkThrowsNotSupportedException(fun () -> ic.Remove(new KeyValuePair<int,int>(3,9)) |> ignore) 
         
             
-    // Empty IC
-    let ic = HashMap.empty :> ICollection<KeyValuePair<int, int>>   
-    Assert.IsFalse(ic.Contains(new KeyValuePair<int,int>(3,9)))      
-    let newArr = Array.create 5 (new KeyValuePair<int,int>(0,0))
-    ic.CopyTo(newArr,0) 
+        // Empty IC
+        let ic = HashMap.empty :> ICollection<KeyValuePair<int, int>>   
+        Assert.IsFalse(ic.Contains(new KeyValuePair<int,int>(3,9)))      
+        let newArr = Array.create 5 (new KeyValuePair<int,int>(0,0))
+        ic.CopyTo(newArr,0) 
     
-[<Test>]
-let IComparable() =        
-    // Legit IC
-    let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IComparable    
-    Assert.AreEqual(ic.CompareTo([(1,1);(2,4);(3,9)]|> HashMap.ofList),0) 
-    Assert.AreEqual(ic.CompareTo([(1,1);(3,9);(2,4)]|> HashMap.ofList),0) 
-    Assert.AreEqual(ic.CompareTo([(1,1);(9,81);(2,4)]|> HashMap.ofList),-1) 
-    Assert.AreEqual(ic.CompareTo([(1,1);(0,0);(2,4)]|> HashMap.ofList),1)      
-    checkThrowsArgumentException(fun() -> ic.CompareTo([(1,1);(2,4);(3,9)]) |> ignore)
+    [<Test>]
+    let IComparable() =        
+        // Legit IC
+        let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IComparable    
+        Assert.AreEqual(ic.CompareTo([(1,1);(2,4);(3,9)]|> HashMap.ofList),0) 
+        Assert.AreEqual(ic.CompareTo([(1,1);(3,9);(2,4)]|> HashMap.ofList),0) 
+        Assert.AreEqual(ic.CompareTo([(1,1);(9,81);(2,4)]|> HashMap.ofList),-1) 
+        Assert.AreEqual(ic.CompareTo([(1,1);(0,0);(2,4)]|> HashMap.ofList),1)      
+        checkThrowsArgumentException(fun() -> ic.CompareTo([(1,1);(2,4);(3,9)]) |> ignore)
                   
-    // Empty IC
-    let ic = [] |> HashMap.ofList :> IComparable   
-    Assert.AreEqual(ic.CompareTo([]|> HashMap.ofList),0)
+        // Empty IC
+        let ic = [] |> HashMap.ofList :> IComparable   
+        Assert.AreEqual(ic.CompareTo([]|> HashMap.ofList),0)
     
     
-// Base class methods
-[<Test>]
-let ObjectGetHashCode() =
-    // Works on empty maps
-    let e = HashMap.ofList (List.empty<int * decimal>)
-    let m = HashMap.ofList [ (1, -1.0M) ]
-    Assert.AreNotEqual(e.GetHashCode(), m.GetHashCode())
+    // Base class methods
+    [<Test>]
+    let ObjectGetHashCode() =
+        // Works on empty maps
+        let e = HashMap.ofList (List.empty<int * decimal>)
+        let m = HashMap.ofList [ (1, -1.0M) ]
+        Assert.AreNotEqual(e.GetHashCode(), m.GetHashCode())
         
-    // Should be order independent
-    let x = HashMap.ofList [(1, -1.0M); (2, -2.0M)]
-    let y = HashMap.ofList [(2, -2.0M); (1, -1.0M)]
-    Assert.AreEqual(x.GetHashCode(), y.GetHashCode())
+        // Should be order independent
+        let x = HashMap.ofList [(1, -1.0M); (2, -2.0M)]
+        let y = HashMap.ofList [(2, -2.0M); (1, -1.0M)]
+        Assert.AreEqual(x.GetHashCode(), y.GetHashCode())
     
-[<Test>]
-let ObjectToString() =
-    Assert.AreEqual("hashMap [(1, 1); (2, 4); (3, 9)]", (HashMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
-    Assert.AreEqual("hashMap []", ([] |> HashMap.ofList).ToString())
-    Assert.AreEqual("hashMap []", 
-                    (([] :(decimal*decimal)list) |> HashMap.ofList).ToString())
+    [<Test>]
+    let ObjectToString() =
+        Assert.AreEqual("hashMap [(1, 1); (2, 4); (3, 9)]", (HashMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
+        Assert.AreEqual("hashMap []", ([] |> HashMap.ofList).ToString())
+        Assert.AreEqual("hashMap []", 
+                        (([] :(decimal*decimal)list) |> HashMap.ofList).ToString())
     
-[<Test>]
-let ObjectEquals() =
-    // All three are different references, but equality has been
-    // provided by the F# compiler.
-    let a = [(1,1);(2,4);(3,9)] |> HashMap.ofList
-    let b = (1,1) :: [(2,4);(3,9)] |> HashMap.ofList
-    Assert.IsTrue( (a = b) )
+    [<Test>]
+    let ObjectEquals() =
+        // All three are different references, but equality has been
+        // provided by the F# compiler.
+        let a = [(1,1);(2,4);(3,9)] |> HashMap.ofList
+        let b = (1,1) :: [(2,4);(3,9)] |> HashMap.ofList
+        Assert.IsTrue( (a = b) )
 
-    Assert.IsTrue( a.Equals(b) ); Assert.IsTrue( b.Equals(a) )
+        Assert.IsTrue( a.Equals(b) ); Assert.IsTrue( b.Equals(a) )
 
-    // Equality between types
-    let a = ([] : (int*int) list)  |> HashMap.ofList
-    let b = ([] : (string*string) list ) |> HashMap.ofList
-    Assert.IsFalse( b.Equals(a) )
-    Assert.IsFalse( a.Equals(b) )
+        // Equality between types
+        let a = ([] : (int*int) list)  |> HashMap.ofList
+        let b = ([] : (string*string) list ) |> HashMap.ofList
+        Assert.IsFalse( b.Equals(a) )
+        Assert.IsFalse( a.Equals(b) )
         
-    // Co/contra varience not supported
-    let a = ([] : (string*string) list) |> HashMap.ofList
-    let b = ([] : (System.IComparable*System.IComparable) list)    |> HashMap.ofList
-    Assert.IsFalse(a.Equals(b))
-    Assert.IsFalse(b.Equals(a))
+        // Co/contra varience not supported
+        let a = ([] : (string*string) list) |> HashMap.ofList
+        let b = ([] : (System.IComparable*System.IComparable) list)    |> HashMap.ofList
+        Assert.IsFalse(a.Equals(b))
+        Assert.IsFalse(b.Equals(a))
         
-    // Self equality
-    let a = [(1,1)] |> HashMap.ofList
-    Assert.IsTrue( (a = a) )
-    Assert.IsTrue(a.Equals(a))
+        // Self equality
+        let a = [(1,1)] |> HashMap.ofList
+        Assert.IsTrue( (a = a) )
+        Assert.IsTrue(a.Equals(a))
         
-    // Null
-    Assert.IsFalse(a.Equals(null))
+        // Null
+        Assert.IsFalse(a.Equals(null))
 
-// Instance methods
-[<Test>]
-let New() =    
-    let newHashMap = new HashMap<int,int>([|(1,1);(2,4);(3,9)|])
-    let b = newHashMap.Add(4,16)
-    Assert.AreEqual(b.[4], 16)
-    Assert.AreEqual(b.[2], 4)
+    // Instance methods
+    [<Test>]
+    let New() =    
+        let newHashMap = new HashMap<int,int>([|(1,1);(2,4);(3,9)|])
+        let b = newHashMap.Add(4,16)
+        Assert.AreEqual(b.[4], 16)
+        Assert.AreEqual(b.[2], 4)
     
-    let e  = new  HashMap<int,string>([])
-    let ae = e.Add(1,"Monday")
-    Assert.AreEqual(ae.[1], "Monday")
+        let e  = new  HashMap<int,string>([])
+        let ae = e.Add(1,"Monday")
+        Assert.AreEqual(ae.[1], "Monday")
         
-let Add() =
+    let Add() =
     
-    let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
-    let b = a.Add(4,16)
-    Assert.AreEqual(b.[4], 16)
-    Assert.AreEqual(b.[2], 4)
+        let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+        let b = a.Add(4,16)
+        Assert.AreEqual(b.[4], 16)
+        Assert.AreEqual(b.[2], 4)
     
-    let e  = HashMap.empty<int,string>
-    let ae = e.Add(1,"Monday")
-    Assert.AreEqual(ae.[1], "Monday")
+        let e  = HashMap.empty<int,string>
+        let ae = e.Add(1,"Monday")
+        Assert.AreEqual(ae.[1], "Monday")
     
-[<Test>]
-let ContainsKey() =
+    [<Test>]
+    let ContainsKey() =
     
-    let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])        
-    Assert.IsTrue(a.ContainsKey(3))
+        let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])        
+        Assert.IsTrue(a.ContainsKey(3))
     
-    let e  = HashMap.empty<int,string>
-    Assert.IsFalse(e.ContainsKey(3)) 
+        let e  = HashMap.empty<int,string>
+        Assert.IsFalse(e.ContainsKey(3)) 
     
     
-[<Test>]
-let Count() =
+    [<Test>]
+    let Count() =
     
-    let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
-    Assert.AreEqual(a.Count, 3)
+        let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+        Assert.AreEqual(a.Count, 3)
     
-    let e  = HashMap.empty<int,string>
-    Assert.AreEqual(e.Count, 0) 
+        let e  = HashMap.empty<int,string>
+        Assert.AreEqual(e.Count, 0) 
     
-[<Test>]
-let IsEmpty() =
+    [<Test>]
+    let IsEmpty() =
     
-    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
-    Assert.IsFalse(l.IsEmpty)
+        let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+        Assert.IsFalse(l.IsEmpty)
     
-    let e = HashMap.empty<int,int>
-    Assert.IsTrue(e.IsEmpty)        
+        let e = HashMap.empty<int,int>
+        Assert.IsTrue(e.IsEmpty)        
     
-[<Test>]
-let Item() =
+    [<Test>]
+    let Item() =
 
-    let mutable l = [(1,1)] |> HashMap.ofList
-    Assert.AreEqual(l.[1], 1)
-    l <- l.Add(100,8)
-    Assert.AreEqual(l.[100], 8)
+        let mutable l = [(1,1)] |> HashMap.ofList
+        Assert.AreEqual(l.[1], 1)
+        l <- l.Add(100,8)
+        Assert.AreEqual(l.[100], 8)
         
-    for testidx = 0 to 20 do
-        let l = HashMap.ofSeq (seq { for i in 0..testidx do yield (i,i*i)})
-        for i = 0 to l.Count - 1 do
-            Assert.AreEqual(i*i, l.[i])
-            Assert.AreEqual(i*i, l.Item(i))
+        for testidx = 0 to 20 do
+            let l = HashMap.ofSeq (seq { for i in 0..testidx do yield (i,i*i)})
+            for i = 0 to l.Count - 1 do
+                Assert.AreEqual(i*i, l.[i])
+                Assert.AreEqual(i*i, l.Item(i))
         
-    // Invalid index
-    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
-    checkThrowsKeyNotFoundException(fun () -> l.[ -1 ] |> ignore)
-    checkThrowsKeyNotFoundException(fun () -> l.[1000] |> ignore)
+        // Invalid index
+        let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+        checkThrowsKeyNotFoundException(fun () -> l.[ -1 ] |> ignore)
+        checkThrowsKeyNotFoundException(fun () -> l.[1000] |> ignore)
     
-[<Test>]
-let Remove() =
+    [<Test>]
+    let Remove() =
     
-    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
-    let rem = l.Remove(2)
-    Assert.AreEqual(rem.Count, 2) 
-    checkThrowsKeyNotFoundException(fun () -> rem.[ 2 ] |> ignore)
+        let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+        let rem = l.Remove(2)
+        Assert.AreEqual(rem.Count, 2) 
+        checkThrowsKeyNotFoundException(fun () -> rem.[ 2 ] |> ignore)
     
-    let e  = HashMap.empty<int,string>
-    let ae = e.Remove(2)
-    Assert.AreEqual(ae.Count, 0)
+        let e  = HashMap.empty<int,string>
+        let ae = e.Remove(2)
+        Assert.AreEqual(ae.Count, 0)
         
-[<Test>]
-let TryFind() =
+    [<Test>]
+    let TryFind() =
     
-    let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
-    let rem = l.TryFind(2)
-    Assert.AreEqual(l.TryFind(2),Some 4)         
+        let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
+        let rem = l.TryFind(2)
+        Assert.AreEqual(l.TryFind(2),Some 4)         
     
-    let e  = HashMap.empty<int,string>
+        let e  = HashMap.empty<int,string>
     
-    Assert.AreEqual(e.TryFind(2), None)    
+        Assert.AreEqual(e.TryFind(2), None)
+
+
+module MapModule =
+    [<Test>]
+    let empty () : unit =
+        let emptyMap = HashMap.empty        
+        Assert.IsTrue(HashMap.isEmpty emptyMap)
+        
+        let a:HashMap<int,int>    = HashMap.empty<int,int>
+        let b : HashMap<string,string> = HashMap.empty<string,string>
+        let c : HashMap<int,string> = HashMap.empty<int,string>  
+              
+        ()
+        
+    [<Test>]
+    let add () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.add 1 "a" valueKeyMap        
+        Assert.AreEqual(resultValueMap.[1], "a")
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = HashMap.add  ""  0 refMap
+        Assert.AreEqual(resultRefMap.[""] , 0)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.add 1 "a" eptMap
+        Assert.AreEqual(resultEpt.[1], "a")
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.add  7  "seven" oeleMap
+        Assert.AreEqual(resultOele.[7], "seven")     
+        
+        // extra test for add -- add some key which already exit in the HashMap
+        let extMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultExt = HashMap.add 2 "dup" extMap        
+        Assert.AreEqual(resultExt.[2], "dup")   
+        
+         
+        ()
+
+    [<Test>]
+    let exists () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.exists (fun x y -> x > 3) valueKeyMap        
+        Assert.IsTrue(resultValueMap)
+
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |> HashMap.exists  (fun x y -> y>2 )
+        Assert.IsTrue(resultRefMap)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.exists  (fun x y -> (x + y.Length) % 4 = 0 ) 
+        Assert.IsTrue(resultOele)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.exists (fun x y -> false) eptMap
+        Assert.IsFalse(resultEpt)
+       
+        ()
+        
+    [<Test>]
+    let filter () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap =valueKeyMap |> HashMap.filter (fun x y -> x % 3 = 0)         
+        Assert.AreEqual(resultValueMap,[3,"c"] |> HashMap.ofList)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |> HashMap.filter  (fun x y -> y  > 3 ) 
+        Assert.AreEqual(resultRefMap,["....",4] |> HashMap.ofList)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.filter  (fun x y -> x<3 )         
+        Assert.AreEqual(resultOele,oeleMap)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.filter (fun x y -> true) eptMap        
+        Assert.AreEqual(resultEpt,eptMap)
+               
+        ()       
+
+
+    [<Test>]
+    let find () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.find 5 valueKeyMap        
+        Assert.AreEqual(resultValueMap,"e")
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = HashMap.find  ".." refMap        
+        Assert.AreEqual(resultRefMap,2)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.find 1 oeleMap        
+        Assert.AreEqual(resultOele,"one")
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        checkThrowsKeyNotFoundException (fun () -> HashMap.find 1 eptMap |> ignore)
+               
+        ()  
+
+    [<Test>]
+    let findIndex () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap =valueKeyMap |> HashMap.findKey (fun x y -> x % 3 = 0)         
+        Assert.AreEqual(resultValueMap,3)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |> HashMap.findKey  (fun x y -> y % 3 = 0 )         
+        Assert.AreEqual(resultRefMap,"...")
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.findKey  (fun x y -> x = 1 )         
+        Assert.AreEqual(resultOele,1)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        checkThrowsKeyNotFoundException (fun () -> HashMap.findKey (fun x y -> true) eptMap |> ignore)
+               
+        ()          
+     
+    [<Test>]
+    let tryPick () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = valueKeyMap |> HashMap.tryPick (fun x y -> if x % 3 = 0 then Some (x) else None)         
+        Assert.AreEqual(resultValueMap,Some 3)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |> HashMap.tryPick  (fun x y -> if (y % 3 = 0 ) then Some y else None ) 
+        
+        Assert.AreEqual(resultRefMap,Some 3)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.tryPick  (fun x y -> if(x + y.Length) % 4 = 0 then Some y else None )         
+        Assert.AreEqual(resultOele,Some "one")
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.tryPick (fun x y -> Some x) eptMap        
+        Assert.AreEqual(resultEpt,None)
+               
+        ()     
+
+    [<Test>]
+    let pick () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValue = valueKeyMap |> HashMap.pick (fun x y -> if x % 3 = 0 then Some (y) else None)         
+        Assert.AreEqual(resultValue, "c")
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let result = refMap |> HashMap.pick (fun x y -> if (y % 3 = 0 ) then Some y else None ) 
+        Assert.AreEqual(result, 3)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.pick (fun x y -> if(x + y.Length) % 4 = 0 then Some y else None )         
+        Assert.AreEqual(resultOele, "one")
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = 
+            try 
+                HashMap.pick (fun x y -> Some x) eptMap
+            with :? System.Collections.Generic.KeyNotFoundException -> Some 0
+        Assert.AreEqual(resultEpt, Some 0)
+        
+        ()
+
+    [<Test>]
+    let fold () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = valueKeyMap |> HashMap.fold (fun x y z -> x + y + z.Length) 10         
+        Assert.AreEqual(resultValueMap,28)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap =   refMap |> HashMap.fold  (fun x y z -> x + y + z.ToString())  "*"      
+        Assert.AreEqual(resultRefMap,"*.1..2...3....4")
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele =   oeleMap |> HashMap.fold  (fun x y z -> x + y.ToString() + z)  "got"      
+        Assert.AreEqual(resultOele,"got1one")
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = eptMap |> HashMap.fold (fun x y z -> 1) 1         
+        Assert.AreEqual(resultEpt,1)
+               
+        ()
+
+    [<Test>]
+    let foldBack () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.foldBack (fun x y z -> x.ToString() + y + z.ToString()) valueKeyMap "*"     
+        Assert.AreEqual(resultValueMap,"2b3c4d5e*")
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = HashMap.foldBack  (fun x y z -> x + y.ToString() + z) refMap "right"         
+        Assert.AreEqual(resultRefMap,".1..2...3....4right")
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.foldBack  (fun x y z -> x.ToString() + y + z) oeleMap "right"         
+        Assert.AreEqual(resultOele,"1oneright")
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.foldBack (fun x y z -> 1) eptMap 1         
+        Assert.AreEqual(resultEpt,1)
+               
+        ()
+        
+    [<Test>]
+    let forall () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = valueKeyMap |> HashMap.forall (fun x y -> x % 3 = 0)         
+        Assert.IsFalse(resultValueMap)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |> HashMap.forall  (fun x y -> x.Length  > 4 )         
+        Assert.IsFalse(resultRefMap)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.forall  (fun x y -> x<3 )         
+        Assert.IsTrue(resultOele)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt =eptMap |>  HashMap.forall (fun x y -> true)         
+        Assert.IsTrue(resultEpt)
+               
+        ()       
+
+
+    [<Test>]
+    let isEmpty () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.isEmpty  valueKeyMap        
+        Assert.IsFalse(resultValueMap)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = HashMap.isEmpty   refMap        
+        Assert.IsFalse(resultRefMap)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.isEmpty   oeleMap        
+        Assert.IsFalse(resultOele)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.isEmpty  eptMap        
+        Assert.IsTrue(resultEpt)
+               
+        ()  
+
+    [<Test>]
+    let iter () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = ref 0    
+        let funInt (x:int) (y:string) =   
+            resultValueMap := !resultValueMap + x + y.Length             
+            () 
+        HashMap.iter funInt valueKeyMap        
+        Assert.AreEqual(!resultValueMap,18)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = ref ""
+        let funStr (x:string) (y:int) = 
+            resultRefMap := !resultRefMap + x + y.ToString()
+            ()
+        HashMap.iter funStr refMap        
+        Assert.AreEqual(!resultRefMap,".1..2...3....4")
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = ref ""
+        let funMix  (x:int) (y:string) =
+            resultOele := !resultOele + x.ToString() + y
+            ()
+        HashMap.iter funMix oeleMap        
+        Assert.AreEqual(!resultOele,"1one")
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = ref 0    
+        let funEpt (x:int) (y:int) =   
+            resultEpt := !resultEpt + x + y              
+            () 
+        HashMap.iter funEpt eptMap        
+        Assert.AreEqual(!resultEpt,0)
+               
+        ()          
+     
+    [<Test>]
+    let map () : unit =
+
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = valueKeyMap |> HashMap.map (fun x y -> x.ToString() + y )         
+        Assert.AreEqual(resultValueMap,[(2,"2b"); (3,"3c"); (4,"4d"); (5,"5e")] |> HashMap.ofList)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |> HashMap.map (fun x y -> x.Length + y ) 
+        Assert.AreEqual(resultRefMap,[(".",2); ("..",4);( "...",6); ("....",8)] |> HashMap.ofList)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.map  (fun x y -> x.ToString() + y )         
+        Assert.AreEqual(resultOele,[1,"1one"] |> HashMap.ofList)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty<int,int>
+        let resultEpt = eptMap |> HashMap.map (fun x y -> x+y)         
+        Assert.AreEqual(resultEpt,eptMap)
+               
+        ()     
+
+    [<Test>]
+    let contains () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.containsKey 2 valueKeyMap        
+        Assert.IsTrue(resultValueMap)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = HashMap.containsKey ".."  refMap        
+        Assert.IsTrue(resultRefMap)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.containsKey 1 oeleMap        
+        Assert.IsTrue(resultOele)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.containsKey 3 eptMap        
+        Assert.IsFalse(resultEpt)
+               
+        () 
+        
+    [<Test>]
+    let ofArray_ofList_ofSeq () : unit =
+        // value keys    
+        let valueKeyMapOfArr = HashMap.ofArray [|(2,"b"); (3,"c"); (4,"d"); (5,"e")|]     
+        let valueKeyMapOfList = HashMap.ofList [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let valueKeyMapOfSeq = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+
+        Assert.AreEqual(valueKeyMapOfArr,valueKeyMapOfList)
+        Assert.AreEqual(valueKeyMapOfList,valueKeyMapOfSeq)
+        Assert.AreEqual(valueKeyMapOfArr,valueKeyMapOfSeq)
+        
+        // reference keys
+        let refMapOfArr = HashMap.ofArray [|(".",1); ("..",2);( "...",3); ("....",4)|]
+        let refMapOfList = HashMap.ofList [(".",1); ("..",2);( "...",3); ("....",4)]
+        let refMapOfSeq = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+
+        Assert.AreEqual(refMapOfArr,refMapOfList)
+        Assert.AreEqual(refMapOfList,refMapOfSeq)
+        Assert.AreEqual(refMapOfArr,refMapOfSeq)
+        
+        // One-element HashMap
+        let oeleMapOfArr = HashMap.ofArray [|(1,"one")|]
+        let oeleMapOfList = HashMap.ofList [(1,"one") ]
+        let oeleMapOfSeq = HashMap.ofSeq [(1,"one") ]
+
+        Assert.AreEqual(oeleMapOfArr,oeleMapOfList)
+        Assert.AreEqual(oeleMapOfList,oeleMapOfSeq)
+        Assert.AreEqual(oeleMapOfArr,oeleMapOfSeq)
+                
+        ()
+
+    [<Test>]
+    let partition () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.partition (fun x y  -> x%2 = 0) valueKeyMap         
+        let choosed = [(2,"b"); (4,"d")] |> HashMap.ofList
+        let notChoosed = [(3,"c"); (5,"e")] |> HashMap.ofList
+        Assert.AreEqual(resultValueMap,(choosed,notChoosed))
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |>  HashMap.partition  (fun x y  -> x.Length >2 )        
+        let choosed = [( "...",3); ("....",4)] |> HashMap.ofList
+        let notChoosed = [(".",1); ("..",2)] |> HashMap.ofList
+        Assert.AreEqual(resultRefMap,(choosed,notChoosed))
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.partition  (fun x y  -> x<4) oeleMap     
+        let choosed = [(1,"one")] |> HashMap.ofList
+        let notChoosed = HashMap.empty<int,string>
+        Assert.AreEqual(resultOele,(choosed,notChoosed))
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.partition (fun x y  -> true) eptMap          
+        Assert.AreEqual(resultEpt,(eptMap,eptMap))
+               
+        ()
+    
+        
+    [<Test>]
+    let remove () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.remove 5 valueKeyMap        
+        Assert.AreEqual(resultValueMap,[(2,"b"); (3,"c"); (4,"d")] |> HashMap.ofList)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = HashMap.remove  ".." refMap         
+        Assert.AreEqual(resultRefMap,[(".",1); ( "...",3); ("....",4)] |> HashMap.ofList)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.remove  1 oeleMap             
+        Assert.AreEqual(resultOele,HashMap.empty<int,string>)
+        
+        // Two-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one");(2,"Two")]
+        let resultOele = HashMap.remove  1 oeleMap             
+        let exOele = HashMap.ofSeq [(2, "Two")]
+        Assert.AreEqual(resultOele, exOele)
+        
+        // Item which want to be removed not included in the map
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.remove 5 valueKeyMap        
+        Assert.AreEqual(resultValueMap,[(2,"b"); (3,"c"); (4,"d")] |> HashMap.ofList)
+        
+                               
+        ()
+        
+    [<Test>]
+    let toArray () : unit =
+        // value keys    
+        let valueKeyMapOfArr = HashMap.ofArray [|(1,1);(2,4);(3,9)|]     
+        let resultValueMap = HashMap.toArray valueKeyMapOfArr        
+        Assert.AreEqual(resultValueMap,[|(1,1);(2,4);(3,9)|])
+        
+        // reference keys
+        let refMapOfArr = HashMap.ofArray [|(".",1); ("..",2);( "...",3); ("....",4)|]
+        let resultRefMap = HashMap.toArray refMapOfArr        
+        Assert.AreEqual(resultRefMap,[|(".",1); ("..",2);( "...",3); ("....",4)|])
+        
+        // One-element HashMap
+        let oeleMapOfArr = HashMap.ofArray [|(1,"one")|]
+        let resultOele = HashMap.toArray oeleMapOfArr        
+        Assert.AreEqual(resultOele,[|(1,"one")|])
+        
+        // empty HashMap
+        let eptMap = HashMap.ofArray [||]
+        let resultEpt = HashMap.toArray eptMap            
+        Assert.AreEqual(resultEpt,[||])
+
+        () 
+
+    [<Test>]
+    let toList () : unit =
+        // value keys    
+        let valueKeyMapOfArr = HashMap.ofList [(1,1);(2,4);(3,9)]     
+        let resultValueMap = HashMap.toList valueKeyMapOfArr        
+        Assert.AreEqual(resultValueMap,[(1,1);(2,4);(3,9)])
+        
+        // reference keys
+        let refMapOfArr = HashMap.ofList [(".",1); ("..",2);( "...",3); ("....",4)]
+        let resultRefMap = HashMap.toList refMapOfArr        
+        Assert.AreEqual(resultRefMap,[(".",1); ("..",2);( "...",3); ("....",4)])
+        
+        // One-element HashMap
+        let oeleMapOfArr = HashMap.ofList [(1,"one")]
+        let resultOele = HashMap.toList oeleMapOfArr        
+        Assert.AreEqual(resultOele,[(1,"one")])
+        
+        // empty HashMap
+        let eptMap = HashMap.empty<int,string>
+        let resultEpt = HashMap.toList eptMap  
+        let eptList :(int*string) list = []          
+        Assert.AreEqual(resultEpt,eptList)
+
+        ()     
+
+    [<Test>]
+    let toSeq () : unit =
+        // value keys    
+        let valueKeyMapOfArr = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]  
+        let resultValueMap = HashMap.toSeq valueKeyMapOfArr
+        let originInt = seq { for i in 1..3 do yield (i,i*i)}
+        CollectionAssert.AreEqual (
+            resultValueMap,
+            [(2,"b"); (3,"c"); (4,"d"); (5,"e")] :> IEnumerable)
+
+        
+        // reference keys
+        let refMapOfArr = HashMap.ofSeq [(".",1); ("..",2);( "...",3); ("....",4)]
+        let resultRefMap = HashMap.toSeq refMapOfArr
+        let originStr = seq { for x in [  "is" ;"lists";"str"; "this"] do yield (x,x.ToUpper())}
+        CollectionAssert.AreEqual (
+            resultRefMap,
+            [(".",1); ("..",2);( "...",3); ("....",4)] :> IEnumerable)
+
+        
+        // One-element HashMap
+        let oeleMapOfArr = HashMap.ofSeq [(1,"one")]
+        let resultOele = HashMap.toSeq oeleMapOfArr
+        let originMix = seq { for x in [ "is" ;"str"; "this" ;"lists"] do yield (x.Length,x.ToUpper())}
+        CollectionAssert.AreEqual (resultOele, [(1,"one")])
+
+         
+        ()           
+
+    [<Test>]
+    let tryFind () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = HashMap.tryFind 5 valueKeyMap        
+        Assert.AreEqual(resultValueMap,Some "e")
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = HashMap.tryFind  "..." refMap        
+        Assert.AreEqual(resultRefMap,Some 3)
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = HashMap.tryFind 1 oeleMap        
+        Assert.AreEqual(resultOele,Some "one")
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.tryFind 1 eptMap        
+        Assert.AreEqual(resultEpt,None)
+               
+        ()      
+
+    [<Test>]
+    let tryFindIndex () : unit =
+        // value keys
+        let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
+        let resultValueMap = valueKeyMap |> HashMap.tryFindKey (fun x y -> x+y.Length >30)         
+        Assert.AreEqual(resultValueMap,None)
+        
+        // reference keys
+        let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
+        let resultRefMap = refMap |> HashMap.tryFindKey  (fun x y -> (x.Length+y)>6)         
+        Assert.AreEqual(resultRefMap,Some "....")
+        
+        // One-element HashMap
+        let oeleMap = HashMap.ofSeq [(1, "one")]
+        let resultOele = oeleMap |> HashMap.tryFindKey (fun x y -> y.Contains("o"))        
+        Assert.AreEqual(resultOele,Some 1)
+        
+        // empty HashMap
+        let eptMap = HashMap.empty
+        let resultEpt = HashMap.tryFindKey (fun x y -> x+y >30) eptMap        
+        Assert.AreEqual(resultEpt,None)
+               
+        ()  
 
 
 (* TODO : Implement FsCheck tests. *)

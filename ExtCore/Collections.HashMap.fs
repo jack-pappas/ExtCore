@@ -1559,6 +1559,14 @@ module HashMap =
         
         map.TryFindKey predicate
 
+    //
+    [<CompiledName("FindKey")>]
+    let inline findKey (predicate : 'Key -> 'T -> bool) (map : HashMap<'Key, 'T>) : 'Key =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.FindKey predicate
+
     /// Returns a new map with the binding added to this map.
     [<CompiledName("Add")>]
     let inline add (key : 'Key) (value : 'T) (map : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =

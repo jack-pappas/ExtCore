@@ -1336,6 +1336,14 @@ module IntMap =
         
         map.TryFindKey predicate
 
+    //
+    [<CompiledName("FindKey")>]
+    let inline findKey (predicate : int -> 'T -> bool) (map : IntMap<'T>) : int =
+        // Preconditions
+        checkNonNull "map" map
+        
+        map.FindKey predicate
+
     /// Returns a new map with the binding added to this map.
     [<CompiledName("Add")>]
     let inline add (key : int) (value : 'T) (map : IntMap<'T>) : IntMap<'T> =
@@ -1678,6 +1686,18 @@ module TagMap =
         checkNonNull "map" map
 
         map.TryFindKey (retype predicate)
+        |> retype
+
+    //
+    [<CompiledName("FindKey")>]
+    let inline findKey (predicate : int<'Tag> -> 'T -> bool) (map : TagMap<'Tag, 'T>) : int<'Tag> =
+        // Retype as IntMap.
+        let map : IntMap<'T> = retype map
+
+        // Preconditions
+        checkNonNull "map" map
+
+        map.FindKey (retype predicate)
         |> retype
 
     /// Returns a new map with the binding added to this map.
