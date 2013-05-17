@@ -62,20 +62,24 @@ type RestrictHash<'T when 'T : equality> =
 
 [<Test>]
 let isEmpty () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     HashMap.singleton 1 'a'
     |> HashMap.isEmpty
     |> should be False
 
 [<Test>]
 let count () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.count
     |> assertEqual 0
 
+    // Sample usage test cases.
     HashMap.singleton 1 'a'
     |> HashMap.count
     |> assertEqual 1
@@ -88,6 +92,7 @@ let count () : unit =
 
 [<Test>]
 let singleton () : unit =
+    // Sample usage test cases.
     HashMap.singleton 1 'a'
     |> assertEqual (
         HashMap.add 1 'a' HashMap.empty)
@@ -98,6 +103,7 @@ let singleton () : unit =
 
 [<Test>]
 let containsKey () : unit =
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> HashMap.ofArray
@@ -112,6 +118,7 @@ let containsKey () : unit =
 
 [<Test>]
 let tryFind () : unit =
+    // Sample usage test cases.
     [(5, 'a'); (3, 'b')]
     |> HashMap.ofList
     |> HashMap.tryFind 5
@@ -124,6 +131,7 @@ let tryFind () : unit =
 
 [<Test>]
 let find () : unit =
+    // Sample usage test cases.
     [(5, 'a'); (3, 'b')]
     |> HashMap.ofList
     |> HashMap.find 5
@@ -138,6 +146,7 @@ let ``find raises exn when key is not found`` () : unit =
 
 [<Test>]
 let findOrDefault () : unit =
+    // Sample usage test cases.
     [(5, 'a'); (3, 'b')]
     |> HashMap.ofList
     |> HashMap.findOrDefault 'z' 5
@@ -150,11 +159,13 @@ let findOrDefault () : unit =
 
 [<Test>]
 let tryFindKey () : unit =
+    // Test case for an empty map.
     (HashMap.empty : HashMap<int, string>)
     |> HashMap.tryFindKey (fun k v ->
         k % 2 = 0)
     |> assertEqual None
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> HashMap.ofArray
@@ -171,6 +182,13 @@ let tryFindKey () : unit =
 
 [<Test>]
 let add () : unit =
+    // Test case for an empty map.
+    HashMap.empty
+    |> HashMap.add 5 'x'
+    |> assertEqual (
+        HashMap.singleton 5 'x')
+
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> HashMap.ofArray
@@ -187,18 +205,15 @@ let add () : unit =
        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (13, 'x'); |])
 
-    HashMap.empty
-    |> HashMap.add 5 'x'
-    |> assertEqual (
-        HashMap.singleton 5 'x')
-
 [<Test>]
 let remove () : unit =
+    // Test case for an empty map.
     (HashMap.empty : HashMap<int, string>)
     |> HashMap.remove 5
     |> HashMap.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [(5, "a"); (3, "b")]
     |> HashMap.ofList
     |> HashMap.remove 5
@@ -282,11 +297,13 @@ let isSubmapOfBy () : unit =
 
 [<Test>]
 let ofSeq () : unit =
+    // Test case for an empty sequence.
     (Seq.empty : seq<int * string>)
     |> HashMap.ofSeq
     |> HashMap.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> Seq.ofArray
     |> HashMap.ofSeq
@@ -295,10 +312,12 @@ let ofSeq () : unit =
 
 [<Test>]
 let ofList () : unit =
+    // Test case for an empty list.
     HashMap.ofList []
     |> HashMap.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [(5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G')]
     |> HashMap.ofList
     |> assertEqual
@@ -306,11 +325,13 @@ let ofList () : unit =
 
 [<Test>]
 let ofArray () : unit =
+    // Test case for an empty array.
     Array.empty
     |> HashMap.ofArray
     |> HashMap.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> assertEqual
@@ -318,11 +339,13 @@ let ofArray () : unit =
 (*
 [<Test>]
 let ofMap () : unit =
+    // Test case for an empty map.
     Map.empty
     |> HashMap.ofMap
     |> HashMap.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
     |> Map.ofArray
     |> HashMap.ofMap
@@ -331,11 +354,13 @@ let ofMap () : unit =
 *)
 [<Test>]
 let toSeq () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.toSeq
     |> Seq.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.toSeq
@@ -345,11 +370,13 @@ let toSeq () : unit =
 
 [<Test>]
 let toList () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.toList
     |> List.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.toList
@@ -358,11 +385,13 @@ let toList () : unit =
 
 [<Test>]
 let toArray () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.toArray
     |> Array.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.toArray
@@ -371,11 +400,13 @@ let toArray () : unit =
 (*
 [<Test>]
 let toMap () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.toMap
     |> Map.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.toMap
@@ -460,11 +491,13 @@ let ``pick raises exn when no match is found`` () : unit =
 
 [<Test>]
 let map () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.map (sprintf "%i:%c")
     |> HashMap.isEmpty
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> HashMap.ofArray
     |> HashMap.map (sprintf "%i:%c")
@@ -474,6 +507,7 @@ let map () : unit =
 
 [<Test>]
 let filter () : unit =
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.filter (fun k v ->
@@ -483,6 +517,7 @@ let filter () : unit =
 
 [<Test>]
 let choose () : unit =
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.choose (fun k v ->
@@ -494,6 +529,7 @@ let choose () : unit =
 
 [<Test>]
 let iter () : unit =
+    // Test case for an empty map.
     do
         let elements = ResizeArray ()
 
@@ -505,6 +541,7 @@ let iter () : unit =
         |> ResizeArray.isEmpty
         |> should be True
 
+    // Sample usage test cases.
     do
         let elements = ResizeArray ()
 
@@ -520,6 +557,7 @@ let iter () : unit =
 
 [<Test>]
 let iterBack () : unit =
+    // Test case for an empty map.
     do
         let elements = ResizeArray ()
 
@@ -531,6 +569,7 @@ let iterBack () : unit =
         |> ResizeArray.isEmpty
         |> should be True
 
+    // Sample usage test cases.
     do
         let elements = ResizeArray ()
 
@@ -546,6 +585,7 @@ let iterBack () : unit =
 
 [<Test>]
 let fold () : unit =
+    // Test case for an empty map.
     do
         let elements = ResizeArray ()
 
@@ -559,6 +599,7 @@ let fold () : unit =
         |> ResizeArray.isEmpty
         |> should be True
 
+    // Sample usage test cases.
     do
         let elements = ResizeArray ()
 
@@ -579,6 +620,7 @@ let fold () : unit =
 
 [<Test>]
 let foldBack () : unit =
+    // Test case for an empty map.
     do
         let elements = ResizeArray ()
 
@@ -592,6 +634,7 @@ let foldBack () : unit =
         |> ResizeArray.isEmpty
         |> should be True
 
+    // Sample usage test cases.
     do
         let elements = ResizeArray ()
 
@@ -612,11 +655,13 @@ let foldBack () : unit =
 
 [<Test>]
 let exists () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.exists (fun k v ->
         (k + int v) % 2 = 0)
     |> should be False
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.exists (fun k v ->
@@ -631,11 +676,13 @@ let exists () : unit =
 
 [<Test>]
 let forall () : unit =
+    // Test case for an empty map.
     HashMap.empty
     |> HashMap.forall (fun k v ->
         (k + int v) < 200)
     |> should be True
 
+    // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.forall (fun k v ->
@@ -650,6 +697,7 @@ let forall () : unit =
 
 [<Test>]
 let partition () : unit =
+    // Test case for an empty map.
     do
         let evens, odds =
             HashMap.empty
@@ -664,6 +712,7 @@ let partition () : unit =
         |> HashMap.isEmpty
         |> should be True
 
+    // Sample usage test cases.
     do
         let evens, odds =
             [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -682,6 +731,7 @@ let partition () : unit =
 
 [<Test>]
 let mapPartition () : unit =
+    // Test case for an empty map.
     do
         let evens, odds =
             HashMap.empty
@@ -699,6 +749,7 @@ let mapPartition () : unit =
         |> HashMap.isEmpty
         |> should be True
 
+    // Sample usage test cases.
     do
         let evens, odds =
             [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -718,7 +769,6 @@ let mapPartition () : unit =
                     Choice2Of2 (k, System.Char.ToUpper v))
 
         evens |> assertEqual (HashMap.ofArray evensExpected)
-
         odds |> assertEqual (HashMap.ofArray oddsExpected)
 
 
@@ -727,12 +777,12 @@ let mapPartition () : unit =
 module MapType =
     // Interfaces
     [<Test>]
-    let IEnumerable() =        
+    let IEnumerable () : unit =        
         // Legit IE
         let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable
         let enum = ie.GetEnumerator()
         
-        let testStepping() =
+        let testStepping () : unit =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(1,1))
@@ -757,12 +807,12 @@ module MapType =
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
     
     [<Test>]
-    let IEnumerable_T() =        
+    let IEnumerable_T () : unit =        
         // Legit IE
         let ie = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable<KeyValuePair<_,_>>
         let enum = ie.GetEnumerator()
         
-        let testStepping() =
+        let testStepping () : unit =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(1,1))
@@ -788,7 +838,7 @@ module MapType =
     
     
     [<Test>]
-    let IDictionary() =        
+    let IDictionary () : unit =        
         // Legit ID
         let id = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IDictionary<_,_> 
         
@@ -814,7 +864,7 @@ module MapType =
         CollectionAssert.AreEqual(id.Values, [| |] :> ICollection<_>) 
     
     [<Test>]
-    let ICollection() =        
+    let ICollection () : unit =        
         // Legit IC
         let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> ICollection<KeyValuePair<_,_>>
         
@@ -838,7 +888,7 @@ module MapType =
         ic.CopyTo(newArr,0) 
     
     [<Test>]
-    let IComparable() =        
+    let IComparable () : unit =        
         // Legit IC
         let ic = (HashMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IComparable    
         Assert.AreEqual(ic.CompareTo([(1,1);(2,4);(3,9)]|> HashMap.ofList),0) 
@@ -854,7 +904,7 @@ module MapType =
     
     // Base class methods
     [<Test>]
-    let ObjectGetHashCode() =
+    let ObjectGetHashCode () : unit =
         // Works on empty maps
         let e = HashMap.ofList (List.empty<int * decimal>)
         let m = HashMap.ofList [ (1, -1.0M) ]
@@ -866,14 +916,14 @@ module MapType =
         Assert.AreEqual(x.GetHashCode(), y.GetHashCode())
     
     [<Test>]
-    let ObjectToString() =
+    let ObjectToString () : unit =
         Assert.AreEqual("hashMap [(1, 1); (2, 4); (3, 9)]", (HashMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
         Assert.AreEqual("hashMap []", ([] |> HashMap.ofList).ToString())
         Assert.AreEqual("hashMap []", 
                         (([] :(decimal*decimal)list) |> HashMap.ofList).ToString())
     
     [<Test>]
-    let ObjectEquals() =
+    let ObjectEquals () : unit =
         // All three are different references, but equality has been
         // provided by the F# compiler.
         let a = [(1,1);(2,4);(3,9)] |> HashMap.ofList
@@ -904,7 +954,7 @@ module MapType =
 
     // Instance methods
     [<Test>]
-    let New() =    
+    let New () : unit =    
         let newHashMap = new HashMap<int,int>([|(1,1);(2,4);(3,9)|])
         let b = newHashMap.Add(4,16)
         Assert.AreEqual(b.[4], 16)
@@ -914,7 +964,7 @@ module MapType =
         let ae = e.Add(1,"Monday")
         Assert.AreEqual(ae.[1], "Monday")
         
-    let Add() =
+    let Add () : unit =
     
         let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
         let b = a.Add(4,16)
@@ -926,7 +976,7 @@ module MapType =
         Assert.AreEqual(ae.[1], "Monday")
     
     [<Test>]
-    let ContainsKey() =
+    let ContainsKey () : unit =
     
         let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])        
         Assert.IsTrue(a.ContainsKey(3))
@@ -936,7 +986,7 @@ module MapType =
     
     
     [<Test>]
-    let Count() =
+    let Count () : unit =
     
         let a = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
         Assert.AreEqual(a.Count, 3)
@@ -945,7 +995,7 @@ module MapType =
         Assert.AreEqual(e.Count, 0) 
     
     [<Test>]
-    let IsEmpty() =
+    let IsEmpty () : unit =
     
         let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
         Assert.IsFalse(l.IsEmpty)
@@ -954,7 +1004,7 @@ module MapType =
         Assert.IsTrue(e.IsEmpty)        
     
     [<Test>]
-    let Item() =
+    let Item () : unit =
 
         let mutable l = [(1,1)] |> HashMap.ofList
         Assert.AreEqual(l.[1], 1)
@@ -973,7 +1023,7 @@ module MapType =
         checkThrowsKeyNotFoundException(fun () -> l.[1000] |> ignore)
     
     [<Test>]
-    let Remove() =
+    let Remove () : unit =
     
         let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
         let rem = l.Remove(2)
@@ -985,7 +1035,7 @@ module MapType =
         Assert.AreEqual(ae.Count, 0)
         
     [<Test>]
-    let TryFind() =
+    let TryFind () : unit =
     
         let l = (HashMap.ofArray [|(1,1);(2,4);(3,9)|])
         let rem = l.TryFind(2)
@@ -1370,7 +1420,7 @@ module MapModule =
         let resultEpt = HashMap.containsKey 3 eptMap        
         Assert.IsFalse(resultEpt)
                
-        () 
+        ()
         
     [<Test>]
     let ofArray_ofList_ofSeq () : unit =
@@ -1379,27 +1429,30 @@ module MapModule =
         let valueKeyMapOfList = HashMap.ofList [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
         let valueKeyMapOfSeq = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
 
-        Assert.AreEqual(valueKeyMapOfArr,valueKeyMapOfList)
-        Assert.AreEqual(valueKeyMapOfList,valueKeyMapOfSeq)
-        Assert.AreEqual(valueKeyMapOfArr,valueKeyMapOfSeq)
+        CollectionAssert.AreEquivalent (
+            valueKeyMapOfArr, valueKeyMapOfList, "ofArray and ofList produced different results (with value keys).")
+        CollectionAssert.AreEquivalent (
+            valueKeyMapOfList,valueKeyMapOfSeq, "ofList and ofSeq produced different results (with value keys).")
+        CollectionAssert.AreEquivalent (
+            valueKeyMapOfArr,valueKeyMapOfSeq, "ofArray and ofSeq produced different results (with value keys).")
         
         // reference keys
         let refMapOfArr = HashMap.ofArray [|(".",1); ("..",2);( "...",3); ("....",4)|]
         let refMapOfList = HashMap.ofList [(".",1); ("..",2);( "...",3); ("....",4)]
         let refMapOfSeq = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
 
-        Assert.AreEqual(refMapOfArr,refMapOfList)
-        Assert.AreEqual(refMapOfList,refMapOfSeq)
-        Assert.AreEqual(refMapOfArr,refMapOfSeq)
+        CollectionAssert.AreEquivalent (refMapOfArr, refMapOfList, "ofArray and ofList produced different results (with reference keys).")
+        CollectionAssert.AreEquivalent (refMapOfList, refMapOfSeq, "ofList and ofSeq produced different results (with reference keys).")
+        CollectionAssert.AreEquivalent (refMapOfArr, refMapOfSeq, "ofArray and ofSeq produced different results (with reference keys).")
         
         // One-element HashMap
         let oeleMapOfArr = HashMap.ofArray [|(1,"one")|]
         let oeleMapOfList = HashMap.ofList [(1,"one") ]
         let oeleMapOfSeq = HashMap.ofSeq [(1,"one") ]
 
-        Assert.AreEqual(oeleMapOfArr,oeleMapOfList)
-        Assert.AreEqual(oeleMapOfList,oeleMapOfSeq)
-        Assert.AreEqual(oeleMapOfArr,oeleMapOfSeq)
+        CollectionAssert.AreEquivalent (oeleMapOfArr, oeleMapOfList, "ofArray and ofList produced different results (one-element maps).")
+        CollectionAssert.AreEquivalent (oeleMapOfList, oeleMapOfSeq, "ofList and ofSeq produced different results (one-element maps).")
+        CollectionAssert.AreEquivalent (oeleMapOfArr, oeleMapOfSeq, "ofArray and ofSeq produced different results (one-element maps).")
                 
         ()
 
@@ -1470,22 +1523,22 @@ module MapModule =
         // value keys    
         let valueKeyMapOfArr = HashMap.ofArray [|(1,1);(2,4);(3,9)|]     
         let resultValueMap = HashMap.toArray valueKeyMapOfArr        
-        Assert.AreEqual(resultValueMap,[|(1,1);(2,4);(3,9)|])
+        CollectionAssert.AreEquivalent(resultValueMap,[|(1,1);(2,4);(3,9)|])
         
         // reference keys
         let refMapOfArr = HashMap.ofArray [|(".",1); ("..",2);( "...",3); ("....",4)|]
         let resultRefMap = HashMap.toArray refMapOfArr        
-        Assert.AreEqual(resultRefMap,[|(".",1); ("..",2);( "...",3); ("....",4)|])
+        CollectionAssert.AreEquivalent(resultRefMap,[|(".",1); ("..",2);( "...",3); ("....",4)|])
         
         // One-element HashMap
         let oeleMapOfArr = HashMap.ofArray [|(1,"one")|]
         let resultOele = HashMap.toArray oeleMapOfArr        
-        Assert.AreEqual(resultOele,[|(1,"one")|])
+        CollectionAssert.AreEquivalent(resultOele,[|(1,"one")|])
         
         // empty HashMap
         let eptMap = HashMap.ofArray [||]
         let resultEpt = HashMap.toArray eptMap            
-        Assert.AreEqual(resultEpt,[||])
+        CollectionAssert.AreEquivalent(resultEpt,[||])
 
         () 
 
@@ -1494,23 +1547,23 @@ module MapModule =
         // value keys    
         let valueKeyMapOfArr = HashMap.ofList [(1,1);(2,4);(3,9)]     
         let resultValueMap = HashMap.toList valueKeyMapOfArr        
-        Assert.AreEqual(resultValueMap,[(1,1);(2,4);(3,9)])
+        CollectionAssert.AreEquivalent(resultValueMap,[(1,1);(2,4);(3,9)])
         
         // reference keys
         let refMapOfArr = HashMap.ofList [(".",1); ("..",2);( "...",3); ("....",4)]
         let resultRefMap = HashMap.toList refMapOfArr        
-        Assert.AreEqual(resultRefMap,[(".",1); ("..",2);( "...",3); ("....",4)])
+        CollectionAssert.AreEquivalent(resultRefMap,[(".",1); ("..",2);( "...",3); ("....",4)])
         
         // One-element HashMap
         let oeleMapOfArr = HashMap.ofList [(1,"one")]
         let resultOele = HashMap.toList oeleMapOfArr        
-        Assert.AreEqual(resultOele,[(1,"one")])
+        CollectionAssert.AreEquivalent(resultOele,[(1,"one")])
         
         // empty HashMap
         let eptMap = HashMap.empty<int,string>
         let resultEpt = HashMap.toList eptMap  
         let eptList :(int*string) list = []          
-        Assert.AreEqual(resultEpt,eptList)
+        CollectionAssert.AreEquivalent(resultEpt,eptList)
 
         ()     
 
@@ -1520,7 +1573,7 @@ module MapModule =
         let valueKeyMapOfArr = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]  
         let resultValueMap = HashMap.toSeq valueKeyMapOfArr
         let originInt = seq { for i in 1..3 do yield (i,i*i)}
-        CollectionAssert.AreEqual (
+        CollectionAssert.AreEquivalent (
             resultValueMap,
             [(2,"b"); (3,"c"); (4,"d"); (5,"e")] :> IEnumerable)
 
@@ -1529,7 +1582,7 @@ module MapModule =
         let refMapOfArr = HashMap.ofSeq [(".",1); ("..",2);( "...",3); ("....",4)]
         let resultRefMap = HashMap.toSeq refMapOfArr
         let originStr = seq { for x in [  "is" ;"lists";"str"; "this"] do yield (x,x.ToUpper())}
-        CollectionAssert.AreEqual (
+        CollectionAssert.AreEquivalent (
             resultRefMap,
             [(".",1); ("..",2);( "...",3); ("....",4)] :> IEnumerable)
 
@@ -1538,7 +1591,7 @@ module MapModule =
         let oeleMapOfArr = HashMap.ofSeq [(1,"one")]
         let resultOele = HashMap.toSeq oeleMapOfArr
         let originMix = seq { for x in [ "is" ;"str"; "this" ;"lists"] do yield (x.Length,x.ToUpper())}
-        CollectionAssert.AreEqual (resultOele, [(1,"one")])
+        CollectionAssert.AreEquivalent (resultOele, [(1,"one")])
 
          
         ()           

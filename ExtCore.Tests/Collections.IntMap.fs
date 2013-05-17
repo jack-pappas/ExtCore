@@ -1274,18 +1274,18 @@ module MapModule =
         let valueKeyMapOfList = IntMap.ofList [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
         let valueKeyMapOfSeq = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
 
-        Assert.AreEqual(valueKeyMapOfArr,valueKeyMapOfList)
-        Assert.AreEqual(valueKeyMapOfList,valueKeyMapOfSeq)
-        Assert.AreEqual(valueKeyMapOfArr,valueKeyMapOfSeq)
+        CollectionAssert.AreEqual(valueKeyMapOfArr,valueKeyMapOfList)
+        CollectionAssert.AreEqual(valueKeyMapOfList,valueKeyMapOfSeq)
+        CollectionAssert.AreEqual(valueKeyMapOfArr,valueKeyMapOfSeq)
         
         // One-element IntMap
         let oeleMapOfArr = IntMap.ofArray [|(1,"one")|]
         let oeleMapOfList = IntMap.ofList [(1,"one") ]
         let oeleMapOfSeq = IntMap.ofSeq [(1,"one") ]
 
-        Assert.AreEqual(oeleMapOfArr,oeleMapOfList)
-        Assert.AreEqual(oeleMapOfList,oeleMapOfSeq)
-        Assert.AreEqual(oeleMapOfArr,oeleMapOfSeq)
+        CollectionAssert.AreEqual(oeleMapOfArr,oeleMapOfList)
+        CollectionAssert.AreEqual(oeleMapOfList,oeleMapOfSeq)
+        CollectionAssert.AreEqual(oeleMapOfArr,oeleMapOfSeq)
                 
         ()
 
