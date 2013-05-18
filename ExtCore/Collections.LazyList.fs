@@ -80,7 +80,7 @@ and [<NoEquality; NoComparison; Sealed; CompiledName("FSharpLazyList`1")>]
     let mutable status : LazyCellStatus<'T> = initialStatus
 
     /// The empty LazyList.
-    static member Empty
+    static member internal Empty
         with get () = emptyList
     
     member internal this.Value =
@@ -151,7 +151,7 @@ and [<NoEquality; NoComparison; Sealed; CompiledName("FSharpLazyList`1")>]
         LazyList (Delayed cellCreator)
 
     /// Return a new list which contains the given item followed by the given list.
-    static member Cons (value, list) : LazyList<'T> =
+    static member internal Cons (value, list) : LazyList<'T> =
         // Preconditions
         checkNonNull "list" list
 
@@ -160,14 +160,14 @@ and [<NoEquality; NoComparison; Sealed; CompiledName("FSharpLazyList`1")>]
 
     /// Return a new list which on consumption contains the given item 
     /// followed by the list returned by the given computation.
-    static member ConsDelayed (value, creator : unit -> LazyList<'T>) : LazyList<'T> =
+    static member internal ConsDelayed (value, creator : unit -> LazyList<'T>) : LazyList<'T> =
         LazyList<_>.CreateLazy <| fun () ->
             Cons (value, LazyList<_>.CreateLazy <| fun () ->
                 (creator ()).Value)
 
     /// Return a list that is -- in effect -- the list returned by the given computation.
     /// The given computation is not executed until the first element on the list is consumed.
-    static member Delayed (creator : unit -> LazyList<'T>) : LazyList<'T> =
+    static member internal Delayed (creator : unit -> LazyList<'T>) : LazyList<'T> =
         LazyList (Delayed <| fun () ->
             (creator ()).Value)
             
@@ -228,21 +228,26 @@ module LazyList =
 
     /// Return a new list which contains the given item followed by the given list.
     [<CompiledName("Cons")>]
-    let inline cons value (list : LazyList<'T>) =
+    let cons value (list : LazyList<'T>) =
         // Preconditions checked by the implementation.
         LazyList<_>.Cons (value, list)
     
-    /// Return a new list which on consumption contains the given item 
+    /// Return a new list which on consumption contains the given item
     /// followed by the list returned by the given computation.
     [<CompiledName("ConsDelayed")>]
-    let inline consDelayed (value : 'T) creator =
+    let consDelayed (value : 'T) creator =
         LazyList<_>.ConsDelayed (value, creator)
 
     /// Return a list that is -- in effect -- the list returned by the given computation.
     /// The given computation is not executed until the first element on the list is consumed.
     [<CompiledName("Delayed")>]
-    let inline delayed creator : LazyList<'T> =
+    let delayed creator : LazyList<'T> =
         LazyList<_>.Delayed creator
+
+    /// Creates a LazyList containing the given value.
+    [<CompiledName("Singleton")>]
+    let singleton value : LazyList<'T> =
+        LazyList<_>.Cons (value, LazyList.Empty)
 
     /// Returns a new LazyListCell created by adding a value to the end of the given LazyList.
     /// This is simply a curried form of the Cons constructor.

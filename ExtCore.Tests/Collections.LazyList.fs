@@ -280,3 +280,8 @@ let ``Basic Test #5`` () : unit =
     |> LazyList.tail
     |> LazyList.head
     |> assertEqual 'M'
+
+
+[<Test>]
+let singleton () : unit =
+    Assert.Ignore "Test not yet implemented."
