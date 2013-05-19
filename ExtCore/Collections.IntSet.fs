@@ -1721,7 +1721,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        set1.IsSubset set2
+        IntSet.IsSubset (set1, set2)
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
@@ -1737,7 +1737,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        set1.IsProperSubset set2
+        IntSet.IsProperSubset (set1, set2)
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
@@ -1752,7 +1752,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        set2.IsSubset set1
+        IntSet.IsSubset (set2, set1)
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
@@ -1768,7 +1768,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        set2.IsProperSubset set1
+        IntSet.IsProperSubset (set2, set1)
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
