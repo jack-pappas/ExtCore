@@ -56,3 +56,7 @@ module ExtraTopLevelOperators =
     let inline hashMap (elements : seq<_>) : HashMap<'Key, 'T> =
         HashMap (elements)
 
+    /// Builds a set from a sequence of elements.
+    [<CompiledName("HashSet")>]
+    let inline hashSet (elements : seq<_>) : HashSet<'T> =
+        HashSet (elements)
