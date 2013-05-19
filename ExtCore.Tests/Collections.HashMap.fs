@@ -25,7 +25,6 @@ open System.Collections
 open System.Collections.Generic
 open NUnit.Framework
 open FsUnit
-//open FsCheck
 
 
 /// A type which uses the same hash value for every instance.
@@ -772,7 +771,7 @@ let mapPartition () : unit =
         odds |> assertEqual (HashMap.ofArray oddsExpected)
 
 
-(* MapModule and MapType tests from the F# distribution. *)
+(* MapModule and MapType tests from the F# source distribution (in FSharp.Core.Unittests). *)
 
 module MapType =
     // Interfaces
