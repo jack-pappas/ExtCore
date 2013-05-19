@@ -432,9 +432,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             PatriciaHashSet.Add (k, x, t)
         | Empty, _ -> t
 
-    /// Compute the intersection of two PatriciaMaps.
-    /// If both set. contain a binding with the same key, the binding from
-    /// the first set.will be used.
+    /// Compute the intersection of two PatriciaHashSets.
     static member Intersect (s, t) : PatriciaHashSet<'T> =
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
@@ -491,7 +489,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty, _ ->
             Empty
 
-    /// Compute the difference of two PatriciaMaps.
+    /// Compute the difference of two PatriciaHashSets.
     static member Difference (s, t) : PatriciaHashSet<'T> =
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
@@ -555,9 +553,9 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             Empty
 *)
 (*
-    /// <c>IsSubset.fBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
+    /// <c>IsSubmapOfBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
     /// and when 'f' returns <c>true</c> when applied to their respective values.
-    static member IsSubset.fBy (predicate : 'T -> 'T -> bool) (t1 : PatriciaHashSet<'T>) (t2 : PatriciaHashSet<'T>) : bool =
+    static member IsSubmapOfBy (predicate : 'T -> 'T -> bool) (t1 : PatriciaHashSet<'T>) (t2 : PatriciaHashSet<'T>) : bool =
         match t1, t2 with
         | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
             if shorter (m1, m2) then
@@ -565,13 +563,13 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             elif shorter (m2, m1) then
                 matchPrefix (p1, p2, m2) && (
                     if zeroBit (p1, m2) then
-                        PatriciaHashSet.IsSubset.fBy predicate t1 l2
+                        PatriciaHashSet.IsSubmapOfBy predicate t1 l2
                     else
-                        PatriciaHashSet.IsSubset.fBy predicate t1 r2)
+                        PatriciaHashSet.IsSubmapOfBy predicate t1 r2)
             else
                 p1 = p2
-                && PatriciaHashSet.IsSubset.fBy predicate l1 l2
-                && PatriciaHashSet.IsSubset.fBy predicate r1 r2
+                && PatriciaHashSet.IsSubmapOfBy predicate l1 l2
+                && PatriciaHashSet.IsSubmapOfBy predicate r1 r2
                 
         | Br (_,_,_,_), _ ->
             false
@@ -585,19 +583,19 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             true
 
     //
-    static member private Subset.mp (predicate : 'T -> 'T -> bool) (t1 : PatriciaHashSet<'T>) (t2 : PatriciaHashSet<'T>) : int =
+    static member private SubsetCmp (predicate : 'T -> 'T -> bool) (t1 : PatriciaHashSet<'T>) (t2 : PatriciaHashSet<'T>) : int =
         match t1, t2 with
         | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
             if shorter (m1, m2) then 1
             elif shorter (m2, m1) then
                 if not <| matchPrefix (p1, p2, m2) then 1
                 elif zeroBit (p1, m2) then
-                    PatriciaHashSet.Subset.mp predicate t1 l2
+                    PatriciaHashSet.SubsetCmp predicate t1 l2
                 else
-                    PatriciaHashSet.Subset.mp predicate t1 r2
+                    PatriciaHashSet.SubsetCmp predicate t1 r2
             elif p1 = p2 then
-                let left = PatriciaHashSet.Subset.mp predicate l1 l2
-                let right = PatriciaHashSet.Subset.mp predicate r1 r2
+                let left = PatriciaHashSet.SubsetCmp predicate l1 l2
+                let right = PatriciaHashSet.SubsetCmp predicate r1 r2
                 match left, right with
                 | 1, _
                 | _, 1 -> 1
@@ -610,11 +608,11 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Br (_,_,_,_), _ -> 1
         | Lf (kx, x), Lf (ky, y) ->
             if kx = ky && predicate x y then 0
-            else 1  // The set. are disjoint.
+            else 1  // The sets are disjoint.
         | Lf (k, x), t ->
             match PatriciaHashSet.TryFind (k, t) with
             | Some y when predicate x y -> -1
-            | _ -> 1    // The set. are disjoint.
+            | _ -> 1    // The sets are disjoint.
 
         | Empty, Empty -> 0
         | Empty, _ -> -1
@@ -646,16 +644,6 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         ||> Array.fold (fun trie value ->
             let valueHash = uint32 <| hash value
             PatriciaHashSet.Add (valueHash, value, trie))
-
-//    //
-//    static member OfSet (source : Set<'T>) : PatriciaHashSet<'T> =
-//        // Preconditions
-//        checkNonNull "source" source
-//
-//        (Empty, source)
-//        ||> Set.fold (fun trie value ->
-//            let valueHash = uint32 <| hash value
-//            PatriciaHashSet.Add (valueHash, value, trie))
 
     //
     static member Iterate (action : 'T -> unit, set) : unit =
@@ -1056,9 +1044,9 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
         elif otherMap.Trie === trie' then otherMap
         else HashSet (trie')
 
-    /// Returns true if 'other' is a subset.of this set.
-    member this.IsSubset.fBy (predicate, other : HashSet<'T>) : bool =
-        PatriciaHashSet.IsSubset.fBy predicate other.Trie trie
+    /// Returns true if 'other' is a subset of this set.
+    member this.IsSubsetOfBy (predicate, other : HashSet<'T>) : bool =
+        PatriciaHashSet.IsSubsetOfBy predicate other.Trie trie
 *)
     /// The HashSet containing the given binding.
     static member Singleton (value : 'T) : HashSet<'T> =
@@ -1095,17 +1083,6 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
         else
             HashSet (PatriciaHashSet.OfArray source)
 
-//    /// Returns a new HashSet made from the given elements.
-//    static member OfSet (source : Set<'T>) : HashSet<'T> =
-//        // Preconditions
-//        checkNonNull "source" source
-//
-//        // OPTIMIZATION : If the source is empty return immediately.
-//        if Set.isEmpty source then
-//            HashSet.Empty
-//        else
-//            HashSet (PatriciaHashSet.OfSet source)
-
     //
     member __.ToSeq () =
         PatriciaHashSet.ToSeq trie
@@ -1119,10 +1096,6 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
         let elements = ResizeArray ()
         PatriciaHashSet.Iterate (elements.Add, trie)
         elements.ToArray ()
-
-//    //
-//    member __.ToSet () : Map<'Key, 'T> =
-//        PatriciaHashSet.FoldBack (Map.add, Map.empty, trie)
 
     //
     member __.Iterate (action : 'T -> unit) : unit =
@@ -1472,13 +1445,17 @@ module HashSet =
     let inline ofArray source : HashSet<'T> =
         // Preconditions are checked by the member.
         HashSet.OfArray source
-(*
+
     /// Returns a new set containing the given elements.
     [<CompiledName("OfSet")>]
-    let inline ofSet source : HashSet<'T> =
-        // Preconditions are checked by the member.
-        HashSet.OfSet source
-*)
+    let ofSet source : HashSet<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        (HashSet.Empty, source)
+        ||> Set.fold (fun hashSet value ->
+            hashSet.Add value)
+
     /// Views the collection as an enumerable sequence of pairs.
     /// The sequence will be ordered by the keys of the set.
     [<CompiledName("ToSeq")>]
@@ -1505,15 +1482,15 @@ module HashSet =
         checkNonNull "set" set
 
         set.ToArray ()
-(*
+
     /// Returns a new Set created from the given HashSet.
     [<CompiledName("ToSet")>]
-    let inline toSet (set : HashSet<'T>) =
+    let toSet (set : HashSet<'T>) =
         // Preconditions
         checkNonNull "set" set
 
-        set.ToSet ()
-*)
+        set.Fold (flip Set.add, Set.empty)
+
     /// Searches the set looking for the first element where the given function
     /// returns a Some value. If no such element is found, returns None.
     [<CompiledName("TryPick")>]
@@ -1536,7 +1513,7 @@ module HashSet =
     /// to each of the elements of the collection. The key passed to the function indicates
     /// the key of the element being transformed.
     [<CompiledName("Map")>]
-    let inline set (mapping : 'T -> 'U) (set : HashSet<'T>) : HashSet<'U> =
+    let inline map (mapping : 'T -> 'U) (set : HashSet<'T>) : HashSet<'U> =
         // Preconditions
         checkNonNull "set" set
         
