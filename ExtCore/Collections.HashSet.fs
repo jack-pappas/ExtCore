@@ -365,10 +365,21 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 else
                     let right = PatriciaHashSet.Add (valueHash, value, t1)
 
-                    // OPTIMIZE : If right === t1 then return the original set.instead of creating a new one.
+                    // OPTIMIZE : If right === t1 then return the original set instead of creating a new one.
                     Br (p, m, t0, right)
             else
                 PatriciaHashSet.Join (valueHash, Lf (valueHash, Tail value), p, set)
+
+    // TEMP : Just for testing...
+    static member Union (s : PatriciaHashSet<'T>, t : PatriciaHashSet<'T>) : PatriciaHashSet<'T> =
+        notImpl "PatriciaHashSet.Union"
+
+    static member Intersect (s : PatriciaHashSet<'T>, t : PatriciaHashSet<'T>) : PatriciaHashSet<'T> =
+        notImpl "PatriciaHashSet.Intersect"
+
+    static member Difference (s : PatriciaHashSet<'T>, t : PatriciaHashSet<'T>) : PatriciaHashSet<'T> =
+        notImpl "PatriciaHashSet.Difference"
+
 
 (*
     /// Computes the union of two PatriciaHashSets.
@@ -1016,34 +1027,43 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
         let trie' = PatriciaHashSet.Remove (valueHash, value, trie)
         if trie === trie' then this
         else HashSet (trie')
-(*
+
     /// Returns a new HashSet created by merging the two specified HashSets.
-    member this.Union (otherMap : HashSet<'T>) : HashSet<'T> =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new HashSet.
-        let trie' = PatriciaHashSet.Union (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
-        else HashSet (trie')
+    member this.Union (otherSet : HashSet<'T>) : HashSet<'T> =
+        // If this set's trie is the same as the other set's trie, we can return immediately.
+        if trie === otherSet.Trie then this
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new HashSet.
+            let trie' = PatriciaHashSet.Union (trie, otherSet.Trie)
+            if trie === trie' then this
+            elif otherSet.Trie === trie' then otherSet
+            else HashSet (trie')
 
     /// Returns the intersection of two HashSets.
-    member this.Intersect (otherMap : HashSet<'T>) : HashSet<'T> =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new HashSet.
-        let trie' = PatriciaHashSet.Intersect (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
-        else HashSet (trie')
+    member this.Intersect (otherSet : HashSet<'T>) : HashSet<'T> =
+        // If this set's trie is the same as the other set's trie, we can return immediately.
+        if trie === otherSet.Trie then this
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new HashSet.
+            let trie' = PatriciaHashSet.Intersect (trie, otherSet.Trie)
+            if trie === trie' then this
+            elif otherSet.Trie === trie' then otherSet
+            else HashSet (trie')
 
     /// Returns a new HashSet created by removing the second HashSet from the first.
-    member this.Difference (otherMap : HashSet<'T>) : HashSet<'T> =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new HashSet.
-        let trie' = PatriciaHashSet.Difference (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
-        else HashSet (trie')
-
+    member this.Difference (otherSet : HashSet<'T>) : HashSet<'T> =
+        // If this set's trie is the same as the other set's trie, we can return immediately.
+        if trie === otherSet.Trie then HashSet.Empty
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new HashSet.
+            let trie' = PatriciaHashSet.Difference (trie, otherSet.Trie)
+            if trie === trie' then this
+            elif otherSet.Trie === trie' then otherSet
+            else HashSet (trie')
+(*
     /// Returns true if 'other' is a subset of this set.
     member this.IsSubsetOfBy (predicate, other : HashSet<'T>) : bool =
         PatriciaHashSet.IsSubsetOfBy predicate other.Trie trie
@@ -1089,7 +1109,7 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
 
     //
     member __.ToList () : 'T list =
-        PatriciaHashSet.FoldBack ((fun x list -> x :: list), [], trie)
+        PatriciaHashSet.FoldBack (flip List.cons, [], trie)
 
     //
     member __.ToArray () : 'T[] =
@@ -1249,6 +1269,16 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
                 .Append("; ... ]")
                 .ToString()
 
+    /// Computes the union of two sets.
+    static member op_Addition (set1 : HashSet<'T>, set2 : HashSet<'T>) : HashSet<'T> =
+        notImpl "HashSet`1.op_Addition"
+        //HashSet.Union (set1, set2)
+
+    /// Computes the difference of two sets.
+    static member op_Subtraction (set1 : HashSet<'T>, set2 : HashSet<'T>) : HashSet<'T> =
+        notImpl "HashSet`1.op_Subtraction"
+        //HashSet.Difference (set1, set2)
+
     interface System.IEquatable<HashSet<'T>> with
         /// <inherit />
         member this.Equals other =
@@ -1400,7 +1430,7 @@ module HashSet =
         checkNonNull "set" set
 
         set.Remove value
-(*
+
     /// Returns a new set created by merging the two specified sets.
     [<CompiledName("Union")>]
     let inline union (set1 : HashSet<'T>) (set2 : HashSet<'T>) : HashSet<'T> =
@@ -1427,7 +1457,7 @@ module HashSet =
         checkNonNull "set2" set2
 
         set1.Difference set2
-*)
+
     /// Returns a new set made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : HashSet<'T> =

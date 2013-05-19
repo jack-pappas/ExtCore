@@ -1135,30 +1135,39 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
 (*
     /// Returns a new HashMap created by merging the two specified HashMaps.
     member this.Union (otherMap : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new HashMap.
-        let trie' = PatriciaHashMap.Union (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
-        else HashMap (trie')
+        // If this map's trie is the same as the other map's trie, we can return immediately.
+        if trie === otherSet.Trie then this
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new HashMap.
+            let trie' = PatriciaHashMap.Union (trie, otherMap.Trie)
+            if trie === trie' then this
+            elif otherMap.Trie === trie' then otherMap
+            else HashMap (trie')
 
     /// Returns the intersection of two HashMaps.
     member this.Intersect (otherMap : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new HashMap.
-        let trie' = PatriciaHashMap.Intersect (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
-        else HashMap (trie')
+        // If this map's trie is the same as the other map's trie, we can return immediately.
+        if trie === otherSet.Trie then this
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new HashMap.
+            let trie' = PatriciaHashMap.Intersect (trie, otherMap.Trie)
+            if trie === trie' then this
+            elif otherMap.Trie === trie' then otherMap
+            else HashMap (trie')
 
     /// Returns a new HashMap created by removing the second HashMap from the first.
     member this.Difference (otherMap : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new HashMap.
-        let trie' = PatriciaHashMap.Difference (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
-        else HashMap (trie')
+        // If this map's trie is the same as the other map's trie, we can return immediately.
+        if trie === otherSet.Trie then this
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new HashMap.
+            let trie' = PatriciaHashMap.Difference (trie, otherMap.Trie)
+            if trie === trie' then this
+            elif otherMap.Trie === trie' then otherMap
+            else HashMap (trie')
 
     /// Returns true if 'other' is a submap of this map.
     member this.IsSubmapOfBy (predicate, other : HashMap<'Key, 'T>) : bool =

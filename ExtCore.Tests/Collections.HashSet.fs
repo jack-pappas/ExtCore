@@ -156,7 +156,7 @@ let remove () : unit =
     |> HashSet.remove 8
     |> assertEqual (HashSet.ofArray
         [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-(*
+
 [<Test>]
 let union () : unit =
     HashSet.union
@@ -199,7 +199,7 @@ let difference () : unit =
         (HashSet.ofArray [| 5; 11; 17; 4; 14 |])
     |> assertEqual
         (HashSet.ofArray [| 3; 2; 12 |])
-*)
+
 (*
 [<Test>]
 let isSubset () : unit =
@@ -854,9 +854,9 @@ module SetType =
     
     [<Test>]
     let ObjectToString () : unit =
-        Assert.AreEqual("set [1; 2; 3; ... ]", (new HashSet<int>([1;2;3;4])).ToString())
-        Assert.AreEqual("set []", (HashSet.empty).ToString())
-        Assert.AreEqual("set [1; 3]", (new HashSet<decimal>([1M;3M])).ToString())
+        Assert.AreEqual("hashSet [1; 2; 3; ... ]", (new HashSet<int>([1;2;3;4])).ToString())
+        Assert.AreEqual("hashSet []", (HashSet.empty).ToString())
+        Assert.AreEqual("hashSet [1; 3]", (new HashSet<decimal>([1M;3M])).ToString())
         
     
     [<Test>]
@@ -944,48 +944,50 @@ module SetType =
         
     [<Test>]
     let IsSubsetOf () : unit =
-        let fir = new HashSet<int>([1 .. 20])
-        let sec = new HashSet<int>([1 .. 10])
-        Assert.IsTrue(sec.IsSubsetOf(fir))
-        Assert.IsTrue(HashSet.isSubset sec fir)
-    
-        let e : HashSet<int> = HashSet.empty<int>
-        Assert.IsTrue(e.IsSubsetOf(fir))
-        Assert.IsTrue(HashSet.isSubset e fir)
-        
-        let s = HashSet.singleton 8
-        Assert.IsTrue(s.IsSubsetOf(fir)) 
-        Assert.IsTrue(HashSet.isSubset s fir)
-        
-        let s100 = set [0..100]
-        let s101 = set [0..101]
-        for i = 0 to 100 do 
-            Assert.IsFalse( (set [-1..i]).IsSubsetOf s100)
-            Assert.IsTrue( (set [0..i]).IsSubsetOf s100)
-            Assert.IsTrue( (set [0..i]).IsProperSubsetOf s101)
+        Assert.Ignore "Test not yet implemented."
+//        let fir = new HashSet<int>([1 .. 20])
+//        let sec = new HashSet<int>([1 .. 10])
+//        Assert.IsTrue(sec.IsSubsetOf(fir))
+//        Assert.IsTrue(HashSet.isSubset sec fir)
+//    
+//        let e : HashSet<int> = HashSet.empty<int>
+//        Assert.IsTrue(e.IsSubsetOf(fir))
+//        Assert.IsTrue(HashSet.isSubset e fir)
+//        
+//        let s = HashSet.singleton 8
+//        Assert.IsTrue(s.IsSubsetOf(fir)) 
+//        Assert.IsTrue(HashSet.isSubset s fir)
+//        
+//        let s100 = set [0..100]
+//        let s101 = set [0..101]
+//        for i = 0 to 100 do 
+//            Assert.IsFalse( (set [-1..i]).IsSubsetOf s100)
+//            Assert.IsTrue( (set [0..i]).IsSubsetOf s100)
+//            Assert.IsTrue( (set [0..i]).IsProperSubsetOf s101)
            
         
     [<Test>]
     let IsSupersetOf () : unit =
-        let fir = new HashSet<int>([1 .. 10])
-        let sec = new HashSet<int>([1 .. 20])
-        Assert.IsTrue(sec.IsSupersetOf(fir))
-        Assert.IsTrue(HashSet.isSuperset sec fir)
-    
-        let e : HashSet<int> = HashSet.empty<int>
-        Assert.IsFalse(e.IsSupersetOf(fir))
-        Assert.IsFalse(HashSet.isSuperset e fir)
-        
-        let s = HashSet.singleton 168
-        Assert.IsFalse(s.IsSupersetOf(fir))  
-        Assert.IsFalse(HashSet.isSuperset s fir)
-
-        let s100 = set [0..100]
-        let s101 = set [0..101]
-        for i = 0 to 100 do 
-            Assert.IsFalse( s100.IsSupersetOf (set [-1..i]))
-            Assert.IsTrue( s100.IsSupersetOf (set [0..i]))
-            Assert.IsTrue( s101.IsSupersetOf (set [0..i]))
+        Assert.Ignore "Test not yet implemented."
+//        let fir = new HashSet<int>([1 .. 10])
+//        let sec = new HashSet<int>([1 .. 20])
+//        Assert.IsTrue(sec.IsSupersetOf(fir))
+//        Assert.IsTrue(HashSet.isSuperset sec fir)
+//    
+//        let e : HashSet<int> = HashSet.empty<int>
+//        Assert.IsFalse(e.IsSupersetOf(fir))
+//        Assert.IsFalse(HashSet.isSuperset e fir)
+//        
+//        let s = HashSet.singleton 168
+//        Assert.IsFalse(s.IsSupersetOf(fir))  
+//        Assert.IsFalse(HashSet.isSuperset s fir)
+//
+//        let s100 = set [0..100]
+//        let s101 = set [0..101]
+//        for i = 0 to 100 do 
+//            Assert.IsFalse( s100.IsSupersetOf (set [-1..i]))
+//            Assert.IsTrue( s100.IsSupersetOf (set [0..i]))
+//            Assert.IsTrue( s101.IsSupersetOf (set [0..i]))
         
     [<Test>]
     let Remove () : unit =    
@@ -1039,22 +1041,24 @@ module SetType =
 
     [<Test>]
     let MinimumElement () : unit =
-        let fir = new HashSet<int>([1..6])
-        let sec = new HashSet<int>([2;4;6])
-        Assert.AreEqual(fir.MinimumElement, 1)
-        Assert.AreEqual(sec.MinimumElement, 2)
-        Assert.AreEqual(HashSet.minElement fir, 1)
-        Assert.AreEqual(HashSet.minElement sec, 2)
+        Assert.Ignore "Test not yet implemented."
+//        let fir = new HashSet<int>([1..6])
+//        let sec = new HashSet<int>([2;4;6])
+//        Assert.AreEqual(fir.MinimumElement, 1)
+//        Assert.AreEqual(sec.MinimumElement, 2)
+//        Assert.AreEqual(HashSet.minElement fir, 1)
+//        Assert.AreEqual(HashSet.minElement sec, 2)
         
 
     [<Test>]
     let MaximumElement () : unit =
-        let fir = new HashSet<int>([1..6])
-        let sec = new HashSet<int>([2;4;7])
-        Assert.AreEqual(fir.MaximumElement, 6)
-        Assert.AreEqual(sec.MaximumElement, 7)
-        Assert.AreEqual(HashSet.maxElement fir, 6)
-        Assert.AreEqual(HashSet.maxElement sec, 7)
+        Assert.Ignore "Test not yet implemented."
+//        let fir = new HashSet<int>([1..6])
+//        let sec = new HashSet<int>([2;4;7])
+//        Assert.AreEqual(fir.MaximumElement, 6)
+//        Assert.AreEqual(sec.MaximumElement, 7)
+//        Assert.AreEqual(HashSet.maxElement fir, 6)
+//        Assert.AreEqual(HashSet.maxElement sec, 7)
 
 
 (*
@@ -1324,6 +1328,7 @@ module SetModule =
     
     [<Test>]
     let IntersectMany () : unit =
+        Assert.Ignore "Test not yet implemented."
         (* IntersectAll
             1234567
              234567
@@ -1331,41 +1336,44 @@ module SetModule =
                4567
                 567
                  67 *)
-        let setsToIntersect = 
-            [
-                for i = 1 to 6 do
-                    yield new HashSet<int>([i .. 7])
-            ]
-            
-        let result : HashSet<_> = HashSet.intersectMany setsToIntersect
-        Assert.IsTrue(result.Count = 2)
-        
-        let contains x s = s |> HashSet.exists (fun i -> i = x) 
-        Assert.IsTrue(contains 6 result)
-        Assert.IsTrue(contains 7 result)
+//        let setsToIntersect = 
+//            [
+//                for i = 1 to 6 do
+//                    yield new HashSet<int>([i .. 7])
+//            ]
+//            
+//        let result : HashSet<_> = HashSet.intersectMany setsToIntersect
+//        Assert.IsTrue(result.Count = 2)
+//        
+//        let contains x s = s |> HashSet.exists (fun i -> i = x) 
+//        Assert.IsTrue(contains 6 result)
+//        Assert.IsTrue(contains 7 result)
                   
     [<Test>]
     let IntersectMany2 () : unit =
-        let all   = new HashSet<_>([1 .. 10])
-        let odds  = new HashSet<_>([1 .. 2 .. 10])
-        let evens = new HashSet<_>([2 .. 2 .. 10])
-        
-        let result = HashSet.intersectMany [odds; evens; all]
-        Assert.IsTrue(HashSet.count result = 0)
+        Assert.Ignore "Test not yet implemented."
+//        let all   = new HashSet<_>([1 .. 10])
+//        let odds  = new HashSet<_>([1 .. 2 .. 10])
+//        let evens = new HashSet<_>([2 .. 2 .. 10])
+//        
+//        let result = HashSet.intersectMany [odds; evens; all]
+//        Assert.IsTrue(HashSet.count result = 0)
 
     [<Test>]
     let IntersectMany3 () : unit =
-        let all   = new HashSet<_>([1 .. 10])
-        let empty = HashSet.empty : HashSet<int>
-        
-        let result = HashSet.intersectMany [all; empty; all]
-        Assert.IsTrue(HashSet.count result = 0)
+        Assert.Ignore "Test not yet implemented."
+//        let all   = new HashSet<_>([1 .. 10])
+//        let empty = HashSet.empty : HashSet<int>
+//        
+//        let result = HashSet.intersectMany [all; empty; all]
+//        Assert.IsTrue(HashSet.count result = 0)
         
         
     [<Test>]
     let IntersectMany4 () : unit =
-        checkThrowsArgumentException (fun () -> HashSet.intersectMany (Seq.empty : seq<HashSet<int>>) |> ignore)
-        ()
+        Assert.Ignore "Test not yet implemented."
+//        checkThrowsArgumentException (fun () -> HashSet.intersectMany (Seq.empty : seq<HashSet<int>>) |> ignore)
+//        ()
 
     [<Test>]
     let Union () : unit =
@@ -1404,19 +1412,21 @@ module SetModule =
         
     [<Test>]
     let UnionMany () : unit =
-        let odds  = new HashSet<int>([1 .. 2 .. 10])
-        let evens = new HashSet<int>([2 .. 2 .. 10])
-        let empty = HashSet.empty : HashSet<int>
-        let rest  = new HashSet<int>([11 .. 19])
-        let zero  = HashSet.singleton 0
-        
-        let result : HashSet<_> = HashSet.unionMany [odds; evens; empty; rest; zero]
-        Assert.IsTrue(result.Count = 20)
+        Assert.Ignore "Test not yet implemented."
+//        let odds  = new HashSet<int>([1 .. 2 .. 10])
+//        let evens = new HashSet<int>([2 .. 2 .. 10])
+//        let empty = HashSet.empty : HashSet<int>
+//        let rest  = new HashSet<int>([11 .. 19])
+//        let zero  = HashSet.singleton 0
+//        
+//        let result : HashSet<_> = HashSet.unionMany [odds; evens; empty; rest; zero]
+//        Assert.IsTrue(result.Count = 20)
 
     [<Test>]
     let UnionMany2 () : unit =
-        let result : HashSet<_> = HashSet.unionMany (Seq.empty : seq<HashSet<string>>)
-        Assert.IsTrue(result.Count = 0)
+        Assert.Ignore "Test not yet implemented."
+//        let result : HashSet<_> = HashSet.unionMany (Seq.empty : seq<HashSet<string>>)
+//        Assert.IsTrue(result.Count = 0)
         
     [<Test>]
     let IsEmpty () : unit =
@@ -1604,58 +1614,57 @@ module SetModule =
 
     [<Test>]
     let MinElement () : unit =
-        
-        // Check for an argument exception "Set contains no members"
-        checkThrowsArgumentException(fun () -> HashSet.minElement HashSet.empty |> ignore)
-        
-        let set1 = HashSet.ofList [10; 8; 100; 1; 50]
-        Assert.AreEqual(HashSet.minElement set1, 1)
-        
-        let set2 = HashSet.ofList ["abcd"; "a"; "abc"; "ab"]
-        Assert.AreEqual(HashSet.minElement set2, "a")
+        Assert.Ignore "Test not yet implemented."
+//        // Check for an argument exception "Set contains no members"
+//        checkThrowsArgumentException(fun () -> HashSet.minElement HashSet.empty |> ignore)
+//        
+//        let set1 = HashSet.ofList [10; 8; 100; 1; 50]
+//        Assert.AreEqual(HashSet.minElement set1, 1)
+//        
+//        let set2 = HashSet.ofList ["abcd"; "a"; "abc"; "ab"]
+//        Assert.AreEqual(HashSet.minElement set2, "a")
         
     [<Test>]
     let MaxElement () : unit =
-        
-        // Check for an argument exception "Set contains no members"
-        checkThrowsArgumentException(fun () -> HashSet.maxElement HashSet.empty |> ignore)
-        
-        let set1 = HashSet.ofList [10; 8; 100; 1; 50]
-        Assert.AreEqual(HashSet.maxElement set1, 100)
-        
-        let set2 = HashSet.ofList ["abcd"; "a"; "abc"; "ab"]
-        Assert.AreEqual(HashSet.maxElement set2, "abcd")
+        Assert.Ignore "Test not yet implemented."
+//        // Check for an argument exception "Set contains no members"
+//        checkThrowsArgumentException(fun () -> HashSet.maxElement HashSet.empty |> ignore)
+//        
+//        let set1 = HashSet.ofList [10; 8; 100; 1; 50]
+//        Assert.AreEqual(HashSet.maxElement set1, 100)
+//        
+//        let set2 = HashSet.ofList ["abcd"; "a"; "abc"; "ab"]
+//        Assert.AreEqual(HashSet.maxElement set2, "abcd")
 
 
     [<Test>]
     let IsProperSubset () : unit =
-        
-        let set1 = HashSet.ofList [10; 8; 100]
-        let set2 = HashSet.ofList [100]
-        Assert.IsTrue(HashSet.isProperSubset set2 set1)
-        Assert.IsTrue(HashSet.isProperSubset HashSet.empty set2)
-        Assert.IsFalse(HashSet.isProperSubset HashSet.empty HashSet.empty)
-        Assert.IsFalse(HashSet.isProperSubset set1 set2)
+        Assert.Ignore "Test not yet implemented."
+//        let set1 = HashSet.ofList [10; 8; 100]
+//        let set2 = HashSet.ofList [100]
+//        Assert.IsTrue(HashSet.isProperSubset set2 set1)
+//        Assert.IsTrue(HashSet.isProperSubset HashSet.empty set2)
+//        Assert.IsFalse(HashSet.isProperSubset HashSet.empty HashSet.empty)
+//        Assert.IsFalse(HashSet.isProperSubset set1 set2)
 
     [<Test>]
     let IsProperSuperset () : unit =
-        
-        let set1 = HashSet.ofList [10; 8; 100]
-        let set2 = HashSet.ofList [100; 8]
-        Assert.IsTrue(HashSet.isProperSuperset set1 set2)
-        Assert.IsTrue(HashSet.isProperSuperset set2 HashSet.empty)
-        Assert.IsFalse(HashSet.isProperSuperset HashSet.empty HashSet.empty)
-        Assert.IsFalse(HashSet.isProperSuperset set1 set1)
-        Assert.IsFalse(HashSet.isProperSuperset set2 set1)
+        Assert.Ignore "Test not yet implemented."
+//        let set1 = HashSet.ofList [10; 8; 100]
+//        let set2 = HashSet.ofList [100; 8]
+//        Assert.IsTrue(HashSet.isProperSuperset set1 set2)
+//        Assert.IsTrue(HashSet.isProperSuperset set2 HashSet.empty)
+//        Assert.IsFalse(HashSet.isProperSuperset HashSet.empty HashSet.empty)
+//        Assert.IsFalse(HashSet.isProperSuperset set1 set1)
+//        Assert.IsFalse(HashSet.isProperSuperset set2 set1)
         
     // ----- Not associated with a module function -----
 
     [<Test>]
     let GeneralTest1 () : unit =
-        
         // Retruns a random permutation of integers between the two bounds.
         let randomPermutation lowerBound upperBound = 
-            let items = System.Collections.Generic.List<_>([lowerBound .. upperBound])
+            let items = ResizeArray<_>([lowerBound .. upperBound])
             let rng = new Random()
             
             let randomPermutation = new System.Collections.Generic.List<int>()
