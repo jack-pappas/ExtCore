@@ -62,6 +62,7 @@
     <Compile Include="Collections.IntSet.fs" />
     <Compile Include="Collections.IntMap.fs" />
     <Compile Include="Collections.IntBimap.fs" />
+    <Compile Include="Collections.HashSet.fs" />
     <Compile Include="Collections.HashMap.fs" />
     <Compile Include="Collections.LazyList.fs" />
     <Compile Include="Collections.Queue.fs" />
