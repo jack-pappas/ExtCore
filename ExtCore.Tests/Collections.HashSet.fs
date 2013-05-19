@@ -445,7 +445,7 @@ let toList () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.toList
-    |> assertEqual
+    |> Collection.assertEquiv
         [2; 3; 4; 5; 11; 12; 14; 17]
 
 [<Test>]
@@ -457,7 +457,7 @@ let toArray () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.toArray
-    |> assertEqual
+    |> Collection.assertEquiv
         [|2; 3; 4; 5; 11; 12; 14; 17|]
 
 [<Test>]
@@ -483,7 +483,7 @@ let iter () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> assertEqual
+    |> Collection.assertEquiv
         [|4; 5; 6; 7; 13; 14; 16; 19|]
 
 [<Test>]
@@ -497,7 +497,7 @@ let iterBack () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> assertEqual
+    |> Collection.assertEquiv
         [|19; 16; 14; 13; 7; 6; 5; 4|]
 
 [<Test>]
@@ -524,14 +524,14 @@ let fold () : unit =
 
         (0, testSet)
         ||> HashSet.fold (fun counter el ->
-            elements.Add (counter + el + 2)
-            counter + 1)
-        |> assertEqual (HashSet.count testSet)
+            elements.Add (el + 2)
+            counter + 3)
+        |> assertEqual (HashSet.count testSet * 3)
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
-            [|4; 6; 8; 10; 17; 19; 22; 26|]
+        |> Collection.assertEquiv
+            [| 7; 5; 13; 4; 19; 6; 14; 16 |]
 
 [<Test>]
 let foldBack () : unit =
@@ -556,15 +556,15 @@ let foldBack () : unit =
             |> HashSet.ofArray
 
         (testSet, 0)
-        ||> HashSet.foldBack (fun el counter ->
-            elements.Add (counter + el + 2)
-            counter + 1)
-        |> assertEqual (HashSet.count testSet)
+        ||> HashSet.foldBack (fun el sum ->
+            elements.Add (el + 2)
+            sum + el + 3)
+        |> assertEqual 92
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
-            [|19; 17; 16; 16; 11; 11; 11; 11|]
+        |> Collection.assertEquiv
+            [| 7; 5; 13; 4; 19; 6; 14; 16 |]
 
 [<Test>]
 let choose () : unit =
