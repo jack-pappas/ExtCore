@@ -382,28 +382,6 @@ type private PatriciaSet =
         | Empty, _ ->
             Empty
 
-    //
-    static member private Delete (key, t) : PatriciaSet =
-        match t with
-        | Empty ->
-            Empty
-        | Lf j ->
-            if key = j then Empty
-            else t
-        | Br (p, m, t0, t1) ->
-            if matchPrefix (key, p, m) then
-                if zeroBit (key, m) then
-                    match PatriciaSet.Delete (key, t0) with
-                    | Empty -> t1
-                    | left ->
-                        Br (p, m, left, t1)
-                else
-                    match PatriciaSet.Delete (key, t1) with
-                    | Empty -> t0
-                    | right ->
-                        Br (p, m, t0, right)
-            else t
-
     /// Compute the difference of two PatriciaMaps.
     static member Difference (s, t) : PatriciaSet =
         match s, t with
@@ -448,12 +426,12 @@ type private PatriciaSet =
         | Br (p, m, s0, s1), Lf k ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    match PatriciaSet.Delete (k, s0) with
+                    match PatriciaSet.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
                         Br (p, m, left, s1)
                 else
-                    match PatriciaSet.Delete (k, s1) with
+                    match PatriciaSet.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
                         Br (p, m, s0, right)
@@ -879,30 +857,39 @@ type IntSet private (trie : PatriciaSet) =
 
     /// Computes the union of two IntSets.
     member this.Union (otherSet : IntSet) : IntSet =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new IntSet.
-        let trie' = PatriciaSet.Union (trie, otherSet.Trie)
-        if trie === trie' then this
-        elif otherSet.Trie === trie' then otherSet
-        else IntSet (trie')
+        // If this set's trie is the same as the other set's trie, we can return immediately.
+        if trie === otherSet.Trie then this
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new IntSet.
+            let trie' = PatriciaSet.Union (trie, otherSet.Trie)
+            if trie === trie' then this
+            elif otherSet.Trie === trie' then otherSet
+            else IntSet (trie')
 
     /// Computes the intersection of two IntSets.
     member this.Intersect (otherSet : IntSet) : IntSet =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new IntSet.
-        let trie' = PatriciaSet.Intersect (trie, otherSet.Trie)
-        if trie === trie' then this
-        elif otherSet.Trie === trie' then otherSet
-        else IntSet (trie')
+        // If this set's trie is the same as the other set's trie, we can return immediately.
+        if trie === otherSet.Trie then this
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new IntSet.
+            let trie' = PatriciaSet.Intersect (trie, otherSet.Trie)
+            if trie === trie' then this
+            elif otherSet.Trie === trie' then otherSet
+            else IntSet (trie')
 
     /// Removes the elements of the specified IntSet from this IntSet.
     member this.Difference (otherSet : IntSet) : IntSet =
-        // If the result is the same (physical equality) to one of the inputs,
-        // return that input instead of creating a new IntSet.
-        let trie' = PatriciaSet.Difference (trie, otherSet.Trie)
-        if trie === trie' then this
-        elif otherSet.Trie === trie' then otherSet
-        else IntSet (trie')
+        // If this set's trie is the same as the other set's trie, we can return immediately.
+        if trie === otherSet.Trie then IntSet.Empty
+        else
+            // If the result is the same (physical equality) to one of the inputs,
+            // return that input instead of creating a new IntSet.
+            let trie' = PatriciaSet.Difference (trie, otherSet.Trie)
+            if trie === trie' then this
+            elif otherSet.Trie === trie' then otherSet
+            else IntSet (trie')
 
     /// Computes the union of a sequence of IntSets.
     static member internal UnionMany (sets : seq<IntSet>) : IntSet =
