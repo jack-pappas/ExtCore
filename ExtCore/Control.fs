@@ -1561,6 +1561,11 @@ module ReaderState =
         snd <| readerStateFunc env initialState
 
     //
+    [<CompiledName("Read")>]
+    let inline read (env : 'Env) (state : 'State) =
+        env, state
+
+    //
     [<CompiledName("GetState")>]
     let inline getState (_ : 'Env) (state : 'State) =
         state, state
