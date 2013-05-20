@@ -224,6 +224,44 @@ type private ListSet<[<ComparisonConditionalOn>] 'T when 'T : equality> =
             | result ->
                 result
 
+    //
+    static member First (listSet : ListSet<'T>) : 'T =
+        match listSet with
+        | Tail x
+        | Element (_, x) ->
+            x
+
+    //
+    static member Last (listSet : ListSet<'T>) : 'T =
+        match listSet with
+        | Tail x -> x
+        | Element (listSet, _) ->
+            ListSet.Last listSet
+
+    //
+    static member UnionImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> =
+        notImpl "ListSet.UnionImpl"
+
+    //
+    static member Union (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> =
+        notImpl "ListSet.Union"
+
+    //
+    static member IntersectImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> option =
+        notImpl "ListSet.IntersectImpl"
+
+    //
+    static member Intersect (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> option =
+        notImpl "ListSet.Intersect"
+
+    //
+    static member DifferenceImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> option =
+        notImpl "ListSet.DifferenceImpl"
+
+    //
+    static member Difference (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> option =
+        notImpl "ListSet.Difference"
+
 
 (* OPTIMIZE :   Some of the functional-style operations on PatriciaHashSet use direct non-tail-recursion;
                 performance may be improved if we modify these to use CPS instead. *)
@@ -250,6 +288,26 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Br (_, m, t0, t1) ->
             PatriciaHashSet.Contains (
                 valueHash, value, (if zeroBit (valueHash, m) then t0 else t1))
+
+    /// Retrieve the first element of the set.
+    static member First (set : PatriciaHashSet<'T>) =
+        match set with
+        | Empty ->
+            invalidArg "set" "The set is empty."
+        | Lf (_, listSet) ->
+            ListSet.First listSet
+        | Br (_, _, t0, _) ->
+            PatriciaHashSet.First t0
+
+    /// Retrieve the last element of the set.
+    static member Last (set : PatriciaHashSet<'T>) =
+        match set with
+        | Empty ->
+            invalidArg "set" "The set is empty."
+        | Lf (_, listSet) ->
+            ListSet.Last listSet
+        | Br (_, _, _, t1) ->
+            PatriciaHashSet.Last t1
 
     //
     static member Count (set : PatriciaHashSet<'T>) : int =
@@ -370,18 +428,14 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             else
                 PatriciaHashSet.Join (valueHash, Lf (valueHash, Tail value), p, set)
 
-    // TEMP : Just for testing...
-    static member Union (s : PatriciaHashSet<'T>, t : PatriciaHashSet<'T>) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.Union"
+    //
+    static member AddSet (valueHash, listSet : ListSet<'T>, set) : PatriciaHashSet<'T> =
+        notImpl "PatriciaHashSet.AddSet"
 
-    static member Intersect (s : PatriciaHashSet<'T>, t : PatriciaHashSet<'T>) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.Intersect"
+    //
+    static member RemoveSet (valueHash, set) : PatriciaHashSet<'T> =
+        notImpl "PatriciaHashSet.RemoveSet"
 
-    static member Difference (s : PatriciaHashSet<'T>, t : PatriciaHashSet<'T>) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.Difference"
-
-
-(*
     /// Computes the union of two PatriciaHashSets.
     static member Union (s, t) : PatriciaHashSet<'T> =
         match s, t with
@@ -426,21 +480,21 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     // The prefixes disagree.
                     PatriciaHashSet.Join (p, s, q, t)
 
-        | Br (p, m, s0, s1), Lf (k, x) ->
+        | Br (p, m, s0, s1), Lf (k, listSet) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    let left = PatriciaHashSet.TryAdd (k, x, s0)
+                    let left = PatriciaHashSet.AddSet (k, listSet, s0)
                     Br (p, m, left, s1)
                 else
-                    let right = PatriciaHashSet.TryAdd (k, x, s1)
+                    let right = PatriciaHashSet.AddSet (k, listSet, s1)
                     Br (p, m, s0, right)
             else
-                PatriciaHashSet.Join (k, Lf (k, x), p, s)
+                PatriciaHashSet.Join (k, Lf (k, listSet), p, s)
 
         | Br (_,_,_,_), Empty ->
             s
-        | Lf (k, x), _ ->
-            PatriciaHashSet.Add (k, x, t)
+        | Lf (k, listSet), _ ->
+            PatriciaHashSet.AddSet (k, listSet, t)
         | Empty, _ -> t
 
     /// Compute the intersection of two PatriciaHashSets.
@@ -480,7 +534,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 else
                     Empty
 
-        | Br (_, m, s0, s1), Lf (k, y) ->
+        | Br (_, m, s0, s1), Lf (k, listSet) ->
             let s' = if zeroBit (k, m) then s0 else s1
             match PatriciaHashSet.TryFind (k, s') with
             | Some x ->
@@ -544,12 +598,12 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Br (p, m, s0, s1), Lf (k, y) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    match PatriciaHashSet.Remove (k, s0) with
+                    match PatriciaHashSet.RemoveSet (k, s0) with
                     | Empty -> s1
                     | left ->
                         Br (p, m, left, s1)
                 else
-                    match PatriciaHashSet.Remove (k, s1) with
+                    match PatriciaHashSet.RemoveSet (k, s1) with
                     | Empty -> s0
                     | right ->
                         Br (p, m, s0, right)
@@ -562,7 +616,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             else s
         | Empty, _ ->
             Empty
-*)
+
 (*
     /// <c>IsSubmapOfBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
     /// and when 'f' returns <c>true</c> when applied to their respective values.
@@ -628,6 +682,23 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty, Empty -> 0
         | Empty, _ -> -1
 *)
+
+    /// Is 'set1' a subset of 'set2'?
+    /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
+    static member IsSubset (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
+        notImpl "PatriciaHashSet.IsSubset"
+//        match PatriciaHashSet.SubsetCompare (set1, set2) with
+//        | -1 | 0 -> true
+//        | _ -> false
+
+    /// Is 'set1' a proper subset of 'set2'?
+    /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
+    /// and at least one element in set2 is not in set1.
+    static member IsProperSubset (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
+        notImpl "PatriciaHashSet.IsProperSubset"
+//        match PatriciaHashSet.SubsetCompare (set1, set2) with
+//        | -1 -> true
+//        | _ -> false
 
     //
     static member OfSeq (source : seq<'T>) : PatriciaHashSet<'T> =
@@ -1006,6 +1077,22 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
             | Empty -> true
             | _ -> false
 
+    /// The first element in the set.
+    /// If the element type has suitable hash and comparison functions for the set
+    /// to be ordered, then this will be the minimum element of the set.
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+    member __.First
+        with get () =
+            PatriciaHashSet.First trie
+
+    /// The last element in the set.
+    /// If the element type has suitable hash and comparison functions for the set
+    /// to be ordered, then this will be the maximum element of the set.
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+    member __.Last
+        with get () =
+            PatriciaHashSet.Last trie
+
     /// Tests if an element is in the domain of the HashSet.
     member __.Contains (value : 'T) : bool =
         let valueHash = uint32 <| hash value
@@ -1063,11 +1150,40 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
             if trie === trie' then this
             elif otherSet.Trie === trie' then otherSet
             else HashSet (trie')
-(*
-    /// Returns true if 'other' is a subset of this set.
-    member this.IsSubsetOfBy (predicate, other : HashSet<'T>) : bool =
-        PatriciaHashSet.IsSubsetOfBy predicate other.Trie trie
-*)
+
+    /// Computes the union of a sequence of IntSets.
+    static member internal UnionMany (sets : seq<HashSet<'T>>) : HashSet<'T> =
+        // Preconditions
+        checkNonNull "sets" sets
+
+        let combinedTrie =
+            (PatriciaHashSet.Empty, sets)
+            ||> Seq.fold (fun combinedSetTree set ->
+                PatriciaHashSet.Union (combinedSetTree, set.Trie))
+
+        HashSet (combinedTrie)
+
+    /// Computes the intersection of a sequence of IntSets.
+    static member internal IntersectMany (sets : seq<HashSet<'T>>) : HashSet<'T> =
+        // Preconditions
+        checkNonNull "sets" sets
+
+        // If the sequence is empty, return an empty set;
+        // this also avoids Seq.reduce raising an exception.
+        if Seq.isEmpty sets then
+            HashSet.Empty
+        else
+            Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
+
+    /// Determines if set1 is a subset of set2.
+    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
+    static member IsSubset (set1 : HashSet<'T>, set2 : HashSet<'T>) : bool =
+        PatriciaHashSet.IsSubset (set1.Trie, set2.Trie)
+
+    /// Determines if set1 is a proper subset of set2.
+    static member IsProperSubset (set1 : HashSet<'T>, set2 : HashSet<'T>) : bool =
+        PatriciaHashSet.IsProperSubset (set1.Trie, set2.Trie)
+
     /// The HashSet containing the given binding.
     static member Singleton (value : 'T) : HashSet<'T> =
         let valueHash = uint32 <| hash value
