@@ -1667,7 +1667,7 @@ module SetModule =
             let items = ResizeArray<_>([lowerBound .. upperBound])
             let rng = new Random()
             
-            let randomPermutation = new System.Collections.Generic.List<int>()
+            let randomPermutation = ResizeArray<int>()
             while items.Count > 0 do
                 let idx = rng.Next() % items.Count
                 let i = items.[idx]
@@ -1693,6 +1693,7 @@ module SetModule =
                               Assert.IsTrue(inter.Count = 0))
                 permutation
         ()
+
 
 
 open FsCheck

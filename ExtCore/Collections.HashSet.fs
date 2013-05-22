@@ -240,11 +240,42 @@ type private ListSet<[<ComparisonConditionalOn>] 'T when 'T : equality> =
 
     //
     static member UnionImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> =
-        notImpl "ListSet.UnionImpl"
+        match listSet1, listSet2 with
+        | Tail x, Tail y ->
+            let c = Unchecked.compare x y
+            if c = 0 then   // x = y
+                // Add this element to the union result, then reverse the result.
+                match acc with
+                | None ->
+                    listSet1    // Tail x
+                | Some acc ->
+                    Element (acc, x)
+                    |> ListSet.Reverse
+
+            elif c < 0 then
+                // Add x, then y to the union result, then reverse the result.
+                match acc with
+                | None ->
+                    Element (Tail y, x)
+                | Some acc ->
+                    Element (Element (acc, x), y)
+                    |> ListSet.Reverse
+
+            else
+                // Add y, then x to the union result, then reverse the result.
+                match acc with
+                | None ->
+                    Element (Tail x, y)
+                | Some acc ->
+                    Element (Element (acc, y), x)
+                    |> ListSet.Reverse
+
+        | _, _ ->
+            notImpl "ListSet.UnionImpl"
 
     //
     static member Union (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> =
-        notImpl "ListSet.Union"
+        ListSet.UnionImpl (listSet1, listSet2, None)
 
     //
     static member IntersectImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> option =
@@ -252,7 +283,7 @@ type private ListSet<[<ComparisonConditionalOn>] 'T when 'T : equality> =
 
     //
     static member Intersect (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> option =
-        notImpl "ListSet.Intersect"
+        ListSet.IntersectImpl (listSet1, listSet2, None)
 
     //
     static member DifferenceImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> option =
@@ -260,7 +291,7 @@ type private ListSet<[<ComparisonConditionalOn>] 'T when 'T : equality> =
 
     //
     static member Difference (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> option =
-        notImpl "ListSet.Difference"
+        ListSet.DifferenceImpl (listSet1, listSet2, None)
 
 
 (* OPTIMIZE :   Some of the functional-style operations on PatriciaHashSet use direct non-tail-recursion;
@@ -438,184 +469,187 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 
     /// Computes the union of two PatriciaHashSets.
     static member Union (s, t) : PatriciaHashSet<'T> =
-        match s, t with
-        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
-            if m = n then
-                if p = q then
-                    // The trees have the same prefix. Merge the subtrees.
-                    let left = PatriciaHashSet.Union (s0, t0)
-                    let right = PatriciaHashSet.Union (s1, t1)
-                    Br (p, m, left, right)
-                else
-                    // The prefixes disagree.
-                    PatriciaHashSet.Join (p, s, q, t)
-
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
-            elif m > n then
-            #endif
-                if matchPrefix (q, p, m) then
-                    // q contains p. Merge t with a subtree of s.
-                    if zeroBit (q, m) then
-                        let left = PatriciaHashSet.Union (s0, t)
-                        Br (p, m, left, s1)
-                    else
-                        let right = PatriciaHashSet.Union (s1, t)
-                        Br (p, m, s0, right)
-                else
-                    // The prefixes disagree.
-                    PatriciaHashSet.Join (p, s, q, t)
-
-            else
-                if matchPrefix (p, q, n) then
-                    // p contains q. Merge s with a subtree of t.
-                    if zeroBit (p, n) then
-                        let left = PatriciaHashSet.Union (s, t0)
-                        Br (q, n, left, t1)
-                    else
-                        let right = PatriciaHashSet.Union (s, t1)
-                        Br (q, n, t0, right)
-                else
-                    // The prefixes disagree.
-                    PatriciaHashSet.Join (p, s, q, t)
-
-        | Br (p, m, s0, s1), Lf (k, listSet) ->
-            if matchPrefix (k, p, m) then
-                if zeroBit (k, m) then
-                    let left = PatriciaHashSet.AddSet (k, listSet, s0)
-                    Br (p, m, left, s1)
-                else
-                    let right = PatriciaHashSet.AddSet (k, listSet, s1)
-                    Br (p, m, s0, right)
-            else
-                PatriciaHashSet.Join (k, Lf (k, listSet), p, s)
-
-        | Br (_,_,_,_), Empty ->
-            s
-        | Lf (k, listSet), _ ->
-            PatriciaHashSet.AddSet (k, listSet, t)
-        | Empty, _ -> t
+        notImpl "PatriciaHashSet.Union"
+//        match s, t with
+//        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
+//            if m = n then
+//                if p = q then
+//                    // The trees have the same prefix. Merge the subtrees.
+//                    let left = PatriciaHashSet.Union (s0, t0)
+//                    let right = PatriciaHashSet.Union (s1, t1)
+//                    Br (p, m, left, right)
+//                else
+//                    // The prefixes disagree.
+//                    PatriciaHashSet.Join (p, s, q, t)
+//
+//            #if LITTLE_ENDIAN_TRIES
+//            elif m < n then
+//            #else
+//            elif m > n then
+//            #endif
+//                if matchPrefix (q, p, m) then
+//                    // q contains p. Merge t with a subtree of s.
+//                    if zeroBit (q, m) then
+//                        let left = PatriciaHashSet.Union (s0, t)
+//                        Br (p, m, left, s1)
+//                    else
+//                        let right = PatriciaHashSet.Union (s1, t)
+//                        Br (p, m, s0, right)
+//                else
+//                    // The prefixes disagree.
+//                    PatriciaHashSet.Join (p, s, q, t)
+//
+//            else
+//                if matchPrefix (p, q, n) then
+//                    // p contains q. Merge s with a subtree of t.
+//                    if zeroBit (p, n) then
+//                        let left = PatriciaHashSet.Union (s, t0)
+//                        Br (q, n, left, t1)
+//                    else
+//                        let right = PatriciaHashSet.Union (s, t1)
+//                        Br (q, n, t0, right)
+//                else
+//                    // The prefixes disagree.
+//                    PatriciaHashSet.Join (p, s, q, t)
+//
+//        | Br (p, m, s0, s1), Lf (k, listSet) ->
+//            if matchPrefix (k, p, m) then
+//                if zeroBit (k, m) then
+//                    let left = PatriciaHashSet.AddSet (k, listSet, s0)
+//                    Br (p, m, left, s1)
+//                else
+//                    let right = PatriciaHashSet.AddSet (k, listSet, s1)
+//                    Br (p, m, s0, right)
+//            else
+//                PatriciaHashSet.Join (k, Lf (k, listSet), p, s)
+//
+//        | Br (_,_,_,_), Empty ->
+//            s
+//        | Lf (k, listSet), _ ->
+//            PatriciaHashSet.AddSet (k, listSet, t)
+//        | Empty, _ -> t
 
     /// Compute the intersection of two PatriciaHashSets.
     static member Intersect (s, t) : PatriciaHashSet<'T> =
-        match s, t with
-        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
-            if m = n then
-                if p <> q then Empty
-                else
-                    let left = PatriciaHashSet.Intersect (s0, t0)
-                    let right = PatriciaHashSet.Intersect (s1, t1)
-                    match left, right with
-                    | Empty, t
-                    | t, Empty -> t
-                    | left, right ->
-                        Br (p, m, left, right)
-
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
-            elif m > n then
-            #endif
-                if matchPrefix (q, p, m) then
-                    if zeroBit (q, m) then
-                        PatriciaHashSet.Intersect (s0, t)
-                    else
-                        PatriciaHashSet.Intersect (s1, t)
-                else
-                    Empty
-
-            else
-                if matchPrefix (p, q, n) then
-                    if zeroBit (p, n) then
-                        PatriciaHashSet.Intersect (s, t0)
-                    else
-                        PatriciaHashSet.Intersect (s, t1)
-                else
-                    Empty
-
-        | Br (_, m, s0, s1), Lf (k, listSet) ->
-            let s' = if zeroBit (k, m) then s0 else s1
-            match PatriciaHashSet.TryFind (k, s') with
-            | Some x ->
-                Lf (k, x)
-            | None ->
-                Empty
-            
-        | Br (_,_,_,_), Empty ->
-            Empty
-            
-        | Lf (k, x), _ ->
-            // Here, we always use the value from the left tree, so as long as the
-            // right tree contains a binding with the same key, we just return the left tree.
-            if PatriciaHashSet.ContainsKey (k, t) then s
-            else Empty
-
-        | Empty, _ ->
-            Empty
+        notImpl "PatriciaHashSet.Intersect"
+//        match s, t with
+//        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
+//            if m = n then
+//                if p <> q then Empty
+//                else
+//                    let left = PatriciaHashSet.Intersect (s0, t0)
+//                    let right = PatriciaHashSet.Intersect (s1, t1)
+//                    match left, right with
+//                    | Empty, t
+//                    | t, Empty -> t
+//                    | left, right ->
+//                        Br (p, m, left, right)
+//
+//            #if LITTLE_ENDIAN_TRIES
+//            elif m < n then
+//            #else
+//            elif m > n then
+//            #endif
+//                if matchPrefix (q, p, m) then
+//                    if zeroBit (q, m) then
+//                        PatriciaHashSet.Intersect (s0, t)
+//                    else
+//                        PatriciaHashSet.Intersect (s1, t)
+//                else
+//                    Empty
+//
+//            else
+//                if matchPrefix (p, q, n) then
+//                    if zeroBit (p, n) then
+//                        PatriciaHashSet.Intersect (s, t0)
+//                    else
+//                        PatriciaHashSet.Intersect (s, t1)
+//                else
+//                    Empty
+//
+//        | Br (_, m, s0, s1), Lf (k, listSet) ->
+//            let s' = if zeroBit (k, m) then s0 else s1
+//            match PatriciaHashSet.TryFind (k, s') with
+//            | Some x ->
+//                Lf (k, x)
+//            | None ->
+//                Empty
+//            
+//        | Br (_,_,_,_), Empty ->
+//            Empty
+//            
+//        | Lf (k, x), _ ->
+//            // Here, we always use the value from the left tree, so as long as the
+//            // right tree contains a binding with the same key, we just return the left tree.
+//            if PatriciaHashSet.ContainsKey (k, t) then s
+//            else Empty
+//
+//        | Empty, _ ->
+//            Empty
 
     /// Compute the difference of two PatriciaHashSets.
     static member Difference (s, t) : PatriciaHashSet<'T> =
-        match s, t with
-        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
-            if m = n then
-                if p <> q then s
-                else
-                    let left = PatriciaHashSet.Difference (s0, t0)
-                    let right = PatriciaHashSet.Difference (s1, t1)
-                    match left, right with
-                    | Empty, t
-                    | t, Empty -> t
-                    | left, right ->
-                        Br (p, m, left, right)
-
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
-            elif m > n then
-            #endif
-                if matchPrefix (q, p, m) then
-                    if zeroBit (q, m) then
-                        match PatriciaHashSet.Difference (s0, t) with
-                        | Empty -> s1
-                        | left ->
-                            Br (p, m, left, s1)
-                    else
-                        match PatriciaHashSet.Difference (s1, t) with
-                        | Empty -> s0
-                        | right ->
-                            Br (p, m, s0, right)
-                else s
-
-            else
-                if matchPrefix (p, q, n) then
-                    if zeroBit (p, n) then
-                        PatriciaHashSet.Difference (s, t0)
-                    else
-                        PatriciaHashSet.Difference (s, t1)
-                else s
-
-        | Br (p, m, s0, s1), Lf (k, y) ->
-            if matchPrefix (k, p, m) then
-                if zeroBit (k, m) then
-                    match PatriciaHashSet.RemoveSet (k, s0) with
-                    | Empty -> s1
-                    | left ->
-                        Br (p, m, left, s1)
-                else
-                    match PatriciaHashSet.RemoveSet (k, s1) with
-                    | Empty -> s0
-                    | right ->
-                        Br (p, m, s0, right)
-            else s
-            
-        | Br (_,_,_,_), Empty ->
-            s
-        | Lf (k, x), _ ->
-            if PatriciaHashSet.ContainsKey (k, t) then Empty
-            else s
-        | Empty, _ ->
-            Empty
+        notImpl "PatriciaHashSet.Difference"
+//        match s, t with
+//        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
+//            if m = n then
+//                if p <> q then s
+//                else
+//                    let left = PatriciaHashSet.Difference (s0, t0)
+//                    let right = PatriciaHashSet.Difference (s1, t1)
+//                    match left, right with
+//                    | Empty, t
+//                    | t, Empty -> t
+//                    | left, right ->
+//                        Br (p, m, left, right)
+//
+//            #if LITTLE_ENDIAN_TRIES
+//            elif m < n then
+//            #else
+//            elif m > n then
+//            #endif
+//                if matchPrefix (q, p, m) then
+//                    if zeroBit (q, m) then
+//                        match PatriciaHashSet.Difference (s0, t) with
+//                        | Empty -> s1
+//                        | left ->
+//                            Br (p, m, left, s1)
+//                    else
+//                        match PatriciaHashSet.Difference (s1, t) with
+//                        | Empty -> s0
+//                        | right ->
+//                            Br (p, m, s0, right)
+//                else s
+//
+//            else
+//                if matchPrefix (p, q, n) then
+//                    if zeroBit (p, n) then
+//                        PatriciaHashSet.Difference (s, t0)
+//                    else
+//                        PatriciaHashSet.Difference (s, t1)
+//                else s
+//
+//        | Br (p, m, s0, s1), Lf (k, y) ->
+//            if matchPrefix (k, p, m) then
+//                if zeroBit (k, m) then
+//                    match PatriciaHashSet.RemoveSet (k, s0) with
+//                    | Empty -> s1
+//                    | left ->
+//                        Br (p, m, left, s1)
+//                else
+//                    match PatriciaHashSet.RemoveSet (k, s1) with
+//                    | Empty -> s0
+//                    | right ->
+//                        Br (p, m, s0, right)
+//            else s
+//            
+//        | Br (_,_,_,_), Empty ->
+//            s
+//        | Lf (k, x), _ ->
+//            if PatriciaHashSet.ContainsKey (k, t) then Empty
+//            else s
+//        | Empty, _ ->
+//            Empty
 
 (*
     /// <c>IsSubmapOfBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
