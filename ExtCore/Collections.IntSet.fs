@@ -905,12 +905,18 @@ type IntSet private (trie : PatriciaSet) =
         // Preconditions
         checkNonNull "sets" sets
 
-        let combinedTrie =
+        let result =
             (PatriciaSet.Empty, sets)
             ||> Seq.fold (fun combinedSetTree set ->
                 PatriciaSet.Union (combinedSetTree, set.Trie))
 
-        IntSet (combinedTrie)
+        // If the resulting trie is empty, return the empty IntSet instance
+        // instead of creating a new one to allow for better structure sharing.
+        match result with
+        | Empty ->
+            IntSet.Empty
+        | _ ->
+            IntSet (result)
 
     /// Computes the intersection of a sequence of IntSets.
     static member internal IntersectMany (sets : seq<IntSet>) : IntSet =

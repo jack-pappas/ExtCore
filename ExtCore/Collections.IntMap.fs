@@ -109,23 +109,29 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         match map with
         | Empty ->
             Empty
-        | Lf (j, _) as t ->
+        | Lf (j, _) ->
             if j = key then Empty
-            else t
+            else map
         
-        | Br (p, m, t0, t1) as t ->
+        | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     match PatriciaMap.Remove (key, t0) with
                     | Empty -> t1
                     | t0 ->
-                        Br (p, m, t0, t1)
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if map === t0 then map
+                        else Br (p, m, t0, t1)
                 else
                     match PatriciaMap.Remove (key, t1) with
                     | Empty -> t0
                     | t1 ->
-                        Br (p, m, t0, t1)
-            else t
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if map === t1 then map
+                        else Br (p, m, t0, t1)
+            else map
 
     //
     static member inline private Join (p0, t0 : PatriciaMap<'T>, p1, t1) =
@@ -206,6 +212,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
 
     /// Computes the union of two PatriciaMaps.
     static member Union (s, t) : PatriciaMap<'T> =
+        // If the maps are identical, return immediately.
+        if s === t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -228,15 +236,15 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     if zeroBit (q, m) then
                         let left = PatriciaMap.Union (s0, t)
 
-                        // OPTIMIZE : If left === s0, we should be able to return this map
-                        // without modifying it.
-                        Br (p, m, left, s1)
+                        // Only create a new tree when the subtree is actually modified.
+                        if left === s0 then s
+                        else Br (p, m, left, s1)
                     else
                         let right = PatriciaMap.Union (s1, t)
 
-                        // OPTIMIZE : If right === s1, we should be able to return this map
-                        // without modifying it.
-                        Br (p, m, s0, right)
+                        // Only create a new tree when the subtree is actually modified.
+                        if right === s1 then s
+                        else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
                     PatriciaMap.Join (p, s, q, t)
@@ -247,15 +255,15 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     if zeroBit (p, n) then
                         let left = PatriciaMap.Union (s, t0)
 
-                        // OPTIMIZE : If left === t0, we should be able to return this map
-                        // without modifying it.
-                        Br (q, n, left, t1)
+                        // Only create a new tree when the subtree is actually modified.
+                        if left === t0 then t
+                        else Br (q, n, left, t1)
                     else
                         let right = PatriciaMap.Union (s, t1)
 
-                        // OPTIMIZE : If right === t1, we should be able to return this map
-                        // without modifying it.
-                        Br (q, n, t0, right)
+                        // Only create a new tree when the subtree is actually modified.
+                        if right === t1 then t
+                        else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
                     PatriciaMap.Join (p, s, q, t)
@@ -265,17 +273,17 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                 if zeroBit (k, m) then
                     let left = PatriciaMap.TryAdd (k, x, s0)
 
-                    // OPTIMIZE : If left === s0, we should be able to return this map
-                    // without modifying it.
-                    Br (p, m, left, s1)
+                    // Only create a new tree when the subtree is actually modified.
+                    if left === s0 then s
+                    else Br (p, m, left, s1)
                 else
                     let right = PatriciaMap.TryAdd (k, x, s1)
 
-                    // OPTIMIZE : If right === s1, we should be able to return this map
-                    // without modifying it.
-                    Br (p, m, s0, right)
+                    // Only create a new tree when the subtree is actually modified.
+                    if right === s1 then s
+                    else Br (p, m, s0, right)
             else
-                PatriciaMap.Join (k, Lf (k, x), p, s)
+                PatriciaMap.Join (k, t, p, s)
 
         | Br (_,_,_,_), Empty ->
             s
@@ -326,6 +334,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             let s' = if zeroBit (k, m) then s0 else s1
             match PatriciaMap.TryFind (k, s') with
             | Some x ->
+                // OPTIMIZE : If x === y or x = y then just return 't' instead
+                // of creating/returning a new Lf.
                 Lf (k, x)
             | None ->
                 Empty
@@ -355,7 +365,10 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     | Empty, t
                     | t, Empty -> t
                     | left, right ->
-                        Br (p, m, left, right)
+                        // Only create a new tree if some values were actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 && right === s1 then s
+                        else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -367,14 +380,18 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                         match PatriciaMap.Difference (s0, t) with
                         | Empty -> s1
                         | left ->
-                            // OPTIMIZE : If left === s0 then return the map as-is instead of creating a new one.
-                            Br (p, m, left, s1)
+                            // Only create a new tree some values were actually removed
+                            // (i.e., the tree was modified).
+                            if left === s0 then s
+                            else Br (p, m, left, s1)
                     else
                         match PatriciaMap.Difference (s1, t) with
                         | Empty -> s0
                         | right ->
-                            // OPTIMIZE : If right === s1 then return the map as-is instead of creating a new one.
-                            Br (p, m, s0, right)
+                            // Only create a new tree some values were actually removed
+                            // (i.e., the tree was modified).
+                            if right === s1 then s
+                            else Br (p, m, s0, right)
                 else s
 
             else
@@ -391,14 +408,18 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     match PatriciaMap.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
-                        // OPTIMIZE : If left === s0 then return the map as-is instead of creating a new one.
-                        Br (p, m, left, s1)
+                        // Only create a new tree if the value was actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 then s
+                        else Br (p, m, left, s1)
                 else
                     match PatriciaMap.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
-                        // OPTIMIZE : If right === s1 then return the map as-is instead of creating a new one.
-                        Br (p, m, s0, right)
+                        // Only create a new tree if the value was actually removed
+                        // (i.e., the tree was modified).
+                        if right === s1 then s
+                        else Br (p, m, s0, right)
             else s
             
         | Br (_,_,_,_), Empty ->
