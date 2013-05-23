@@ -225,12 +225,18 @@ type private PatriciaSet =
                     match PatriciaSet.Remove (key, t0) with
                     | Empty -> t1
                     | t0 ->
-                        Br (p, m, t0, t1)
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if set === t0 then set
+                        else Br (p, m, t0, t1)
                 else
                     match PatriciaSet.Remove (key, t1) with
                     | Empty -> t0
                     | t1 ->
-                        Br (p, m, t0, t1)
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if set === t1 then set
+                        else Br (p, m, t0, t1)
             else set
 
     //
@@ -259,15 +265,25 @@ type private PatriciaSet =
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
                     let left = PatriciaSet.Add (key, t0)
-                    Br (p, m, left, t1)
+
+                    // Only create a new tree when the value was actually added
+                    // (i.e., the tree was modified).
+                    if left === t0 then set
+                    else Br (p, m, left, t1)
                 else
                     let right = PatriciaSet.Add (key, t1)
-                    Br (p, m, t0, right)
+
+                    // Only create a new tree when the value was actually added
+                    // (i.e., the tree was modified).
+                    if right === t1 then set
+                    else Br (p, m, t0, right)
             else
                 PatriciaSet.Join (key, Lf key, p, set)
 
-    //
+    /// Computes the union of two PatriciaSets.
     static member Union (s, t) : PatriciaSet =
+        // If the sets are identical, return immediately.
+        if s === t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -275,7 +291,12 @@ type private PatriciaSet =
                     // The trees have the same prefix. Merge the subtrees.
                     let left = PatriciaSet.Union (s0, t0)
                     let right = PatriciaSet.Union (s1, t1)
-                    Br (p, m, left, right)
+                    
+                    // Only create a new tree if some values were actually added
+                    // (i.e., the tree was modified).
+                    if left === s0 && right === s1 then s
+                    elif left === t0 && right === t1 then t
+                    else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
                     PatriciaSet.Join (p, s, q, t)
@@ -289,10 +310,16 @@ type private PatriciaSet =
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
                         let left = PatriciaSet.Union (s0, t)
-                        Br (p, m, left, s1)
+                        
+                        // Only create a new tree when the subtree is actually modified.
+                        if left === s0 then s
+                        else Br (p, m, left, s1)
                     else
                         let right = PatriciaSet.Union (s1, t)
-                        Br (p, m, s0, right)
+
+                        // Only create a new tree when the subtree is actually modified.
+                        if right === s1 then s
+                        else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
                     PatriciaSet.Join (p, s, q, t)
@@ -302,10 +329,16 @@ type private PatriciaSet =
                     // p contains q. Merge s with a subtree of t.
                     if zeroBit (p, n) then
                         let left = PatriciaSet.Union (s, t0)
-                        Br (q, n, left, t1)
+                        
+                        // Only create a new tree when the subtree is actually modified.
+                        if left === t0 then t
+                        else Br (q, n, left, t1)
                     else
                         let right = PatriciaSet.Union (s, t1)
-                        Br (q, n, t0, right)
+                        
+                        // Only create a new tree when the subtree is actually modified.
+                        if right === t1 then t
+                        else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
                     PatriciaSet.Join (p, s, q, t)
@@ -314,10 +347,16 @@ type private PatriciaSet =
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
                     let left = PatriciaSet.Add (k, s0)
-                    Br (p, m, left, s1)
+                    
+                    // Only create a new tree when the subtree is actually modified.
+                    if left === s0 then s
+                    else Br (p, m, left, s1)
                 else
                     let right = PatriciaSet.Add (k, s1)
-                    Br (p, m, s0, right)
+                    
+                    // Only create a new tree when the subtree is actually modified.
+                    if right === s1 then s
+                    else Br (p, m, s0, right)
             else
                 PatriciaSet.Join (k, t, p, s)
 
@@ -328,10 +367,10 @@ type private PatriciaSet =
         | Empty, t ->
             t
 
-    /// Compute the intersection of two PatriciaMaps.
-    /// If both maps contain a binding with the same key, the binding from
-    /// the first map will be used.
+    /// Compute the intersection of two PatriciaSets.
     static member Intersect (s, t) : PatriciaSet =
+        // If the sets are identical, return immediately.
+        if s === t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -340,10 +379,14 @@ type private PatriciaSet =
                     let left = PatriciaSet.Intersect (s0, t0)
                     let right = PatriciaSet.Intersect (s1, t1)
                     match left, right with
-                    | Empty, t
-                    | t, Empty -> t
+                    | Empty, r
+                    | r, Empty -> r
                     | left, right ->
-                        Br (p, m, left, right)
+                        // Only create a new tree if some values were actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 && right === s1 then s
+                        elif left === t0 && right === t1 then t
+                        else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -382,8 +425,10 @@ type private PatriciaSet =
         | Empty, _ ->
             Empty
 
-    /// Compute the difference of two PatriciaMaps.
+    /// Compute the difference of two PatriciaSets.
     static member Difference (s, t) : PatriciaSet =
+        // If the sets are identical, return immediately.
+        if s === t then Empty else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -395,7 +440,10 @@ type private PatriciaSet =
                     | Empty, t
                     | t, Empty -> t
                     | left, right ->
-                        Br (p, m, left, right)
+                        // Only create a new tree if some values were actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 && right === s1 then s
+                        else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -407,12 +455,18 @@ type private PatriciaSet =
                         match PatriciaSet.Difference (s0, t) with
                         | Empty -> s1
                         | left ->
-                            Br (p, m, left, s1)
+                            // Only create a new tree some values were actually removed
+                            // (i.e., the tree was modified).
+                            if left === s0 then s
+                            else Br (p, m, left, s1)
                     else
                         match PatriciaSet.Difference (s1, t) with
                         | Empty -> s0
                         | right ->
-                            Br (p, m, s0, right)
+                            // Only create a new tree some values were actually removed
+                            // (i.e., the tree was modified).
+                            if right === s1 then s
+                            else Br (p, m, s0, right)
                 else s
 
             else
@@ -429,12 +483,18 @@ type private PatriciaSet =
                     match PatriciaSet.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
-                        Br (p, m, left, s1)
+                        // Only create a new tree if the value was actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 then s
+                        else Br (p, m, left, s1)
                 else
                     match PatriciaSet.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
-                        Br (p, m, s0, right)
+                        // Only create a new tree if the value was actually removed
+                        // (i.e., the tree was modified).
+                        if right === s1 then s
+                        else Br (p, m, s0, right)
             else s
             
         | Br (_,_,_,_), Empty ->

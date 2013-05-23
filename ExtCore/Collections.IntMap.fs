@@ -221,7 +221,12 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     // The trees have the same prefix. Merge the subtrees.
                     let left = PatriciaMap.Union (s0, t0)
                     let right = PatriciaMap.Union (s1, t1)
-                    Br (p, m, left, right)
+
+                    // Only create a new tree if some values were actually added
+                    // (i.e., the tree was modified).
+                    if left === s0 && right === s1 then s
+                    elif left === t0 && right === t1 then t
+                    else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
                     PatriciaMap.Join (p, s, q, t)
@@ -295,6 +300,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
     /// If both maps contain a binding with the same key, the binding from
     /// the first map will be used.
     static member Intersect (s, t) : PatriciaMap<'T> =
+        // If the maps are identical, return immediately.
+        if s === t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -303,10 +310,14 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     let left = PatriciaMap.Intersect (s0, t0)
                     let right = PatriciaMap.Intersect (s1, t1)
                     match left, right with
-                    | Empty, t
-                    | t, Empty -> t
+                    | Empty, r
+                    | r, Empty -> r
                     | left, right ->
-                        Br (p, m, left, right)
+                        // Only create a new tree if some values were actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 && right === s1 then s
+                        elif left === t0 && right === t1 then t
+                        else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -354,6 +365,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
 
     /// Compute the difference of two PatriciaMaps.
     static member Difference (s, t) : PatriciaMap<'T> =
+        // If the maps are identical, return immediately.
+        if s === t then Empty else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -402,7 +415,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                         PatriciaMap.Difference (s, t1)
                 else s
 
-        | Br (p, m, s0, s1), Lf (k, y) ->
+        | Br (p, m, s0, s1), Lf (k, _) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
                     match PatriciaMap.Remove (k, s0) with
@@ -434,7 +447,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
     /// and when 'f' returns <c>true</c> when applied to their respective values.
     static member IsSubmapOfBy (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap<'T>) (t2 : PatriciaMap<'T>) : bool =
         match t1, t2 with
-        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+        | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then
                 false
             elif shorter (m2, m1) then
