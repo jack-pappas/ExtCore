@@ -133,12 +133,12 @@ type private PatriciaSet =
         match set with
         | Empty -> 0
         | Lf _ -> 1
-        | Br (_,_,_,_) as t ->
+        | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push set
 
             // Traverse the tree, counting the elements by using the mutable stack.
             let mutable count = 0u
@@ -605,12 +605,12 @@ type private PatriciaSet =
         | Empty -> ()
         | Lf k ->
             action (int k)
-        | Br (_,_,_,_) as t ->
+        | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push set
 
             // Loop until we've processed the entire tree.
             while stack.Count <> 0 do
@@ -643,12 +643,12 @@ type private PatriciaSet =
         | Empty -> ()
         | Lf k ->
             action (int k)
-        | Br (_,_,_,_) as t ->
+        | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push set
 
             // Loop until we've processed the entire tree.
             while stack.Count <> 0 do
@@ -682,14 +682,14 @@ type private PatriciaSet =
             state
         | Lf k ->
             folder state (int k)
-        | Br (_,_,_,_) as t ->
+        | Br (_,_,_,_) ->
             let folder = FSharpFunc<_,_,_>.Adapt folder
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push set
 
             /// Loop until we've processed the entire tree.
             let mutable state = state
@@ -727,14 +727,14 @@ type private PatriciaSet =
             state
         | Lf k ->
             folder (int k) state
-        | Br (_,_,_,_) as t ->
+        | Br (_,_,_,_) ->
             let folder = FSharpFunc<_,_,_>.Adapt folder
 
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push set
 
             /// Loop until we've processed the entire tree.
             let mutable state = state
@@ -772,12 +772,12 @@ type private PatriciaSet =
             None
         | Lf k ->
             picker (int k)
-        | Br (_,_,_,_) as t ->
+        | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
             // Add the initial tree to the stack.
-            stack.Push t
+            stack.Push set
 
             /// Loop until we find a key/value that matches the picker,
             /// or until we've processed the entire tree.
