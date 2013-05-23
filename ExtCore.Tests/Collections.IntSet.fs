@@ -248,8 +248,8 @@ let difference () : unit =
 let isSubset () : unit =
     // The empty set is always a subset of any other set.
     IntSet.isSubset
-        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         IntSet.empty
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     IntSet.isSubset
@@ -264,13 +264,13 @@ let isSubset () : unit =
 
     // Basic tests.
     IntSet.isSubset
-        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     IntSet.isSubset
-        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
     |> should be False
 
     // Partially-overlapping sets.
@@ -289,8 +289,8 @@ let isSubset () : unit =
 let isProperSubset () : unit =
     // The empty set is a proper subset of any set except itself.
     IntSet.isProperSubset
-        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         IntSet.empty
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     IntSet.isProperSubset
@@ -305,13 +305,13 @@ let isProperSubset () : unit =
 
     // Basic tests.
     IntSet.isProperSubset
-        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     IntSet.isProperSubset
-        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
     |> should be False
 
     // Partially-overlapping sets.
@@ -346,13 +346,13 @@ let isSuperset () : unit =
 
     // Basic tests.
     IntSet.isSuperset
-        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be False
 
     IntSet.isSuperset
-        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
     |> should be True
 
     // Partially-overlapping sets.

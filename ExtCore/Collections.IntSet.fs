@@ -457,9 +457,9 @@ type private PatriciaSet =
             elif shorter (m2, m1) then
                 if not <| matchPrefix (p1, p2, m2) then 1
                 elif zeroBit (p1, m2) then
-                    PatriciaSet.SubsetCompare (t1, l2)
+                    match PatriciaSet.SubsetCompare (t1, l2) with 1 -> 1 | _ -> -1
                 else
-                    PatriciaSet.SubsetCompare (t1, r2)
+                    match PatriciaSet.SubsetCompare (t1, r2) with 1 -> 1 | _ -> -1
             elif p1 = p2 then
                 let left = PatriciaSet.SubsetCompare (l1, l2)
                 let right = PatriciaSet.SubsetCompare (r1, r2)
@@ -480,9 +480,9 @@ type private PatriciaSet =
         | Lf x, Br (p, m, l, r) ->
             if not <| matchPrefix (x, p, m) then 1
             elif zeroBit (x, m) then
-                if PatriciaSet.Contains (x, l) then -1 else 1
+                match PatriciaSet.SubsetCompare (t1, l) with 1 -> 1 | _ -> -1
             else
-                if PatriciaSet.Contains (x, r) then -1 else 1
+                match PatriciaSet.SubsetCompare (t1, r) with 1 -> 1 | _ -> -1
 
         | Lf _, Empty ->
             // The maps are disjoint.
@@ -491,20 +491,38 @@ type private PatriciaSet =
         | Empty, Empty -> 0
         | Empty, _ -> -1
 
-    /// Is 'set1' a subset of 'set2'?
-    /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
-        match PatriciaSet.SubsetCompare (set1, set2) with
-        | -1 | 0 -> true
-        | _ -> false
-
-    /// Is 'set1' a proper subset of 'set2'?
+        /// Is 'set1' a proper subset of 'set2'?
     /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
     /// and at least one element in set2 is not in set1.
     static member IsProperSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
         match PatriciaSet.SubsetCompare (set1, set2) with
         | -1 -> true
         | _ -> false
+
+    /// Is 'set1' a subset of 'set2'?
+    /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
+    static member IsSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+        match set1, set2 with
+        | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
+            if shorter (m1, m2) then false
+            elif shorter (m2, m1) then
+                matchPrefix (p1, p2, m2) &&
+                (if zeroBit (p1, m2) then PatriciaSet.IsSubset (set1, l2) else PatriciaSet.IsSubset (set1, r2))
+            else
+                p1 = p2 && PatriciaSet.IsSubset (l1, l2) && PatriciaSet.IsSubset (r1, r2)
+
+        | Br (_,_,_,_), _ -> false
+        | Lf kx, Lf ky ->
+            kx = ky
+        | Lf kx, Br (p, m, l, r) ->
+            if not <| matchPrefix (kx, p, m) then false
+            elif zeroBit (kx, m) then
+                PatriciaSet.IsSubset (set1, l)
+            else
+                PatriciaSet.IsSubset (set1, r)
+
+        | Lf _, Empty -> false
+        | Empty, _ -> true
 
     //
     static member OfSeq (source : seq<int>) : PatriciaSet =
