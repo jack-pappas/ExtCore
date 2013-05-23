@@ -118,19 +118,19 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                 if zeroBit (key, m) then
                     match PatriciaMap.Remove (key, t0) with
                     | Empty -> t1
-                    | t0 ->
+                    | left ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if map === t0 then map
-                        else Br (p, m, t0, t1)
+                        if left === t0 then map
+                        else Br (p, m, left, t1)
                 else
                     match PatriciaMap.Remove (key, t1) with
                     | Empty -> t0
-                    | t1 ->
+                    | right ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if map === t1 then map
-                        else Br (p, m, t0, t1)
+                        if right === t1 then map
+                        else Br (p, m, t0, right)
             else map
 
     //
@@ -375,8 +375,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     let left = PatriciaMap.Difference (s0, t0)
                     let right = PatriciaMap.Difference (s1, t1)
                     match left, right with
-                    | Empty, t
-                    | t, Empty -> t
+                    | Empty, r
+                    | r, Empty -> r
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).

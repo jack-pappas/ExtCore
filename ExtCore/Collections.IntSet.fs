@@ -224,19 +224,19 @@ type private PatriciaSet =
                 if zeroBit (key, m) then
                     match PatriciaSet.Remove (key, t0) with
                     | Empty -> t1
-                    | t0 ->
+                    | left ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if set === t0 then set
-                        else Br (p, m, t0, t1)
+                        if left === t0 then set
+                        else Br (p, m, left, t1)
                 else
                     match PatriciaSet.Remove (key, t1) with
                     | Empty -> t0
-                    | t1 ->
+                    | right ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if set === t1 then set
-                        else Br (p, m, t0, t1)
+                        if right === t1 then set
+                        else Br (p, m, t0, right)
             else set
 
     //
@@ -437,8 +437,8 @@ type private PatriciaSet =
                     let left = PatriciaSet.Difference (s0, t0)
                     let right = PatriciaSet.Difference (s1, t1)
                     match left, right with
-                    | Empty, t
-                    | t, Empty -> t
+                    | Empty, r
+                    | r, Empty -> r
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).

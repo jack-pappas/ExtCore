@@ -244,14 +244,18 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     match PatriciaHashSet.Remove (valueHash, value, t0) with
                     | Empty -> t1
                     | left ->
-                        // OPTIMIZE : If left === t0 then return the original set instead of creating a new one.
-                        Br (p, m, left, t1)
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if left === t0 then set
+                        else Br (p, m, left, t1)
                 else
                     match PatriciaHashSet.Remove (valueHash, value, t1) with
                     | Empty -> t0
                     | right ->
-                        // OPTIMIZE : If right === t1 then return the original set instead of creating a new one.
-                        Br (p, m, t0, right)
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if right === t1 then set
+                        else Br (p, m, t0, right)
             else set
 
     //
@@ -284,13 +288,17 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 if zeroBit (valueHash, m) then
                     let left = PatriciaHashSet.Add (valueHash, value, t0)
 
-                    // OPTIMIZE : If left === t0 then return the original set.instead of creating a new one.
-                    Br (p, m, left, t1)
+                    // Only create a new tree when the value was actually added
+                    // (i.e., the tree was modified).
+                    if left === t0 then set
+                    else Br (p, m, left, t1)
                 else
                     let right = PatriciaHashSet.Add (valueHash, value, t1)
 
-                    // OPTIMIZE : If right === t1 then return the original set instead of creating a new one.
-                    Br (p, m, t0, right)
+                    // Only create a new tree when the value was actually added
+                    // (i.e., the tree was modified).
+                    if right === t1 then set
+                    else Br (p, m, t0, right)
             else
                 PatriciaHashSet.Join (valueHash, Lf (valueHash, [value]), p, set)
 
@@ -986,19 +994,25 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
             elif otherSet.Trie === trie' then otherSet
             else HashSet (trie')
 
-    /// Computes the union of a sequence of IntSets.
+    /// Computes the union of a sequence of HashSets.
     static member internal UnionMany (sets : seq<HashSet<'T>>) : HashSet<'T> =
         // Preconditions
         checkNonNull "sets" sets
 
-        let combinedTrie =
+        let result =
             (PatriciaHashSet.Empty, sets)
             ||> Seq.fold (fun combinedSetTree set ->
                 PatriciaHashSet.Union (combinedSetTree, set.Trie))
 
-        HashSet (combinedTrie)
+        // If the resulting trie is empty, return the empty HashSet instance
+        // instead of creating a new one to allow for better structure sharing.
+        match result with
+        | Empty ->
+            HashSet.Empty
+        | _ ->
+            HashSet (result)
 
-    /// Computes the intersection of a sequence of IntSets.
+    /// Computes the intersection of a sequence of HashSets.
     static member internal IntersectMany (sets : seq<HashSet<'T>>) : HashSet<'T> =
         // Preconditions
         checkNonNull "sets" sets
@@ -1222,13 +1236,11 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
 
     /// Computes the union of two sets.
     static member op_Addition (set1 : HashSet<'T>, set2 : HashSet<'T>) : HashSet<'T> =
-        notImpl "HashSet`1.op_Addition"
-        //HashSet.Union (set1, set2)
+        set1.Union set2
 
     /// Computes the difference of two sets.
     static member op_Subtraction (set1 : HashSet<'T>, set2 : HashSet<'T>) : HashSet<'T> =
-        notImpl "HashSet`1.op_Subtraction"
-        //HashSet.Difference (set1, set2)
+        set1.Difference set2
 
     interface System.IEquatable<HashSet<'T>> with
         /// <inherit />

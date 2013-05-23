@@ -345,14 +345,18 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     match PatriciaHashMap.Remove (keyHash, key, t0) with
                     | Empty -> t1
                     | left ->
-                        // OPTIMIZE : If left === t0 then return the original map instead of creating a new one.
-                        Br (p, m, left, t1)
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if left === t0 then map
+                        else Br (p, m, left, t1)
                 else
                     match PatriciaHashMap.Remove (keyHash, key, t1) with
                     | Empty -> t0
                     | right ->
-                        // OPTIMIZE : If right === t1 then return the original map instead of creating a new one.
-                        Br (p, m, t0, right)
+                        // Only create a new tree when the value was actually removed
+                        // (i.e., the tree was modified).
+                        if right === t1 then map
+                        else Br (p, m, t0, right)
             else map
 
     //
@@ -385,13 +389,17 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                 if zeroBit (keyHash, m) then
                     let left = PatriciaHashMap.Add (keyHash, key, value, t0)
 
-                    // OPTIMIZE : If left === t0 then return the original map instead of creating a new one.
-                    Br (p, m, left, t1)
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if left === t0 then map
+                    else Br (p, m, left, t1)
                 else
                     let right = PatriciaHashMap.Add (keyHash, key, value, t1)
 
-                    // OPTIMIZE : If right === t1 then return the original map instead of creating a new one.
-                    Br (p, m, t0, right)
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if right === t1 then map
+                    else Br (p, m, t0, right)
             else
                 PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), p, map)
 
@@ -416,10 +424,18 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             if matchPrefix (keyHash, p, m) then
                 if zeroBit (keyHash, m) then
                     let left = PatriciaHashMap.TryAdd (keyHash, key, value, t0)
-                    Br (p, m, left, t1)
+                    
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if left === t0 then map
+                    else Br (p, m, left, t1)
                 else
                     let right = PatriciaHashMap.TryAdd (keyHash, key, value, t1)
-                    Br (p, m, t0, right)
+                    
+                    // OPTIMIZATION : If the returned map is identical to the original map after
+                    // adding the value to it, we can return this map without modifying it.
+                    if right === t1 then map
+                    else Br (p, m, t0, right)
             else
                 PatriciaHashMap.Join (keyHash, Lf (keyHash, Tail (key, value)), p, map)
 
