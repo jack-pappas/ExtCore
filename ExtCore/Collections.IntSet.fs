@@ -811,6 +811,15 @@ type IntSet private (trie : PatriciaSet) =
         with get () = empty
 
     //
+    new (elements : seq<int>) =
+        // Preconditions
+        // TODO : Check for null input.
+
+        // OPTIMIZE : Try to cast the sequence to array or list;
+        // if it succeeds use the specialized method for that type for better performance.
+        IntSet (PatriciaSet.OfSeq elements)
+
+    //
     member private __.Trie
         with get () = trie
 
@@ -1074,6 +1083,14 @@ type IntSet private (trie : PatriciaSet) =
             else
                 trueSet,
                 falseSet.Add el), (IntSet.Empty, IntSet.Empty))
+
+    /// Compute the union of two sets.
+    static member op_Addition (set1 : IntSet, set2 : IntSet) : IntSet =
+        set1.Union set2
+
+    /// Remove the elements of the second set from the first.
+    static member op_Subtraction (set1 : IntSet, set2 : IntSet) : IntSet =
+        set1.Difference set2
 
     /// <inherit />
     override __.Equals other =
