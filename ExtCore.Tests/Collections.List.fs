@@ -22,8 +22,19 @@ module Tests.ExtCore.Collections.List
 open System
 open NUnit.Framework
 open FsUnit
-//open FsCheck
 
+
+[<Test>]
+let contains () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let last () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let dropLast () : unit =
+    Assert.Ignore "Test not yet implemented."
 
 [<Test>]
 let indexed () : unit =
@@ -238,3 +249,8 @@ let countWith () : unit =
     |> List.countWith (fun x ->
         x % 3 = 0)
     |> assertEqual 4
+
+
+open FsCheck
+
+(* TODO : Implement randomized tests with FsCheck. *)

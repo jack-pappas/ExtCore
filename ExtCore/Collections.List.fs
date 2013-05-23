@@ -68,6 +68,38 @@ let inline ofSet (set : Set<'T>) =
 let inline toSet (list : 'T list) =
     Set.ofList list
 
+/// Determines if a given value is contained in a list.
+[<CompiledName("Contains")>]
+let rec contains (value : 'T) (set : 'T list) : bool =
+    match set with
+    | [] -> false
+    | el :: set ->
+        el = value || contains value set
+
+/// Returns the last element of a list.
+[<CompiledName("Last")>]
+let rec last (list : 'T list) =
+    match list with
+    | [] ->
+        invalidArg "list" "Cannot get the last element of an empty list."
+    | [x] -> x
+    | _ :: list ->
+        last list
+
+/// Drops the last element of a list, returning the remaining list.
+[<CompiledName("DropLast")>]
+let dropLast (list : 'T list) : 'T list =
+    match list with
+    | [] ->
+        invalidArg "list" "The list is empty."
+    | [_] ->
+        []  // Fast path for single-element lists.
+    | _ ->
+        list
+        |> List.rev
+        |> List.tail
+        |> List.rev
+
 /// Creates a new list by combining each element of the list with it's index.
 [<CompiledName("Indexed")>]
 let indexed (list : 'T list) =
@@ -104,14 +136,14 @@ let revIntoArray (list : 'T list) =
     let len = List.length list
     let results = Array.zeroCreate len
 
-    let rec loop (idx, lst) =
+    let rec loop idx lst =
         match lst with
         | [] -> results
         | hd :: tl ->
             results.[idx] <- hd
-            loop (idx - 1, tl)
+            loop (idx - 1) tl
 
-    loop (len - 1, list)
+    loop (len - 1) list
 
 /// <summary>Applies the given function to each element of a list,
 /// and copies the results into an array from right-to-left so the
@@ -126,14 +158,14 @@ let revMapIntoArray (mapping : 'T -> 'U) (list : 'T list) =
     let len = List.length list
     let results = Array.zeroCreate len
 
-    let rec loop (idx, lst) =
+    let rec loop idx lst =
         match lst with
         | [] -> results
         | hd :: tl ->
             results.[idx] <- mapping hd
-            loop (idx - 1, tl)
+            loop (idx - 1) tl
 
-    loop (len - 1, list)
+    loop (len - 1) list
 
 /// <summary>
 /// Applies the given function to each element of the list.
@@ -148,7 +180,7 @@ let choosei (chooser : int -> 'T -> 'U option) list : 'U list =
     
     let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
-    let rec choosei (chosen, index, list) =
+    let rec choosei chosen index list =
         match list with
         | [] ->
             // Reverse the list of chosen elements before returning it.
@@ -163,10 +195,10 @@ let choosei (chooser : int -> 'T -> 'U option) list : 'U list =
                     result :: chosen
 
             // Process the rest of the list elements.
-            choosei (chosen, index + 1, tl)
+            choosei chosen (index + 1) tl
 
     // Process the list.
-    choosei ([], 0, list)
+    choosei [] 0 list
 
 /// <summary>
 /// Applies the given function pairwise to the two lists.
@@ -181,7 +213,7 @@ let choose2 (chooser : 'T1 -> 'T2 -> 'U option) list1 list2 : 'U list =
     
     let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
-    let rec choose2 (chosen, list1, list2) =
+    let rec choose2 chosen list1 list2 =
         match list1, list2 with
         | [], [] ->
             // Reverse the list of chosen elements before returning it.
@@ -202,10 +234,10 @@ let choose2 (chooser : 'T1 -> 'T2 -> 'U option) list1 list2 : 'U list =
                     result :: chosen
 
             // Process the rest of the list elements.
-            choose2 (chosen, tl1, tl2)
+            choose2 chosen tl1 tl2
 
     // Process the lists recursively.
-    choose2 ([], list1, list2)
+    choose2 [] list1 list2
 
 /// Takes a specified number of items from a list, returning them (as a new list) along with the remaining list.
 [<CompiledName("Take")>]
