@@ -29,269 +29,104 @@ open BitOps
 
 /// A list-based data structure implementing a set.
 /// This is used within PatriciaHashSet to handle hash collisions in a manner reminiscent of a hashtable.
-type private ListSet<[<ComparisonConditionalOn>] 'T when 'T : equality> =
-    /// The tail (last element) in the list.
-    | Tail of 'T
-    /// A list element along with the rest of the list.
-    | Element of ListSet<'T> * 'T
+type private ListSet<[<ComparisonConditionalOn>] 'T when 'T : equality> = 'T list
 
-    /// Returns the number of bindings in the set.
-    static member private CountImpl (listSet : ListSet<'T>, acc) : int =
-        match listSet with
-        | Tail _ ->
-            acc + 1
-        | Element (listSet,_) ->
-            ListSet.CountImpl (listSet, acc + 1)
-
-    /// Returns the number of bindings in the set.
-    static member Count (listSet : ListSet<'T>) : int =
-        // Call the recursive implementation.
-        ListSet.CountImpl (listSet, 0)
-
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module private ListSet =
     //
-    static member Contains (value : 'T, listSet : ListSet<'T>) : bool =
-        match listSet with
-        | Tail x ->
-            x = value
-        | Element (listSet, x) ->
-            x = value || ListSet.Contains (value, listSet)
+    [<CompiledName("Count")>]
+    let inline count (set : ListSet<'T>) : int =
+        List.length set
 
-    //
-    static member private Rewind (stack : 'T list, listSet : ListSet<'T>) : ListSet<'T> =
-        match stack with
+    /// "Rewinds" an accumulator and a list like a zipper whose context
+    /// is being moved all the way to the beginning (head) of the list.
+    let rec rewind path (tail : 'T list) =
+        match path with
+        | [] -> tail
+        | el :: path ->
+            rewind path (el :: tail)
+
+    /// Zipper-like implementation of 'add'.
+    let rec private addImpl path tail orig (value : 'T) =
+        match tail with
         | [] ->
-            listSet
-        | value :: stack ->
-            ListSet.Rewind (
-                stack,
-                Element (listSet, value))
+            // We can use List.rev instead of 'rewind' since we're adding the
+            // value to the end of the list.
+            List.rev (value :: path)
 
-    //
-    static member RemoveImpl (stack : 'T list, listSet : ListSet<'T>, original, value : 'T) : ListSet<'T> option =
-        match listSet with
-        | Tail x ->
-            if x = value then
-                match stack with
-                | [] -> None
-                | v :: stack ->
-                    ListSet.Rewind (stack, Tail v)
-                    |> Some
-            else
-                // The specified key isn't in the set. so return the original set.without changing it.
-                Some original
-
-        | Element (listSet, x) ->
-            if x = value then
-                Some <| ListSet.Rewind (stack, listSet)
-            else
-                ListSet.RemoveImpl (x :: stack, listSet, original, value)
-
-    //
-    static member Remove (value : 'T, listSet : ListSet<'T>) : ListSet<'T> option =
-        match listSet with
-        | Tail x ->
-            if x = value then None
-            else Some listSet
-
-        | Element (listSet, x) ->
-            if x = value then Some listSet
-            else
-                ListSet.RemoveImpl ([x], listSet, listSet, value)
-
-    //
-    static member private AddImpl (stack : 'T list, listSet : ListSet<'T>, original, value : 'T) : ListSet<'T> =
-        match listSet with
-        | Tail x ->
-            // OPTIMIZATION : If the value being inserted is _identical_ to the tail element,
-            // the ListSet doesn't need to be modified -- so just return the original.
-            if System.Object.ReferenceEquals (box x, value) then original
-            else
-                // Compare the value being inserted to the tail element and insert
-                // the new element so that the list is still ordered.
-                let c = Unchecked.compare x value
-                if c = 0 then
-                    original
-                elif c < 0 then
-                    // Add the new element to the end of the listSet.
-                    let listSet = Element (Tail value, x)
-                    ListSet.Rewind (stack, listSet)
-                else
-                    // Insert the new element before the tail.
-                    let listSet = Element (listSet, x)
-                    ListSet.Rewind (stack, listSet)
-
-        | Element (listSet, x) ->
-            // OPTIMIZATION : If the value being inserted is _identical_ to the tail element,
-            // the ListSet doesn't need to be modified -- so just return the original.
-            if System.Object.ReferenceEquals (box x, value) then original
-            else
-                // Compare the value being inserted to the current element and insert
-                // the new element so that the list is still ordered.
-                let c = Unchecked.compare x value
-                if c = 0 then
-                    original
-                elif c < 0 then
-                    // The new binding is inserted at some "later" point in the list.
-                    ListSet.AddImpl (x :: stack, listSet, original, value)
-                else
-                    // Add the new binding prior to this binding, then rewind the stack onto
-                    // the result to produce the new set.
-                    let listSet = Element (listSet, value)
-                    ListSet.Rewind (stack, listSet)
-
-    //
-    static member Add (value : 'T, listSet : ListSet<'T>) : ListSet<'T> =
-        ListSet.AddImpl ([], listSet, listSet, value)
-
-    //
-    static member ToSeq (listSet : ListSet<'T>) =
-        seq {
-        match listSet with
-        | Tail x ->
-            yield x
-        | Element (listSet, x) ->
-            yield x
-            yield! ListSet.ToSeq listSet
-        }
-
-    //
-    static member private Reverse (reversed : ListSet<'T>, listSet : ListSet<'T>) =
-        match listSet with
-        | Tail x ->
-            Element (reversed, x)
-        | Element (listSet, x) ->
-            ListSet.Reverse (Element (reversed, x), listSet)
-
-    //
-    static member private Reverse (listSet : ListSet<'T>) =
-        match listSet with
-        | Tail _ ->
-            listSet
-        | Element (listSet, x) ->
-            ListSet.Reverse (Tail x, listSet)
-
-    //
-    static member Iterate (action : 'T -> unit, listSet : ListSet<'T>) =
-        match listSet with
-        | Tail x ->
-            action x
-        | Element (listSet, x) ->
-            action x
-            ListSet.Iterate (action, listSet)
-
-    //
-    static member IterateBack (action, listSet : ListSet<'T>) =
-        ListSet.Iterate (action, ListSet.Reverse listSet)
-
-    //
-    static member Fold (folder : FSharpFunc<_,_,_>, listSet : ListSet<'T>, state : 'State) =
-        match listSet with
-        | Tail x ->
-            folder.Invoke (state, x)
-        | Element (listSet, x) ->
-            let state = folder.Invoke (state, x)
-            ListSet.Fold (folder, listSet, state)
-
-    //
-    static member FoldBack (folder : FSharpFunc<_,_,_>, listSet : ListSet<'T>, state : 'State) =
-        let folder state x =
-            folder.Invoke (x, state)
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-        ListSet.Fold (folder, ListSet.Reverse listSet, state)
-
-    //
-    static member TryFind (predicate : 'T -> bool, listSet : ListSet<'T>) =
-        match listSet with
-        | Tail x ->
-            if predicate x then
-                Some x
-            else None
-        | Element (listSet, x) ->
-            if predicate x then
-                Some x
-            else
-                ListSet.TryFind (predicate, listSet)
-
-    //
-    static member TryPick (picker : 'T -> 'U option, listSet : ListSet<'T>) : 'U option =
-        match listSet with
-        | Tail x ->
-            picker x
-        | Element (listSet, x) ->
-            match picker x with
-            | None ->
-                ListSet.TryPick (picker, listSet)
-            | result ->
-                result
-
-    //
-    static member First (listSet : ListSet<'T>) : 'T =
-        match listSet with
-        | Tail x
-        | Element (_, x) ->
-            x
-
-    //
-    static member Last (listSet : ListSet<'T>) : 'T =
-        match listSet with
-        | Tail x -> x
-        | Element (listSet, _) ->
-            ListSet.Last listSet
-
-    //
-    static member UnionImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> =
-        match listSet1, listSet2 with
-        | Tail x, Tail y ->
-            let c = Unchecked.compare x y
-            if c = 0 then   // x = y
-                // Add this element to the union result, then reverse the result.
-                match acc with
-                | None ->
-                    listSet1    // Tail x
-                | Some acc ->
-                    Element (acc, x)
-                    |> ListSet.Reverse
-
+        | el :: tl ->
+            // Should the value be inserted before 'el'?
+            let c = Unchecked.compare value el
+            if c = 0 then
+                orig    // value = el, so we don't need to modify the list. Return the original list.
             elif c < 0 then
-                // Add x, then y to the union result, then reverse the result.
-                match acc with
-                | None ->
-                    Element (Tail y, x)
-                | Some acc ->
-                    Element (Element (acc, x), y)
-                    |> ListSet.Reverse
-
+                // Cons the element onto the tail -- that is, prior to 'el' -- then rewind the zipper.
+                rewind path (value :: tail)
             else
-                // Add y, then x to the union result, then reverse the result.
-                match acc with
-                | None ->
-                    Element (Tail x, y)
-                | Some acc ->
-                    Element (Element (acc, y), x)
-                    |> ListSet.Reverse
-
-        | _, _ ->
-            notImpl "ListSet.UnionImpl"
+                // The value needs to be inserted at some later point.
+                // Add 'el' to the path and continue traversing the list.
+                addImpl (el :: path) tl orig value
 
     //
-    static member Union (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> =
-        ListSet.UnionImpl (listSet1, listSet2, None)
+    [<CompiledName("Add")>]
+    let add (value : 'T) (set : ListSet<'T>) : ListSet<'T> =
+        // Call the recursive implementation.
+        addImpl [] set set value
 
     //
-    static member IntersectImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> option =
-        notImpl "ListSet.IntersectImpl"
+    let rec private removeImpl path tail orig (value : 'T) =
+        match tail with
+        | [] ->
+            // The value wasn't found in the list, so there's nothing
+            // to modify -- return the original list.
+            orig
+        | el :: tl ->
+            // Is 'el' the value we want to remove?
+            if el = value then
+                // Rewind the zipper, leaving out 'el'.
+                rewind path tl
+            else
+                // Add 'el' to the path and continue traversing the list.
+                removeImpl (el :: path) tl orig value
 
     //
-    static member Intersect (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> option =
-        ListSet.IntersectImpl (listSet1, listSet2, None)
+    [<CompiledName("Remove")>]
+    let remove (value : 'T) (set : ListSet<'T>) : ListSet<'T> =
+        // Call the recursive implementation.
+        removeImpl [] set set value
 
     //
-    static member DifferenceImpl (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>, acc) : ListSet<'T> option =
-        notImpl "ListSet.DifferenceImpl"
+    [<CompiledName("Union")>]
+    let union (set1 : ListSet<'T>) (set2 : ListSet<'T>) : ListSet<'T> =
+        notImpl "ListSet.union"
 
     //
-    static member Difference (listSet1 : ListSet<'T>, listSet2 : ListSet<'T>) : ListSet<'T> option =
-        ListSet.DifferenceImpl (listSet1, listSet2, None)
+    [<CompiledName("Intersect")>]
+    let intersect (set1 : ListSet<'T>) (set2 : ListSet<'T>) : ListSet<'T> =
+        notImpl "ListSet.intersect"
+
+    //
+    [<CompiledName("Difference")>]
+    let difference (set1 : ListSet<'T>) (set2 : ListSet<'T>) : ListSet<'T> =
+        notImpl "ListSet.difference"
+
+    /// <summary>
+    /// Is <paramref name="set1"/> a subset of <paramref name="set2"/>?
+    /// <c>isSubset set1 set2</c> returns <c>true</c> if all keys in <paramref name="set1"/> are in <paramref name="set2"/>.
+    /// </summary>
+    [<CompiledName("IsSubset")>]
+    let isSubset (set1 : ListSet<'T>) (set2 : ListSet<'T>) : bool =
+        notImpl "ListSet.isSubset"
+
+    /// <summary>
+    /// Is <paramref name="set1"/> a proper subset of <paramref name="set2"/>?
+    /// <c>isProperSubset set1 set2</c> returns <c>true</c> if all keys in <paramref name="set1"/> are in <paramref name="set2"/>,
+    /// and at least one element in <paramref name="set2"/> is not in <paramref name="set1"/>.
+    /// </summary>
+    [<CompiledName("IsProperSubset")>]
+    let isProperSubset (set1 : ListSet<'T>) (set2 : ListSet<'T>) : bool =
+        notImpl "ListSet.isProperSubset"
 
 
 (* OPTIMIZE :   Some of the functional-style operations on PatriciaHashSet use direct non-tail-recursion;
@@ -315,7 +150,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             false
         | Lf (j, listSet) ->
             j = valueHash
-            && ListSet.Contains (value, listSet)
+            && List.contains value listSet
         | Br (_, m, t0, t1) ->
             PatriciaHashSet.Contains (
                 valueHash, value, (if zeroBit (valueHash, m) then t0 else t1))
@@ -326,7 +161,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty ->
             invalidArg "set" "The set is empty."
         | Lf (_, listSet) ->
-            ListSet.First listSet
+            List.head listSet
         | Br (_, _, t0, _) ->
             PatriciaHashSet.First t0
 
@@ -336,7 +171,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty ->
             invalidArg "set" "The set is empty."
         | Lf (_, listSet) ->
-            ListSet.Last listSet
+            List.last listSet
         | Br (_, _, _, t1) ->
             PatriciaHashSet.Last t1
 
@@ -345,7 +180,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         match set with
         | Empty -> 0
         | Lf (_, listSet) ->
-            ListSet.Count listSet
+            List.length listSet
         | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
@@ -360,19 +195,19 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listSet) ->
-                    count <- count + (uint32 <| ListSet.Count listSet)
+                    count <- count + (uint32 <| List.length listSet)
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
                     count <-
                         count
-                        + (uint32 <| ListSet.Count listSet1)
-                        + (uint32 <| ListSet.Count listSet2)
+                        + (uint32 <| List.length listSet1)
+                        + (uint32 <| List.length listSet2)
                     
                 | Br (_, _, Lf (_, listSet), child)
                 | Br (_, _, child, Lf (_, listSet)) ->
-                    count <- count + (uint32 <| ListSet.Count listSet)
+                    count <- count + (uint32 <| List.length listSet)
                     stack.Push child
 
                 | Br (_, _, left, right) ->
@@ -392,10 +227,10 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             Empty
         | Lf (j, listSet) ->
             if j = valueHash then
-                match ListSet.Remove (value, listSet) with
-                | None ->
+                match ListSet.remove value listSet with
+                | [] ->
                     Empty
-                | Some result ->
+                | result ->
                     // OPTIMIZATION : If the result is the same as the input, return the
                     // original set.since it wasn't modified.
                     if result === listSet then set
@@ -409,13 +244,13 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     match PatriciaHashSet.Remove (valueHash, value, t0) with
                     | Empty -> t1
                     | left ->
-                        // OPTIMIZE : If left === t0 then return the original set.instead of creating a new one.
+                        // OPTIMIZE : If left === t0 then return the original set instead of creating a new one.
                         Br (p, m, left, t1)
                 else
                     match PatriciaHashSet.Remove (valueHash, value, t1) with
                     | Empty -> t0
                     | right ->
-                        // OPTIMIZE : If right === t1 then return the original set.instead of creating a new one.
+                        // OPTIMIZE : If right === t1 then return the original set instead of creating a new one.
                         Br (p, m, t0, right)
             else set
 
@@ -432,10 +267,10 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
     static member Add (valueHash, value : 'T, set) =
         match set with
         | Empty ->
-            Lf (valueHash, Tail value)
+            Lf (valueHash, [value])
         | Lf (j, listSet) ->
             if j = valueHash then
-                let result = ListSet.Add (value, listSet)
+                let result = ListSet.add value listSet
 
                 // OPTIMIZATION : If the result is the same as the input, return the original
                 // set.instead since it wasn't modified.
@@ -443,7 +278,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 else
                     Lf (j, result)
             else
-                PatriciaHashSet.Join (valueHash, Lf (valueHash, Tail value), j, set)
+                PatriciaHashSet.Join (valueHash, Lf (valueHash, [value]), j, set)
         | Br (p, m, t0, t1) ->
             if matchPrefix (valueHash, p, m) then
                 if zeroBit (valueHash, m) then
@@ -457,15 +292,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     // OPTIMIZE : If right === t1 then return the original set instead of creating a new one.
                     Br (p, m, t0, right)
             else
-                PatriciaHashSet.Join (valueHash, Lf (valueHash, Tail value), p, set)
-
-    //
-    static member AddSet (valueHash, listSet : ListSet<'T>, set) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.AddSet"
-
-    //
-    static member RemoveSet (valueHash, set) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.RemoveSet"
+                PatriciaHashSet.Join (valueHash, Lf (valueHash, [value]), p, set)
 
     /// Computes the union of two PatriciaHashSets.
     static member Union (s, t) : PatriciaHashSet<'T> =
@@ -651,88 +478,68 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 //        | Empty, _ ->
 //            Empty
 
+    /// Computes the containment ordering for two sets (i.e., determines if one set includes the other).
+    // Return values:
+    //  -1 : All values in 't1' are in 't2', and at least one value of 't2' is not in 't1'.
+    //   0 : The sets contain _exactly_ the same values.
+    //   1 : The sets are disjoint, i.e., 't1' contains at least one value which is not in 't2'.
+    static member private SubsetCompare (t1 : PatriciaHashSet<'T>, t2 : PatriciaHashSet<'T>) : int =
+        notImpl "PatriciaHashSet.SubsetCompare"
 (*
-    /// <c>IsSubmapOfBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
-    /// and when 'f' returns <c>true</c> when applied to their respective values.
-    static member IsSubmapOfBy (predicate : 'T -> 'T -> bool) (t1 : PatriciaHashSet<'T>) (t2 : PatriciaHashSet<'T>) : bool =
         match t1, t2 with
-        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
-            if shorter (m1, m2) then
-                false
-            elif shorter (m2, m1) then
-                matchPrefix (p1, p2, m2) && (
-                    if zeroBit (p1, m2) then
-                        PatriciaHashSet.IsSubmapOfBy predicate t1 l2
-                    else
-                        PatriciaHashSet.IsSubmapOfBy predicate t1 r2)
-            else
-                p1 = p2
-                && PatriciaHashSet.IsSubmapOfBy predicate l1 l2
-                && PatriciaHashSet.IsSubmapOfBy predicate r1 r2
-                
-        | Br (_,_,_,_), _ ->
-            false
-        | Lf (k, x), t ->
-            match PatriciaHashSet.TryFind (k, t) with
-            | None ->
-                false
-            | Some y ->
-                predicate x y
-        | Empty, _ ->
-            true
-
-    //
-    static member private SubsetCmp (predicate : 'T -> 'T -> bool) (t1 : PatriciaHashSet<'T>) (t2 : PatriciaHashSet<'T>) : int =
-        match t1, t2 with
-        | (Br (p1, m1, l1, r1) as t1), (Br (p2, m2, l2, r2) as t2) ->
+        | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then 1
             elif shorter (m2, m1) then
                 if not <| matchPrefix (p1, p2, m2) then 1
                 elif zeroBit (p1, m2) then
-                    PatriciaHashSet.SubsetCmp predicate t1 l2
+                    match PatriciaHashSet.SubsetCompare (t1, l2) with 1 -> 1 | _ -> -1
                 else
-                    PatriciaHashSet.SubsetCmp predicate t1 r2
+                    match PatriciaHashSet.SubsetCompare (t1, r2) with 1 -> 1 | _ -> -1
             elif p1 = p2 then
-                let left = PatriciaHashSet.SubsetCmp predicate l1 l2
-                let right = PatriciaHashSet.SubsetCmp predicate r1 r2
+                let left = PatriciaHashSet.SubsetCompare (l1, l2)
+                let right = PatriciaHashSet.SubsetCompare (r1, r2)
                 match left, right with
                 | 1, _
                 | _, 1 -> 1
                 | 0, 0 -> 0
                 | _ -> -1
             else
-                // The set. are disjoint.
+                // The maps are disjoint.
                 1
 
-        | Br (_,_,_,_), _ -> 1
-        | Lf (kx, x), Lf (ky, y) ->
-            if kx = ky && predicate x y then 0
-            else 1  // The sets are disjoint.
-        | Lf (k, x), t ->
-            match PatriciaHashSet.TryFind (k, t) with
-            | Some y when predicate x y -> -1
-            | _ -> 1    // The sets are disjoint.
+        | Br (_,_,_,_), (Empty | Lf (_,_)) -> 1
+        | Lf x, Lf y ->
+            if x = y then 0
+            else 1
+
+        | Lf x, Br (p, m, l, r) ->
+            if not <| matchPrefix (x, p, m) then 1
+            elif zeroBit (x, m) then
+                match PatriciaSet.SubsetCompare (t1, l) with 1 -> 1 | _ -> -1
+            else
+                match PatriciaSet.SubsetCompare (t1, r) with 1 -> 1 | _ -> -1
+
+        | Lf _, Empty ->
+            // The maps are disjoint.
+            1
 
         | Empty, Empty -> 0
         | Empty, _ -> -1
 *)
-
-    /// Is 'set1' a subset of 'set2'?
-    /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubset (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
-        notImpl "PatriciaHashSet.IsSubset"
-//        match PatriciaHashSet.SubsetCompare (set1, set2) with
-//        | -1 | 0 -> true
-//        | _ -> false
-
     /// Is 'set1' a proper subset of 'set2'?
     /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
     /// and at least one element in set2 is not in set1.
     static member IsProperSubset (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
-        notImpl "PatriciaHashSet.IsProperSubset"
-//        match PatriciaHashSet.SubsetCompare (set1, set2) with
-//        | -1 -> true
-//        | _ -> false
+        match PatriciaHashSet.SubsetCompare (set1, set2) with
+        | -1 -> true
+        | _ -> false
+
+    /// Is 'set1' a subset of 'set2'?
+    /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
+    static member IsSubset (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
+        match PatriciaHashSet.SubsetCompare (set1, set2) with
+        | -1 | 0 -> true
+        | _ -> false
 
     //
     static member OfSeq (source : seq<'T>) : PatriciaHashSet<'T> =
@@ -766,7 +573,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         match set with
         | Empty -> ()
         | Lf (_, listSet) ->
-            ListSet.Iterate (action, listSet)
+            List.iter action listSet
         | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
@@ -779,18 +586,18 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listSet) ->
-                    ListSet.Iterate (action, listSet)
+                    List.iter action listSet
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
-                    ListSet.Iterate (action, listSet1)
-                    ListSet.Iterate (action, listSet2)
+                    List.iter action listSet1
+                    List.iter action listSet2
                     
                 | Br (_, _, Lf (_, listSet), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    ListSet.Iterate (action, listSet)
+                    List.iter action listSet
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -804,7 +611,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         match set with
         | Empty -> ()
         | Lf (_, listSet) ->
-            ListSet.IterateBack (action, listSet)
+            List.iter action <| List.rev listSet
         | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
@@ -817,18 +624,18 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listSet) ->
-                    ListSet.IterateBack (action, listSet)
+                    List.iter action <| List.rev listSet
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
-                    ListSet.IterateBack (action, listSet1)
-                    ListSet.IterateBack (action, listSet2)
+                    List.iter action <| List.rev listSet1
+                    List.iter action <| List.rev listSet2
                     
                 | Br (_, _, left, Lf (_, listSet)) ->
                     // Only handle the case where the right child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    ListSet.IterateBack (action, listSet)
+                    List.iter action <| List.rev listSet
                     stack.Push left
 
                 | Br (_, _, left, right) ->
@@ -843,11 +650,8 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty ->
             state
         | Lf (_, listSet) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-            ListSet.Fold (folder, listSet, state)
+            List.fold folder state listSet
         | Br (_,_,_,_) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
@@ -860,18 +664,18 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listSet) ->
-                    state <- ListSet.Fold (folder, listSet, state)
+                    state <- List.fold folder state listSet
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
-                    state <- ListSet.Fold (folder, listSet1, state)
-                    state <- ListSet.Fold (folder, listSet2, state)
+                    state <- List.fold folder state listSet1
+                    state <- List.fold folder state listSet2
                     
                 | Br (_, _, Lf (_, listSet), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    state <- ListSet.Fold (folder, listSet, state)
+                    state <- List.fold folder state listSet
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -889,11 +693,8 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty ->
             state
         | Lf (_, listSet) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-            ListSet.FoldBack (folder, listSet, state)
+            List.foldBack folder listSet state
         | Br (_,_,_,_) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
 
@@ -906,18 +707,18 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listSet) ->
-                    state <- ListSet.FoldBack (folder, listSet, state)
+                    state <- List.foldBack folder listSet state
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
-                    state <- ListSet.FoldBack (folder, listSet1, state)
-                    state <- ListSet.FoldBack (folder, listSet2, state)
+                    state <- List.foldBack folder listSet1 state
+                    state <- List.foldBack folder listSet2 state
                     
                 | Br (_, _, left, Lf (_, listSet)) ->
                     // Only handle the case where the right child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    state <- ListSet.FoldBack (folder, listSet, state)
+                    state <- List.foldBack folder listSet state
                     stack.Push left
 
                 | Br (_, _, left, right) ->
@@ -935,7 +736,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty ->
             None
         | Lf (_, listSet) ->
-            ListSet.TryFind (predicate, listSet)
+            List.tryFind predicate listSet
         | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
@@ -950,19 +751,19 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listSet) ->
-                    matchingKey <- ListSet.TryFind (predicate, listSet)
+                    matchingKey <- List.tryFind predicate listSet
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
-                    matchingKey <- ListSet.TryFind (predicate, listSet1)
+                    matchingKey <- List.tryFind predicate listSet1
                     if Option.isNone matchingKey then
-                        matchingKey <- ListSet.TryFind (predicate, listSet2)
+                        matchingKey <- List.tryFind predicate listSet2
                     
                 | Br (_, _, Lf (_, listSet), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    matchingKey <- ListSet.TryFind (predicate, listSet)
+                    matchingKey <- List.tryFind predicate listSet
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -980,7 +781,7 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Empty ->
             None
         | Lf (_, listSet) ->
-            ListSet.TryPick (picker, listSet)
+            List.tryPick picker listSet
         | Br (_,_,_,_) ->
             /// The stack of trie nodes pending traversal.
             let stack = Stack (defaultTraversalStackSize)
@@ -995,22 +796,22 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf (_, listSet) ->
-                    pickedValue <- ListSet.TryPick (picker, listSet)
+                    pickedValue <- List.tryPick picker listSet
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
                     pickedValue <-
-                        match ListSet.TryPick (picker, listSet1) with
+                        match List.tryPick picker listSet1 with
                         | (Some _) as value ->
                             value
                         | None ->
-                            ListSet.TryPick (picker, listSet2)
+                            List.tryPick picker listSet2
                     
                 | Br (_, _, Lf (_, listSet), right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    pickedValue <- ListSet.TryPick (picker, listSet)
+                    pickedValue <- List.tryPick picker listSet
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -1028,18 +829,18 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         match set with
         | Empty -> ()
         | Lf (_, listSet) ->
-            yield! ListSet.ToSeq listSet
+            yield! List.toSeq listSet
         
         (* OPTIMIZATION :   When one or both children of this node are leaves,
                             we handle them directly since it's a little faster. *)
         | Br (_, _, Lf (_, listSet1), Lf (_, listSet2)) ->
-            yield! ListSet.ToSeq listSet1
-            yield! ListSet.ToSeq listSet2
+            yield! List.toSeq listSet1
+            yield! List.toSeq listSet2
 
         | Br (_, _, Lf (_, listSet), right) ->
             // Only handle the case where the left child is a leaf
             // -- otherwise the traversal order would be altered.
-            yield! ListSet.ToSeq listSet
+            yield! List.toSeq listSet
             yield! PatriciaHashSet.ToSeq right
 
         | Br (_, _, left, right) ->
@@ -1222,7 +1023,7 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
     static member Singleton (value : 'T) : HashSet<'T> =
         let valueHash = uint32 <| hash value
         HashSet (
-            Lf (valueHash, Tail value))
+            Lf (valueHash, [value]))
 
     /// Returns a new HashSet made from the given bindings.
     static member OfSeq (source : seq<'T>) : HashSet<'T> =
