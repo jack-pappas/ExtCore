@@ -74,7 +74,7 @@ module private ListSet =
         // Call the recursive implementation.
         addImpl [] set set value
 
-    //
+    /// Zipper-like implementation of 'remove'.
     let rec private removeImpl path tail orig (value : 'T) =
         match tail with
         | [] ->
@@ -96,28 +96,100 @@ module private ListSet =
         // Call the recursive implementation.
         removeImpl [] set set value
 
+    /// Recursive implementation of 'union'.
+    let rec private unionImpl acc set1 set2 : ListSet<'T> =
+        match set1, set2 with
+        | [], [] ->
+            // Reverse the combined list before returning so
+            // the results are in the correct order.
+            List.rev acc
+        | hd :: tl, []
+        | [], hd :: tl ->
+            unionImpl (hd :: acc) tl []
+        | hd1 :: tl1, hd2 :: tl2 ->
+            let c = Unchecked.compare hd1 hd2
+
+            // Based on the comparison, cons the "lesser" element onto the accumulator
+            // (i.e., the merged list) then recurse to continue processing.
+            if c = 0 then   // hd1 = hd2
+                unionImpl (hd1 :: acc) tl1 tl2
+            elif c < 0 then
+                unionImpl (hd1 :: acc) tl1 set2
+            else
+                unionImpl (hd2 :: acc) set1 tl2
+
     //
     [<CompiledName("Union")>]
     let union (set1 : ListSet<'T>) (set2 : ListSet<'T>) : ListSet<'T> =
-        notImpl "ListSet.union"
+        // Call the recursive implementation.
+        unionImpl [] set1 set2
+
+    /// Recursive implementation of 'intersect'.
+    let rec private intersectImpl acc set1 set2 : ListSet<'T> =
+        match set1, set2 with
+        | [], _
+        | _, [] ->
+            // Reverse the combined list before returning so
+            // the results are in the correct order.
+            List.rev acc
+        | hd1 :: tl1, hd2 :: tl2 ->
+            let c = Unchecked.compare hd1 hd2
+
+            // If the heads of the lists are equal, add that element to the accumulator
+            // (i.e., the merged list); otherwise, drop the "lesser" of the two head elements.
+            if c = 0 then   // hd1 = hd2
+                intersectImpl (hd1 :: acc) tl1 tl2
+            elif c < 0 then
+                intersectImpl acc tl1 set2
+            else
+                intersectImpl acc set1 tl2
 
     //
     [<CompiledName("Intersect")>]
     let intersect (set1 : ListSet<'T>) (set2 : ListSet<'T>) : ListSet<'T> =
-        notImpl "ListSet.intersect"
+        // Call the recursive implementation.
+        intersectImpl [] set1 set2
+
+    /// Recursive implementation of 'difference'.
+    let rec private differenceImpl acc set1 set2 : ListSet<'T> =
+        match set1, set2 with
+        | [], _
+        | _, [] ->
+            // Reverse the combined list before returning so
+            // the results are in the correct order.
+            List.rev acc
+        | hd1 :: tl1, hd2 :: tl2 ->
+            let c = Unchecked.compare hd1 hd2
+
+            // If hd1 = hd2 then we drop both of them, effectively "removing" the value from set1.
+            if c = 0 then
+                differenceImpl acc tl1 tl2
+            elif c < 0 then
+                differenceImpl (hd1 :: acc) tl1 tl2
+            else
+                differenceImpl acc set1 tl2
 
     //
     [<CompiledName("Difference")>]
     let difference (set1 : ListSet<'T>) (set2 : ListSet<'T>) : ListSet<'T> =
-        notImpl "ListSet.difference"
+        // Call the recursive implementation.
+        differenceImpl [] set1 set2
 
     /// <summary>
     /// Is <paramref name="set1"/> a subset of <paramref name="set2"/>?
     /// <c>isSubset set1 set2</c> returns <c>true</c> if all keys in <paramref name="set1"/> are in <paramref name="set2"/>.
     /// </summary>
     [<CompiledName("IsSubset")>]
-    let isSubset (set1 : ListSet<'T>) (set2 : ListSet<'T>) : bool =
-        notImpl "ListSet.isSubset"
+    let rec isSubset (set1 : ListSet<'T>) (set2 : ListSet<'T>) : bool =
+        match set1, set2 with
+        | [], _ -> true
+        | _, [] -> false
+        | hd1 :: tl1, hd2 :: tl2 ->
+            let c = Unchecked.compare hd1 hd2
+
+            if c = 0 then isSubset tl1 tl2
+            elif c < 0 then false
+            else isSubset set1 tl2
 
     /// <summary>
     /// Is <paramref name="set1"/> a proper subset of <paramref name="set2"/>?
@@ -125,8 +197,16 @@ module private ListSet =
     /// and at least one element in <paramref name="set2"/> is not in <paramref name="set1"/>.
     /// </summary>
     [<CompiledName("IsProperSubset")>]
-    let isProperSubset (set1 : ListSet<'T>) (set2 : ListSet<'T>) : bool =
-        notImpl "ListSet.isProperSubset"
+    let rec isProperSubset (set1 : ListSet<'T>) (set2 : ListSet<'T>) : bool =
+        match set1, set2 with
+        | _, [] -> false
+        | [], _ -> true
+        | hd1 :: tl1, hd2 :: tl2 ->
+            let c = Unchecked.compare hd1 hd2
+
+            if c = 0 then isProperSubset tl1 tl2
+            elif c < 0 then false
+            else isSubset set1 tl2
 
 
 (* OPTIMIZE :   Some of the functional-style operations on PatriciaHashSet use direct non-tail-recursion;
