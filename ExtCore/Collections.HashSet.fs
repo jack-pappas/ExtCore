@@ -384,65 +384,86 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 
     /// Computes the union of two PatriciaHashSets.
     static member Union (s, t) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.Union"
-//        match s, t with
-//        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
-//            if m = n then
-//                if p = q then
-//                    // The trees have the same prefix. Merge the subtrees.
-//                    let left = PatriciaHashSet.Union (s0, t0)
-//                    let right = PatriciaHashSet.Union (s1, t1)
-//                    Br (p, m, left, right)
-//                else
-//                    // The prefixes disagree.
-//                    PatriciaHashSet.Join (p, s, q, t)
-//
-//            #if LITTLE_ENDIAN_TRIES
-//            elif m < n then
-//            #else
-//            elif m > n then
-//            #endif
-//                if matchPrefix (q, p, m) then
-//                    // q contains p. Merge t with a subtree of s.
-//                    if zeroBit (q, m) then
-//                        let left = PatriciaHashSet.Union (s0, t)
-//                        Br (p, m, left, s1)
-//                    else
-//                        let right = PatriciaHashSet.Union (s1, t)
-//                        Br (p, m, s0, right)
-//                else
-//                    // The prefixes disagree.
-//                    PatriciaHashSet.Join (p, s, q, t)
-//
-//            else
-//                if matchPrefix (p, q, n) then
-//                    // p contains q. Merge s with a subtree of t.
-//                    if zeroBit (p, n) then
-//                        let left = PatriciaHashSet.Union (s, t0)
-//                        Br (q, n, left, t1)
-//                    else
-//                        let right = PatriciaHashSet.Union (s, t1)
-//                        Br (q, n, t0, right)
-//                else
-//                    // The prefixes disagree.
-//                    PatriciaHashSet.Join (p, s, q, t)
-//
-//        | Br (p, m, s0, s1), Lf (k, listSet) ->
-//            if matchPrefix (k, p, m) then
-//                if zeroBit (k, m) then
-//                    let left = PatriciaHashSet.AddSet (k, listSet, s0)
-//                    Br (p, m, left, s1)
-//                else
-//                    let right = PatriciaHashSet.AddSet (k, listSet, s1)
-//                    Br (p, m, s0, right)
-//            else
-//                PatriciaHashSet.Join (k, Lf (k, listSet), p, s)
-//
-//        | Br (_,_,_,_), Empty ->
-//            s
-//        | Lf (k, listSet), _ ->
-//            PatriciaHashSet.AddSet (k, listSet, t)
-//        | Empty, _ -> t
+        match s, t with
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
+            if m = n then
+                if p = q then
+                    // The trees have the same prefix. Merge the subtrees.
+                    let left = PatriciaHashSet.Union (s0, t0)
+                    let right = PatriciaHashSet.Union (s1, t1)
+                    Br (p, m, left, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaHashSet.Join (p, s, q, t)
+
+            #if LITTLE_ENDIAN_TRIES
+            elif m < n then
+            #else
+            elif m > n then
+            #endif
+                if matchPrefix (q, p, m) then
+                    // q contains p. Merge t with a subtree of s.
+                    if zeroBit (q, m) then
+                        let left = PatriciaHashSet.Union (s0, t)
+                        Br (p, m, left, s1)
+                    else
+                        let right = PatriciaHashSet.Union (s1, t)
+                        Br (p, m, s0, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaHashSet.Join (p, s, q, t)
+
+            else
+                if matchPrefix (p, q, n) then
+                    // p contains q. Merge s with a subtree of t.
+                    if zeroBit (p, n) then
+                        let left = PatriciaHashSet.Union (s, t0)
+                        Br (q, n, left, t1)
+                    else
+                        let right = PatriciaHashSet.Union (s, t1)
+                        Br (q, n, t0, right)
+                else
+                    // The prefixes disagree.
+                    PatriciaHashSet.Join (p, s, q, t)
+
+        | Br (p, m, s0, s1), Lf (k, _) ->
+            if matchPrefix (k, p, m) then
+                if zeroBit (k, m) then
+                    let left = PatriciaHashSet.Union (s0, t)
+                    Br (p, m, left, s1)
+                else
+                    let right = PatriciaHashSet.Union (s1, t)
+                    Br (p, m, s0, right)
+            else
+                PatriciaHashSet.Join (k, t, p, s)
+
+        | Lf (k, _), Br (q, n, t0, t1) ->
+            if matchPrefix (k, q, n) then
+                if zeroBit (k, n) then
+                    let left = PatriciaHashSet.Union (s, t0)
+                    Br (q, n, left, t1)
+                else
+                    let right = PatriciaHashSet.Union (s, t1)
+                    Br (q, n, t0, right)
+            else
+                PatriciaHashSet.Join (k, s, q, t)
+
+        | Lf (j, listSet1), Lf (k, listSet2) ->
+            if j = k then
+                // Combine the sets into a single set.
+                let listSet = ListSet.union listSet1 listSet2
+                
+                // OPTIMIZE : Try to figure out how we can implement structure-sharing
+                // here (i.e., how can we modify the ListSet functions so they return one of
+                // the original lists if the result is going to be the same anyway).
+                // Without this, the effectiveness of the structure-sharing optimizations
+                // for this data structure is greatly reduced.
+                Lf (j, listSet)
+            else
+                PatriciaHashSet.Join (j, s, k, t)
+
+        | _, Empty -> s
+        | Empty, _ -> t
 
     /// Compute the intersection of two PatriciaHashSets.
     static member Intersect (s, t) : PatriciaHashSet<'T> =
@@ -1432,31 +1453,6 @@ module HashSet =
     let inline singleton (value : 'T) : HashSet<'T> =
         HashSet.Singleton value
 
-    /// Tests if an element is in the domain of the set.
-    [<CompiledName("ContainsKey")>]
-    let inline contains (value : 'T) (set : HashSet<'T>) : bool =
-        // Preconditions
-        checkNonNull "set" set
-
-        set.Contains value
-
-    /// Returns the key of the first element in the collection which satisfies the given
-    /// predicate. Returns None if no such element is found.
-    [<CompiledName("TryFind")>]
-    let inline tryFind (predicate : 'T -> bool) (set : HashSet<'T>) : 'T option =
-        // Preconditions
-        checkNonNull "set" set
-        
-        set.TryFind predicate
-
-    //
-    [<CompiledName("Find")>]
-    let inline find (predicate : 'T -> bool) (set : HashSet<'T>) : 'T =
-        // Preconditions
-        checkNonNull "set" set
-
-        set.Find predicate
-
     /// Returns a new set with the binding added to this set.
     [<CompiledName("Add")>]
     let inline add (value : 'T) (set : HashSet<'T>) : HashSet<'T> =
@@ -1474,32 +1470,100 @@ module HashSet =
 
         set.Remove value
 
-    /// Returns a new set created by merging the two specified sets.
+    /// Tests if an element is in the domain of the set.
+    [<CompiledName("Contains")>]
+    let inline contains (value : 'T) (set : HashSet<'T>) : bool =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Contains value
+
+    (* maxElement, minElement *)
+
+    /// Computes the union of the two sets.
     [<CompiledName("Union")>]
     let inline union (set1 : HashSet<'T>) (set2 : HashSet<'T>) : HashSet<'T> =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.Union set2
 
-    /// Returns the intersection of two sets.
+    /// Computes the union of a sequence of sets.
+    [<CompiledName("UnionMany")>]
+    let unionMany sets =
+        // Preconditions checked by the target method.
+        HashSet.UnionMany sets
+
+    /// Computes the intersection of the two sets.
     [<CompiledName("Intersect")>]
     let inline intersect (set1 : HashSet<'T>) (set2 : HashSet<'T>) : HashSet<'T> =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.Intersect set2
 
-    /// Returns a new set created by removing the second set from the first.
+    /// Computes the intersection of a sequence of sets.
+    [<CompiledName("IntersectMany")>]
+    let intersectMany sets =
+        // Preconditions checked by the target method.
+        HashSet.IntersectMany sets
+
+    /// Returns a new set with the elements of the second set removed from the first.
     [<CompiledName("Difference")>]
     let inline difference (set1 : HashSet<'T>) (set2 : HashSet<'T>) : HashSet<'T> =
         // Preconditions
         checkNonNull "set1" set1
         checkNonNull "set2" set2
-
+        
         set1.Difference set2
+
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the first set are in the second.
+    /// </summary>
+    [<CompiledName("IsSubset")>]
+    let inline isSubset (set1 : HashSet<'T>) (set2 : HashSet<'T>) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        HashSet.IsSubset (set1, set2)
+
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
+    /// and at least one element of the second is not in the first.
+    /// </summary>
+    [<CompiledName("IsProperSubset")>]
+    let inline isProperSubset (set1 : HashSet<'T>) (set2 : HashSet<'T>) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+        
+        HashSet.IsProperSubset (set1, set2)
+
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
+    /// </summary>
+    [<CompiledName("IsSuperset")>]
+    let inline isSuperset (set1 : HashSet<'T>) (set2 : HashSet<'T>) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+        
+        HashSet.IsSubset (set2, set1)
+
+    /// <summary>
+    /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
+    /// and at least one element of the first is not in the second.
+    /// </summary>
+    [<CompiledName("IsProperSuperset")>]
+    let inline isProperSuperset (set1 : HashSet<'T>) (set2 : HashSet<'T>) : bool =
+        // Preconditions
+        checkNonNull "set1" set1
+        checkNonNull "set2" set2
+
+        HashSet.IsProperSubset (set2, set1)
 
     /// Returns a new set made from the given bindings.
     [<CompiledName("OfSeq")>]
@@ -1564,57 +1628,6 @@ module HashSet =
 
         set.Fold (flip Set.add, Set.empty)
 
-    /// Searches the set looking for the first element where the given function
-    /// returns a Some value. If no such element is found, returns None.
-    [<CompiledName("TryPick")>]
-    let inline tryPick (picker : 'T -> 'U option) (set : HashSet<'T>) : 'U option =
-        // Preconditions
-        checkNonNull "set" set
-        
-        set.TryPick picker
-
-    /// Searches the set looking for the first element where the given function
-    /// returns a Some value.
-    [<CompiledName("Pick")>]
-    let inline pick (picker : 'T -> 'U option) (set : HashSet<'T>) : 'U =
-        // Preconditions
-        checkNonNull "set" set
-
-        set.Pick picker
-
-    /// Builds a new collection whose elements are the results of applying the given function
-    /// to each of the elements of the collection. The key passed to the function indicates
-    /// the key of the element being transformed.
-    [<CompiledName("Map")>]
-    let inline map (mapping : 'T -> 'U) (set : HashSet<'T>) : HashSet<'U> =
-        // Preconditions
-        checkNonNull "set" set
-        
-        set.Map mapping
-
-    /// <summary>
-    /// Builds a new set containing only the bindings for which the given
-    /// predicate returns &quot;true&quot;.
-    /// </summary>
-    [<CompiledName("Filter")>]
-    let inline filter (predicate : 'T -> bool) (set : HashSet<'T>) : HashSet<'T> =
-        // Preconditions
-        checkNonNull "set" set
-        
-        set.Filter predicate
-
-    /// <summary>
-    /// Applies the given function to each binding in the set.
-    /// Returns the set comprised of the results "x" for each binding
-    /// where the function returns <c>Some(x)</c>.
-    /// </summary>
-    [<CompiledName("Choose")>]
-    let inline choose (chooser : 'T -> 'U option) (set : HashSet<'T>) : HashSet<'U> =
-        // Preconditions
-        checkNonNull "set" set
-        
-        set.Choose chooser
-
     /// Applies the given function to each binding in the set.
     [<CompiledName("Iterate")>]
     let inline iter (action : 'T -> unit) (set : HashSet<'T>) : unit =
@@ -1647,6 +1660,48 @@ module HashSet =
 
         set.FoldBack (folder, state)
 
+    /// <summary>
+    /// Applies the given function to each binding in the set.
+    /// Returns the set comprised of the results "x" for each binding
+    /// where the function returns <c>Some(x)</c>.
+    /// </summary>
+    [<CompiledName("Choose")>]
+    let inline choose (chooser : 'T -> 'U option) (set : HashSet<'T>) : HashSet<'U> =
+        // Preconditions
+        checkNonNull "set" set
+        
+        set.Choose chooser
+
+    /// <summary>
+    /// Builds a new set containing only the bindings for which the given
+    /// predicate returns &quot;true&quot;.
+    /// </summary>
+    [<CompiledName("Filter")>]
+    let inline filter (predicate : 'T -> bool) (set : HashSet<'T>) : HashSet<'T> =
+        // Preconditions
+        checkNonNull "set" set
+        
+        set.Filter predicate
+
+    /// Builds a new collection whose elements are the results of applying the given function
+    /// to each of the elements of the collection. The key passed to the function indicates
+    /// the key of the element being transformed.
+    [<CompiledName("Map")>]
+    let inline map (mapping : 'T -> 'U) (set : HashSet<'T>) : HashSet<'U> =
+        // Preconditions
+        checkNonNull "set" set
+        
+        set.Map mapping
+
+    /// Splits the set into two sets containing the bindings for which the given
+    /// predicate returns true and false, respectively.
+    [<CompiledName("Partition")>]
+    let inline partition (predicate : 'T -> bool) (set : HashSet<'T>) : HashSet<'T> * HashSet<'T> =
+        // Preconditions
+        checkNonNull "set" set
+        
+        set.Partition predicate
+
     /// Determines if any binding in the set matches the specified predicate.
     [<CompiledName("Exists")>]
     let inline exists (predicate : 'T -> bool) (set : HashSet<'T>) : bool =
@@ -1663,14 +1718,40 @@ module HashSet =
 
         set.Forall predicate
 
-    /// Splits the set into two sets containing the bindings for which the given
-    /// predicate returns true and false, respectively.
-    [<CompiledName("Partition")>]
-    let inline partition (predicate : 'T -> bool) (set : HashSet<'T>) : HashSet<'T> * HashSet<'T> =
+    /// Returns the key of the first element in the collection which satisfies the given
+    /// predicate. Returns None if no such element is found.
+    [<CompiledName("TryFind")>]
+    let inline tryFind (predicate : 'T -> bool) (set : HashSet<'T>) : 'T option =
         // Preconditions
         checkNonNull "set" set
         
-        set.Partition predicate
+        set.TryFind predicate
+
+    //
+    [<CompiledName("Find")>]
+    let inline find (predicate : 'T -> bool) (set : HashSet<'T>) : 'T =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Find predicate
+
+    /// Searches the set looking for the first element where the given function
+    /// returns a Some value. If no such element is found, returns None.
+    [<CompiledName("TryPick")>]
+    let inline tryPick (picker : 'T -> 'U option) (set : HashSet<'T>) : 'U option =
+        // Preconditions
+        checkNonNull "set" set
+        
+        set.TryPick picker
+
+    /// Searches the set looking for the first element where the given function
+    /// returns a Some value.
+    [<CompiledName("Pick")>]
+    let inline pick (picker : 'T -> 'U option) (set : HashSet<'T>) : 'U =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Pick picker
 
     /// Splits the set into two sets by applying the given partitioning function
     /// to each binding in the set.
@@ -1680,4 +1761,3 @@ module HashSet =
         checkNonNull "set" set
 
         set.MapPartition partitioner
-
