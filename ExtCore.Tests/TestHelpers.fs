@@ -128,7 +128,7 @@ let numActiveEnumerators = ref 0
 
 let countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd (seq : seq<'T>) =
     let enumerator () =
-        numActiveEnumerators := !numActiveEnumerators + 1
+        incr numActiveEnumerators
         let disposed = ref false
         let endReached = ref false
         let ie = seq.GetEnumerator ()
@@ -140,7 +140,7 @@ let countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd (seq : seq<'T>) =
             member __.Dispose () =
                 Assert.IsTrue (!endReached, "MiniTest 'rvlrve2'")
                 Assert.IsFalse (!disposed, "MiniTest 'rvlrve4'")
-                numActiveEnumerators := !numActiveEnumerators - 1
+                decr numActiveEnumerators
                 disposed := true
                 ie.Dispose ()
         interface System.Collections.IEnumerator with
@@ -167,7 +167,7 @@ let countEnumeratorsAndCheckedDisposedAtMostOnce (seq : seq<'T>) =
         let disposed = ref false
         let endReached = ref false
         let ie = seq.GetEnumerator ()
-        numActiveEnumerators := !numActiveEnumerators + 1
+        incr numActiveEnumerators
         { new System.Collections.Generic.IEnumerator<'T> with
             member x.Current =
                 Assert.IsFalse (!endReached, "MiniTest 'qrvlrve0'")
@@ -175,7 +175,7 @@ let countEnumeratorsAndCheckedDisposedAtMostOnce (seq : seq<'T>) =
                 ie.Current
             member x.Dispose () =
                 Assert.IsFalse (!disposed, "MiniTest 'qrvlrve4'")
-                numActiveEnumerators := !numActiveEnumerators - 1
+                decr numActiveEnumerators
                 disposed := true
                 ie.Dispose ()
         interface System.Collections.IEnumerator with

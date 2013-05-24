@@ -1105,7 +1105,6 @@ module SetModule =
         if IntSet.count emptySet <> 0 then Assert.Fail()    
         
         let c : IntSet    = IntSet.empty
-        let d : IntSet<string> = IntSet.empty
         ()
 
     [<Test>]
@@ -1113,17 +1112,14 @@ module SetModule =
         let intSingleton = IntSet.singleton 5
         Assert.IsTrue(intSingleton.Count = 1)
         Assert.IsTrue(intSingleton.Contains(5))
-                
-        let stringSingleton = IntSet.singleton (null)
-        Assert.IsFalse(stringSingleton.Contains(""))
         
     [<Test>]
     let add () : unit =
         let empty = IntSet.empty
-        let x     = IntSet.add 'x' empty
-        let xy    = IntSet.add 'y' x
-        let xyz   = IntSet.add 'z' xy
-        let wxyz  = IntSet.add 'w' xyz
+        let x     = IntSet.add 123 empty
+        let xy    = IntSet.add 456 x
+        let xyz   = IntSet.add 789 xy
+        let wxyz  = IntSet.add 10 xyz
         
         Assert.IsTrue(IntSet.count xy   = 2)
         Assert.IsTrue(IntSet.count xyz  = 3)
@@ -1448,14 +1444,14 @@ module SetModule =
 
     [<Test>]
     let unionMany2 () : unit =
-        let result : IntSet = IntSet.unionMany (Seq.empty : seq<IntSet<string>>)
+        let result : IntSet = IntSet.unionMany (Seq.empty : seq<IntSet>)
         Assert.IsTrue(result.Count = 0)
         
     [<Test>]
     let isEmpty () : unit =
-        let zero  = IntSet.empty : IntSet<decimal>
+        let zero  = IntSet.empty : IntSet
         let zero2 = new IntSet([])
-        let one   = IntSet.singleton "foo"
+        let one   = IntSet.singleton 123
         let n     = new IntSet( [1 .. 10] )
         
         Assert.IsTrue(IntSet.isEmpty zero)
@@ -1471,11 +1467,11 @@ module SetModule =
         IntSet.empty |> IntSet.iter (fun _ -> Assert.Fail())
 
         // Full set
-        let elements = [| for i = 0 to 9 do yield false |]
+        let elements = [| for i = 3 to 12 do yield false |]
         
-        let set = new IntSet(['0' .. '9'])
+        let set = new IntSet([3 .. 12])
         IntSet.iter (fun c ->
-            let i = int c - int '0'
+            let i = int c - 3
             elements.[i] <- true) set
         
         Assert.IsTrue (Array.forall ( (=) true ) elements)
