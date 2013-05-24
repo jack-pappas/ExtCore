@@ -892,7 +892,7 @@ type IntSet private (trie : PatriciaSet) =
 #else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
-    member __.MinElement
+    member __.MinimumElement
         with get () : int =
             int <| PatriciaSet.MinElement trie
 
@@ -901,19 +901,19 @@ type IntSet private (trie : PatriciaSet) =
 #else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
-    member __.MinElementSigned
+    member __.MinimumElementSigned
         with get () : int =
             int <| PatriciaSet.MinElementSigned trie
 
     /// The maximum unsigned value stored in the set.
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
-    member __.MaxElement
+    member __.MaximumElement
         with get () : int =
             int <| PatriciaSet.MaxElement trie
 
     /// The maximum signed value stored in the set.
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
-    member __.MaxElementSigned
+    member __.MaximumElementSigned
         with get () : int =
             int <| PatriciaSet.MaxElementSigned trie
 
@@ -1151,6 +1151,55 @@ type IntSet private (trie : PatriciaSet) =
                 trueSet,
                 falseSet.Add el), (IntSet.Empty, IntSet.Empty))
 
+    /// Formats an element value for use within the ToString() method.
+    static member (*inline*) private ElementString (element : obj) =
+        match box element with
+        | null -> "null"
+        | :? System.IFormattable as formattable ->
+            formattable.ToString (
+                null, System.Globalization.CultureInfo.InvariantCulture)
+        | _ ->
+            element.ToString ()
+
+    override this.ToString () =
+        (* NOTE :   Like Set, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
+        match List.ofSeq (Seq.truncate 4 this) with
+        | [] -> "intSet []"
+        | [h1] ->
+            System.Text.StringBuilder()
+                .Append("intSet [")
+                .Append(IntSet.ElementString h1)
+                .Append("]")
+                .ToString()
+        | [h1; h2] ->
+            System.Text.StringBuilder()
+                .Append("intSet [")
+                .Append(IntSet.ElementString h1)
+                .Append("; ")
+                .Append(IntSet.ElementString h2)
+                .Append("]")
+                .ToString()
+        | [h1; h2; h3] ->
+            System.Text.StringBuilder()
+                .Append("intSet [")
+                .Append(IntSet.ElementString h1)
+                .Append("; ")
+                .Append(IntSet.ElementString h2)
+                .Append("; ")
+                .Append(IntSet.ElementString h3)
+                .Append("]")
+                .ToString()
+        | h1 :: h2 :: h3 :: _ ->
+            System.Text.StringBuilder()
+                .Append("intSet [")
+                .Append(IntSet.ElementString h1)
+                .Append("; ")
+                .Append(IntSet.ElementString h2)
+                .Append("; ")
+                .Append(IntSet.ElementString h3)
+                .Append("; ... ]")
+                .ToString()
+
     /// Compute the union of two sets.
     static member op_Addition (set1 : IntSet, set2 : IntSet) : IntSet =
         set1.Union set2
@@ -1161,7 +1210,11 @@ type IntSet private (trie : PatriciaSet) =
 
     /// <inherit />
     override __.Equals other =
-        trie = (other :?> IntSet).Trie
+        match other with
+        | :? IntSet as other ->
+            trie = other.Trie
+        | _ ->
+            false
 
     /// <inherit />
     override __.GetHashCode () =
@@ -1313,7 +1366,7 @@ module IntSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MinElement
+        set.MinimumElement
 
     /// Returns the lowest element in the set according to a signed integer comparison.
     [<CompiledName("MinElementSigned")>]
@@ -1321,7 +1374,7 @@ module IntSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MinElementSigned
+        set.MinimumElementSigned
 
     /// Returns the highest element in the set according to an unsigned integer comparison.
     [<CompiledName("MaxElement")>]
@@ -1329,7 +1382,7 @@ module IntSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MaxElement
+        set.MaximumElement
 
     /// Returns the highest element in the set according to a signed integer comparison.
     [<CompiledName("MaxElementSigned")>]
@@ -1337,7 +1390,7 @@ module IntSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MaxElementSigned
+        set.MaximumElementSigned
 
     /// Computes the union of the two sets.
     [<CompiledName("Union")>]

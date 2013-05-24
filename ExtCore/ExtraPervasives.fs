@@ -51,6 +51,11 @@ module ExtraTopLevelOperators =
     let inline intMap (elements : seq<_>) : IntMap<'T> =
         IntMap (elements)
 
+    /// Builds a set from a sequence of elements.
+    [<CompiledName("IntSet")>]
+    let inline intSet (elements : seq<_>) : IntSet =
+        IntSet (elements)
+
     /// Builds a map from a sequence of key-value pairs.
     [<CompiledName("HashMap")>]
     let inline hashMap (elements : seq<_>) : HashMap<'Key, 'T> =

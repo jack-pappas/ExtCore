@@ -800,7 +800,7 @@ Make sure each method works on:
 * Single-element set
 * Sets with 4 more more elements
 *)
-(*
+
 module SetType =
     // Interfaces
     [<Test>]
@@ -900,9 +900,9 @@ module SetType =
     
     [<Test>]
     let ObjectToString () : unit =
-        Assert.AreEqual("IntSet [1; 2; 3; ... ]", (new IntSet([1;2;3;4])).ToString())
-        Assert.AreEqual("IntSet []", (IntSet.empty).ToString())
-        Assert.AreEqual("IntSet [1; 3]", (new IntSet([1;3])).ToString())
+        Assert.AreEqual("intSet [1; 2; 3; ... ]", (new IntSet([1;2;3;4])).ToString())
+        Assert.AreEqual("intSet []", (IntSet.empty).ToString())
+        Assert.AreEqual("intSet [1; 3]", (new IntSet([1;3])).ToString())
         
     
     [<Test>]
@@ -935,9 +935,9 @@ module SetType =
         let ad = l.Add 88
         Assert.IsTrue(ad.Contains(88))
     
-        let e : IntSet<string> = IntSet.empty<string>
-        let ade = e.Add "A"
-        Assert.IsTrue(ade.Contains("A"))
+        let e : IntSet = IntSet.empty
+        let ade = e.Add 123
+        Assert.IsTrue(ade.Contains(123))
         
         let s = IntSet.singleton 168
         let ads = s.Add 100
@@ -948,8 +948,8 @@ module SetType =
         let i = new IntSet([1 .. 10])
         Assert.IsTrue(i.Contains(8))
     
-        let e : IntSet<string> = IntSet.empty<string>
-        Assert.IsFalse(e.Contains("A"))
+        let e : IntSet = IntSet.empty
+        Assert.IsFalse(e.Contains(123))
         
         let s = IntSet.singleton 168
         Assert.IsTrue(s.Contains(168))
@@ -959,10 +959,10 @@ module SetType =
         let l = new IntSet([1 .. 10])
         Assert.AreEqual(l.Count, 10)
     
-        let e : IntSet<string> = IntSet.empty<string>
+        let e : IntSet = IntSet.empty
         Assert.AreEqual(e.Count, 0)
         
-        let s = IntSet.singleton 'a'
+        let s = IntSet.singleton 123
         Assert.AreEqual(s.Count, 1)        
         
     [<Test>]
@@ -970,7 +970,7 @@ module SetType =
         let i = new IntSet([1 .. 10])
         Assert.IsFalse(i.IsEmpty)
     
-        let e : IntSet<string> = IntSet.empty<string>
+        let e : IntSet = IntSet.empty
         Assert.IsTrue(e.IsEmpty)
         
         let s = IntSet.singleton 168
@@ -983,7 +983,7 @@ module SetType =
         Assert.IsTrue(sec.IsSubsetOf(fir))
         Assert.IsTrue(IntSet.isSubset sec fir)
     
-        let e : IntSet = IntSet.empty<int>
+        let e : IntSet = IntSet.empty
         Assert.IsTrue(e.IsSubsetOf(fir))
         Assert.IsTrue(IntSet.isSubset e fir)
         
@@ -1006,7 +1006,7 @@ module SetType =
         Assert.IsTrue(sec.IsSupersetOf(fir))
         Assert.IsTrue(IntSet.isSuperset sec fir)
     
-        let e : IntSet = IntSet.empty<int>
+        let e : IntSet = IntSet.empty
         Assert.IsFalse(e.IsSupersetOf(fir))
         Assert.IsFalse(IntSet.isSuperset e fir)
         
@@ -1026,50 +1026,11 @@ module SetType =
         let i = new IntSet([1;2;3;4])
         Assert.AreEqual(i.Remove 3,(new IntSet([1;2;4])))
     
-        let e : IntSet<string> = IntSet.empty<string>
-        Assert.AreEqual(e.Remove "A", e)
+        let e : IntSet = IntSet.empty
+        Assert.AreEqual(e.Remove 123, e)
         
         let s = IntSet.singleton 168
-        Assert.AreEqual(s.Remove 168, IntSet.empty<int>) 
-        
-        
-    // Static methods
-    [<Test>]
-    let Addition () : unit =
-        let fir = new IntSet([1;3;5])
-        let sec = new IntSet([2;4;6])
-        Assert.AreEqual(fir + sec, new IntSet([1;2;3;4;5;6]))
-        Assert.AreEqual(IntSet.op_Addition(fir,sec), new IntSet([1;2;3;4;5;6]))
-    
-        let e : IntSet = IntSet.empty<int>
-        Assert.AreEqual(e + e, e)
-        Assert.AreEqual(IntSet.op_Addition(e,e),e)
-        
-        let s1 = IntSet.singleton 8
-        let s2 = IntSet.singleton 6
-        Assert.AreEqual(s1 + s2, new IntSet([8;6]))
-        Assert.AreEqual(IntSet.op_Addition(s1,s2), new IntSet([8;6]))
-        
-
-    [<Test>]
-    let Subtraction () : unit =
-        let fir = new IntSet([1..6])
-        let sec = new IntSet([2;4;6])
-        Assert.AreEqual(fir - sec, new IntSet([1;3;5]))
-        Assert.AreEqual(IntSet.difference fir sec, new IntSet([1;3;5]))
-        Assert.AreEqual(IntSet.op_Subtraction(fir,sec), new IntSet([1;3;5]))
-    
-        let e : IntSet = IntSet.empty<int>
-        Assert.AreEqual(e - e, e)
-        Assert.AreEqual(IntSet.difference e e, e)
-        Assert.AreEqual(IntSet.op_Subtraction(e,e),e)
-        
-        let s1 = IntSet.singleton 8
-        let s2 = IntSet.singleton 6
-        Assert.AreEqual(s1 - s2, new IntSet([8]))
-        Assert.AreEqual(IntSet.difference s1 s2, new IntSet([8]))
-        Assert.AreEqual(IntSet.op_Subtraction(s1,s2), new IntSet([8]))
-        
+        Assert.AreEqual(s.Remove 168, IntSet.empty)
 
     [<Test>]
     let MinimumElement () : unit =
@@ -1089,7 +1050,45 @@ module SetType =
         Assert.AreEqual(sec.MaximumElement, 7)
         Assert.AreEqual(IntSet.maxElement fir, 6)
         Assert.AreEqual(IntSet.maxElement sec, 7)
-*)
+        
+        
+    // Static methods
+    [<Test>]
+    let Addition () : unit =
+        let fir = new IntSet([1;3;5])
+        let sec = new IntSet([2;4;6])
+        Assert.AreEqual(fir + sec, new IntSet([1;2;3;4;5;6]))
+        Assert.AreEqual(IntSet.op_Addition(fir,sec), new IntSet([1;2;3;4;5;6]))
+    
+        let e : IntSet = IntSet.empty
+        Assert.AreEqual(e + e, e)
+        Assert.AreEqual(IntSet.op_Addition(e,e),e)
+        
+        let s1 = IntSet.singleton 8
+        let s2 = IntSet.singleton 6
+        Assert.AreEqual(s1 + s2, new IntSet([8;6]))
+        Assert.AreEqual(IntSet.op_Addition(s1,s2), new IntSet([8;6]))
+        
+
+    [<Test>]
+    let Subtraction () : unit =
+        let fir = new IntSet([1..6])
+        let sec = new IntSet([2;4;6])
+        Assert.AreEqual(fir - sec, new IntSet([1;3;5]))
+        Assert.AreEqual(IntSet.difference fir sec, new IntSet([1;3;5]))
+        Assert.AreEqual(IntSet.op_Subtraction(fir,sec), new IntSet([1;3;5]))
+    
+        let e : IntSet = IntSet.empty
+        Assert.AreEqual(e - e, e)
+        Assert.AreEqual(IntSet.difference e e, e)
+        Assert.AreEqual(IntSet.op_Subtraction(e,e),e)
+        
+        let s1 = IntSet.singleton 8
+        let s2 = IntSet.singleton 6
+        Assert.AreEqual(s1 - s2, new IntSet([8]))
+        Assert.AreEqual(IntSet.difference s1 s2, new IntSet([8]))
+        Assert.AreEqual(IntSet.op_Subtraction(s1,s2), new IntSet([8]))
+
 
 (*
 [Test Strategy]
