@@ -248,7 +248,7 @@ type private PatriciaSet =
         else
             Br (p, m, t1, t0)
 
-    //
+    /// Insert a binding (key-value pair) into a set. returning a new, updated set.
     static member Add (key, set) =
         match set with
         | Empty ->
@@ -483,18 +483,24 @@ type private PatriciaSet =
                     match PatriciaSet.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
-                        // Only create a new tree if the value was actually removed
-                        // (i.e., the tree was modified).
-                        if left === s0 then s
-                        else Br (p, m, left, s1)
+                        match s1 with
+                        | Empty -> left
+                        | _ ->
+                            // Only create a new tree if the value was actually removed
+                            // (i.e., the tree was modified).
+                            if left === s0 then s
+                            else Br (p, m, left, s1)
                 else
                     match PatriciaSet.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
-                        // Only create a new tree if the value was actually removed
-                        // (i.e., the tree was modified).
-                        if right === s1 then s
-                        else Br (p, m, s0, right)
+                        match s0 with
+                        | Empty -> right
+                        | _ ->
+                            // Only create a new tree if the value was actually removed
+                            // (i.e., the tree was modified).
+                            if right === s1 then s
+                            else Br (p, m, s0, right)
             else s
             
         | Br (_,_,_,_), Empty ->

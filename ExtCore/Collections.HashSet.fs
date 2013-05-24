@@ -375,8 +375,8 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             if j = valueHash then
                 let result = ListSet.add value listSet
 
-                // OPTIMIZATION : If the result is the same as the input, return the original
-                // set.instead since it wasn't modified.
+                // OPTIMIZATION : If the result is the same as the input,
+                // return the original set instead since it wasn't modified.
                 if result === listSet then set
                 else
                     Lf (j, result)
@@ -403,6 +403,8 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 
     /// Computes the union of two PatriciaHashSets.
     static member Union (s, t) : PatriciaHashSet<'T> =
+        // If the sets are identical, return immediately.
+        if s === t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -410,7 +412,12 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     // The trees have the same prefix. Merge the subtrees.
                     let left = PatriciaHashSet.Union (s0, t0)
                     let right = PatriciaHashSet.Union (s1, t1)
-                    Br (p, m, left, right)
+                    
+                    // Only create a new tree if some values were actually added
+                    // (i.e., the tree was modified).
+                    if left === s0 && right === s1 then s
+                    elif left === t0 && right === t1 then t
+                    else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
                     PatriciaHashSet.Join (p, s, q, t)
@@ -424,10 +431,16 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
                         let left = PatriciaHashSet.Union (s0, t)
-                        Br (p, m, left, s1)
+                        
+                        // Only create a new tree when the subtree is actually modified.
+                        if left === s0 then s
+                        else Br (p, m, left, s1)
                     else
                         let right = PatriciaHashSet.Union (s1, t)
-                        Br (p, m, s0, right)
+                        
+                        // Only create a new tree when the subtree is actually modified.
+                        if right === s1 then s
+                        else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
                     PatriciaHashSet.Join (p, s, q, t)
@@ -437,10 +450,16 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     // p contains q. Merge s with a subtree of t.
                     if zeroBit (p, n) then
                         let left = PatriciaHashSet.Union (s, t0)
-                        Br (q, n, left, t1)
+                        
+                        // Only create a new tree when the subtree is actually modified.
+                        if left === t0 then t
+                        else Br (q, n, left, t1)
                     else
                         let right = PatriciaHashSet.Union (s, t1)
-                        Br (q, n, t0, right)
+                        
+                        // Only create a new tree when the subtree is actually modified.
+                        if right === t1 then t
+                        else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
                     PatriciaHashSet.Join (p, s, q, t)
@@ -449,10 +468,16 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
                     let left = PatriciaHashSet.Union (s0, t)
-                    Br (p, m, left, s1)
+                    
+                    // Only create a new tree when the subtree is actually modified.
+                    if left === s0 then s
+                    else Br (p, m, left, s1)
                 else
                     let right = PatriciaHashSet.Union (s1, t)
-                    Br (p, m, s0, right)
+                    
+                    // Only create a new tree when the subtree is actually modified.
+                    if right === s1 then s
+                    else Br (p, m, s0, right)
             else
                 PatriciaHashSet.Join (k, t, p, s)
 
@@ -460,10 +485,16 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
             if matchPrefix (k, q, n) then
                 if zeroBit (k, n) then
                     let left = PatriciaHashSet.Union (s, t0)
-                    Br (q, n, left, t1)
+
+                    // Only create a new tree when the subtree is actually modified.
+                    if left === t0 then t
+                    else Br (q, n, left, t1)
                 else
                     let right = PatriciaHashSet.Union (s, t1)
-                    Br (q, n, t0, right)
+
+                    // Only create a new tree when the subtree is actually modified.
+                    if right === t1 then t
+                    else Br (q, n, t0, right)
             else
                 PatriciaHashSet.Join (k, s, q, t)
 
@@ -485,6 +516,8 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 
     /// Compute the intersection of two PatriciaHashSets.
     static member Intersect (s, t) : PatriciaHashSet<'T> =
+        // If the sets are identical, return immediately.
+        if s === t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -493,10 +526,14 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     let left = PatriciaHashSet.Intersect (s0, t0)
                     let right = PatriciaHashSet.Intersect (s1, t1)
                     match left, right with
-                    | Empty, t
-                    | t, Empty -> t
+                    | Empty, r
+                    | r, Empty -> r
                     | left, right ->
-                        Br (p, m, left, right)
+                        // Only create a new tree if some values were actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 && right === s1 then s
+                        elif left === t0 && right === t1 then t
+                        else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -550,6 +587,8 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 
     /// Compute the difference of two PatriciaHashSets.
     static member Difference (s, t) : PatriciaHashSet<'T> =
+        // If the sets are identical, return immediately.
+        if s === t then Empty else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -558,10 +597,13 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                     let left = PatriciaHashSet.Difference (s0, t0)
                     let right = PatriciaHashSet.Difference (s1, t1)
                     match left, right with
-                    | Empty, t
-                    | t, Empty -> t
+                    | Empty, r
+                    | r, Empty -> r
                     | left, right ->
-                        Br (p, m, left, right)
+                        // Only create a new tree if some values were actually removed
+                        // (i.e., the tree was modified).
+                        if left === s0 && right === s1 then s
+                        else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -573,12 +615,18 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                         match PatriciaHashSet.Difference (s0, t) with
                         | Empty -> s1
                         | left ->
-                            Br (p, m, left, s1)
+                            // Only create a new tree some values were actually removed
+                            // (i.e., the tree was modified).
+                            if left === s0 then s
+                            else Br (p, m, left, s1)
                     else
                         match PatriciaHashSet.Difference (s1, t) with
                         | Empty -> s0
                         | right ->
-                            Br (p, m, s0, right)
+                            // Only create a new tree some values were actually removed
+                            // (i.e., the tree was modified).
+                            if right === s1 then s
+                            else Br (p, m, s0, right)
                 else s
 
             else
@@ -598,7 +646,10 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                         match s1 with
                         | Empty -> left
                         | _ ->
-                            Br (p, m, left, s1)
+                            // Only create a new tree if the value was actually removed
+                            // (i.e., the tree was modified).
+                            if left === s0 then s
+                            else Br (p, m, left, s1)
                 else
                     match PatriciaHashSet.Difference (s1, t) with
                     | Empty -> s0
@@ -606,7 +657,10 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                         match s0 with
                         | Empty -> right
                         | _ ->
-                            Br (p, m, s0, right)
+                            // Only create a new tree if the value was actually removed
+                            // (i.e., the tree was modified).
+                            if right === s1 then s
+                            else Br (p, m, s0, right)
             else s
 
         | Lf (j, _), Br (q, n, t0, t1) ->
