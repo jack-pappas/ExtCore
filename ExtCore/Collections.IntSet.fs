@@ -1749,7 +1749,7 @@ module TagSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MinElement
+        set.MinimumElement
         |> retype
 
     /// Returns the lowest element in the set according to a signed integer comparison.
@@ -1761,7 +1761,7 @@ module TagSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MinElementSigned
+        set.MinimumElementSigned
         |> retype
 
     /// Returns the highest element in the set according to an unsigned integer comparison.
@@ -1773,7 +1773,7 @@ module TagSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MaxElement
+        set.MaximumElement
         |> retype
 
     /// Returns the highest element in the set according to a signed integer comparison.
@@ -1785,7 +1785,7 @@ module TagSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.MaxElementSigned
+        set.MaximumElementSigned
         |> retype
 
     /// Computes the union of the two sets.
