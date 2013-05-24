@@ -451,14 +451,13 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Lf (j, listSet1), Lf (k, listSet2) ->
             if j = k then
                 // Combine the sets into a single set.
-                let listSet = ListSet.union listSet1 listSet2
+                let result = ListSet.union listSet1 listSet2
                 
-                // OPTIMIZE : Try to figure out how we can implement structure-sharing
-                // here (i.e., how can we modify the ListSet functions so they return one of
-                // the original lists if the result is going to be the same anyway).
-                // Without this, the effectiveness of the structure-sharing optimizations
-                // for this data structure is greatly reduced.
-                Lf (j, listSet)
+                // Only create a new tree if we can't re-use one of the input trees.
+                if result === listSet1 then s
+                elif result === listSet2 then t
+                else
+                    Lf (j, result)
             else
                 PatriciaHashSet.Join (j, s, k, t)
 
@@ -467,125 +466,177 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 
     /// Compute the intersection of two PatriciaHashSets.
     static member Intersect (s, t) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.Intersect"
-//        match s, t with
-//        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
-//            if m = n then
-//                if p <> q then Empty
-//                else
-//                    let left = PatriciaHashSet.Intersect (s0, t0)
-//                    let right = PatriciaHashSet.Intersect (s1, t1)
-//                    match left, right with
-//                    | Empty, t
-//                    | t, Empty -> t
-//                    | left, right ->
-//                        Br (p, m, left, right)
-//
-//            #if LITTLE_ENDIAN_TRIES
-//            elif m < n then
-//            #else
-//            elif m > n then
-//            #endif
-//                if matchPrefix (q, p, m) then
-//                    if zeroBit (q, m) then
-//                        PatriciaHashSet.Intersect (s0, t)
-//                    else
-//                        PatriciaHashSet.Intersect (s1, t)
-//                else
-//                    Empty
-//
-//            else
-//                if matchPrefix (p, q, n) then
-//                    if zeroBit (p, n) then
-//                        PatriciaHashSet.Intersect (s, t0)
-//                    else
-//                        PatriciaHashSet.Intersect (s, t1)
-//                else
-//                    Empty
-//
-//        | Br (_, m, s0, s1), Lf (k, listSet) ->
-//            let s' = if zeroBit (k, m) then s0 else s1
-//            match PatriciaHashSet.TryFind (k, s') with
-//            | Some x ->
-//                Lf (k, x)
-//            | None ->
-//                Empty
-//            
-//        | Br (_,_,_,_), Empty ->
-//            Empty
-//            
-//        | Lf (k, x), _ ->
-//            // Here, we always use the value from the left tree, so as long as the
-//            // right tree contains a binding with the same key, we just return the left tree.
-//            if PatriciaHashSet.ContainsKey (k, t) then s
-//            else Empty
-//
-//        | Empty, _ ->
-//            Empty
+        match s, t with
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
+            if m = n then
+                if p <> q then Empty
+                else
+                    let left = PatriciaHashSet.Intersect (s0, t0)
+                    let right = PatriciaHashSet.Intersect (s1, t1)
+                    match left, right with
+                    | Empty, t
+                    | t, Empty -> t
+                    | left, right ->
+                        Br (p, m, left, right)
+
+            #if LITTLE_ENDIAN_TRIES
+            elif m < n then
+            #else
+            elif m > n then
+            #endif
+                if matchPrefix (q, p, m) then
+                    if zeroBit (q, m) then
+                        PatriciaHashSet.Intersect (s0, t)
+                    else
+                        PatriciaHashSet.Intersect (s1, t)
+                else
+                    Empty
+
+            else
+                if matchPrefix (p, q, n) then
+                    if zeroBit (p, n) then
+                        PatriciaHashSet.Intersect (s, t0)
+                    else
+                        PatriciaHashSet.Intersect (s, t1)
+                else
+                    Empty
+
+        | Br (p, m, s0, s1), Lf (k, _) ->
+            if matchPrefix (k, p, m) then
+                if zeroBit (k, m) then
+                    match PatriciaHashSet.Intersect (s0, t) with
+                    | Empty -> s1
+                    | left ->
+                        match s1 with
+                        | Empty -> left
+                        | _ ->
+                            Br (p, m, left, s1)
+                else
+                    match PatriciaHashSet.Intersect (s1, t) with
+                    | Empty -> s0
+                    | right ->
+                        match s0 with
+                        | Empty -> right
+                        | _ ->
+                            Br (p, m, s0, right)
+            else Empty
+
+        | Lf (j, _), Br (q, n, t0, t1) ->
+            if matchPrefix (j, q, n) then
+                if zeroBit (j, n) then
+                    match PatriciaHashSet.Intersect (s, t0) with
+                    | Empty -> t1
+                    | left ->
+                        match t1 with
+                        | Empty -> left
+                        | _ ->
+                            Br (q, n, left, t1)
+                else
+                    match PatriciaHashSet.Intersect (s, t1) with
+                    | Empty -> t0
+                    | right ->
+                        match t0 with
+                        | Empty -> right
+                        | _ ->
+                            Br (q, n, t0, right)
+            else Empty
+
+        | Lf (j, listSet1), Lf (k, listSet2) ->
+            if j <> k then Empty
+            else
+                let result = ListSet.intersect listSet1 listSet2
+
+                // Only create a new tree if we can't re-use one of the input trees.
+                if result === listSet1 then s
+                elif result === listSet2 then t
+                else
+                    Lf (j, result)
+
+        | Empty, _
+        | _, Empty ->
+            Empty
 
     /// Compute the difference of two PatriciaHashSets.
     static member Difference (s, t) : PatriciaHashSet<'T> =
-        notImpl "PatriciaHashSet.Difference"
-//        match s, t with
-//        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
-//            if m = n then
-//                if p <> q then s
-//                else
-//                    let left = PatriciaHashSet.Difference (s0, t0)
-//                    let right = PatriciaHashSet.Difference (s1, t1)
-//                    match left, right with
-//                    | Empty, t
-//                    | t, Empty -> t
-//                    | left, right ->
-//                        Br (p, m, left, right)
-//
-//            #if LITTLE_ENDIAN_TRIES
-//            elif m < n then
-//            #else
-//            elif m > n then
-//            #endif
-//                if matchPrefix (q, p, m) then
-//                    if zeroBit (q, m) then
-//                        match PatriciaHashSet.Difference (s0, t) with
-//                        | Empty -> s1
-//                        | left ->
-//                            Br (p, m, left, s1)
-//                    else
-//                        match PatriciaHashSet.Difference (s1, t) with
-//                        | Empty -> s0
-//                        | right ->
-//                            Br (p, m, s0, right)
-//                else s
-//
-//            else
-//                if matchPrefix (p, q, n) then
-//                    if zeroBit (p, n) then
-//                        PatriciaHashSet.Difference (s, t0)
-//                    else
-//                        PatriciaHashSet.Difference (s, t1)
-//                else s
-//
-//        | Br (p, m, s0, s1), Lf (k, y) ->
-//            if matchPrefix (k, p, m) then
-//                if zeroBit (k, m) then
-//                    match PatriciaHashSet.RemoveSet (k, s0) with
-//                    | Empty -> s1
-//                    | left ->
-//                        Br (p, m, left, s1)
-//                else
-//                    match PatriciaHashSet.RemoveSet (k, s1) with
-//                    | Empty -> s0
-//                    | right ->
-//                        Br (p, m, s0, right)
-//            else s
-//            
-//        | Br (_,_,_,_), Empty ->
-//            s
-//        | Lf (k, x), _ ->
-//            if PatriciaHashSet.ContainsKey (k, t) then Empty
-//            else s
-//        | Empty, _ ->
-//            Empty
+        match s, t with
+        | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
+            if m = n then
+                if p <> q then s
+                else
+                    let left = PatriciaHashSet.Difference (s0, t0)
+                    let right = PatriciaHashSet.Difference (s1, t1)
+                    match left, right with
+                    | Empty, t
+                    | t, Empty -> t
+                    | left, right ->
+                        Br (p, m, left, right)
+
+            #if LITTLE_ENDIAN_TRIES
+            elif m < n then
+            #else
+            elif m > n then
+            #endif
+                if matchPrefix (q, p, m) then
+                    if zeroBit (q, m) then
+                        match PatriciaHashSet.Difference (s0, t) with
+                        | Empty -> s1
+                        | left ->
+                            Br (p, m, left, s1)
+                    else
+                        match PatriciaHashSet.Difference (s1, t) with
+                        | Empty -> s0
+                        | right ->
+                            Br (p, m, s0, right)
+                else s
+
+            else
+                if matchPrefix (p, q, n) then
+                    if zeroBit (p, n) then
+                        PatriciaHashSet.Difference (s, t0)
+                    else
+                        PatriciaHashSet.Difference (s, t1)
+                else s
+
+        | Br (p, m, s0, s1), Lf (k, _) ->
+            if matchPrefix (k, p, m) then
+                if zeroBit (k, m) then
+                    match PatriciaHashSet.Difference (s0, t) with
+                    | Empty -> s1
+                    | left ->
+                        match s1 with
+                        | Empty -> left
+                        | _ ->
+                            Br (p, m, left, s1)
+                else
+                    match PatriciaHashSet.Difference (s1, t) with
+                    | Empty -> s0
+                    | right ->
+                        match s0 with
+                        | Empty -> right
+                        | _ ->
+                            Br (p, m, s0, right)
+            else s
+
+        | Lf (j, _), Br (q, n, t0, t1) ->
+            if matchPrefix (j, q, n) then
+                let t' = if zeroBit (j, n) then t0 else t1
+                PatriciaHashSet.Difference (s, t')
+            else s
+        
+        | Lf (j, listSet1), Lf (k, listSet2) ->
+            if j <> k then s
+            else
+                let result = ListSet.difference listSet1 listSet2
+
+                // Only create a new tree if we can't re-use one of the input trees.
+                if result === listSet1 then s
+                elif result === listSet2 then t
+                else
+                    Lf (j, result)
+        
+        | _, Empty -> s
+        | Empty, _ ->
+            Empty
 
     /// Computes the containment ordering for two sets (i.e., determines if one set includes the other).
     // Return values:

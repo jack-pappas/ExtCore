@@ -162,8 +162,9 @@ let union () : unit =
     HashSet.union
         (HashSet.ofArray [| 3; 11; 2; 4; 12 |])
         (HashSet.ofArray [| 5; 11; 17; 4; 14 |])
-    |> assertEqual
-        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> HashSet.toArray
+    |> Collection.assertEquiv
+        [| 5; 3; 11; 2; 17; 4; 12; 14 |]
 
 [<Test>]
 let unionMany () : unit =
@@ -174,13 +175,15 @@ let intersect () : unit =
     HashSet.intersect
         (HashSet.ofArray [| 5; 11; 17; 4; 14 |])
         HashSet.empty
-    |> assertEqual HashSet.empty
+    |> HashSet.isEmpty
+    |> assertTrue
 
     HashSet.intersect
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 11; 17; 4; 14 |])
-    |> assertEqual
-        (HashSet.ofArray [| 5; 11; 17; 4; 14 |])
+    |> HashSet.toArray
+    |> Collection.assertEquiv
+        [| 5; 11; 17; 4; 14 |]
 
 [<Test>]
 let intersectMany () : unit =
@@ -191,16 +194,17 @@ let difference () : unit =
     HashSet.difference
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         HashSet.empty
-    |> assertEqual
-        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+    |> HashSet.toArray
+    |> Collection.assertEquiv
+        [| 5; 3; 11; 2; 17; 4; 12; 14 |]
 
     HashSet.difference
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 11; 17; 4; 14 |])
-    |> assertEqual
-        (HashSet.ofArray [| 3; 2; 12 |])
+    |> HashSet.toArray
+    |> Collection.assertEquiv
+        [| 3; 2; 12 |]
 
-(*
 [<Test>]
 let isSubset () : unit =
     // The empty set is always a subset of any other set.
@@ -364,7 +368,7 @@ let isProperSuperset () : unit =
         (HashSet.ofArray [| 1..5 |])
         (HashSet.ofArray [| 6..10 |])
     |> should be False
-*)
+
 [<Test>]
 let ofSeq () : unit =
     Seq.empty
@@ -1328,7 +1332,6 @@ module SetModule =
     
     [<Test>]
     let intersectMany () : unit =
-        Assert.Ignore "Test not yet implemented."
         (* IntersectAll
             1234567
              234567
@@ -1336,44 +1339,41 @@ module SetModule =
                4567
                 567
                  67 *)
-//        let setsToIntersect = 
-//            [
-//                for i = 1 to 6 do
-//                    yield new HashSet<int>([i .. 7])
-//            ]
-//            
-//        let result : HashSet<_> = HashSet.intersectMany setsToIntersect
-//        Assert.IsTrue(result.Count = 2)
-//        
-//        let contains x s = s |> HashSet.exists (fun i -> i = x) 
-//        Assert.IsTrue(contains 6 result)
-//        Assert.IsTrue(contains 7 result)
+        let setsToIntersect = 
+            [
+                for i = 1 to 6 do
+                    yield new HashSet<int>([i .. 7])
+            ]
+            
+        let result : HashSet<_> = HashSet.intersectMany setsToIntersect
+        Assert.IsTrue(result.Count = 2)
+        
+        let contains x s = s |> HashSet.exists (fun i -> i = x) 
+        Assert.IsTrue(contains 6 result)
+        Assert.IsTrue(contains 7 result)
                   
     [<Test>]
     let intersectMany2 () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let all   = new HashSet<_>([1 .. 10])
-//        let odds  = new HashSet<_>([1 .. 2 .. 10])
-//        let evens = new HashSet<_>([2 .. 2 .. 10])
-//        
-//        let result = HashSet.intersectMany [odds; evens; all]
-//        Assert.IsTrue(HashSet.count result = 0)
+        let all   = new HashSet<_>([1 .. 10])
+        let odds  = new HashSet<_>([1 .. 2 .. 10])
+        let evens = new HashSet<_>([2 .. 2 .. 10])
+        
+        let result = HashSet.intersectMany [odds; evens; all]
+        Assert.IsTrue(HashSet.count result = 0)
 
     [<Test>]
     let intersectMany3 () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let all   = new HashSet<_>([1 .. 10])
-//        let empty = HashSet.empty : HashSet<int>
-//        
-//        let result = HashSet.intersectMany [all; empty; all]
-//        Assert.IsTrue(HashSet.count result = 0)
+        let all   = new HashSet<_>([1 .. 10])
+        let empty = HashSet.empty : HashSet<int>
+        
+        let result = HashSet.intersectMany [all; empty; all]
+        Assert.IsTrue(HashSet.count result = 0)
         
         
     [<Test>]
     let intersectMany4 () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        checkThrowsArgumentException (fun () -> HashSet.intersectMany (Seq.empty : seq<HashSet<int>>) |> ignore)
-//        ()
+        checkThrowsArgumentException (fun () -> HashSet.intersectMany (Seq.empty : seq<HashSet<int>>) |> ignore)
+        ()
 
     [<Test>]
     let union () : unit =
@@ -1412,21 +1412,19 @@ module SetModule =
         
     [<Test>]
     let unionMany () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let odds  = new HashSet<int>([1 .. 2 .. 10])
-//        let evens = new HashSet<int>([2 .. 2 .. 10])
-//        let empty = HashSet.empty : HashSet<int>
-//        let rest  = new HashSet<int>([11 .. 19])
-//        let zero  = HashSet.singleton 0
-//        
-//        let result : HashSet<_> = HashSet.unionMany [odds; evens; empty; rest; zero]
-//        Assert.IsTrue(result.Count = 20)
+        let odds  = new HashSet<int>([1 .. 2 .. 10])
+        let evens = new HashSet<int>([2 .. 2 .. 10])
+        let empty = HashSet.empty : HashSet<int>
+        let rest  = new HashSet<int>([11 .. 19])
+        let zero  = HashSet.singleton 0
+        
+        let result : HashSet<_> = HashSet.unionMany [odds; evens; empty; rest; zero]
+        Assert.IsTrue(result.Count = 20)
 
     [<Test>]
     let unionMany2 () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let result : HashSet<_> = HashSet.unionMany (Seq.empty : seq<HashSet<string>>)
-//        Assert.IsTrue(result.Count = 0)
+        let result : HashSet<_> = HashSet.unionMany (Seq.empty : seq<HashSet<string>>)
+        Assert.IsTrue(result.Count = 0)
         
     [<Test>]
     let isEmpty () : unit =
@@ -1539,7 +1537,8 @@ module SetModule =
         
         // Multi
         let multi = new HashSet<_>([5; 2; 3; 1; 4])
-        Assert.IsTrue(HashSet.toList multi = [1; 2; 3; 4; 5])
+        HashSet.toList multi
+        |> Collection.assertEquiv [1; 2; 3; 4; 5]
 
     [<Test>]
     let ofArray () : unit =
@@ -1639,24 +1638,22 @@ module SetModule =
 
     [<Test>]
     let isProperSubset () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let set1 = HashSet.ofList [10; 8; 100]
-//        let set2 = HashSet.ofList [100]
-//        Assert.IsTrue(HashSet.isProperSubset set2 set1)
-//        Assert.IsTrue(HashSet.isProperSubset HashSet.empty set2)
-//        Assert.IsFalse(HashSet.isProperSubset HashSet.empty HashSet.empty)
-//        Assert.IsFalse(HashSet.isProperSubset set1 set2)
+        let set1 = HashSet.ofList [10; 8; 100]
+        let set2 = HashSet.ofList [100]
+        Assert.IsTrue(HashSet.isProperSubset set2 set1)
+        Assert.IsTrue(HashSet.isProperSubset HashSet.empty set2)
+        Assert.IsFalse(HashSet.isProperSubset HashSet.empty HashSet.empty)
+        Assert.IsFalse(HashSet.isProperSubset set1 set2)
 
     [<Test>]
     let isProperSuperset () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let set1 = HashSet.ofList [10; 8; 100]
-//        let set2 = HashSet.ofList [100; 8]
-//        Assert.IsTrue(HashSet.isProperSuperset set1 set2)
-//        Assert.IsTrue(HashSet.isProperSuperset set2 HashSet.empty)
-//        Assert.IsFalse(HashSet.isProperSuperset HashSet.empty HashSet.empty)
-//        Assert.IsFalse(HashSet.isProperSuperset set1 set1)
-//        Assert.IsFalse(HashSet.isProperSuperset set2 set1)
+        let set1 = HashSet.ofList [10; 8; 100]
+        let set2 = HashSet.ofList [100; 8]
+        Assert.IsTrue(HashSet.isProperSuperset set1 set2)
+        Assert.IsTrue(HashSet.isProperSuperset set2 HashSet.empty)
+        Assert.IsFalse(HashSet.isProperSuperset HashSet.empty HashSet.empty)
+        Assert.IsFalse(HashSet.isProperSuperset set1 set1)
+        Assert.IsFalse(HashSet.isProperSuperset set2 set1)
         
     // ----- Not associated with a module function -----
 
