@@ -1136,31 +1136,30 @@ module SetModule =
         let emptyChar = HashSet.empty : HashSet<char>
         
         let removeEmpty = alphabet - emptyChar
-        if (alphabet = removeEmpty) <> true then Assert.Fail()
+        assertEqual alphabet removeEmpty
         
         let number = HashSet.singleton '1'
         let removeNumber = alphabet - number
-        if (alphabet = removeNumber) <> true then Assert.Fail()
+        assertEqual alphabet removeNumber
         
         let vowels = new HashSet<char>([| 'a'; 'e'; 'i'; 'o'; 'u' |])
         let noVowels = alphabet - vowels
-        if noVowels.Count <> 21 then Assert.Fail()
+        assertEqual 21 noVowels.Count
         
         // Give a set of 0, 1, x elements remove some other set
         let odds  = new HashSet<int>([1 .. 2 .. 10])
         let evens = new HashSet<int>([2 .. 2 .. 10])
         
         let emptyNum = HashSet.empty : HashSet<int>
-        let removeOddsFromEmpty = emptyNum - odds 
-        if (emptyNum = removeOddsFromEmpty) <> true then Assert.Fail()
+        let removeOddsFromEmpty = emptyNum - odds
+        assertEqual emptyNum removeOddsFromEmpty
         
         let one = HashSet.singleton 1
         let removeOddsFrom1 = one - odds
-        if (removeOddsFrom1 = emptyNum) <> true then Assert.Fail()
+        assertEqual emptyNum removeOddsFrom1
         
         let evensSansOdds = evens - odds
-        if (evensSansOdds = evens) <> true then Assert.Fail()
-        ()
+        assertEqual evens evensSansOdds
 
     [<Test>]
     let equal () : unit =

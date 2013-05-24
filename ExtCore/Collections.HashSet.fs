@@ -503,54 +503,27 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
 
         | Br (p, m, s0, s1), Lf (k, _) ->
             if matchPrefix (k, p, m) then
-                if zeroBit (k, m) then
-                    match PatriciaHashSet.Intersect (s0, t) with
-                    | Empty -> s1
-                    | left ->
-                        match s1 with
-                        | Empty -> left
-                        | _ ->
-                            Br (p, m, left, s1)
-                else
-                    match PatriciaHashSet.Intersect (s1, t) with
-                    | Empty -> s0
-                    | right ->
-                        match s0 with
-                        | Empty -> right
-                        | _ ->
-                            Br (p, m, s0, right)
+                let s' = if zeroBit (k, m) then s0 else s1
+                PatriciaHashSet.Intersect (s', t)
             else Empty
 
         | Lf (j, _), Br (q, n, t0, t1) ->
             if matchPrefix (j, q, n) then
-                if zeroBit (j, n) then
-                    match PatriciaHashSet.Intersect (s, t0) with
-                    | Empty -> t1
-                    | left ->
-                        match t1 with
-                        | Empty -> left
-                        | _ ->
-                            Br (q, n, left, t1)
-                else
-                    match PatriciaHashSet.Intersect (s, t1) with
-                    | Empty -> t0
-                    | right ->
-                        match t0 with
-                        | Empty -> right
-                        | _ ->
-                            Br (q, n, t0, right)
+                let t' = if zeroBit (j, n) then t0 else t1
+                PatriciaHashSet.Intersect (s, t')
             else Empty
 
         | Lf (j, listSet1), Lf (k, listSet2) ->
             if j <> k then Empty
             else
-                let result = ListSet.intersect listSet1 listSet2
-
-                // Only create a new tree if we can't re-use one of the input trees.
-                if result === listSet1 then s
-                elif result === listSet2 then t
-                else
-                    Lf (j, result)
+                match ListSet.intersect listSet1 listSet2 with
+                | [] -> Empty
+                | result ->
+                    // Only create a new tree if we can't re-use one of the input trees.
+                    if result === listSet1 then s
+                    elif result === listSet2 then t
+                    else
+                        Lf (j, result)
 
         | Empty, _
         | _, Empty ->
@@ -626,13 +599,14 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         | Lf (j, listSet1), Lf (k, listSet2) ->
             if j <> k then s
             else
-                let result = ListSet.difference listSet1 listSet2
-
-                // Only create a new tree if we can't re-use one of the input trees.
-                if result === listSet1 then s
-                elif result === listSet2 then t
-                else
-                    Lf (j, result)
+                match ListSet.difference listSet1 listSet2 with
+                | [] -> Empty
+                | result ->
+                    // Only create a new tree if we can't re-use one of the input trees.
+                    if result === listSet1 then s
+                    elif result === listSet2 then t
+                    else
+                        Lf (j, result)
         
         | _, Empty -> s
         | Empty, _ ->
