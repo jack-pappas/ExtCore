@@ -682,14 +682,14 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
     /// Is 'set1' a proper subset of 'set2'?
     /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
     /// and at least one element in set2 is not in set1.
-    static member IsProperSubset (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
+    static member IsProperSubsetOf (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
         match PatriciaHashSet.SubsetCompare (set1, set2) with
         | -1 -> true
         | _ -> false
 
     /// Is 'set1' a subset of 'set2'?
     /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubset (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
+    static member IsSubsetOf (set1 : PatriciaHashSet<'T>, set2 : PatriciaHashSet<'T>) : bool =
         match PatriciaHashSet.SubsetCompare (set1, set2) with
         | -1 | 0 -> true
         | _ -> false
@@ -1068,7 +1068,10 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
     /// The first element in the set.
     /// If the element type has suitable hash and comparison functions for the set
     /// to be ordered, then this will be the minimum element of the set.
+#if FX_NO_DEBUG_DISPLAYS
+#else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
     member __.First
         with get () =
             PatriciaHashSet.First trie
@@ -1076,7 +1079,10 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
     /// The last element in the set.
     /// If the element type has suitable hash and comparison functions for the set
     /// to be ordered, then this will be the maximum element of the set.
+#if FX_NO_DEBUG_DISPLAYS
+#else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
     member __.Last
         with get () =
             PatriciaHashSet.Last trie
@@ -1162,21 +1168,28 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
         // Preconditions
         checkNonNull "sets" sets
 
-        // If the sequence is empty, return an empty set;
-        // this also avoids Seq.reduce raising an exception.
-        if Seq.isEmpty sets then
-            HashSet.Empty
-        else
-            Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
+        // For compatibility with Set, don't check for an empty sequence --
+        // just allow Seq.reduce to raise an exception.
+        Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
 
-    /// Determines if set1 is a subset of set2.
-    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubset (set1 : HashSet<'T>, set2 : HashSet<'T>) : bool =
-        PatriciaHashSet.IsSubset (set1.Trie, set2.Trie)
+    /// Determines if this set is a subset of the given set.
+    // IsSubsetOf (otherSet) returns true if all values in this set are in 'otherSet'.
+    member __.IsSubsetOf (otherSet : HashSet<'T>) : bool =
+        PatriciaHashSet.IsSubsetOf (trie, otherSet.Trie)
 
     /// Determines if set1 is a proper subset of set2.
-    static member IsProperSubset (set1 : HashSet<'T>, set2 : HashSet<'T>) : bool =
-        PatriciaHashSet.IsProperSubset (set1.Trie, set2.Trie)
+    // IsProperSubsetOf (otherSet) returns true if all values in this set are in 'otherSet',
+    // and 'otherSet' contains at least one value which is not in this set.
+    member __.IsProperSubsetOf (otherSet : HashSet<'T>) : bool =
+        PatriciaHashSet.IsProperSubsetOf (trie, otherSet.Trie)
+
+    //
+    member __.IsSupersetOf (otherSet : HashSet<'T>) : bool =
+        PatriciaHashSet.IsSubsetOf (otherSet.Trie, trie)
+
+    //
+    member __.IsProperSupersetOf (otherSet : HashSet<'T>) : bool =
+        PatriciaHashSet.IsProperSubsetOf (otherSet.Trie, trie)
 
     /// The HashSet containing the given binding.
     static member Singleton (value : 'T) : HashSet<'T> =
@@ -1572,7 +1585,7 @@ module HashSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        HashSet.IsSubset (set1, set2)
+        set1.IsSubsetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
@@ -1584,7 +1597,7 @@ module HashSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
         
-        HashSet.IsProperSubset (set1, set2)
+        set1.IsProperSubsetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
@@ -1595,7 +1608,7 @@ module HashSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
         
-        HashSet.IsSubset (set2, set1)
+        set1.IsSupersetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
@@ -1607,7 +1620,7 @@ module HashSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        HashSet.IsProperSubset (set2, set1)
+        set1.IsProperSupersetOf set2
 
     /// Returns a new set made from the given bindings.
     [<CompiledName("OfSeq")>]

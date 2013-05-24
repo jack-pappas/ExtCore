@@ -948,50 +948,48 @@ module SetType =
         
     [<Test>]
     let IsSubsetOf () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let fir = new HashSet<int>([1 .. 20])
-//        let sec = new HashSet<int>([1 .. 10])
-//        Assert.IsTrue(sec.IsSubsetOf(fir))
-//        Assert.IsTrue(HashSet.isSubset sec fir)
-//    
-//        let e : HashSet<int> = HashSet.empty<int>
-//        Assert.IsTrue(e.IsSubsetOf(fir))
-//        Assert.IsTrue(HashSet.isSubset e fir)
-//        
-//        let s = HashSet.singleton 8
-//        Assert.IsTrue(s.IsSubsetOf(fir)) 
-//        Assert.IsTrue(HashSet.isSubset s fir)
-//        
-//        let s100 = set [0..100]
-//        let s101 = set [0..101]
-//        for i = 0 to 100 do 
-//            Assert.IsFalse( (set [-1..i]).IsSubsetOf s100)
-//            Assert.IsTrue( (set [0..i]).IsSubsetOf s100)
-//            Assert.IsTrue( (set [0..i]).IsProperSubsetOf s101)
+        let fir = new HashSet<int>([1 .. 20])
+        let sec = new HashSet<int>([1 .. 10])
+        Assert.IsTrue(sec.IsSubsetOf(fir))
+        Assert.IsTrue(HashSet.isSubset sec fir)
+    
+        let e : HashSet<int> = HashSet.empty<int>
+        Assert.IsTrue(e.IsSubsetOf(fir))
+        Assert.IsTrue(HashSet.isSubset e fir)
+        
+        let s = HashSet.singleton 8
+        Assert.IsTrue(s.IsSubsetOf(fir)) 
+        Assert.IsTrue(HashSet.isSubset s fir)
+        
+        let s100 = set [0..100]
+        let s101 = set [0..101]
+        for i = 0 to 100 do 
+            Assert.IsFalse( (set [-1..i]).IsSubsetOf s100)
+            Assert.IsTrue( (set [0..i]).IsSubsetOf s100)
+            Assert.IsTrue( (set [0..i]).IsProperSubsetOf s101)
            
         
     [<Test>]
     let IsSupersetOf () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let fir = new HashSet<int>([1 .. 10])
-//        let sec = new HashSet<int>([1 .. 20])
-//        Assert.IsTrue(sec.IsSupersetOf(fir))
-//        Assert.IsTrue(HashSet.isSuperset sec fir)
-//    
-//        let e : HashSet<int> = HashSet.empty<int>
-//        Assert.IsFalse(e.IsSupersetOf(fir))
-//        Assert.IsFalse(HashSet.isSuperset e fir)
-//        
-//        let s = HashSet.singleton 168
-//        Assert.IsFalse(s.IsSupersetOf(fir))  
-//        Assert.IsFalse(HashSet.isSuperset s fir)
-//
-//        let s100 = set [0..100]
-//        let s101 = set [0..101]
-//        for i = 0 to 100 do 
-//            Assert.IsFalse( s100.IsSupersetOf (set [-1..i]))
-//            Assert.IsTrue( s100.IsSupersetOf (set [0..i]))
-//            Assert.IsTrue( s101.IsSupersetOf (set [0..i]))
+        let fir = new HashSet<int>([1 .. 10])
+        let sec = new HashSet<int>([1 .. 20])
+        Assert.IsTrue(sec.IsSupersetOf(fir))
+        Assert.IsTrue(HashSet.isSuperset sec fir)
+    
+        let e : HashSet<int> = HashSet.empty<int>
+        Assert.IsFalse(e.IsSupersetOf(fir))
+        Assert.IsFalse(HashSet.isSuperset e fir)
+        
+        let s = HashSet.singleton 168
+        Assert.IsFalse(s.IsSupersetOf(fir))  
+        Assert.IsFalse(HashSet.isSuperset s fir)
+
+        let s100 = set [0..100]
+        let s101 = set [0..101]
+        for i = 0 to 100 do 
+            Assert.IsFalse( s100.IsSupersetOf (set [-1..i]))
+            Assert.IsTrue( s100.IsSupersetOf (set [0..i]))
+            Assert.IsTrue( s101.IsSupersetOf (set [0..i]))
         
     [<Test>]
     let Remove () : unit =    
@@ -1002,7 +1000,28 @@ module SetType =
         Assert.AreEqual(e.Remove "A", e)
         
         let s = HashSet.singleton 168
-        Assert.AreEqual(s.Remove 168, HashSet.empty<int>) 
+        Assert.AreEqual(s.Remove 168, HashSet.empty<int>)
+
+    [<Test>]
+    let MinimumElement () : unit =
+        Assert.Ignore "Test not yet implemented."
+//        let fir = new HashSet<int>([1..6])
+//        let sec = new HashSet<int>([2;4;6])
+//        Assert.AreEqual(fir.MinimumElement, 1)
+//        Assert.AreEqual(sec.MinimumElement, 2)
+//        Assert.AreEqual(HashSet.minElement fir, 1)
+//        Assert.AreEqual(HashSet.minElement sec, 2)
+        
+
+    [<Test>]
+    let MaximumElement () : unit =
+        Assert.Ignore "Test not yet implemented."
+//        let fir = new HashSet<int>([1..6])
+//        let sec = new HashSet<int>([2;4;7])
+//        Assert.AreEqual(fir.MaximumElement, 6)
+//        Assert.AreEqual(sec.MaximumElement, 7)
+//        Assert.AreEqual(HashSet.maxElement fir, 6)
+//        Assert.AreEqual(HashSet.maxElement sec, 7)
         
         
     // Static methods
@@ -1041,28 +1060,6 @@ module SetType =
         Assert.AreEqual(s1 - s2, new HashSet<int>([8]))
         Assert.AreEqual(HashSet.difference s1 s2, new HashSet<int>([8]))
         Assert.AreEqual(HashSet.op_Subtraction(s1,s2), new HashSet<int>([8]))
-        
-
-    [<Test>]
-    let MinimumElement () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let fir = new HashSet<int>([1..6])
-//        let sec = new HashSet<int>([2;4;6])
-//        Assert.AreEqual(fir.MinimumElement, 1)
-//        Assert.AreEqual(sec.MinimumElement, 2)
-//        Assert.AreEqual(HashSet.minElement fir, 1)
-//        Assert.AreEqual(HashSet.minElement sec, 2)
-        
-
-    [<Test>]
-    let MaximumElement () : unit =
-        Assert.Ignore "Test not yet implemented."
-//        let fir = new HashSet<int>([1..6])
-//        let sec = new HashSet<int>([2;4;7])
-//        Assert.AreEqual(fir.MaximumElement, 6)
-//        Assert.AreEqual(sec.MaximumElement, 7)
-//        Assert.AreEqual(HashSet.maxElement fir, 6)
-//        Assert.AreEqual(HashSet.maxElement sec, 7)
 
 
 (*
@@ -1255,43 +1252,30 @@ module SetModule =
         
         let emptySet : HashSet<decimal> = HashSet.empty
         let result = HashSet.fold (fun _ _ -> Assert.Fail(); -1I) 0I emptySet
-        if result <> 0I then Assert.Fail()
+        assertEqual 0I result
         
-        let callOrder = ref ([] : (int * int) list)
         let input = new HashSet<_>([1; 2; 3; 4; 5])
         
-        let result = HashSet.fold 
-                            (fun acc i -> callOrder := (acc, i) :: !callOrder; acc + i) 
-                            0 
-                            input
-        if result    <> 15 then Assert.Fail()
-        if !callOrder <> [(10, 5); (6, 4); (3, 3); (1, 2); (0, 1)] then Assert.Fail()
-        ()
+        HashSet.fold (+) 0 input
+        |> assertEqual 15
         
     [<Test>]
     let foldBack () : unit =
         
         let emptySet : HashSet<decimal> = HashSet.empty
         let result = HashSet.foldBack (fun _ _ -> Assert.Fail(); -1I) emptySet 0I
-        if result <> 0I then Assert.Fail()
+        assertEqual 0I result
         
-        let callOrder = ref ([] : (int * int) list)
         let input = new HashSet<_>([1; 2; 3; 4; 5])
         
-        let result = HashSet.foldBack
-                            (fun i acc -> callOrder := (acc, i) :: !callOrder; acc + i) 
-                            input
-                            0
-        if result    <> 15 then Assert.Fail()
-        if !callOrder <> [(14, 1); (12, 2); (9, 3); (5, 4); (0, 5)] then Assert.Fail()
-        ()
+        HashSet.foldBack (+) input 0
+        |> assertEqual 15
 
     [<Test>]
     let forall () : unit =
-
-        let emptySet : HashSet<string> = HashSet.empty
-        let result = HashSet.forall (fun x -> Assert.Fail(); false) emptySet
-        if result <> true then Assert.Fail()
+        (HashSet.empty : HashSet<string>)
+        |> HashSet.forall (fun _ -> Assert.Fail(); false)
+        |> assertTrue
         
         let seta = new HashSet<_>( [1 .. 99] |> List.map (fun i -> i.ToString()) )
         let result = seta |> HashSet.forall (fun str -> str.Length < 3)
@@ -1679,7 +1663,7 @@ module SetModule =
             // Add permutation items to set in order
             Array.iter (fun i -> set := HashSet.add i !set) permutation
             // Check that the set equals the full list
-            Assert.IsTrue(HashSet.toList !set = [0 .. i])
+            Collection.assertEquiv [0 .. i] <| HashSet.toList !set
             // Remove items in permutation order, ensuring set is delt with correctly
             Array.iteri
                 (fun idx i -> set := HashSet.remove i !set

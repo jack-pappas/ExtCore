@@ -554,14 +554,14 @@ type private PatriciaSet =
     /// Is 'set1' a proper subset of 'set2'?
     /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
     /// and at least one element in set2 is not in set1.
-    static member IsProperSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+    static member IsProperSubsetOf (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
         match PatriciaSet.SubsetCompare (set1, set2) with
         | -1 -> true
         | _ -> false
 
     /// Is 'set1' a subset of 'set2'?
     /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubset (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
+    static member IsSubsetOf (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
         match PatriciaSet.SubsetCompare (set1, set2) with
         | -1 | 0 -> true
         | _ -> false
@@ -882,13 +882,19 @@ type IntSet private (trie : PatriciaSet) =
         PatriciaSet.Contains (uint32 key, trie)
 
     /// The minimum unsigned value stored in the set.
+#if FX_NO_DEBUG_DISPLAYS
+#else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
     member __.MinElement
         with get () : int =
             int <| PatriciaSet.MinElement trie
 
     /// The minimum signed value stored in the set.
+#if FX_NO_DEBUG_DISPLAYS
+#else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
     member __.MinElementSigned
         with get () : int =
             int <| PatriciaSet.MinElementSigned trie
@@ -983,21 +989,28 @@ type IntSet private (trie : PatriciaSet) =
         // Preconditions
         checkNonNull "sets" sets
 
-        // If the sequence is empty, return an empty set;
-        // this also avoids Seq.reduce raising an exception.
-        if Seq.isEmpty sets then
-            IntSet.Empty
-        else
-            Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
+        // For compatibility with Set, don't check for an empty sequence --
+        // just allow Seq.reduce to raise an exception.
+        Seq.reduce (fun s1 s2 -> s1.Intersect s2) sets
 
-    /// Determines if set1 is a subset of set2.
-    // IsSubsetOf (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubset (set1 : IntSet, set2 : IntSet) : bool =
-        PatriciaSet.IsSubset (set1.Trie, set2.Trie)
+    /// Determines if this set is a subset of the given set.
+    // IsSubsetOf (otherSet) returns true if all values in this set are in 'otherSet'.
+    member __.IsSubsetOf (otherSet : IntSet) : bool =
+        PatriciaSet.IsSubsetOf (trie, otherSet.Trie)
 
     /// Determines if set1 is a proper subset of set2.
-    static member IsProperSubset (set1 : IntSet, set2 : IntSet) : bool =
-        PatriciaSet.IsProperSubset (set1.Trie, set2.Trie)
+    // IsProperSubsetOf (otherSet) returns true if all values in this set are in 'otherSet',
+    // and 'otherSet' contains at least one value which is not in this set.
+    member __.IsProperSubsetOf (otherSet : IntSet) : bool =
+        PatriciaSet.IsProperSubsetOf (trie, otherSet.Trie)
+
+    //
+    member __.IsSupersetOf (otherSet : IntSet) : bool =
+        PatriciaSet.IsSubsetOf (otherSet.Trie, trie)
+
+    //
+    member __.IsProperSupersetOf (otherSet : IntSet) : bool =
+        PatriciaSet.IsProperSubsetOf (otherSet.Trie, trie)
 
     /// Returns a new IntSet made from the given elements.
     static member internal OfSeq (source : seq<int>) : IntSet =
@@ -1368,7 +1381,7 @@ module IntSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        IntSet.IsSubset (set1, set2)
+        set1.IsSubsetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
@@ -1380,7 +1393,7 @@ module IntSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
         
-        IntSet.IsProperSubset (set1, set2)
+        set1.IsProperSubsetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
@@ -1391,7 +1404,7 @@ module IntSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
         
-        IntSet.IsSubset (set2, set1)
+        set1.IsSupersetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
@@ -1403,7 +1416,7 @@ module IntSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        IntSet.IsProperSubset (set2, set1)
+        set1.IsProperSupersetOf set2
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
@@ -1791,7 +1804,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        IntSet.IsSubset (set1, set2)
+        set1.IsSubsetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the first set are in the second,
@@ -1807,7 +1820,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        IntSet.IsProperSubset (set1, set2)
+        set1.IsProperSubsetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first.
@@ -1822,7 +1835,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        IntSet.IsSubset (set2, set1)
+        set1.IsSupersetOf set2
 
     /// <summary>
     /// Evaluates to &quot;true&quot; if all elements of the second set are in the first,
@@ -1838,7 +1851,7 @@ module TagSet =
         checkNonNull "set1" set1
         checkNonNull "set2" set2
 
-        IntSet.IsProperSubset (set2, set1)
+        set1.IsProperSupersetOf set2
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
