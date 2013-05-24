@@ -300,7 +300,7 @@ let isProperSubset () : unit =
         IntSet.empty IntSet.empty
     |> should be False
 
-    // A set is a subset of itself (this distinguishes isSubset from isProperSubset).
+    // A set is not a proper subset of itself (this distinguishes isSubset from isProperSubset).
     IntSet.isProperSubset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])

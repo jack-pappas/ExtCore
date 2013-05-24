@@ -208,6 +208,25 @@ module private ListSet =
             elif c < 0 then false
             else isSubset set1 tl2
 
+    /// Computes a containment ordering for two sets.
+    /// For use with PatriciaHashSet.SubsetCompare.
+    // Return values:
+    //  -1 : All values in 't1' are in 't2', and at least one value of 't2' is not in 't1'.
+    //   0 : The sets contain _exactly_ the same values.
+    //   1 : The sets are disjoint, i.e., 't1' contains at least one value which is not in 't2'.
+    [<CompiledName("SubsetCompare")>]
+    let rec subsetCompare (set1 : ListSet<'T>) (set2 : ListSet<'T>) : int =
+        match set1, set2 with
+        | [], [] -> 0
+        | _, [] -> 1
+        | [], _ -> -1
+        | hd1 :: tl1, hd2 :: tl2 ->
+            let c = Unchecked.compare hd1 hd2
+
+            if c = 0 then subsetCompare tl1 tl2
+            elif c < 0 then 1
+            else subsetCompare set1 tl2
+
 
 (* OPTIMIZE :   Some of the functional-style operations on PatriciaHashSet use direct non-tail-recursion;
                 performance may be improved if we modify these to use CPS instead. *)
@@ -618,8 +637,6 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
     //   0 : The sets contain _exactly_ the same values.
     //   1 : The sets are disjoint, i.e., 't1' contains at least one value which is not in 't2'.
     static member private SubsetCompare (t1 : PatriciaHashSet<'T>, t2 : PatriciaHashSet<'T>) : int =
-        notImpl "PatriciaHashSet.SubsetCompare"
-(*
         match t1, t2 with
         | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then 1
@@ -641,25 +658,27 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
                 // The maps are disjoint.
                 1
 
-        | Br (_,_,_,_), (Empty | Lf (_,_)) -> 1
-        | Lf x, Lf y ->
-            if x = y then 0
-            else 1
-
-        | Lf x, Br (p, m, l, r) ->
-            if not <| matchPrefix (x, p, m) then 1
-            elif zeroBit (x, m) then
-                match PatriciaSet.SubsetCompare (t1, l) with 1 -> 1 | _ -> -1
+        | Lf (k, _), Br (p, m, l, r) ->
+            if not <| matchPrefix (k, p, m) then 1
+            elif zeroBit (k, m) then
+                match PatriciaHashSet.SubsetCompare (t1, l) with 1 -> 1 | _ -> -1
             else
-                match PatriciaSet.SubsetCompare (t1, r) with 1 -> 1 | _ -> -1
+                match PatriciaHashSet.SubsetCompare (t1, r) with 1 -> 1 | _ -> -1
 
+        | Lf (j, listSet1), Lf (k, listSet2) ->
+            if j <> k then 1
+            else
+                // Compare the two sets.
+                ListSet.subsetCompare listSet1 listSet2
+
+        | Br (_,_,_,_), (Empty | Lf (_,_))
         | Lf _, Empty ->
             // The maps are disjoint.
             1
 
         | Empty, Empty -> 0
         | Empty, _ -> -1
-*)
+
     /// Is 'set1' a proper subset of 'set2'?
     /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
     /// and at least one element in set2 is not in set1.

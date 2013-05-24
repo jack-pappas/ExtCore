@@ -209,8 +209,8 @@ let difference () : unit =
 let isSubset () : unit =
     // The empty set is always a subset of any other set.
     HashSet.isSubset
-        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         HashSet.empty
+        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     HashSet.isSubset
@@ -225,13 +225,13 @@ let isSubset () : unit =
 
     // Basic tests.
     HashSet.isSubset
-        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     HashSet.isSubset
-        (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
     |> should be False
 
     // Partially-overlapping sets.
@@ -250,15 +250,15 @@ let isSubset () : unit =
 let isProperSubset () : unit =
     // The empty set is a proper subset of any set except itself.
     HashSet.isProperSubset
-        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         HashSet.empty
+        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     HashSet.isProperSubset
         HashSet.empty HashSet.empty
     |> should be False
 
-    // A set is a subset of itself (this distinguishes isSubset from isProperSubset).
+    // A set is not a proper subset of itself (this distinguishes isSubset from isProperSubset).
     HashSet.isProperSubset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
@@ -266,13 +266,13 @@ let isProperSubset () : unit =
 
     // Basic tests.
     HashSet.isProperSubset
-        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be True
 
     HashSet.isProperSubset
-        (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
     |> should be False
 
     // Partially-overlapping sets.
@@ -307,13 +307,13 @@ let isSuperset () : unit =
 
     // Basic tests.
     HashSet.isSuperset
-        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
+        (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
     |> should be False
 
     HashSet.isSuperset
-        (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
+        (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
     |> should be True
 
     // Partially-overlapping sets.
