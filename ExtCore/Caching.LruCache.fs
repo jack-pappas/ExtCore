@@ -16,13 +16,22 @@ limitations under the License.
 
 *)
 
-/// Unit tests for the ExtCore.Collections.LruCache type and module.
-module Tests.ExtCore.Collections.LruCache
+//
+namespace ExtCore.Caching
 
-open NUnit.Framework
-open FsUnit
-//open FsCheck
+open LanguagePrimitives
+open OptimizedClosures
+open ExtCore
 
 
-(* TODO : Implement tests for ExtCore.Collections.LruCache. *)
+//
+type LruCache<'Key, 'T when 'Key : equality> =
+    class end
 
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module LruCache =
+    //
+    [<CompiledName("Empty")>]
+    let empty = ()

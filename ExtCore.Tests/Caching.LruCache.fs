@@ -16,16 +16,13 @@ limitations under the License.
 
 *)
 
-//
-namespace ExtCore.Collections
+/// Unit tests for the ExtCore.Caching.LruCache type and module.
+module Tests.ExtCore.Caching.LruCache
 
-open LanguagePrimitives
-open OptimizedClosures
-open ExtCore
+open NUnit.Framework
+open FsUnit
+//open FsCheck
 
 
-//
-type LruCache<'Key, 'T when 'Key : equality> =
-    class end
-
+(* TODO : Implement tests for ExtCore.Caching.LruCache. *)
 

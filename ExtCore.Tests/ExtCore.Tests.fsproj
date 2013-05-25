@@ -68,7 +68,6 @@
     <Compile Include="Collections.LazyList.fs" />
     <Compile Include="Collections.Queue.fs" />
     <Compile Include="Collections.PriorityQueue.fs" />
-    <Compile Include="Collections.LruCache.fs" />
     <Compile Include="ControlCollections.State.fs" />
     <Compile Include="ControlCollections.Reader.fs" />
     <Compile Include="ControlCollections.ReaderState.fs" />
@@ -86,6 +85,7 @@
     <Compile Include="ControlCollections.AsyncProtectedState.fs" />
     <Compile Include="ControlCollections.Cont.fs" />
     <Compile Include="ControlCollections.StateCont.fs" />
+    <Compile Include="Caching.LruCache.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">
