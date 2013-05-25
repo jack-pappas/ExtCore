@@ -248,6 +248,16 @@ module Operators =
     [<CompiledName("RaiseKeyNotFoundException")>]
     let inline keyNotFound (msg : string) : 'T =
         raise <| System.Collections.Generic.KeyNotFoundException msg
+
+    (* Active Patterns *)
+
+    /// Classifies a Choice`2 value as a success or failure.
+    let inline (|Success|Failure|) (result : Choice<'T, 'Error>) =
+        match result with
+        | Choice1Of2 res ->
+            Success res
+        | Choice2Of2 err ->
+            Failure err
     
 
 /// Functional operators on enumerations.
