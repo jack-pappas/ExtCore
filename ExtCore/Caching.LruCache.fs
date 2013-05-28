@@ -264,6 +264,10 @@ type LruCache<'Key, 'T when 'Key : equality>
         ||> Array.fold (fun cache (key, value) ->
             cache.Add (key, value))
 
+    /// Create a new LruCache with the specified capacity.
+    static member internal Create (capacity : uint32) : LruCache<'Key, 'T> =
+        LruCache (HashMap.empty, IntMap.empty, capacity, 0u)
+
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -282,12 +286,17 @@ module LruCache =
         cache.Count
 
     //
-    [<CompiledName("Count")>]
+    [<CompiledName("Capacity")>]
     let inline capacity (cache : LruCache<'Key, 'T>) : uint32 =
         // Preconditions
         checkNonNull "cache" cache
 
         cache.Capacity
+
+    /// Create a new LruCache with the specified capacity.
+    [<CompiledName("Create")>]
+    let create (capacity : uint32) : LruCache<'Key, 'T> =
+        LruCache.Create capacity
 
     //
     [<CompiledName("ChangeCapacity")>]
