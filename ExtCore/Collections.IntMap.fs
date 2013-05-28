@@ -855,10 +855,10 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     static member Empty
         with get () = empty
 
-    //
+    /// Create an IntMap from a sequence of key-value pairs.
     new (elements : seq<int * 'T>) =
         // Preconditions
-        // TODO : Check for null input.
+        checkNonNull "elements" elements
 
         // OPTIMIZE : Try to cast the sequence to array or list;
         // if it succeeds use the specialized method for that type for better performance.
@@ -888,7 +888,8 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     override __.GetHashCode () =
         Unchecked.hash trie
 
-    //
+    /// Look up an element in the map, raising KeyNotFoundException
+    /// if no binding exists in the map.
     member __.Item
         with get key =
             match PatriciaMap.TryFind (uint32 key, trie) with
@@ -908,13 +909,13 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             | Empty -> true
             | _ -> false
 
-    /// Look up an element in the IntMap returning a Some value if the
-    /// element is in the domain of the IntMap and None if not.
+    /// Look up an element in the map, returning a Some value if the
+    /// element is in the domain of the map and None if not.
     member __.TryFind (key : int) : 'T option =
         PatriciaMap.TryFind (uint32 key, trie)
 
-    /// Look up an element in the IntMap, raising KeyNotFoundException
-    /// if no binding exists in the IntMap.
+    /// Look up an element in the map, raising KeyNotFoundException
+    /// if no binding exists in the map.
     member __.Find (key : int) : 'T =
         match PatriciaMap.TryFind (uint32 key, trie) with
         | Some x -> x
@@ -923,25 +924,25 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    /// Tests if an element is in the domain of the IntMap.
+    /// Tests if an element is in the domain of the map.
     member __.ContainsKey (key : int) : bool =
         PatriciaMap.ContainsKey (uint32 key, trie)
 
-    /// Returns a new IntMap with the binding added to this IntMap.
+    /// Returns a new map with the binding added to this map.
     member this.Add (key : int, value : 'T) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
         let trie' = PatriciaMap.Add (uint32 key, value, trie)
         if trie === trie' then this
         else IntMap (trie')
 
-    /// Returns a new IntMap with the binding added to this IntMap.
+    /// Returns a new map with the binding added to this map.
     member this.TryAdd (key : int, value : 'T) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
         let trie' = PatriciaMap.TryAdd (uint32 key, value, trie)
         if trie === trie' then this
         else IntMap (trie')
 
-    /// Removes an element from the domain of the IntMap.
+    /// Removes an element from the domain of the map.
     /// No exception is raised if the element is not present.
     member this.Remove (key : int) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
@@ -949,7 +950,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         if trie === trie' then this
         else IntMap (trie')
 
-    /// Returns a new IntMap created by merging the two specified IntMaps.
+    /// Returns a new map created by merging the two specified maps.
     member this.Union (otherMap : IntMap<'T>) : IntMap<'T> =
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
@@ -958,7 +959,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         elif otherMap.Trie === trie' then otherMap
         else IntMap (trie')
 
-    /// Returns the intersection of two IntMaps.
+    /// Returns the intersection of two maps.
     member this.Intersect (otherMap : IntMap<'T>) : IntMap<'T> =
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
@@ -967,7 +968,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         elif otherMap.Trie === trie' then otherMap
         else IntMap (trie')
 
-    /// Returns a new IntMap created by removing the second IntMap from the first.
+    /// Returns a new map created by removing the second map from the first.
     member this.Difference (otherMap : IntMap<'T>) : IntMap<'T> =
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
@@ -980,7 +981,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     member this.IsSubmapOfBy (predicate, other : IntMap<'T>) : bool =
         PatriciaMap.IsSubmapOfBy predicate other.Trie trie
 
-    /// The IntMap containing the given binding.
+    /// The map containing the given binding.
     static member Singleton (key : int, value : 'T) : IntMap<'T> =
         IntMap (
             Lf (uint32 key, value))

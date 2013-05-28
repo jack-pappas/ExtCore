@@ -1077,7 +1077,7 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
     //
     new (elements : seq<'T>) =
         // Preconditions
-        // TODO : Check for null input.
+        checkNonNull "elements" elements
 
         // OPTIMIZE : Try to cast the sequence to array or list;
         // if it succeeds use the specialized method for that type for better performance.

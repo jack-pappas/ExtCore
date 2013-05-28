@@ -1051,7 +1051,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     //
     new (elements : seq<'Key * 'T>) =
         // Preconditions
-        // TODO : Check for null input.
+        checkNonNull "elements" elements
 
         // OPTIMIZE : Try to cast the sequence to array or list;
         // if it succeeds use the specialized method for that type for better performance.
