@@ -41,6 +41,7 @@ type LruCache<'Key, 'T when 'Key : equality>
     static member internal Empty
         with get () = empty
 
+(*
     /// Create an LruCache from a sequence of key-value pairs.
     new (capacity : uint32, elements : seq<'Key * 'T>) =
         // Preconditions
@@ -59,6 +60,7 @@ type LruCache<'Key, 'T when 'Key : equality>
             // TEMP : This is necessary because of the exception being raised (above).
             // It can be removed whenever this code path is implemented.
             LruCache (HashMap.empty, IntMap.empty, 0u, 0u)
+*)
 
     /// Is the cache empty?
     member __.IsEmpty
@@ -96,33 +98,41 @@ type LruCache<'Key, 'T when 'Key : equality>
 
     //
     member this.Add (key : 'Key, value : 'T) : LruCache<'Key, 'T> =
-        // NOTE : It is very important that we use checked addition here with uint32 operands --
-        // this data structure currently breaks if the index rolls over from 0xffffffff to 0x00000000.
-        let newIndex = Checked.(+) currentIndex 1u
-        let newCache = HashMap.add key (KeyValuePair (int newIndex, value)) cache
-
-        let newIndexedKeys =
-            // Update the key-index (if necessary, i.e., the key already exists in the cache).
-            let newIndexedKeys =
-                match HashMap.tryFind key cache with
-                | None -> indexedKeys
-                | Some keyIndexAndValue ->
-                    IntMap.remove keyIndexAndValue.Key indexedKeys
-
-            // Add the key and it's new index to the key-index.
-            IntMap.add (int newIndex) key newIndexedKeys
-
-        // Evict the least-recently-used key (and it's associated value) from the cache
-        // if this map (the original) is already full.
-        if uint32 (IntMap.count newIndexedKeys) > capacity then
-            // Remove the minimum key from the key-index and cache.
-            // TODO : Fix this so it works correctly even when the index rolls over from 0xffffffff to 0x00000000
-            // OPTIMIZE : Use IntMap.extractMin here once it's implemented.
-            
-            notImpl "LruCache.Add"
+        // OPTIMIZATION : If the capacity is zero (0), we don't need to do anything here.
+        if capacity = 0u then this
         else
-            // Return a new cache with the updated map and key-index.
-            LruCache (newCache, newIndexedKeys, capacity, newIndex)
+            // NOTE : It is very important that we use checked addition here with uint32 operands --
+            // this data structure currently breaks if the index rolls over from 0xffffffff to 0x00000000.
+            let newIndex = Checked.(+) currentIndex 1u
+            let newCache = HashMap.add key (KeyValuePair (int newIndex, value)) cache
+
+            let newIndexedKeys =
+                // Update the key-index (if necessary, i.e., the key already exists in the cache).
+                let newIndexedKeys =
+                    match HashMap.tryFind key cache with
+                    | None -> indexedKeys
+                    | Some keyIndexAndValue ->
+                        IntMap.remove keyIndexAndValue.Key indexedKeys
+
+                // Add the key and it's new index to the key-index.
+                IntMap.add (int newIndex) key newIndexedKeys
+
+            // Evict the least-recently-used key (and it's associated value) from the cache
+            // if this map (the original) is already full.
+            if uint32 (IntMap.count newIndexedKeys) > capacity then
+                // Remove the minimum key from the key-index and cache.
+                // TODO : Fix this so it works correctly even when the index rolls over from 0xffffffff to 0x00000000
+                // OPTIMIZE : Use IntMap.extractMin here once it's implemented.
+                let minKeyIndex = IntMap.minKey newIndexedKeys
+                let minKey = IntMap.find minKeyIndex newIndexedKeys
+                let newIndexedKeys = IntMap.remove minKeyIndex newIndexedKeys
+                let newCache = HashMap.remove minKey newCache
+
+                // Return a new cache with the updated map and key-index.
+                LruCache (newCache, newIndexedKeys, capacity, newIndex)
+            else
+                // Return a new cache with the updated map and key-index.
+                LruCache (newCache, newIndexedKeys, capacity, newIndex)
 
     //
     member this.Remove (key : 'Key) : LruCache<'Key, 'T> =
@@ -142,6 +152,33 @@ type LruCache<'Key, 'T when 'Key : equality>
             // when adding values to the cache.
             Some (KeyValuePair (key, keyIndexAndValue.Value)),
             LruCache (cache', indexedKeys', capacity, currentIndex)
+
+    //
+    member private this.Evict () : LruCache<'Key, 'T> =
+        // If the cache is empty, there's nothing to do so just
+        // return the cache without modifying it.
+        if IntMap.isEmpty indexedKeys then this
+        else
+            // Remove the minimum key from the key-index and cache.
+            // TODO : Fix this so it works correctly even when the index rolls over from 0xffffffff to 0x00000000
+            // OPTIMIZE : Use IntMap.extractMin here once it's implemented.
+            let minKeyIndex = IntMap.minKey indexedKeys
+            let minKey = IntMap.find minKeyIndex indexedKeys
+            let newIndexedKeys = IntMap.remove minKeyIndex indexedKeys
+            let newCache = HashMap.remove minKey cache
+
+            // Return a new cache with the updated map and key-index.
+            LruCache (newCache, newIndexedKeys, capacity, currentIndex)
+
+    //
+    member private this.EvictMany (count : uint32) : LruCache<'Key, 'T> =
+        if count = 0u then this
+        else
+            // Evict the next key/value from the cache.
+            let this' = this.Evict ()
+
+            // Continue evicting keys until we've evicted the specified number.
+            this'.EvictMany (count - 1u)
     
     //
     member this.ChangeCapacity (newCapacity : uint32) : LruCache<'Key, 'T> =
@@ -156,7 +193,7 @@ type LruCache<'Key, 'T when 'Key : equality>
         else
             // The new capacity is smaller than the old capacity, so we need to
             // evict (capacity - newCapacity) values.
-            notImpl "LruCache.ChangeCapacity"
+            this.EvictMany (capacity - newCapacity)
 
     //
     member __.ToSeq () : seq<'Key * 'T> =
