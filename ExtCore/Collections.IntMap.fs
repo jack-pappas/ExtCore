@@ -103,6 +103,48 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             // Return the computed element count.
             int count
 
+    /// Retrieve the minimum key of the map.
+    static member MinKey (map : PatriciaMap<'T>) =
+        match map with
+        | Empty ->
+            invalidArg "map" "The map is empty."
+        | Lf (j, _) -> j
+        | Br (_, _, t0, _) ->
+            PatriciaMap.MinKey t0
+
+    /// Retrieve the minimum key of the map, treating the
+    /// keys of the map as signed values.
+    static member MinKeySigned (map : PatriciaMap<'T>) =
+        match map with
+        | Empty ->
+            invalidArg "map" "The map is empty."
+        | Lf (j, _) -> j
+        | Br (_, m, t0, t1) ->
+            // OPTIMIZE : Just use a bitmask here to check the top bit?
+            if (int m) < 0 then t1 else t0
+            |> PatriciaMap.MinKey
+
+    /// Retrieve the maximum key of the map.
+    static member MaxKey (map : PatriciaMap<'T>) =
+        match map with
+        | Empty ->
+            invalidArg "set" "The set is empty."
+        | Lf (j, _) -> j
+        | Br (_, _, _, t1) ->
+            PatriciaMap.MaxKey t1
+
+    /// Retrieve the maximum element of the map, treating the
+    /// keys of the map as signed values.
+    static member MaxKeySigned (map : PatriciaMap<'T>) =
+        match map with
+        | Empty ->
+            invalidArg "map" "The map is empty."
+        | Lf (j, _) -> j
+        | Br (_, m, t0, t1) ->
+            // OPTIMIZE : Just use a bitmask here to check the top bit?
+            if (int m) < 0 then t0 else t1
+            |> PatriciaMap.MaxKey
+
     /// Remove the binding with the specified key from the map.
     /// No exception is thrown if the map does not contain a binding for the key.
     static member Remove (key, map : PatriciaMap<'T>) =
@@ -909,6 +951,42 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             | Empty -> true
             | _ -> false
 
+    /// The minimum unsigned key stored in the map.
+#if FX_NO_DEBUG_DISPLAYS
+#else
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
+    member __.MinimumKey
+        with get () : int =
+            int <| PatriciaMap.MinKey trie
+
+    /// The minimum signed key stored in the map.
+#if FX_NO_DEBUG_DISPLAYS
+#else
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
+    member __.MinimumKeySigned
+        with get () : int =
+            int <| PatriciaMap.MinKeySigned trie
+
+    /// The maximum unsigned key stored in the map.
+#if FX_NO_DEBUG_DISPLAYS
+#else
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
+    member __.MaximumKey
+        with get () : int =
+            int <| PatriciaMap.MaxKey trie
+
+    /// The maximum signed key stored in the map.
+#if FX_NO_DEBUG_DISPLAYS
+#else
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
+    member __.MaximumKeySigned
+        with get () : int =
+            int <| PatriciaMap.MaxKeySigned trie
+
     /// Look up an element in the map, returning a Some value if the
     /// element is in the domain of the map and None if not.
     member __.TryFind (key : int) : 'T option =
@@ -1418,6 +1496,38 @@ module IntMap =
     [<CompiledName("FindOrDefault")>]
     let inline findOrDefault defaultValue (key : int) (map : IntMap<'T>) =
         defaultArg (map.TryFind key) defaultValue
+
+    /// Returns the lowest key in the map according to an unsigned integer comparison.
+    [<CompiledName("MinKey")>]
+    let inline minKey (map : IntMap<'T>) : int =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.MinimumKey
+
+    /// Returns the lowest key in the map according to a signed integer comparison.
+    [<CompiledName("MinKeySigned")>]
+    let inline minKeySigned (map : IntMap<'T>) : int =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.MinimumKeySigned
+
+    /// Returns the highest key in the map according to an unsigned integer comparison.
+    [<CompiledName("MaxKey")>]
+    let inline maxKey (map : IntMap<'T>) : int =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.MaximumKey
+
+    /// Returns the highest key in the map according to a signed integer comparison.
+    [<CompiledName("MaxKeySigned")>]
+    let inline maxKeySigned (map : IntMap<'T>) : int =
+        // Preconditions
+        checkNonNull "map" map
+
+        map.MaximumKeySigned
 
     /// Returns the key of the first mapping in the collection which satisfies the given
     /// predicate. Returns None if no such mapping is found.

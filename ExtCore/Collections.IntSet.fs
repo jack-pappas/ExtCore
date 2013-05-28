@@ -906,13 +906,19 @@ type IntSet private (trie : PatriciaSet) =
             int <| PatriciaSet.MinElementSigned trie
 
     /// The maximum unsigned value stored in the set.
+#if FX_NO_DEBUG_DISPLAYS
+#else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
     member __.MaximumElement
         with get () : int =
             int <| PatriciaSet.MaxElement trie
 
     /// The maximum signed value stored in the set.
+#if FX_NO_DEBUG_DISPLAYS
+#else
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
     member __.MaximumElementSigned
         with get () : int =
             int <| PatriciaSet.MaxElementSigned trie
