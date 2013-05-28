@@ -25,6 +25,11 @@ open ExtCore
 open ExtCore.Collections
 
 
+(* OPTIMIZE :   In the HashMap used in the cache, change the KeyValuePair to a simple struct-tuple
+                so we can flip the order the index and value are stored in; this'll provide better
+                data alignment in most cases. (E.g., name the type ValueWithKeyIndex) *)
+// TODO : Perhaps use TagMap instead of IntMap, and tag the key indices with a tag type like KeyIndex.
+
 /// An immutable cache data structure with a Least-Recently-Used (LRU) eviction policy.
 type LruCache<'Key, 'T when 'Key : equality>
     private (cache : HashMap<'Key, KeyValuePair<int, 'T>>, indexedKeys : IntMap<'Key>,
@@ -69,23 +74,38 @@ type LruCache<'Key, 'T when 'Key : equality>
         with get () =
             IntMap.count indexedKeys
 
-    /// Look up a key in the cache, returning Some with the associated value and
-    /// updated cache if the key is in the domain of the cache and None if not.
-    member __.TryFind (key : 'Key) : ('T * LruCache<'Key, 'T>) option =
-        notImpl "LruCache.TryFind"
+    /// Look up a key in the cache, returning Some with the associated value if
+    /// if the key is in the domain of the cache and None if not. The (possibly)
+    /// updated cache is also returned.
+    member this.TryFind (key : 'Key) : 'T option * LruCache<'Key, 'T> =
+        // Try extracting the key/value from the cache.
+        let value, this' = this.Extract key
+
+        // If the key was found (and the value extracted), re-insert the key/value
+        // in the cache so the key's index will be updated.
+        match value with
+        | None ->
+            None, this
+        | Some indexAndValue ->
+            Some indexAndValue.Value,
+            this'.Add (key, indexAndValue.Value)
 
     /// Tests if a key is in the domain of the cache.
     member __.ContainsKey (key : 'Key) : bool =
-        notImpl "LruCache.ContainsKey"
+        HashMap.containsKey key cache
 
     //
-    member __.Add (key : 'Key, value : 'T) : LruCache<'Key, 'T> =
+    member this.Add (key : 'Key, value : 'T) : LruCache<'Key, 'T> =
         // NOTE : Checked.add MUST be used when incrementing 'count'!
         notImpl "LruCache.Add"
 
     //
-    member __.Remove (key : 'Key) : LruCache<'Key, 'T> =
-        notImpl "LruCache.Remove"
+    member this.Remove (key : 'Key) : LruCache<'Key, 'T> =
+        snd <| this.Extract key
+
+    //
+    member private __.Extract (key : 'Key) : KeyValuePair<'Key, 'T> option * LruCache<'Key, 'T> =
+        notImpl "LruCache.Extract"
     
     //
     member this.ChangeCapacity (newCapacity : uint32) : LruCache<'Key, 'T> =
@@ -104,27 +124,72 @@ type LruCache<'Key, 'T when 'Key : equality>
 
     //
     member __.ToSeq () : seq<'Key * 'T> =
-        notImpl "LruCache.ToSeq"
+        indexedKeys
+        |> IntMap.toSeq
+        |> Seq.map (fun (_, key) ->
+            // Find the value using the key.
+            let kvp = HashMap.find key cache
+            key, kvp.Value)
 
     //
     member __.ToList () : ('Key * 'T) list =
-        notImpl "LruCache.ToList"
+        // Fold backwards so we don't have to reverse the created list.
+        (indexedKeys, [])
+        ||> IntMap.foldBack (fun keyIndex key list ->
+            // Find the value using the key.
+            let kvp = HashMap.find key cache
+
+            // DEBUG : Assert that the index in the key-value pair is
+            // equal to the one from the key-index.
+            assert (keyIndex = kvp.Key)
+
+            // Cons the key and value onto the list.
+            (key, kvp.Value) :: list)
 
     //
     member __.ToArray () : ('Key * 'T)[] =
-        notImpl "LruCache.ToSeq"
+        let kvps = ResizeArray ()
+
+        indexedKeys
+        |> IntMap.iter (fun keyIndex key ->
+            // Find the value using the key.
+            let kvp = HashMap.find key cache
+
+            // DEBUG : Assert that the index in the key-value pair is
+            // equal to the one from the key-index.
+            assert (keyIndex = kvp.Key)
+
+            // Add the key and value to the ResizeArray
+            kvps.Add (key, kvp.Value))
+
+        ResizeArray.toArray kvps
 
     //
     static member OfSeq (source : seq<'Key * 'T>) : LruCache<'Key, 'T> =
-        notImpl "LruCache.OfSeq"
+        // Preconditions
+        checkNonNull "source" source
+
+        (empty, source)
+        ||> Seq.fold (fun cache (key, value) ->
+            cache.Add (key, value))
 
     //
     static member OfList (source : ('Key * 'T) list) : LruCache<'Key, 'T> =
-        notImpl "LruCache.OfList"
+        // Preconditions
+        checkNonNull "source" source
+
+        (empty, source)
+        ||> List.fold (fun cache (key, value) ->
+            cache.Add (key, value))
 
     //
     static member OfArray (source : ('Key * 'T)[]) : LruCache<'Key, 'T> =
-        notImpl "LruCache.OfArray"
+        // Preconditions
+        checkNonNull "source" source
+        
+        (empty, source)
+        ||> Array.fold (fun cache (key, value) ->
+            cache.Add (key, value))
 
 
 //
@@ -169,7 +234,7 @@ module LruCache =
 
     //
     [<CompiledName("TryFind")>]
-    let inline tryFind (key : 'Key) (cache : LruCache<'Key, 'T>) : ('T * LruCache<'Key, 'T>) option =
+    let inline tryFind (key : 'Key) (cache : LruCache<'Key, 'T>) : 'T option * LruCache<'Key, 'T> =
         // Preconditions
         checkNonNull "cache" cache
 
@@ -194,25 +259,19 @@ module LruCache =
     //
     [<CompiledName("OfSeq")>]
     let inline ofSeq (source : seq<'Key * 'T>) : LruCache<'Key, 'T> =
-        // Preconditions
-        checkNonNull "source" source
-
+        // Preconditions checked within the member.
         LruCache.OfSeq source
 
     //
     [<CompiledName("OfList")>]
     let inline ofList (source : ('Key * 'T) list) : LruCache<'Key, 'T> =
-        // Preconditions
-        checkNonNull "source" source
-
+        // Preconditions checked within the member.
         LruCache.OfList source
 
     //
     [<CompiledName("OfArray")>]
     let inline ofArray (source : ('Key * 'T)[]) : LruCache<'Key, 'T> =
-        // Preconditions
-        checkNonNull "source" source
-
+        // Preconditions checked within the member.
         LruCache.OfArray source
 
     //
