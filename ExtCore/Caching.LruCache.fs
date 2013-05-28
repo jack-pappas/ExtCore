@@ -28,17 +28,17 @@ open ExtCore.Collections
 (* OPTIMIZE :   In the HashMap used in the cache, change the KeyValuePair to a simple struct-tuple
                 so we can flip the order the index and value are stored in; this'll provide better
                 data alignment in most cases. (E.g., name the type ValueWithKeyIndex) *)
-// TODO : Perhaps use TagMap instead of IntMap, and tag the key indices with a tag type like KeyIndex.
+// TODO : Use TagMap instead of IntMap, and tag the key indices with a tag type like KeyIndex.
 
 /// An immutable cache data structure with a Least-Recently-Used (LRU) eviction policy.
 type LruCache<'Key, 'T when 'Key : equality>
     private (cache : HashMap<'Key, KeyValuePair<int, 'T>>, indexedKeys : IntMap<'Key>,
-             capacity : uint32, currentIndex : int) =
+             capacity : uint32, currentIndex : uint32) =
     /// The empty cache instance.
-    static let empty = LruCache (HashMap.empty, IntMap.empty, 0u, 0)
+    static let empty = LruCache (HashMap.empty, IntMap.empty, 0u, 0u)
 
     /// The empty cache instance.
-    static member Empty
+    static member internal Empty
         with get () = empty
 
     /// Create an LruCache from a sequence of key-value pairs.
@@ -50,7 +50,7 @@ type LruCache<'Key, 'T when 'Key : equality>
         if capacity = 0u then
             // Unfortunately, we can't just return the empty cache instance,
             // we must actually call a constructor.
-            LruCache (HashMap.empty, IntMap.empty, 0u, 0)
+            LruCache (HashMap.empty, IntMap.empty, 0u, 0u)
         else
             // OPTIMIZE : Try to cast the sequence to array or list;
             // if it succeeds use the specialized method for that type for better performance.
@@ -58,7 +58,7 @@ type LruCache<'Key, 'T when 'Key : equality>
             notImpl "LruCache::.ctor(uint32, seq<'Key, 'T>)"
             // TEMP : This is necessary because of the exception being raised (above).
             // It can be removed whenever this code path is implemented.
-            LruCache (HashMap.empty, IntMap.empty, 0u, 0)
+            LruCache (HashMap.empty, IntMap.empty, 0u, 0u)
 
     /// Is the cache empty?
     member __.IsEmpty
@@ -86,9 +86,9 @@ type LruCache<'Key, 'T when 'Key : equality>
         match value with
         | None ->
             None, this
-        | Some indexAndValue ->
-            Some indexAndValue.Value,
-            this'.Add (key, indexAndValue.Value)
+        | Some keyIndexAndValue ->
+            Some keyIndexAndValue.Value,
+            this'.Add (key, keyIndexAndValue.Value)
 
     /// Tests if a key is in the domain of the cache.
     member __.ContainsKey (key : 'Key) : bool =
@@ -96,16 +96,52 @@ type LruCache<'Key, 'T when 'Key : equality>
 
     //
     member this.Add (key : 'Key, value : 'T) : LruCache<'Key, 'T> =
-        // NOTE : Checked.add MUST be used when incrementing 'count'!
-        notImpl "LruCache.Add"
+        // NOTE : It is very important that we use checked addition here with uint32 operands --
+        // this data structure currently breaks if the index rolls over from 0xffffffff to 0x00000000.
+        let newIndex = Checked.(+) currentIndex 1u
+        let newCache = HashMap.add key (KeyValuePair (int newIndex, value)) cache
+
+        let newIndexedKeys =
+            // Update the key-index (if necessary, i.e., the key already exists in the cache).
+            let newIndexedKeys =
+                match HashMap.tryFind key cache with
+                | None -> indexedKeys
+                | Some keyIndexAndValue ->
+                    IntMap.remove keyIndexAndValue.Key indexedKeys
+
+            // Add the key and it's new index to the key-index.
+            IntMap.add (int newIndex) key newIndexedKeys
+
+        // Evict the least-recently-used key (and it's associated value) from the cache
+        // if this map (the original) is already full.
+        if uint32 (IntMap.count newIndexedKeys) > capacity then
+            // Remove the minimum key from the key-index and cache.
+            // TODO : Fix this so it works correctly even when the index rolls over from 0xffffffff to 0x00000000
+            // OPTIMIZE : Use IntMap.extractMin here once it's implemented.
+            
+            notImpl "LruCache.Add"
+        else
+            // Return a new cache with the updated map and key-index.
+            LruCache (newCache, newIndexedKeys, capacity, newIndex)
 
     //
     member this.Remove (key : 'Key) : LruCache<'Key, 'T> =
         snd <| this.Extract key
 
     //
-    member private __.Extract (key : 'Key) : KeyValuePair<'Key, 'T> option * LruCache<'Key, 'T> =
-        notImpl "LruCache.Extract"
+    member private this.Extract (key : 'Key) : KeyValuePair<'Key, 'T> option * LruCache<'Key, 'T> =
+        match HashMap.tryFind key cache with
+        | None ->
+            None, this
+        | Some keyIndexAndValue ->
+            let cache' = HashMap.remove key cache
+            let indexedKeys' = IntMap.remove keyIndexAndValue.Key indexedKeys
+
+            // Return the new cache with the modified maps.
+            // NOTE : The index is not updated here -- that is only done
+            // when adding values to the cache.
+            Some (KeyValuePair (key, keyIndexAndValue.Value)),
+            LruCache (cache', indexedKeys', capacity, currentIndex)
     
     //
     member this.ChangeCapacity (newCapacity : uint32) : LruCache<'Key, 'T> =
@@ -165,7 +201,7 @@ type LruCache<'Key, 'T when 'Key : equality>
         ResizeArray.toArray kvps
 
     //
-    static member OfSeq (source : seq<'Key * 'T>) : LruCache<'Key, 'T> =
+    static member internal OfSeq (source : seq<'Key * 'T>) : LruCache<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
@@ -174,7 +210,7 @@ type LruCache<'Key, 'T when 'Key : equality>
             cache.Add (key, value))
 
     //
-    static member OfList (source : ('Key * 'T) list) : LruCache<'Key, 'T> =
+    static member internal OfList (source : ('Key * 'T) list) : LruCache<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
@@ -183,7 +219,7 @@ type LruCache<'Key, 'T when 'Key : equality>
             cache.Add (key, value))
 
     //
-    static member OfArray (source : ('Key * 'T)[]) : LruCache<'Key, 'T> =
+    static member internal OfArray (source : ('Key * 'T)[]) : LruCache<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
         
@@ -258,19 +294,19 @@ module LruCache =
 
     //
     [<CompiledName("OfSeq")>]
-    let inline ofSeq (source : seq<'Key * 'T>) : LruCache<'Key, 'T> =
+    let ofSeq (source : seq<'Key * 'T>) : LruCache<'Key, 'T> =
         // Preconditions checked within the member.
         LruCache.OfSeq source
 
     //
     [<CompiledName("OfList")>]
-    let inline ofList (source : ('Key * 'T) list) : LruCache<'Key, 'T> =
+    let ofList (source : ('Key * 'T) list) : LruCache<'Key, 'T> =
         // Preconditions checked within the member.
         LruCache.OfList source
 
     //
     [<CompiledName("OfArray")>]
-    let inline ofArray (source : ('Key * 'T)[]) : LruCache<'Key, 'T> =
+    let ofArray (source : ('Key * 'T)[]) : LruCache<'Key, 'T> =
         // Preconditions checked within the member.
         LruCache.OfArray source
 
