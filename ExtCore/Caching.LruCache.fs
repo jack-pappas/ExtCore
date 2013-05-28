@@ -31,6 +31,7 @@ open ExtCore.Collections
 // TODO : Use TagMap instead of IntMap, and tag the key indices with a tag type like KeyIndex.
 
 /// An immutable cache data structure with a Least-Recently-Used (LRU) eviction policy.
+[<Sealed>]
 type LruCache<'Key, 'T when 'Key : equality>
     private (cache : HashMap<'Key, KeyValuePair<int, 'T>>, indexedKeys : IntMap<'Key>,
              capacity : uint32, currentIndex : uint32) =
@@ -398,6 +399,3 @@ module LruCache =
 
         cache.ToSeq ()
         |> Map.ofSeq
-
-
-

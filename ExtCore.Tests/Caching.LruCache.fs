@@ -21,8 +21,79 @@ module Tests.ExtCore.Caching.LruCache
 
 open NUnit.Framework
 open FsUnit
-//open FsCheck
 
 
-(* TODO : Implement tests for ExtCore.Caching.LruCache. *)
+[<Test>]
+let empty () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let count () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let capacity () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let create () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let changeCapacity () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let containsKey () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let tryFind () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let add () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let remove () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofSeq () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofList () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofArray () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofMap () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let toSeq () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let toList () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let toArray () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let toMap () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+
+
+open FsCheck
+
+(* TODO : Implement FsCheck tests. *)
 
