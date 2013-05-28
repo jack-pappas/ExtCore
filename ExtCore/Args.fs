@@ -242,6 +242,6 @@ type ArgParser () =
             System.Console.Error.WriteLine text
             System.Console.Error.Flush ()
             exit 1
-        | e ->
+        | _ ->
             reraise ()
     #endif

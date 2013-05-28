@@ -1465,7 +1465,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
             with get () = true
 
         /// <inherit />
-        member __.Add x =
+        member __.Add _ =
             notSupported "HashMaps cannot be mutated."
 
         /// <inherit />
@@ -1500,7 +1500,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
             |> ignore
 
         /// <inherit />
-        member __.Remove item : bool =
+        member __.Remove _ : bool =
             notSupported "HashMaps cannot be mutated."
 
     interface IDictionary<'Key, 'T> with
@@ -1515,7 +1515,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
                     // TODO : Provide a better error message here.
                     //keyNotFound ""
                     raise <| System.Collections.Generic.KeyNotFoundException ()
-            and set key value =
+            and set _ _ =
                 notSupported "HashMaps cannot be mutated."
 
         /// <inherit />
@@ -1539,7 +1539,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
                 :> ICollection<'T>
 
         /// <inherit />
-        member __.Add (key, value) =
+        member __.Add (_, _) =
             notSupported "HashMaps cannot be mutated."
 
         /// <inherit />
@@ -1548,7 +1548,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
             PatriciaHashMap.ContainsKey (keyHash, key, trie)
 
         /// <inherit />
-        member __.Remove key =
+        member __.Remove _ =
             notSupported "HashMaps cannot be mutated."
 
         /// <inherit />

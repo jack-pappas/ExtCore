@@ -174,7 +174,7 @@ type ReaderIndexedStateBuilder () =
     // 'T -> M<'T>
     member __.Return value
         : ReaderIndexedStateFunc<'Env, 'State, 'State, 'T> =
-        fun env state ->
+        fun _ state ->
         value, state
 
     // M<'T> -> M<'T>
@@ -342,7 +342,7 @@ type ReaderProtectedIndexedStateBuilder () =
     // 'T -> M<'T>
     member __.Return value
         : ReaderProtectedIndexedStateFunc<'Env, 'State, 'State, 'T, 'Error> =
-        fun env state ->
+        fun _ state ->
         Choice1Of2 (value, state)
 
     // M<'T> -> M<'T>
@@ -353,7 +353,7 @@ type ReaderProtectedIndexedStateBuilder () =
     // unit -> M<'T>
     member this.Zero ()
         : ReaderProtectedIndexedStateFunc<'Env, 'State, 'State, unit, 'Error> =
-        fun env state ->
+        fun _ state ->
         Choice1Of2 ((), state)
 
     // (unit -> M<'T>) -> M<'T>

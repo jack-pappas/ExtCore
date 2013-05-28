@@ -341,7 +341,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                 else
                     Empty
 
-        | Br (_, m, s0, s1), Lf (k, y) ->
+        | Br (_, m, s0, s1), Lf (k, _) ->
             let s' = if zeroBit (k, m) then s0 else s1
             match PatriciaMap.TryFind (k, s') with
             | Some x ->
@@ -1256,7 +1256,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             with get () = true
 
         /// <inherit />
-        member __.Add x =
+        member __.Add _ =
             notSupported "IntMaps cannot be mutated."
 
         /// <inherit />
@@ -1290,7 +1290,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             |> ignore
 
         /// <inherit />
-        member __.Remove item : bool =
+        member __.Remove _ : bool =
             notSupported "IntMaps cannot be mutated."
 
     interface IDictionary<int, 'T> with
@@ -1304,7 +1304,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
                     // TODO : Provide a better error message here.
                     //keyNotFound ""
                     raise <| System.Collections.Generic.KeyNotFoundException ()
-            and set key value =
+            and set _ _ =
                 notSupported "IntMaps cannot be mutated."
 
         /// <inherit />
@@ -1328,7 +1328,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
                 :> ICollection<'T>
 
         /// <inherit />
-        member __.Add (key, value) =
+        member __.Add (_, _) =
             notSupported "IntMaps cannot be mutated."
 
         /// <inherit />
@@ -1336,7 +1336,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             PatriciaMap.ContainsKey (uint32 key, trie)
 
         /// <inherit />
-        member __.Remove key =
+        member __.Remove _ =
             notSupported "IntMaps cannot be mutated."
 
         /// <inherit />

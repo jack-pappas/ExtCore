@@ -408,7 +408,7 @@ module List =
                 match action.Invoke (hd1, hd2, env) with
                 | Choice2Of2 error ->
                     Choice2Of2 error
-                | Choice1Of2 result ->
+                | Choice1Of2 () ->
                     mapRec (tl1, tl2)
 
             | _, _ ->
