@@ -30,9 +30,11 @@ open ExtCore.Collections
                 data alignment in most cases. (E.g., name the type ValueWithKeyIndex) *)
 // TODO : Use TagMap instead of IntMap, and tag the key indices with a tag type like KeyIndex.
 
-/// An immutable cache data structure with a Least-Recently-Used (LRU) eviction policy.
+/// <summary>An immutable cache data structure with a Least-Recently-Used (LRU) eviction policy.</summary>
+/// <typeparam name="Key">The type of key used by the cache.</typeparam>
+/// <typeparam name="T">The type of the values stored in the cache.</typeparam>
 [<Sealed>]
-type LruCache<'Key, 'T when 'Key : equality>
+type LruCache<'Key, 'T when 'Key : comparison>
     private (cache : HashMap<'Key, KeyValuePair<int, 'T>>, indexedKeys : IntMap<'Key>,
              capacity : uint32, currentIndex : uint32) =
     /// The empty cache instance.
@@ -275,7 +277,7 @@ type LruCache<'Key, 'T when 'Key : equality>
 module LruCache =
     /// The empty cache.
     [<CompiledName("Empty")>]
-    let empty<'Key, 'T when 'Key : equality> =
+    let empty<'Key, 'T when 'Key : comparison> =
         LruCache<'Key, 'T>.Empty
 
     //

@@ -29,7 +29,7 @@ open BitOps
 
 /// A list-based data structure implementing a set.
 /// This is used within PatriciaHashSet to handle hash collisions in a manner reminiscent of a hashtable.
-type private ListSet<[<ComparisonConditionalOn>] 'T when 'T : equality> = 'T list
+type private ListSet<'T when 'T : comparison> = 'T list
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -41,7 +41,7 @@ module private ListSet =
 
     /// "Rewinds" an accumulator and a list like a zipper whose context
     /// is being moved all the way to the beginning (head) of the list.
-    let rec rewind path (tail : 'T list) =
+    let rec private rewind path (tail : 'T list) =
         match path with
         | [] -> tail
         | el :: path ->
@@ -57,7 +57,7 @@ module private ListSet =
 
         | el :: tl ->
             // Should the value be inserted before 'el'?
-            let c = Unchecked.compare value el
+            let c = compare value el
             if c = 0 then
                 orig    // value = el, so we don't need to modify the list. Return the original list.
             elif c < 0 then
@@ -107,7 +107,7 @@ module private ListSet =
         | [], hd :: tl ->
             unionImpl (hd :: acc) tl []
         | hd1 :: tl1, hd2 :: tl2 ->
-            let c = Unchecked.compare hd1 hd2
+            let c = compare hd1 hd2
 
             // Based on the comparison, cons the "lesser" element onto the accumulator
             // (i.e., the merged list) then recurse to continue processing.
@@ -133,7 +133,7 @@ module private ListSet =
             // the results are in the correct order.
             List.rev acc
         | hd1 :: tl1, hd2 :: tl2 ->
-            let c = Unchecked.compare hd1 hd2
+            let c = compare hd1 hd2
 
             // If the heads of the lists are equal, add that element to the accumulator
             // (i.e., the merged list); otherwise, drop the "lesser" of the two head elements.
@@ -159,7 +159,7 @@ module private ListSet =
             // the results are in the correct order.
             List.rev acc
         | hd1 :: tl1, hd2 :: tl2 ->
-            let c = Unchecked.compare hd1 hd2
+            let c = compare hd1 hd2
 
             // If hd1 = hd2 then we drop both of them, effectively "removing" the value from set1.
             if c = 0 then
@@ -185,7 +185,7 @@ module private ListSet =
         | [], _ -> true
         | _, [] -> false
         | hd1 :: tl1, hd2 :: tl2 ->
-            let c = Unchecked.compare hd1 hd2
+            let c = compare hd1 hd2
 
             if c = 0 then isSubset tl1 tl2
             elif c < 0 then false
@@ -202,7 +202,7 @@ module private ListSet =
         | _, [] -> false
         | [], _ -> true
         | hd1 :: tl1, hd2 :: tl2 ->
-            let c = Unchecked.compare hd1 hd2
+            let c = compare hd1 hd2
 
             if c = 0 then isProperSubset tl1 tl2
             elif c < 0 then false
@@ -221,7 +221,7 @@ module private ListSet =
         | _, [] -> 1
         | [], _ -> -1
         | hd1 :: tl1, hd2 :: tl2 ->
-            let c = Unchecked.compare hd1 hd2
+            let c = compare hd1 hd2
 
             if c = 0 then subsetCompare tl1 tl2
             elif c < 0 then 1
@@ -235,7 +235,7 @@ module private ListSet =
 /// is actually a set implemented with a list.
 /// Used as the underlying data structure for HashSet.
 [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
-type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> =
+type private PatriciaHashSet<'T when 'T : comparison> =
     | Empty
     // Key-HashCode * Value
     | Lf of uint32 * ListSet<'T>
@@ -1057,15 +1057,13 @@ type private PatriciaHashSet<[<ComparisonConditionalOn>] 'T when 'T : equality> 
         }
 
 
-/// <summary>Immutable, unordered set..</summary>
-/// <typeparam name="Key">The type of key used by the set.</typeparam>
+/// <summary>Immutable, unordered sets based on PATRICIA tries and binary tries.</summary>
 /// <typeparam name="T">The type of the values stored in the set.</typeparam>
 [<Sealed; CompiledName("FSharpHashSet`1")>]
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
 [<DebuggerTypeProxy(typedefof<HashSetDebuggerProxy<int>>)>]
-type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
-    private (trie : PatriciaHashSet<'T>) =
+type HashSet<'T when 'T : comparison> private (trie : PatriciaHashSet<'T>) =
     /// The empty HashSet instance.
     static let empty : HashSet<'T> =
         HashSet Empty
@@ -1527,7 +1525,7 @@ type HashSet<[<ComparisonConditionalOn>] 'T when 'T : equality>
 
 //
 and [<Sealed>]
-    internal HashSetDebuggerProxy<'T when 'T : equality> (set : HashSet<'T>) =
+    internal HashSetDebuggerProxy<'T when 'T : comparison> (set : HashSet<'T>) =
 
     [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
     member __.Items
@@ -1540,7 +1538,7 @@ and [<Sealed>]
 module HashSet =
     /// The empty set.
     [<CompiledName("Empty")>]
-    let empty<'T when 'T : equality> =
+    let empty<'T when 'T : comparison> =
         HashSet<'T>.Empty
 
     /// Is the set empty?
