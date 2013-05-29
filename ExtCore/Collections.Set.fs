@@ -33,6 +33,36 @@ let ofArrayView (view : ArrayView<'T>) : Set<'T> =
     ||> ArrayView.fold (fun set el ->
         Set.add el set)
 
+/// Creates a set with the same elements as the vector.
+[<CompiledName("OfVector")>]
+let ofVector (vector : vector<'T>) : Set<'T> =
+    // Preconditions
+    // TODO : Check that the vector is not equivalent to null (i.e., Unchecked.defaultOf<vector<_>>).
+
+    (Set.empty, vector)
+    ||> Vector.fold (fun set el ->
+        Set.add el set)
+
+/// Builds a vector that contains the elements of the set in order.
+[<CompiledName("ToVector")>]
+let toVector (set : Set<'T>) : vector<'T> =
+    // Preconditions
+    checkNonNull "set" set
+
+    vector.UnsafeCreate <| Set.toArray set
+
+/// Applies a function to each element of the set, in decreasing element order.
+[<CompiledName("IterBack")>]
+let iterBack (action : 'T -> unit) (set : Set<'T>) : unit =
+    // Preconditions
+    checkNonNull "set" set
+
+    // WORKAROUND : We don't have access to the internals of Set, so this is really
+    // the only feasible, reasonably performant way of implementing this function.
+    (set, ())
+    ||> Set.foldBack (fun el () ->
+        action el)
+
 /// Applies a function to each element of the set, threading an accumulator argument
 /// through the computation. The integer index passed to the function indicates the
 /// index of the element within the set.

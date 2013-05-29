@@ -44,6 +44,24 @@ let inline singleton key value : Map<'Key, 'T> =
     Map.empty
     |> Map.add key value
 
+/// Creates a map with the same elements as the vector.
+[<CompiledName("OfVector")>]
+let ofVector (vector : vector<'Key * 'T>) : Map<'Key, 'T> =
+    // Preconditions
+    // TODO : Check that the vector is not equivalent to null (i.e., Unchecked.defaultOf<vector<_>>).
+
+    (Map.empty, vector)
+    ||> Vector.fold (fun map (k, v) ->
+        Map.add k v map)
+
+/// Builds a vector that contains the elements of the map in order.
+[<CompiledName("ToVector")>]
+let toVector (map : Map<'Key, 'T>) : vector<'Key * 'T> =
+    // Preconditions
+    checkNonNull "map" map
+
+    vector.UnsafeCreate <| Map.toArray map
+
 /// Returns the key set of the Map.
 [<CompiledName("Keys")>]
 let keys (map : Map<'Key, 'T>) =
@@ -148,6 +166,18 @@ let filterKeys keys (map : Map<'Key, 'T>) =
         map
         |> Map.filter (fun key _ ->
             Set.contains key keys)
+
+/// Applies a function to each binding in the map, in decreasing key order.
+[<CompiledName("IterBack")>]
+let iterBack (action : 'Key -> 'T -> unit) (map : Map<'Key, 'T>) : unit =
+    // Preconditions
+    checkNonNull "map" map
+
+    // WORKAROUND : We don't have access to the internals of Map, so this is really
+    // the only feasible, reasonably performant way of implementing this function.
+    (map, ())
+    ||> Map.foldBack (fun key value () ->
+        action key value)
 
 /// <summary>
 /// Applies the given function to each binding in the map.

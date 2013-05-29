@@ -1218,7 +1218,7 @@ module SetModule =
         
     [<Test>]
     let filter () : unit =
-        let emptyComplex = HashSet.empty : HashSet<int * List<string * HashSet<decimal>> * HashSet<int * string * (char * char * char)>>
+        let emptyComplex = HashSet.empty : HashSet<int * (string * HashSet<decimal>) list * HashSet<int * string * (char * char * char)>>
         let fileredEmpty = HashSet.filter (fun _ -> false) emptyComplex 
         if (fileredEmpty = emptyComplex) <> true then Assert.Fail()
         
