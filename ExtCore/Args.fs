@@ -17,7 +17,9 @@ limitations under the License.
 
 *)
 
-namespace ExtCore
+namespace ExtCore.Args
+
+open ExtCore
 
 (* TODO :   Replace the code from the F# PowerPack with a new implementation
             which doesn't require the use of mutable state (e.g., ref cells)
