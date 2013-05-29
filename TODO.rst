@@ -70,9 +70,6 @@ Set
 ---
   - scan : folder:('State -> 'T -> 'State) -> state:'State -> set:Set<'T> -> Set<'State>
   - scanBack
-  - iterBack
-    It may not be possible to implement this "correctly" since we don't have access to the underlying tree.
-    We could implement it with Set.foldBack though; it's messy but it'll work.
   - allSubsets : Set<'T> -> seq<Set<'T>>
     Returns a sequence of all subsets of the given set.
   - subsets : Set<'T> -> int -> seq<Set<'T>>

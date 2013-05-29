@@ -1726,8 +1726,7 @@ module IntMap =
 
     /// Folds over the bindings in the map.
     [<CompiledName("Fold")>]
-    let inline fold (folder : 'State -> int -> 'T -> 'State)
-            (state : 'State) (map : IntMap<'T>) : 'State =
+    let inline fold (folder : 'State -> int -> 'T -> 'State) (state : 'State) (map : IntMap<'T>) : 'State =
         // Preconditions
         checkNonNull "map" map
         
@@ -1735,8 +1734,7 @@ module IntMap =
 
     /// Folds over the bindings in the map.
     [<CompiledName("FoldBack")>]
-    let inline foldBack
-            (folder : int -> 'T -> 'State -> 'State) (map : IntMap<'T>) (state : 'State) : 'State =
+    let inline foldBack (folder : int -> 'T -> 'State -> 'State) (map : IntMap<'T>) (state : 'State) : 'State =
         // Preconditions
         checkNonNull "map" map
 
@@ -1770,8 +1768,7 @@ module IntMap =
     /// Splits the map into two maps by applying the given partitioning function
     /// to each binding in the map.
     [<CompiledName("MapPartition")>]
-    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>)
-            (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
+    let inline mapPartition (partitioner : int -> 'T -> Choice<'U, 'V>) (map : IntMap<'T>) : IntMap<'U> * IntMap<'V> =
         // Preconditions
         checkNonNull "map" map
 

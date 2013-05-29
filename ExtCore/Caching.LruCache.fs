@@ -241,6 +241,20 @@ type LruCache<'Key, 'T when 'Key : comparison>
         ResizeArray.toArray kvps
 
     //
+    member __.ToMap () : Map<'Key, 'T> =
+        (Map.empty, indexedKeys)
+        ||> IntMap.fold (fun map keyIndex key ->
+            // Find the value using the key.
+            let kvp = HashMap.find key cache
+
+            // DEBUG : Assert that the index in the key-value pair is
+            // equal to the one from the key-index.
+            assert (keyIndex = kvp.Key)
+
+            // Add the key and value to the map.
+            Map.add key kvp.Value map)
+
+    //
     static member internal OfSeq (source : seq<'Key * 'T>) : LruCache<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
@@ -265,6 +279,15 @@ type LruCache<'Key, 'T when 'Key : comparison>
         
         (empty, source)
         ||> Array.fold (fun cache (key, value) ->
+            cache.Add (key, value))
+
+    //
+    static member internal OfMap (source : Map<'Key, 'T>) : LruCache<'Key, 'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        (empty, source)
+        ||> Map.fold (fun cache key value ->
             cache.Add (key, value))
 
     /// Create a new LruCache with the specified capacity.
@@ -326,6 +349,21 @@ module LruCache =
         cache.TryFind key
 
     //
+    [<CompiledName("Find")>]
+    let find (key : 'Key) (cache : LruCache<'Key, 'T>) : 'T * LruCache<'Key, 'T> =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        let result, cache = tryFind key cache
+        match result with
+        | None ->
+            // TODO : Provide a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+        | Some result ->
+            result, cache
+
+    //
     [<CompiledName("Add")>]
     let inline add (key : 'Key) (value : 'T) (cache : LruCache<'Key, 'T>) : LruCache<'Key, 'T> =
         // Preconditions
@@ -362,12 +400,8 @@ module LruCache =
     //
     [<CompiledName("OfMap")>]
     let ofMap (source : Map<'Key, 'T>) : LruCache<'Key, 'T> =
-        // Preconditions
-        checkNonNull "source" source
-
-        source
-        |> Map.toSeq
-        |> LruCache.OfSeq
+        // Preconditions checked within the member.
+        LruCache.OfMap source
 
     //
     [<CompiledName("ToSeq")>]
@@ -399,5 +433,122 @@ module LruCache =
         // Preconditions
         checkNonNull "cache" cache
 
-        cache.ToSeq ()
-        |> Map.ofSeq
+        cache.ToMap ()
+(*
+    /// Searches the map looking for the first element where the given function
+    /// returns a Some value. If no such element is found, returns None.
+    [<CompiledName("TryPick")>]
+    let inline tryPick (picker : 'Key -> 'T -> 'U option) (cache : LruCache<'Key, 'T>) : 'U option =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.TryPick picker
+
+    /// Searches the map looking for the first element where the given function
+    /// returns a Some value.
+    [<CompiledName("Pick")>]
+    let inline pick (picker : 'Key -> 'T -> 'U option) (cache : LruCache<'Key, 'T>) : 'U =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        map.Pick picker
+
+    /// Builds a new collection whose elements are the results of applying the given function
+    /// to each of the elements of the collection. The key passed to the function indicates
+    /// the key of the element being transformed.
+    [<CompiledName("Map")>]
+    let inline map (mapping : 'Key -> 'T -> 'U) (cache : LruCache<'Key, 'T>) : LruCache<'Key, 'U> =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.Map mapping
+
+    /// <summary>
+    /// Builds a new map containing only the bindings for which the given
+    /// predicate returns &quot;true&quot;.
+    /// </summary>
+    [<CompiledName("Filter")>]
+    let inline filter (predicate : 'Key -> 'T -> bool) (cache : LruCache<'Key, 'T>) : LruCache<'Key, 'T> =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.Filter predicate
+
+    /// <summary>
+    /// Applies the given function to each binding in the map.
+    /// Returns the map comprised of the results "x" for each binding
+    /// where the function returns <c>Some(x)</c>.
+    /// </summary>
+    [<CompiledName("Choose")>]
+    let inline choose (chooser : 'Key -> 'T -> 'U option) (cache : LruCache<'Key, 'T>) : LruCache<'Key, 'U> =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.Choose chooser
+
+    /// Applies the given function to each binding in the map.
+    [<CompiledName("Iterate")>]
+    let inline iter (action : 'Key -> 'T -> unit) (cache : LruCache<'Key, 'T>) : unit =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.Iterate action
+
+    /// Applies the given function to each binding in the map.
+    [<CompiledName("IterateBack")>]
+    let inline iterBack (action : 'Key -> 'T -> unit) (cache : LruCache<'Key, 'T>) : unit =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        map.IterateBack action
+
+    /// Folds over the bindings in the map.
+    [<CompiledName("Fold")>]
+    let inline fold (folder : 'State -> 'Key -> 'T -> 'State) (state : 'State) (cache : LruCache<'Key, 'T>) : 'State =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.Fold (folder, state)
+
+    /// Folds over the bindings in the map.
+    [<CompiledName("FoldBack")>]
+    let inline foldBack (folder : 'Key -> 'T -> 'State -> 'State) (cache : LruCache<'Key, 'T>) (state : 'State) : 'State =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        map.FoldBack (folder, state)
+
+    /// Determines if any binding in the map matches the specified predicate.
+    [<CompiledName("Exists")>]
+    let inline exists (predicate : 'Key -> 'T -> bool) (cache : LruCache<'Key, 'T>) : bool =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.Exists predicate
+
+    /// Determines if all bindings in the map match the specified predicate.
+    [<CompiledName("Forall")>]
+    let inline forall (predicate : 'Key -> 'T -> bool) (cache : LruCache<'Key, 'T>) : bool =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        map.Forall predicate
+
+    /// Splits the map into two maps containing the bindings for which the given
+    /// predicate returns true and false, respectively.
+    [<CompiledName("Partition")>]
+    let inline partition (predicate : 'Key -> 'T -> bool) (cache : LruCache<'Key, 'T>) : LruCache<'Key, 'T> * LruCache<'Key, 'T> =
+        // Preconditions
+        checkNonNull "cache" cache
+        
+        map.Partition predicate
+
+    /// Splits the map into two maps by applying the given partitioning function
+    /// to each binding in the map.
+    [<CompiledName("MapPartition")>]
+    let inline mapPartition (partitioner : 'Key -> 'T -> Choice<'U, 'V>) (cache : LruCache<'Key, 'T>) : LruCache<'Key, 'U> * LruCache<'Key, 'V> =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        map.MapPartition partitioner
+*)
