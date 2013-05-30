@@ -575,6 +575,15 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
         member this.Equals other =
             LruCache.Equals (this, other)
 
+    interface System.Collections.IEnumerable with
+        member this.GetEnumerator () =
+            (this.ToSeq ()).GetEnumerator ()
+            :> System.Collections.IEnumerator
+
+    interface System.Collections.Generic.IEnumerable<'Key * 'T> with
+        member this.GetEnumerator () =
+            (this.ToSeq ()).GetEnumerator ()
+
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LruCache =
