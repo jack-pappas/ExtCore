@@ -19,6 +19,7 @@ limitations under the License.
 namespace ExtCore.Caching
 
 open System.Collections.Generic
+open System.Diagnostics
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
@@ -34,6 +35,7 @@ open ExtCore.Collections
 /// <typeparam name="Key">The type of key used by the cache.</typeparam>
 /// <typeparam name="T">The type of the values stored in the cache.</typeparam>
 [<Sealed; NoComparison>]
+[<DebuggerDisplay("Count = {Count}, Capacity = {Capacity}")>]
 type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
     private (cache : HashMap<'Key, KeyValuePair<int, 'T>>, indexedKeys : IntMap<'Key>,
              capacity : uint32, currentIndex : uint32) =
