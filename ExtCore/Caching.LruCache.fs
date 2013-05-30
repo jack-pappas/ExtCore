@@ -545,7 +545,7 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
             // Iterate over the sequences to determine if the caches are equal.
             while cacheSeqsEqual do
                 // Try to move to the next pair of elements.
-                if cache1Enum.MoveNext () <> cache2Enum.MoveNext () then
+                if xnor (cache1Enum.MoveNext ()) (cache2Enum.MoveNext ()) then
                     // The sequences don't have the same number of elements.
                     cacheSeqsEqual <- false
                 else
