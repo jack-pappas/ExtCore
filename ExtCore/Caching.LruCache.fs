@@ -33,8 +33,8 @@ open ExtCore.Collections
 /// <summary>An immutable cache data structure with a Least-Recently-Used (LRU) eviction policy.</summary>
 /// <typeparam name="Key">The type of key used by the cache.</typeparam>
 /// <typeparam name="T">The type of the values stored in the cache.</typeparam>
-[<Sealed>]
-type LruCache<'Key, 'T when 'Key : comparison>
+[<Sealed; NoComparison>]
+type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
     private (cache : HashMap<'Key, KeyValuePair<int, 'T>>, indexedKeys : IntMap<'Key>,
              capacity : uint32, currentIndex : uint32) =
     /// The empty cache instance.
@@ -526,6 +526,55 @@ type LruCache<'Key, 'T when 'Key : comparison>
         LruCache (cache1, indexedKeys1, capacity, currentIndex),
         LruCache (cache2, indexedKeys2, capacity, currentIndex)
 
+    /// Compare two LruCache instances for equality.
+    static member private Equals (cache1 : LruCache<'Key, 'T>, cache2 : LruCache<'Key, 'T>) : bool =
+        // Check for physical (reference) equality first, since it's very quick.
+        if cache1 === cache2 then true
+        // Caches must have the same capacity to be equal.
+        elif cache1.Capacity <> cache2.Capacity then false
+        else
+            // Now check that the caches contain the same key/value pairs in the same order.
+            // We don't care about 'currentIndex' or the key indices themselves, as that's an
+            // implementation detail and invisible to the user.
+            let cache1Enum = (cache1.ToSeq ()).GetEnumerator ()
+            let cache2Enum = (cache2.ToSeq ()).GetEnumerator ()
+
+            /// Indicates whether the cache-sequences contain the exact same key-value pairs.
+            let mutable cacheSeqsEqual = true
+
+            // Iterate over the sequences to determine if the caches are equal.
+            while cacheSeqsEqual do
+                // Try to move to the next pair of elements.
+                if cache1Enum.MoveNext () <> cache2Enum.MoveNext () then
+                    // The sequences don't have the same number of elements.
+                    cacheSeqsEqual <- false
+                else
+                    // Check if the current pair of key-value pairs are equal.
+                    cacheSeqsEqual <-
+                        let key1, value1 = cache1Enum.Current
+                        let key2, value2 = cache2Enum.Current
+                        key1 = key2 && Unchecked.equals value1 value2
+
+            // Return the value indicating whether the caches are equal.
+            cacheSeqsEqual
+
+    //
+    override this.Equals other =
+        match other with
+        | :? LruCache<'Key, 'T> as other ->
+            LruCache.Equals (this, other)
+        | _ ->
+            false
+
+    //
+    override __.GetHashCode () =
+        // TODO : Implement a more robust hashcode.
+        hash indexedKeys
+
+    interface System.IEquatable<LruCache<'Key, 'T>> with
+        member this.Equals other =
+            LruCache.Equals (this, other)
+
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module LruCache =
@@ -534,7 +583,7 @@ module LruCache =
     let empty<'Key, 'T when 'Key : comparison> =
         LruCache<'Key, 'T>.Empty
 
-    //
+    /// The number of elements stored in the cache.
     [<CompiledName("Count")>]
     let inline count (cache : LruCache<'Key, 'T>) : int =
         // Preconditions
@@ -542,13 +591,21 @@ module LruCache =
 
         cache.Count
 
-    //
+    /// The maximum number of elements which could be stored in the cache.
     [<CompiledName("Capacity")>]
     let inline capacity (cache : LruCache<'Key, 'T>) : uint32 =
         // Preconditions
         checkNonNull "cache" cache
 
         cache.Capacity
+
+    /// Is the cache empty?
+    [<CompiledName("IsEmpty")>]
+    let inline isEmpty (cache : LruCache<'Key, 'T>) : bool =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        cache.IsEmpty
 
     /// Create a new LruCache with the specified capacity.
     [<CompiledName("Create")>]
