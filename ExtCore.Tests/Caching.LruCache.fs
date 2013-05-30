@@ -91,6 +91,60 @@ let toArray () : unit =
 let toMap () : unit =
     Assert.Ignore "Test not yet implemented."
 
+[<Test>]
+let tryPick () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let pick () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let exists () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let forall () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let filter () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let choose () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let iter () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let iterBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let fold () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let foldBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let map () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let partition () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let mapPartition () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+
+(* TODO : Import MapType and MapModule tests from F# distribution. *)
 
 
 open FsCheck

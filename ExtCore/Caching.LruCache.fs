@@ -480,14 +480,51 @@ type LruCache<'Key, 'T when 'Key : comparison>
         // Adapt the predicate for better performance.
         let predicate = FSharpFunc<_,_,_>.Adapt predicate
 
-        notImpl "LruCache.Partition"
+        // We fold over the cache-map (HashMap) here instead of the key-index (IntMap)
+        // because it is faster than having to look up the value corresponding to each key.
+        // However, this also means the mapping is not applied to the elements in
+        // any particular order (oldest-to-newest or newest-to-oldest).
+        ((this, this), cache)
+        ||> HashMap.fold (fun (trueCache, falseCache) key keyIndexAndValue ->
+            // Apply the predicate to the key and value;
+            // based on the result, remove the key/value from one of the caches.
+            if predicate.Invoke (key, keyIndexAndValue.Value) then
+                trueCache,
+                falseCache.Remove key
+            else
+                trueCache.Remove key,
+                falseCache)
 
     //
     member this.MapPartition (partitioner : 'Key -> 'T -> Choice<'U, 'V>) : LruCache<'Key, 'U> * LruCache<'Key, 'V> =
         // Adapt the partitioner for better performance.
         let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
 
-        notImpl "LruCache.MapPartition"
+        // We fold over the cache-map (HashMap) here instead of the key-index (IntMap)
+        // because it is faster than having to look up the value corresponding to each key.
+        // However, this also means the mapping is not applied to the elements in
+        // any particular order (oldest-to-newest or newest-to-oldest).
+        let cache1, indexedKeys1, cache2, indexedKeys2 =
+            ((HashMap.empty, indexedKeys, HashMap.empty, indexedKeys), cache)
+            ||> HashMap.fold (fun (cache1, indexedKeys1, cache2, indexedKeys2) key (KeyValue (keyIndex, value)) ->
+                // Apply the partitioner to the key and value; based on the result,
+                // add the mapped value to one of the caches and remove the key from
+                // the opposite key-index.
+                match partitioner.Invoke (key, value) with
+                | Choice1Of2 result ->
+                    HashMap.add key (KeyValuePair (keyIndex, result)) cache1,
+                    indexedKeys1,
+                    cache2,
+                    IntMap.remove keyIndex indexedKeys2
+                | Choice2Of2 result ->
+                    cache1,
+                    IntMap.remove keyIndex indexedKeys1,
+                    HashMap.add key (KeyValuePair (keyIndex, result)) cache2,
+                    indexedKeys2)
+
+        // Return new caches with the mapped cache-maps and partitioned key-indices.
+        LruCache (cache1, indexedKeys1, capacity, currentIndex),
+        LruCache (cache2, indexedKeys2, capacity, currentIndex)
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
