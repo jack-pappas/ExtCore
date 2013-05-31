@@ -35,7 +35,9 @@ open ExtCore.Collections
 /// <typeparam name="Key">The type of key used by the cache.</typeparam>
 /// <typeparam name="T">The type of the values stored in the cache.</typeparam>
 [<Sealed; NoComparison>]
+//[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}, Capacity = {Capacity}")>]
+//[<DebuggerTypeProxy(typedefof<LruCacheDebuggerProxy<int,int>>)>]
 type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
     private (cache : HashMap<'Key, KeyValuePair<int, 'T>>, indexedKeys : IntMap<'Key>,
              capacity : uint32, currentIndex : uint32) =
@@ -81,12 +83,32 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
         with get () =
             IntMap.count indexedKeys
 
+    /// The oldest (least-recently-used) key stored in the map.
+#if FX_NO_DEBUG_DISPLAYS
+#else
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
+    member __.LeastRecentKey
+        with get () : int =
+            // TODO : This needs to be modified to handle roll-over of key-indices.
+            int <| IntMap.minKey indexedKeys
+
+    /// The newest (most-recently-used) key stored in the map.
+#if FX_NO_DEBUG_DISPLAYS
+#else
+    [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
+#endif
+    member __.MostRecentKey
+        with get () : int =
+            // TODO : This needs to be modified to handle roll-over of key-indices.
+            int <| IntMap.maxKey indexedKeys
+
     /// Look up a key in the cache, returning Some with the associated value if
     /// if the key is in the domain of the cache and None if not. The (possibly)
     /// updated cache is also returned.
     member this.TryFind (key : 'Key) : 'T option * LruCache<'Key, 'T> =
         // Try extracting the key/value from the cache.
-        let value, this' = this.Extract key
+        let value, this' = this.TryExtract key
 
         // If the key was found (and the value extracted), re-insert the key/value
         // in the cache so the key's index will be updated.
@@ -94,8 +116,8 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
         | None ->
             None, this
         | Some keyIndexAndValue ->
-            Some keyIndexAndValue.Value,
-            this'.Add (key, keyIndexAndValue.Value)
+            Some (snd keyIndexAndValue),
+            this'.Add (key, snd keyIndexAndValue)
 
     /// Tests if a key is in the domain of the cache.
     member __.ContainsKey (key : 'Key) : bool =
@@ -141,10 +163,21 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
 
     //
     member this.Remove (key : 'Key) : LruCache<'Key, 'T> =
-        snd <| this.Extract key
+        match HashMap.tryFind key cache with
+        | None ->
+            this
+        | Some keyIndexAndValue ->
+            let cache' = HashMap.remove key cache
+            let indexedKeys' = IntMap.remove keyIndexAndValue.Key indexedKeys
 
-    //
-    member private this.Extract (key : 'Key) : KeyValuePair<'Key, 'T> option * LruCache<'Key, 'T> =
+            // Return the new cache with the modified maps.
+            // NOTE : The index is not updated here -- that is only done
+            // when adding values to the cache.
+            LruCache (cache', indexedKeys', capacity, currentIndex)
+
+    /// Try to extract the specified key from the cache, returning
+    /// the key and it's associated value along with the updated cache.
+    member this.TryExtract (key : 'Key) : ('Key * 'T) option * LruCache<'Key, 'T> =
         match HashMap.tryFind key cache with
         | None ->
             None, this
@@ -155,7 +188,7 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
             // Return the new cache with the modified maps.
             // NOTE : The index is not updated here -- that is only done
             // when adding values to the cache.
-            Some (KeyValuePair (key, keyIndexAndValue.Value)),
+            Some (key, keyIndexAndValue.Value),
             LruCache (cache', indexedKeys', capacity, currentIndex)
 
     //
@@ -239,6 +272,27 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
 
             // Add the key and value to the ResizeArray
             kvps.Add (key, kvp.Value))
+
+        ResizeArray.toArray kvps
+
+    //
+    member internal __.ToKvpArray () : KeyValuePair<'Key, 'T>[] =
+        let kvps = ResizeArray ()
+
+        // Iterate backwards over the keys so the newest (most-recently-used) keys
+        // are at the beginning of the array.
+        // TODO : This needs to be modified to handle wrap-around of key-indices.
+        indexedKeys
+        |> IntMap.iterBack (fun keyIndex key ->
+            // Find the value using the key.
+            let kvp = HashMap.find key cache
+
+            // DEBUG : Assert that the index in the key-value pair is
+            // equal to the one from the key-index.
+            assert (keyIndex = kvp.Key)
+
+            // Add the key and value to the ResizeArray
+            kvps.Add (KeyValuePair (key, kvp.Value)))
 
         ResizeArray.toArray kvps
 
@@ -577,14 +631,139 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
         member this.Equals other =
             LruCache.Equals (this, other)
 
+//    interface System.IComparable with
+//        /// <inherit />
+//        member this.CompareTo other =
+//            IntMap<_>.Compare (this, other :?> IntMap<'T>)
+//
+//    interface System.IComparable<IntMap<'T>> with
+//        /// <inherit />
+//        member this.CompareTo other =
+//            IntMap<_>.Compare (this, other)
+
     interface System.Collections.IEnumerable with
+        /// <inherit />
         member this.GetEnumerator () =
-            (this.ToSeq ()).GetEnumerator ()
+            (this.ToSeq () |> Seq.map (fun (k, v) ->
+                System.Collections.DictionaryEntry (k, v))).GetEnumerator ()
             :> System.Collections.IEnumerator
 
-    interface System.Collections.Generic.IEnumerable<'Key * 'T> with
+    interface IEnumerable<KeyValuePair<'Key, 'T>> with
+        /// <inherit />
         member this.GetEnumerator () =
-            (this.ToSeq ()).GetEnumerator ()
+            (this.ToSeq () |> Seq.map (fun (k, v) ->
+                KeyValuePair (k, v))).GetEnumerator ()
+
+    interface ICollection<KeyValuePair<'Key, 'T>> with
+        /// <inherit />
+        member this.Count
+            with get () =
+                this.Count
+
+        /// <inherit />
+        member __.IsReadOnly
+            with get () = true
+
+        /// <inherit />
+        member __.Add _ =
+            notSupported "LruCache instances cannot be mutated."
+
+        /// <inherit />
+        member __.Clear () =
+            notSupported "LruCache instances cannot be mutated."
+
+        /// <inherit />
+        member this.Contains (item : KeyValuePair<'Key, 'T>) =
+            match fst <| this.TryFind item.Key with
+            | None ->
+                false
+            | Some value ->
+                Unchecked.equals value item.Value
+
+        /// <inherit />
+        member this.CopyTo (array, arrayIndex) =
+            // Preconditions
+            checkNonNull "array" array
+            if arrayIndex < 0 then
+                raise <| System.ArgumentOutOfRangeException "arrayIndex"
+
+            if arrayIndex + this.Count > Array.length array then
+                invalidArg "arrayIndex"
+                    "There is not enough room in the array to copy the \
+                     elements when starting at the specified index."
+
+            this.Fold ((fun index key value ->
+                array.[index] <- KeyValuePair (key, value)
+                index + 1), arrayIndex)
+            |> ignore
+
+        /// <inherit />
+        member __.Remove _ : bool =
+            notSupported "LruCache instances cannot be mutated."
+
+    interface IDictionary<'Key, 'T> with
+        /// <inherit />
+        member this.Item
+            with get key =
+                match fst <| this.TryFind key with
+                | Some value ->
+                    value
+                | None ->
+                    // TODO : Provide a better error message here.
+                    //keyNotFound ""
+                    raise <| System.Collections.Generic.KeyNotFoundException ()
+            and set _ _ =
+                notSupported "LruCache instances cannot be mutated."
+
+        /// <inherit />
+        member this.Keys
+            with get () =
+                // OPTIMIZE : Change this to use IntSet instead so it'll be faster to test set membership.
+                let keys = ResizeArray ()
+                this.Iterate (fun k _ -> keys.Add k)
+                
+                System.Collections.ObjectModel.ReadOnlyCollection (keys)
+                :> ICollection<'Key>
+
+        /// <inherit />
+        member this.Values
+            with get () =
+                // OPTIMIZE : Change this to use HashSet instead so it'll be faster to test set membership.
+                let values = ResizeArray ()
+                this.Iterate (fun _ v -> values.Add v)
+                
+                System.Collections.ObjectModel.ReadOnlyCollection (values)
+                :> ICollection<'T>
+
+        /// <inherit />
+        member __.Add (_, _) =
+            notSupported "LruCache instances cannot be mutated."
+
+        /// <inherit />
+        member this.ContainsKey key =
+            this.ContainsKey key
+
+        /// <inherit />
+        member __.Remove _ =
+            notSupported "LruCache instances cannot be mutated."
+
+        /// <inherit />
+        member this.TryGetValue (key, value) =
+            match fst <| this.TryFind key with
+            | None ->
+                false
+            | Some v ->
+                value <- v
+                true
+
+//
+and [<Sealed>]
+    internal LruCacheDebuggerProxy<'Key, 'T when 'Key : comparison> (cache : LruCache<'Key, 'T>) =
+
+    [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
+    member __.Items
+        with get () : KeyValuePair<'Key, 'T>[] =
+            cache.ToKvpArray ()
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -677,6 +856,14 @@ module LruCache =
         checkNonNull "cache" cache
 
         cache.Remove key
+
+    //
+    [<CompiledName("TryExtract")>]
+    let inline tryExtract (key : 'Key) (cache : LruCache<'Key, 'T>) : ('Key * 'T) option * LruCache<'Key, 'T> =
+        // Preconditions
+        checkNonNull "cache" cache
+
+        cache.TryExtract key
 
     //
     [<CompiledName("OfSeq")>]
