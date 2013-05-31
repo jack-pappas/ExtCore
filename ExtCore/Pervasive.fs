@@ -251,13 +251,13 @@ module Operators =
 
     (* Active Patterns *)
 
-    /// Classifies a Choice`2 value as a success or failure.
-    let inline (|Success|Failure|) (result : Choice<'T, 'Error>) =
+    /// Classifies a Choice`2 value as a successful result or an error.
+    let inline (|Success|Error|) (result : Choice<'T, 'Error>) =
         match result with
         | Choice1Of2 res ->
             Success res
         | Choice2Of2 err ->
-            Failure err
+            Error err
     
 
 /// Functional operators on enumerations.
