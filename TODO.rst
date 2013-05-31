@@ -144,12 +144,7 @@ LruCache
     i.e., from newest (most-recently-used) to oldest (least-recently-used) key value. This is useful when the
     cache could contain multiple matching key/value pairs and we want to choose the one with the newest key value.
 
-
-  - ICollection<'T>
-  - IDictionary<'T>
-
   - Import the MapType and MapModule tests from the F# distribution and adapt them for LruCache.
-  - Implement a DebuggerTypeProxy.
   - Implement a comparison method similar to how LruCache.Equals is implemented.
 
 
