@@ -50,7 +50,13 @@ let count () : unit =
 
 [<Test>]
 let capacity () : unit =
-    Assert.Ignore "Test not yet implemented."
+    LruCache.empty
+    |> LruCache.capacity
+    |> assertEqual 0u
+
+    LruCache.create 123u
+    |> LruCache.capacity
+    |> assertEqual 123u
 
 [<Test>]
 let isEmpty () : unit =
@@ -168,6 +174,10 @@ let remove () : unit =
     |> Collection.assertEqual
        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (12, 'b'); (14, 'c'); |]
+
+[<Test>]
+let tryExtract () : unit =
+    Assert.Ignore "Test not yet implemented."
 
 [<Test>]
 let ofSeq () : unit =
@@ -627,7 +637,39 @@ let mapPartition () : unit =
 (* TODO : Import MapType and MapModule tests from F# distribution. *)
 
 
-open FsCheck
+/// FsCheck-based tests for LruCache.
+module FsCheck =
+    open FsCheck
 
-(* TODO : Implement FsCheck tests. *)
+    /// FsCheck generators for LruCache.
+    type LruCacheGenerator =
+        /// Generates an arbitrary LruCache instance.
+        static member LruCache () : Arbitrary<LruCache<_,_>> =
+            gen {
+                let! capacity = Arb.generate<int>
+                let! keys = Arb.generate
+                let! values = Arb.generate
+            
+                // It seems FsCheck requires the use of sequences here --
+                // using List.fold2 to build the IntMap causes FsCheck to crash.
+                let kvpSeq = (Seq.ofList keys, Seq.ofList values) ||> Seq.zip
+                return LruCache.ofSeq (uint32 capacity) kvpSeq
+            } |> Arb.fromGen
+
+    /// Registers the FsCheck generators so they're already loaded
+    /// when NUnit runs the tests in this fixture.
+    [<TestFixtureSetUp>]
+    let registerFsCheckGenerators =
+        Arb.register<LruCacheGenerator> () |> ignore
+
+
+    (* Tests *)
+
+    [<Test>]
+    let ``prop addLookup`` () : unit =
+        assertProp "addLookup" <| fun (k : int) v cache ->
+            if LruCache.capacity cache = 0u then true
+            else
+                LruCache.add k v cache
+                |> LruCache.containsKey k
 

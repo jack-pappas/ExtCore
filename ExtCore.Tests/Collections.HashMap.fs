@@ -1644,5 +1644,36 @@ module MapModule =
         ()  
 
 
-(* TODO : Implement FsCheck tests. *)
+/// FsCheck-based tests for HashMap.
+module FsCheck =
+    open FsCheck
+
+    /// FsCheck generators for HashMap.
+    type HashMapGenerator =
+        /// Generates an arbitrary HashMap instance.
+        static member HashMap () : Arbitrary<HashMap<_,_>> =
+            gen {
+                let! keys = Arb.generate
+                let! values = Arb.generate
+            
+                // It seems FsCheck requires the use of sequences here --
+                // using List.fold2 to build the IntMap causes FsCheck to crash.
+                let kvpSeq = (Seq.ofList keys, Seq.ofList values) ||> Seq.zip
+                return HashMap.ofSeq kvpSeq
+            } |> Arb.fromGen
+
+    /// Registers the FsCheck generators so they're already loaded
+    /// when NUnit runs the tests in this fixture.
+    [<TestFixtureSetUp>]
+    let registerFsCheckGenerators =
+        Arb.register<HashMapGenerator> () |> ignore
+
+
+    (* Tests *)
+
+    [<Test>]
+    let ``prop addLookup``() =
+        assertProp "addLookup" <| fun (k : int) v map ->
+            HashMap.add k v map
+            |> HashMap.containsKey k
 
