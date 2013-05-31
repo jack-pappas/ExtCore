@@ -89,9 +89,11 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
     member __.LeastRecentKey
-        with get () : int =
+        with get () : 'Key =
             // TODO : This needs to be modified to handle roll-over of key-indices.
-            int <| IntMap.minKey indexedKeys
+            // OPTIMIZE : Use IntMap.extractMin when it's implemented -- it'll save one lookup here.
+            let minKey = IntMap.minKey indexedKeys
+            IntMap.find minKey indexedKeys
 
     /// The newest (most-recently-used) key stored in the map.
 #if FX_NO_DEBUG_DISPLAYS
@@ -99,9 +101,11 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
     [<DebuggerBrowsable(DebuggerBrowsableState.Never)>]
 #endif
     member __.MostRecentKey
-        with get () : int =
+        with get () : 'Key =
             // TODO : This needs to be modified to handle roll-over of key-indices.
-            int <| IntMap.maxKey indexedKeys
+            // OPTIMIZE : Use IntMap.extractMin when it's implemented -- it'll save one lookup here.
+            let maxKey = IntMap.maxKey indexedKeys
+            IntMap.find maxKey indexedKeys
 
     /// Look up a key in the cache, returning Some with the associated value if
     /// if the key is in the domain of the cache and None if not. The (possibly)
