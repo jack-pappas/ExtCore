@@ -194,14 +194,15 @@ module ListZipper =
     let inline moveBack (zipper : ListZipper<'T>) : ListZipper<'T> =
         zipper.MoveBack ()
 
-(* NOTE : This function is temporarily disabled due to a bug in the F# 3.0 compiler. *)
-(*
     /// Moves the zipper forwards by one step.
     /// No exception is raised if the zipper is already at the end of the list.
     [<CompiledName("MoveNext")>]
     let inline moveNext (zipper : ListZipper<'T>) : ListZipper<'T> =
-        zipper.MoveNext ()
-*)
+        // WORKAROUND : For some reason, the F# 3.0 compiler emits an error message here
+        // unless we first assign the value to a mutable variable.
+        //zipper.MoveNext ()
+        let mutable zipper' = zipper
+        zipper'.MoveNext ()
 
     /// Moves the zipper to the start of the list.
     /// No exception is raised if the zipper is already at the start of the list.
