@@ -1,6 +1,13 @@
 TODO for ExtCore 1.0
 ====================
 
+General
+-------
+
+  - Fill-in any missing documentation comments.
+  - Publish debugging symbols (e.g., on SymbolSource) and add ExtCore.pdb to the NuGet package.
+
+
 Array
 -----
 
@@ -308,10 +315,9 @@ Vector
   - IStructuralEquatable
 
 
-State.Array
------------
+Workflow Collections -- State.Array
+-----------------------------------
 
-  - reduce
   - mapReduce
 
 

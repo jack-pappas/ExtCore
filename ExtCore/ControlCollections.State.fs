@@ -231,6 +231,48 @@ module Array =
 
         innerState, outerState
 
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    /// Raises ArgumentException if the array is empty (has a length of zero (0)).
+    [<CompiledName("Reduce")>]
+    let reduce (reduction : 'T -> 'T -> 'State -> 'T * 'State) (array : 'T[]) (state : 'State) : 'T * 'State =
+        // Preconditions
+        checkNonNull "array" array
+        if Array.isEmpty array then
+            invalidArg "array" "The array is empty."
+
+        let reduction = FSharpFunc<_,_,_,_>.Adapt reduction
+        let len = array.Length
+        let mutable result = Array.first array
+        let mutable state = state
+
+        for i = 1 to len - 1 do
+            let result', state' = reduction.Invoke (result, array.[i], state)
+            result <- result'
+            state <- state'
+
+        result, state
+
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    /// Raises ArgumentException if the array is empty (has a length of zero (0)).
+    [<CompiledName("ReduceBack")>]
+    let reduceBack (reduction : 'T -> 'T -> 'State -> 'T * 'State) (array : 'T[]) (state : 'State) : 'T * 'State =
+        // Preconditions
+        checkNonNull "array" array
+        if Array.isEmpty array then
+            invalidArg "array" "The array is empty."
+
+        let reduction = FSharpFunc<_,_,_,_>.Adapt reduction
+        let len = array.Length
+        let mutable result = Array.last array
+        let mutable state = state
+
+        for i = len - 2 downto 0 do
+            let result', state' = reduction.Invoke (result, array.[i], state)
+            result <- result'
+            state <- state'
+
+        result, state
+
 
 /// The standard F# List module, lifted into the State monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -242,15 +284,18 @@ module List =
         // Preconditions
         checkNonNull "list" list
 
-        let action = FSharpFunc<_,_,_>.Adapt action
-        let mutable list = list
-        let mutable state = state
+        // OPTIMIZATION : Return immediately if the list is empty.
+        if List.isEmpty list then (), state
+        else
+            let action = FSharpFunc<_,_,_>.Adapt action
+            let mutable list = list
+            let mutable state = state
 
-        while not <| List.isEmpty list do
-            state <- snd <| action.Invoke (List.head list, state)
-            list <- List.tail list
+            while not <| List.isEmpty list do
+                state <- snd <| action.Invoke (List.head list, state)
+                list <- List.tail list
 
-        (), state
+            (), state
 
     /// A specialization of List.iteri which threads an accumulator through the computation;
     /// this allows the use of actions requiring a (possibly mutable) state variable.
@@ -259,17 +304,40 @@ module List =
         // Preconditions
         checkNonNull "list" list
 
-        let action = FSharpFunc<_,_,_,_>.Adapt action
-        let mutable list = list
-        let mutable state = state
-        let mutable index = 0
+        // OPTIMIZATION : Return immediately if the list is empty.
+        if List.isEmpty list then (), state
+        else
+            let action = FSharpFunc<_,_,_,_>.Adapt action
+            let mutable list = list
+            let mutable state = state
+            let mutable index = 0
 
-        while not <| List.isEmpty list do
-            state <- snd <| action.Invoke (index, List.head list, state)
-            list <- List.tail list
-            index <- index + 1
+            while not <| List.isEmpty list do
+                state <- snd <| action.Invoke (index, List.head list, state)
+                list <- List.tail list
+                index <- index + 1
 
-        (), state
+            (), state
+
+    /// A specialization of List.iterBack which threads an accumulator through the computation;
+    /// this allows the use of actions requiring a (possibly mutable) state variable.
+    [<CompiledName("IterateBack")>]
+    let iterBack (action : 'T -> 'State -> unit * 'State) (list : 'T list) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "list" list
+
+        // OPTIMIZATION : Return immediately if the list is empty.
+        if List.isEmpty list then (), state
+        else
+            let action = FSharpFunc<_,_,_>.Adapt action
+            let mutable list = List.rev list    // The list is reversed here so we iterate backwards over it.
+            let mutable state = state
+
+            while not <| List.isEmpty list do
+                state <- snd <| action.Invoke (List.head list, state)
+                list <- List.tail list
+
+            (), state
 
     /// A specialization of List.map which threads an accumulator through the computation;
     /// this allows the use of mapping functions requiring a (possibly mutable) state variable.
@@ -519,5 +587,4 @@ module Set =
                 snd <| action.Invoke (el, state))
 
         (), state
-
 

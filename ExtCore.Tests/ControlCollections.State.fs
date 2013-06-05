@@ -406,6 +406,14 @@ module Array =
             foldResult |> assertEqual "ROOYYYGGGGBBBBBVVVVVV"
             finalState |> assertEqual 122
 
+    [<Test>]
+    let reduce () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let reduceBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
 
 /// Tests for the ExtCore.Control.Collections.State.List module.
 module List =
@@ -464,6 +472,10 @@ module List =
 
             !initials |> assertEqual "ROOYYYGGGGBBBBBVVVVVV"
             finalState |> assertEqual 122
+
+    [<Test>]
+    let iterBack () : unit =
+        Assert.Ignore "Test not yet implemented."
 
     [<Test>]
     let map () : unit =
