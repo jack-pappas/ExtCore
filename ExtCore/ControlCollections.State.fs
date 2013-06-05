@@ -564,7 +564,6 @@ module Set =
 
         let action = FSharpFunc<_,_,_>.Adapt action
 
-        // Implement based on the standard Set.fold function.
         let state =
             (state, set)
             ||> Set.fold (fun state el ->
@@ -580,11 +579,355 @@ module Set =
 
         let action = FSharpFunc<_,_,_>.Adapt action
 
-        // Implement based on the standard Set.foldBack function.
         let state =
             (set, state)
             ||> Set.foldBack (fun el state ->
                 snd <| action.Invoke (el, state))
 
         (), state
+
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> 'State -> 'U * 'State) (set : Set<'T>) (state : 'State) : Set<'U> * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        ((Set.empty, state), set)
+        ||> Set.fold (fun (mappedSet, state) el ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            Set.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("MapBack")>]
+    let mapBack (mapping : 'T -> 'State -> 'U * 'State) (set : Set<'T>) (state : 'State) : Set<'U> * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        (set, (Set.empty, state))
+        ||> Set.foldBack (fun el (mappedSet, state) ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            Set.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'InnerState -> 'T -> 'OuterState -> 'InnerState * 'OuterState)
+        (innerState : 'InnerState) (set : Set<'T>) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        ((innerState, outerState), set)
+        ||> Set.fold (fun (innerState, outerState) el ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (innerState, el, outerState))
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'InnerState -> 'OuterState -> 'InnerState * 'OuterState) (set : Set<'T>)
+        (innerState : 'InnerState) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        (set, (innerState, outerState))
+        ||> Set.foldBack (fun el (innerState, outerState) ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (el, innerState, outerState))
+
+
+/// The IntSet module, lifted into the State monad.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module IntSet =
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : int -> 'State -> unit * 'State) (set : IntSet) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let state =
+            (state, set)
+            ||> IntSet.fold (fun state el ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
+    //
+    [<CompiledName("IterateBack")>]
+    let iterBack (action : int -> 'State -> unit * 'State) (set : IntSet) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let state =
+            (set, state)
+            ||> IntSet.foldBack (fun el state ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : int -> 'State -> int * 'State) (set : IntSet) (state : 'State) : IntSet * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        ((IntSet.empty, state), set)
+        ||> IntSet.fold (fun (mappedSet, state) el ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            IntSet.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("MapBack")>]
+    let mapBack (mapping : int -> 'State -> int * 'State) (set : IntSet) (state : 'State) : IntSet * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        (set, (IntSet.empty, state))
+        ||> IntSet.foldBack (fun el (mappedSet, state) ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            IntSet.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'InnerState -> int -> 'OuterState -> 'InnerState * 'OuterState)
+        (innerState : 'InnerState) (set : IntSet) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        ((innerState, outerState), set)
+        ||> IntSet.fold (fun (innerState, outerState) el ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (innerState, el, outerState))
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : int -> 'InnerState -> 'OuterState -> 'InnerState * 'OuterState) (set : IntSet)
+        (innerState : 'InnerState) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        (set, (innerState, outerState))
+        ||> IntSet.foldBack (fun el (innerState, outerState) ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (el, innerState, outerState))
+
+
+#if PROTO_COMPILER
+
+/// The TagSet module, lifted into the State monad.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module TagSet =
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : int<'Tag> -> 'State -> unit * 'State) (set : TagSet<'Tag>) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let state =
+            (state, set)
+            ||> TagSet.fold (fun state el ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
+    //
+    [<CompiledName("IterateBack")>]
+    let iterBack (action : int<'Tag> -> 'State -> unit * 'State) (set : TagSet<'Tag>) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let state =
+            (set, state)
+            ||> TagSet.foldBack (fun el state ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : int<'Tag1> -> 'State -> int<'Tag2> * 'State) (set : TagSet<'Tag1>) (state : 'State) : TagSet<'Tag2> * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        ((TagSet.empty, state), set)
+        ||> TagSet.fold (fun (mappedSet, state) el ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            TagSet.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("MapBack")>]
+    let mapBack (mapping : int<'Tag1> -> 'State -> int<'Tag2> * 'State) (set : TagSet<'Tag1>) (state : 'State) : TagSet<'Tag2> * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        (set, (TagSet.empty, state))
+        ||> TagSet.foldBack (fun el (mappedSet, state) ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            TagSet.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'InnerState -> int<'Tag> -> 'OuterState -> 'InnerState * 'OuterState)
+        (innerState : 'InnerState) (set : TagSet<'Tag>) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        ((innerState, outerState), set)
+        ||> TagSet.fold (fun (innerState, outerState) el ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (innerState, el, outerState))
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : int<'Tag> -> 'InnerState -> 'OuterState -> 'InnerState * 'OuterState) (set : TagSet<'Tag>)
+        (innerState : 'InnerState) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        (set, (innerState, outerState))
+        ||> TagSet.foldBack (fun el (innerState, outerState) ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (el, innerState, outerState))
+
+#endif
+
+/// The HashSet module, lifted into the State monad.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module HashSet =
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> 'State -> unit * 'State) (set : HashSet<'T>) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let state =
+            (state, set)
+            ||> HashSet.fold (fun state el ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
+    //
+    [<CompiledName("IterateBack")>]
+    let iterBack (action : 'T -> 'State -> unit * 'State) (set : HashSet<'T>) (state : 'State) : unit * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let state =
+            (set, state)
+            ||> HashSet.foldBack (fun el state ->
+                snd <| action.Invoke (el, state))
+
+        (), state
+
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> 'State -> 'U * 'State) (set : HashSet<'T>) (state : 'State) : HashSet<'U> * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        ((HashSet.empty, state), set)
+        ||> HashSet.fold (fun (mappedSet, state) el ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            HashSet.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("MapBack")>]
+    let mapBack (mapping : 'T -> 'State -> 'U * 'State) (set : HashSet<'T>) (state : 'State) : HashSet<'U> * 'State =
+        // Preconditions
+        checkNonNull "set" set
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        (set, (HashSet.empty, state))
+        ||> HashSet.foldBack (fun el (mappedSet, state) ->
+            // Apply the mapping to the current element and state value.
+            let mappedEl, state = mapping.Invoke (el, state)
+
+            // Add the mapped element to the mapped set and continue iterating.
+            HashSet.add mappedEl mappedSet, state)
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'InnerState -> 'T -> 'OuterState -> 'InnerState * 'OuterState)
+        (innerState : 'InnerState) (set : HashSet<'T>) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        ((innerState, outerState), set)
+        ||> HashSet.fold (fun (innerState, outerState) el ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (innerState, el, outerState))
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'InnerState -> 'OuterState -> 'InnerState * 'OuterState) (set : HashSet<'T>)
+        (innerState : 'InnerState) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "set" set
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        (set, (innerState, outerState))
+        ||> HashSet.foldBack (fun el (innerState, outerState) ->
+            // Apply the folder to the current element and state values.
+            folder.Invoke (el, innerState, outerState))
 
