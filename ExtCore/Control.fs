@@ -1538,6 +1538,20 @@ module Reader =
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderState =
+    /// Adapts a function designed for use with the State monad
+    /// so it can be used with the ReaderState monad.
+    [<CompiledName("LiftReader")>]
+    let inline liftReader (readerFunc : ReaderFunc<'Env, 'T>)
+        env (_ : 'State) =
+        readerFunc env, state
+
+    /// Adapts a function designed for use with the State monad
+    /// so it can be used with the ReaderState monad.
+    [<CompiledName("LiftState")>]
+    let inline liftState (stateFunc : StateFunc<'State, 'T>)
+        (_ : 'Env) state =
+        stateFunc state
+
     //
     [<CompiledName("Run")>]
     let inline run (readerStateFunc : ReaderStateFunc<'Env, 'State, 'T>)
