@@ -111,6 +111,14 @@ module Reader =
 /// Tests for the ExtCore.Control.ReaderState module.
 module ReaderState =
     [<Test>]
+    let liftReader () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let liftState () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let evaluate () : unit =
         Assert.Ignore "Test not yet implemented."
 
