@@ -724,3 +724,73 @@ module Set =
     let iterBack () : unit =
         Assert.Ignore "Test not yet implemented."
 
+    [<Test>]
+    let map () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let mapBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let fold () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let foldBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.State.IntSet module.
+module IntSet =
+    [<Test>]
+    let iter () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let iterBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let map () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let mapBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let fold () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let foldBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+
+/// Tests for the ExtCore.Control.Collections.State.HashSet module.
+module HashSet =
+    [<Test>]
+    let iter () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let iterBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let map () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let mapBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let fold () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let foldBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
