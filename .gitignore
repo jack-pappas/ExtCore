@@ -14,11 +14,6 @@
 .hg
 .svn
 
-# NuGet
-!.nuget/*
-[Pp]ackages/*
-![Pp]ackages/repositories.config
-
 # .NET / Visual Studio (Folders)
 ipch/
 obj/
@@ -54,6 +49,11 @@ obj/
 *.vspscc
 *.vssscc
 Ankh.NoLoad
+
+# NuGet
+!.nuget/*
+[Pp]ackages/*
+![Pp]ackages/repositories.config
 
 # Visual Studio (Project Upgrade)
 Backup/
