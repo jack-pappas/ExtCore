@@ -383,7 +383,8 @@ module List =
 
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'S1 -> 'T -> 'S2 -> 'S1 * 'S2) (innerState : 'S1) (list : 'T list) (outerState : 'S2) : 'S1 * 'S2 =
+    let fold (folder : 'InnerState -> 'T -> 'OuterState -> 'InnerState * 'OuterState)
+        (innerState : 'InnerState) (list : 'T list) (outerState : 'OuterState) : 'InnerState * 'OuterState =
         // Preconditions
         checkNonNull "list" list
 
@@ -395,6 +396,27 @@ module List =
         while not <| List.isEmpty list do
             let innerState', outerState' =
                 folder.Invoke (innerState, List.head list, outerState)
+            innerState <- innerState'
+            outerState <- outerState'
+            list <- List.tail list
+
+        innerState, outerState
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'InnerState -> 'OuterState -> 'InnerState * 'OuterState)
+        (list : 'T list) (innerState : 'InnerState) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // Preconditions
+        checkNonNull "list" list
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+        let mutable list = List.rev list
+        let mutable innerState = innerState
+        let mutable outerState = outerState
+
+        while not <| List.isEmpty list do
+            let innerState', outerState' =
+                folder.Invoke (List.head list, innerState, outerState)
             innerState <- innerState'
             outerState <- outerState'
             list <- List.tail list

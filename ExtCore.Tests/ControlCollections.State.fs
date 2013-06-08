@@ -581,6 +581,10 @@ module List =
             foldResult |> assertEqual "ROYGBV"
             finalState |> assertEqual 122
 
+    [<Test>]
+    let foldBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
 
 /// Tests for the ExtCore.Control.Collections.State.TaggedArray module.
 module TaggedArray =
