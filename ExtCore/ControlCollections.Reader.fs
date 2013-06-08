@@ -274,7 +274,7 @@ module TagSet =
     [<CompiledName("Iterate")>]
     let iter (action : int<'Tag> -> 'Env -> unit) (set : TagSet<'Tag>) (env : 'Env) : unit =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let action = FSharpFunc<_,_,_>.Adapt action
 
@@ -286,7 +286,7 @@ module TagSet =
     [<CompiledName("IterateBack")>]
     let iterBack (action : int<'Tag> -> 'Env -> unit) (set : TagSet<'Tag>) (env : 'Env) : unit =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let action = FSharpFunc<_,_,_>.Adapt action
 
@@ -298,7 +298,7 @@ module TagSet =
     [<CompiledName("Map")>]
     let map (mapping : int<'Tag1> -> 'Env -> int<'Tag2>) (set : TagSet<'Tag1>) (env : 'Env) : TagSet<'Tag2> =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
@@ -314,7 +314,7 @@ module TagSet =
     [<CompiledName("MapBack")>]
     let mapBack (mapping : int<'Tag1> -> 'Env -> int<'Tag2>) (set : TagSet<'Tag1>) (env : 'Env) : TagSet<'Tag2> =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
@@ -331,7 +331,7 @@ module TagSet =
     let fold (folder : 'State -> int<'Tag> -> 'Env -> 'State)
         (state : 'State) (set : TagSet<'Tag>) (env : 'Env) : 'State =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
@@ -345,7 +345,7 @@ module TagSet =
     let foldBack (folder : int<'Tag> -> 'State -> 'Env -> 'State) (set : TagSet<'Tag>)
         (state : 'State) (env : 'Env) : 'State =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
 

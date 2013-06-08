@@ -750,7 +750,7 @@ module TagSet =
     [<CompiledName("Iterate")>]
     let iter (action : int<'Tag> -> 'State -> unit * 'State) (set : TagSet<'Tag>) (state : 'State) : unit * 'State =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let action = FSharpFunc<_,_,_>.Adapt action
 
@@ -765,7 +765,7 @@ module TagSet =
     [<CompiledName("IterateBack")>]
     let iterBack (action : int<'Tag> -> 'State -> unit * 'State) (set : TagSet<'Tag>) (state : 'State) : unit * 'State =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let action = FSharpFunc<_,_,_>.Adapt action
 
@@ -780,7 +780,7 @@ module TagSet =
     [<CompiledName("Map")>]
     let map (mapping : int<'Tag1> -> 'State -> int<'Tag2> * 'State) (set : TagSet<'Tag1>) (state : 'State) : TagSet<'Tag2> * 'State =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
@@ -796,7 +796,7 @@ module TagSet =
     [<CompiledName("MapBack")>]
     let mapBack (mapping : int<'Tag1> -> 'State -> int<'Tag2> * 'State) (set : TagSet<'Tag1>) (state : 'State) : TagSet<'Tag2> * 'State =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
@@ -813,7 +813,7 @@ module TagSet =
     let fold (folder : 'InnerState -> int<'Tag> -> 'OuterState -> 'InnerState * 'OuterState)
         (innerState : 'InnerState) (set : TagSet<'Tag>) (outerState : 'OuterState) : 'InnerState * 'OuterState =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
@@ -827,7 +827,7 @@ module TagSet =
     let foldBack (folder : int<'Tag> -> 'InnerState -> 'OuterState -> 'InnerState * 'OuterState) (set : TagSet<'Tag>)
         (innerState : 'InnerState) (outerState : 'OuterState) : 'InnerState * 'OuterState =
         // Preconditions
-        checkNonNull "set" set
+        //checkNonNull "set" set    // NOTE : Disabled due to bug in F# 3.0 compiler.
 
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
