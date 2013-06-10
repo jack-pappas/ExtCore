@@ -180,8 +180,20 @@ type IntBimap<'Value when 'Value : comparison>
             this
 
     //
+    member __.Exists (predicate : int -> 'Value -> bool) : bool =
+        IntMap.exists predicate map
+
+    //
+    member __.Forall (predicate : int -> 'Value -> bool) : bool =
+        IntMap.forall predicate map
+
+    //
     member __.Iterate (action : int -> 'Value -> unit) : unit =
         IntMap.iter action map
+
+    //
+    member __.IterateBack (action : int -> 'Value -> unit) : unit =
+        IntMap.iterBack action map
 
     //
     member __.Fold (folder : 'State -> int -> 'Value -> 'State, state : 'State) : 'State =
@@ -243,16 +255,20 @@ type IntBimap<'Value when 'Value : comparison>
             bimap.Add (key, value))
 
     //
-    member this.ToSeq () =
+    member __.ToSeq () =
         map.ToSeq ()
 
     //
-    member this.ToList () =
+    member __.ToList () =
         map.ToList ()
 
     //
-    member this.ToArray () =
+    member __.ToArray () =
         map.ToArray ()
+
+    //
+    member __.ToIntMap () =
+        map
 
     //
     member internal this.LeftKvpArray () : KeyValuePair<int, 'Value>[] =
@@ -430,6 +446,22 @@ module IntBimap =
 
         bimap.TryAdd (key, value)
 
+    /// Returns true if the given predicate returns true for one or more bindings in the map.
+    [<CompiledName("Exists")>]
+    let inline exists (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>) : bool =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Exists predicate
+
+    /// Returns true if the given predicate returns true for every binding in the map.
+    [<CompiledName("Forall")>]
+    let inline forall (predicate : int -> 'T -> bool) (bimap : IntBimap<'T>) : bool =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Forall predicate
+
     /// Applies the given function to each binding in the map.
     [<CompiledName("Iterate")>]
     let inline iter (action : int -> 'T -> unit) (bimap : IntBimap<'T>) : unit =
@@ -437,6 +469,14 @@ module IntBimap =
         checkNonNull "bimap" bimap
 
         bimap.Iterate action
+
+    /// Applies the given function to each binding in the map.
+    [<CompiledName("IterateBack")>]
+    let inline iterBack (action : int -> 'T -> unit) (bimap : IntBimap<'T>) : unit =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.IterateBack action
 
     /// Folds over the bindings in the map.
     [<CompiledName("Fold")>]
@@ -519,6 +559,14 @@ module IntBimap =
         checkNonNull "bimap" bimap
 
         bimap.ToArray ()
+
+    /// Returns an IntMap with the same key-value pairs as the IntBimap.
+    [<CompiledName("ToIntMap")>]
+    let inline toIntMap (bimap : IntBimap<'T>) : IntMap<'T> =
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToIntMap ()
 
 
 #if PROTO_COMPILER
@@ -706,6 +754,28 @@ module TagBimap =
         bimap.TryAdd (retype key, value)
         |> retype
 
+    /// Returns true if the given predicate returns true for one or more bindings in the map.
+    [<CompiledName("Exists")>]
+    let inline exists (predicate : int<'Tag> -> 'T -> bool) (bimap : TagBimap<'Tag, 'T>) : bool =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Exists (retype predicate)
+
+    /// Returns true if the given predicate returns true for every binding in the map.
+    [<CompiledName("Forall")>]
+    let inline forall (predicate : int<'Tag> -> 'T -> bool) (bimap : TagBimap<'Tag, 'T>) : bool =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.Forall (retype predicate)
+
     /// Applies the given function to each binding in the map.
     [<CompiledName("Iterate")>]
     let inline iter (action : int<'Tag> -> 'T -> unit) (bimap : TagBimap<'Tag, 'T>) : unit =
@@ -716,6 +786,17 @@ module TagBimap =
         checkNonNull "bimap" bimap
 
         bimap.Iterate (retype action)
+
+    /// Applies the given function to each binding in the map.
+    [<CompiledName("IterateBack")>]
+    let inline iterBack (action : int<'Tag> -> 'T -> unit) (bimap : TagBimap<'Tag, 'T>) : unit =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+        
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.IterateBack (retype action)
 
     /// Folds over the bindings in the map.
     [<CompiledName("Fold")>]
@@ -832,6 +913,18 @@ module TagBimap =
         checkNonNull "bimap" bimap
 
         bimap.ToArray ()
+        |> retype
+
+    /// Returns a TagMap with the same key-value pairs as the TagBimap.
+    [<CompiledName("ToTagMap")>]
+    let inline toTagMap (bimap : TagBimap<'Tag, 'T>) : TagMap<'Tag, 'T> =
+        // Retype as IntBimap.
+        let bimap : IntBimap<'T> = retype bimap
+
+        // Preconditions
+        checkNonNull "bimap" bimap
+
+        bimap.ToIntMap ()
         |> retype
 
 #endif
