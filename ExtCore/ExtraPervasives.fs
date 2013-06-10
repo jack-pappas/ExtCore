@@ -36,6 +36,16 @@ module ExtraTopLevelOperators =
     let inline untag<[<Measure>] 'Tag> (tag : int<'Tag>) : int =
         int tag
 
+    /// Creates a tagged 64-bit integer from a 64-bit integer value.
+    [<CompiledName("TagLong")>]
+    let inline tagl<[<Measure>] 'Tag> (value : int64) : int64<'Tag> =
+        Int64WithMeasure value
+
+    /// Removes the tag from a tagged 64-bit integer, returning the 64-bit integer value.
+    [<CompiledName("UntagLong")>]
+    let inline untagl<[<Measure>] 'Tag> (tag : int64<'Tag>) : int64 =
+        int64 tag
+
     /// Builds a map from a sequence of key-value pairs.
     [<CompiledName("Map")>]
     let inline map (elements : seq<_>) : Map<'Key, 'T> =

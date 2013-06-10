@@ -289,6 +289,8 @@ TagBimap
   - tryOfMap
   - projectKeys
   - projectValues
+  - forall
+  - exists
 
 
 Vector

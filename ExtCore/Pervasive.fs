@@ -25,7 +25,11 @@ open System.Collections.Generic
 
 (* Type abbreviations *)
 
-/// Type abbreviation for System.Collections.Generic.IDictionary`2.
+/// Represents an object whose underlying type is a value type
+/// that can also be assigned null like a reference type.
+type nullable<'T when 'T : struct and 'T : (new : unit -> 'T) and 'T :> System.ValueType> = System.Nullable<'T>
+
+/// Represents a generic collection of key/value pairs.
 type dict<'Key, 'Value> = System.Collections.Generic.IDictionary<'Key, 'Value>
 
 /// <summary>
