@@ -1920,30 +1920,30 @@ module TagSet =
 
     /// Builds a new collection from the given enumerable object.
     [<CompiledName("OfSeq")>]
-    let (*inline*) ofSeq source : TagSet<'Tag> =
+    let (*inline*) ofSeq (source : seq<int<'Tag>>) : TagSet<'Tag> =
         // Preconditions are checked by the member.
-        IntSet.OfSeq source
+        IntSet.OfSeq (retype source)
         |> retype
 
     /// Builds a set that contains the same elements as the given list.
     [<CompiledName("OfList")>]
-    let (*inline*) ofList source : TagSet<'Tag> =
+    let (*inline*) ofList (source : int<'Tag> list) : TagSet<'Tag> =
         // Preconditions are checked by the member.
-        IntSet.OfList source
+        IntSet.OfList (retype source)
         |> retype
 
     /// Builds a set that contains the same elements as the given array.
     [<CompiledName("OfArray")>]
-    let (*inline*) ofArray source : TagSet<'Tag> =
+    let (*inline*) ofArray (source : int<'Tag>[]) : TagSet<'Tag> =
         // Preconditions are checked by the member.
-        IntSet.OfArray source
+        IntSet.OfArray (retype source)
         |> retype
 
-    /// Builds an IntSet that contains the same elements as the given Set.
+    /// Builds an set that contains the same elements as the given Set.
     [<CompiledName("OfSet")>]
-    let (*inline*) ofSet source : TagSet<'Tag> =
+    let (*inline*) ofSet (source : Set<int<'Tag>>) : TagSet<'Tag> =
         // Preconditions are checked by the member.
-        IntSet.OfSet source
+        IntSet.OfSet (retype source)
         |> retype
 
     /// Returns an ordered view of the collection as an enumerable object.
@@ -1960,7 +1960,7 @@ module TagSet =
 
     /// Builds a list that contains the elements of the set in order.
     [<CompiledName("ToList")>]
-    let inline toList (set : TagSet<'Tag>) =
+    let inline toList (set : TagSet<'Tag>) : int<'Tag> list =
         // Retype as IntSet
         let set : IntSet = retype set
 
@@ -1968,10 +1968,11 @@ module TagSet =
         checkNonNull "set" set
 
         set.ToList ()
+        |> retype
 
     /// Builds an array that contains the elements of the set in order.
     [<CompiledName("ToArray")>]
-    let inline toArray (set : TagSet<'Tag>) =
+    let inline toArray (set : TagSet<'Tag>) : int<'Tag>[] =
         // Retype as IntSet
         let set : IntSet = retype set
 
@@ -1979,10 +1980,11 @@ module TagSet =
         checkNonNull "set" set
 
         set.ToArray ()
+        |> retype
 
-    /// Builds a Set that contains the same elements as the given IntSet.
+    /// Builds a Set that contains the same elements as the given TagSet.
     [<CompiledName("ToSet")>]
-    let inline toSet (set : TagSet<'Tag>) =
+    let inline toSet (set : TagSet<'Tag>) : Set<int<'Tag>> =
         // Retype as IntSet
         let set : IntSet = retype set
 
@@ -1990,6 +1992,7 @@ module TagSet =
         checkNonNull "set" set
 
         set.ToSet ()
+        |> retype
 
     /// Applies the given function to each element of the set,
     /// in order according to the comparison function.
