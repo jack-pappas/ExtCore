@@ -42,9 +42,8 @@ IntMap/IntSet/HashMap/HashSet
 IntBimap
 --------
 
-  - ofMap
-  - toMap
-  - tryOfMap
+  - ofIntMap
+  - tryOfIntMap
   - projectKeys
   - projectValues
 
@@ -284,13 +283,10 @@ Substring
 TagBimap
 --------
 
-  - ofMap
-  - toMap
-  - tryOfMap
+  - ofTagMap
+  - tryOfTagMap
   - projectKeys
   - projectValues
-  - forall
-  - exists
 
 
 Vector
