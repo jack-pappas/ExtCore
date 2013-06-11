@@ -1160,16 +1160,16 @@ type LongSet private (trie : PatriciaSet64) =
     override this.ToString () =
         (* NOTE :   Like Set, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
         match List.ofSeq (Seq.truncate 4 this) with
-        | [] -> "intSet []"
+        | [] -> "longSet []"
         | [h1] ->
             System.Text.StringBuilder()
-                .Append("intSet [")
+                .Append("longSet [")
                 .Append(LongSet.ElementString h1)
                 .Append("]")
                 .ToString()
         | [h1; h2] ->
             System.Text.StringBuilder()
-                .Append("intSet [")
+                .Append("longSet [")
                 .Append(LongSet.ElementString h1)
                 .Append("; ")
                 .Append(LongSet.ElementString h2)
@@ -1177,7 +1177,7 @@ type LongSet private (trie : PatriciaSet64) =
                 .ToString()
         | [h1; h2; h3] ->
             System.Text.StringBuilder()
-                .Append("intSet [")
+                .Append("longSet [")
                 .Append(LongSet.ElementString h1)
                 .Append("; ")
                 .Append(LongSet.ElementString h2)
@@ -1187,7 +1187,7 @@ type LongSet private (trie : PatriciaSet64) =
                 .ToString()
         | h1 :: h2 :: h3 :: _ ->
             System.Text.StringBuilder()
-                .Append("intSet [")
+                .Append("longSet [")
                 .Append(LongSet.ElementString h1)
                 .Append("; ")
                 .Append(LongSet.ElementString h2)

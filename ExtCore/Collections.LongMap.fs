@@ -934,7 +934,7 @@ type LongMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tr
     /// Look up an element in the map, raising KeyNotFoundException
     /// if no binding exists in the map.
     member __.Item
-        with get key =
+        with get (key : int64) =
             match PatriciaMap64.TryFind (uint64 key, trie) with
             | Some v -> v
             | None ->
@@ -1260,16 +1260,16 @@ type LongMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tr
     override this.ToString () =
         (* NOTE :   Like Map, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
         match List.ofSeq (Seq.truncate 4 this) with
-        | [] -> "intMap []"
+        | [] -> "longMap []"
         | [KeyValue h1] ->
             System.Text.StringBuilder()
-                .Append("intMap [")
+                .Append("longMap [")
                 .Append(LongMap<_>.ElementString h1)
                 .Append("]")
                 .ToString()
         | [KeyValue h1; KeyValue h2] ->
             System.Text.StringBuilder()
-                .Append("intMap [")
+                .Append("longMap [")
                 .Append(LongMap<_>.ElementString h1)
                 .Append("; ")
                 .Append(LongMap<_>.ElementString h2)
@@ -1277,7 +1277,7 @@ type LongMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tr
                 .ToString()
         | [KeyValue h1; KeyValue h2; KeyValue h3] ->
             System.Text.StringBuilder()
-                .Append("intMap [")
+                .Append("longMap [")
                 .Append(LongMap<_>.ElementString h1)
                 .Append("; ")
                 .Append(LongMap<_>.ElementString h2)
@@ -1287,7 +1287,7 @@ type LongMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tr
                 .ToString()
         | KeyValue h1 :: KeyValue h2 :: KeyValue h3 :: _ ->
             System.Text.StringBuilder()
-                .Append("intMap [")
+                .Append("longMap [")
                 .Append(LongMap<_>.ElementString h1)
                 .Append("; ")
                 .Append(LongMap<_>.ElementString h2)

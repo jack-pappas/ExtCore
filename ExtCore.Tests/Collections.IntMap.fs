@@ -1444,7 +1444,7 @@ module FsCheck =
     /// FsCheck generators for IntMap.
     type IntMapGenerator =
         /// Generates an arbitrary IntMap instance.
-        static member IntMap () : Arbitrary<IntMap<_>> =
+        static member IntMap () : Arbitrary<IntMap<'T>> =
             gen {
                 let! keys = Arb.generate
                 let! values = Arb.generate
@@ -1466,7 +1466,7 @@ module FsCheck =
 
     [<Test>]
     let ``prop addLookup``() =
-        assertProp "addLookup" <| fun k map ->
-            IntMap.add k () map
+        assertProp "addLookup" <| fun k v map ->
+            IntMap.add k v map
             |> IntMap.containsKey k
 
