@@ -1682,7 +1682,7 @@ module LongTagSet =
 
     /// Returns the number of elements in the set
     [<CompiledName("Count")>]
-    let inline count (set : LongTagSet<'Tag>) : int =
+    let inline count (set : LongTagSet<'Tag>) : int64 =
         // Retype as LongSet
         let set : LongSet = retype set
 
@@ -1694,7 +1694,7 @@ module LongTagSet =
     /// The set containing the given element.
     [<CompiledName("Singleton")>]
     let inline singleton (element : int64<'Tag>) : LongTagSet<'Tag> =
-        LongSet.Singleton (int element)
+        LongSet.Singleton (int64 element)
         |> retype
 
     /// Returns a new set with an element added to the set.
@@ -1707,7 +1707,7 @@ module LongTagSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.Add (int key)
+        set.Add (int64 key)
         |> retype
 
     /// Returns a new set with the given element removed.
@@ -1720,7 +1720,7 @@ module LongTagSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.Remove (int key)
+        set.Remove (int64 key)
         |> retype
 
     /// <summary>
@@ -1734,7 +1734,7 @@ module LongTagSet =
         // Preconditions
         checkNonNull "set" set
 
-        set.Contains (int key)
+        set.Contains (int64 key)
 
     /// Returns the lowest element in the set according to an unsigned integer comparison.
     [<CompiledName("MinElement")>]
