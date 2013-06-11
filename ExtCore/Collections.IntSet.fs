@@ -34,12 +34,12 @@ module internal PatriciaTrieConstants =
     let [<Literal>] defaultTraversalStackSize = 16
 
 
-type internal Mask = uint32
-type internal Key = uint32
-type internal Prefix = uint32
+type internal Mask32 = uint32
+type internal Key32 = uint32
+type internal Prefix32 = uint32
 
-/// Bitwise operations necessary for implementing Patricia tries.
-module internal BitOps =
+/// Bitwise operations (32-bit) necessary for implementing Patricia tries.
+module internal BitOps32 =
     #if LITTLE_ENDIAN_TRIES
     
     //
@@ -48,15 +48,15 @@ module internal BitOps =
 
     /// Finds the last (least-significant) bit at which p0 and p1 disagree.
     /// Returns a power-of-two value containing this (and only this) bit.
-    let inline branchingBit (p0 : Prefix, p1 : Prefix) : Mask =
+    let inline branchingBit (p0 : Prefix32, p1 : Prefix32) : Mask32 =
         leastSignificantSetBit (p0 ^^^ p1)
 
     /// Clears the indicated bit and sets all lower bits.
-    let inline mask (key : Key, mask : Mask) : Prefix =
+    let inline mask (key : Key32, mask : Mask32) : Prefix32 =
         key &&& (mask - 1u)
 
     //
-    let (*inline*) shorter (m1 : Mask, m2 : Mask) : bool =
+    let (*inline*) shorter (m1 : Mask32, m2 : Mask32) : bool =
         notImpl "BitOps.shorter (Little-Endian)"
 
     #else
@@ -71,65 +71,64 @@ module internal BitOps =
         let x4 = x3 ||| (x3 >>> 4)
         let x5 = x4 ||| (x4 >>> 8)
         let x6 = x5 ||| (x5 >>> 16)
-        //x &&& ~~~(x >>> 1)
         // OPTIMIZATION : p AND (NOT q) <-> p XOR q
         x6 ^^^ (x6 >>> 1)
 
     /// Finds the first (most-significant) bit at which p0 and p1 disagree.
     /// Returns a power-of-two value containing this (and only this) bit.
-    let inline branchingBit (p0 : Prefix, p1 : Prefix) : Mask =
+    let inline branchingBit (p0 : Prefix32, p1 : Prefix32) : Mask32 =
         mostSignificantSetBit (p0 ^^^ p1)
 
     /// Clears the indicated bit and sets all lower bits.
-    let inline mask (key : Key, mask : Mask) : Prefix =
+    let inline mask (key : Key32, mask : Mask32) : Prefix32 =
         key &&& (~~~(mask - 1u) ^^^ mask)
 
     //
-    let inline shorter (m1 : Mask, m2 : Mask) : bool =
+    let inline shorter (m1 : Mask32, m2 : Mask32) : bool =
         // NOTE : This must be an *unsigned* comparison for the results to be correct.
         m1 > m2
 
     #endif
 
     //
-    let inline matchPrefix (key : Key, prefix : Prefix, mask' : Mask) : bool =
+    let inline matchPrefix (key : Key32, prefix : Prefix32, mask' : Mask32) : bool =
         mask (key, mask') = prefix
 
     /// <summary>Determines if all specified bits are cleared (not set) in a value.</summary>
     /// <param name="value">The value to test.</param>
     /// <param name="bitValue">The bits to test in 'value'.</param>
     /// <returns>true if all bits which are set in 'bitValue' are *not* set in 'value'.</returns>
-    let inline zeroBit (key : Key, mask : Mask) : bool =
+    let inline zeroBit (key : Key32, mask : Mask32) : bool =
         key &&& mask = 0u
 
 
 open PatriciaTrieConstants
-open BitOps
+open BitOps32
 
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntSet (and TagSet).
 [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
-type private PatriciaSet =
+type private PatriciaSet32 =
     | Empty
     // Key
-    | Lf of uint32
+    | Lf of Key32
     // Prefix * Mask * Left-Child * Right-Child
-    | Br of uint32 * uint32 * PatriciaSet * PatriciaSet
+    | Br of Prefix32 * Mask32 * PatriciaSet32 * PatriciaSet32
 
     /// Determines if the set contains the given value.
-    static member Contains (key, set : PatriciaSet) =
+    static member Contains (key, set : PatriciaSet32) =
         match set with
         | Empty ->
             false
         | Lf j ->
             key = j
         | Br (_, m, t0, t1) ->
-            PatriciaSet.Contains
+            PatriciaSet32.Contains
                 (key, (if zeroBit (key, m) then t0 else t1))
 
     /// The number of items (i.e., the cardinality) of the set.
-    static member Count (set : PatriciaSet) : int =
+    static member Count (set : PatriciaSet32) : int =
         match set with
         | Empty -> 0
         | Lf _ -> 1
@@ -169,17 +168,17 @@ type private PatriciaSet =
             int count
 
     /// Retrieve the minimum element of the set.
-    static member MinElement (set : PatriciaSet) =
+    static member MinElement (set : PatriciaSet32) =
         match set with
         | Empty ->
             invalidArg "set" "The set is empty."
         | Lf j -> j
         | Br (_, _, t0, _) ->
-            PatriciaSet.MinElement t0
+            PatriciaSet32.MinElement t0
 
     /// Retrieve the minimum element of the set, treating the
     /// elements of the set as signed values.
-    static member MinElementSigned (set : PatriciaSet) =
+    static member MinElementSigned (set : PatriciaSet32) =
         match set with
         | Empty ->
             invalidArg "set" "The set is empty."
@@ -187,20 +186,20 @@ type private PatriciaSet =
         | Br (_, m, t0, t1) ->
             // OPTIMIZE : Just use a bitmask here to check the top bit?
             if (int m) < 0 then t1 else t0
-            |> PatriciaSet.MinElement
+            |> PatriciaSet32.MinElement
 
     /// Retrieve the maximum element of the set.
-    static member MaxElement (set : PatriciaSet) =
+    static member MaxElement (set : PatriciaSet32) =
         match set with
         | Empty ->
             invalidArg "set" "The set is empty."
         | Lf j -> j
         | Br (_, _, _, t1) ->
-            PatriciaSet.MaxElement t1
+            PatriciaSet32.MaxElement t1
 
     /// Retrieve the maximum element of the set, treating the
     /// elements of the set as signed values.
-    static member MaxElementSigned (set : PatriciaSet) =
+    static member MaxElementSigned (set : PatriciaSet32) =
         match set with
         | Empty ->
             invalidArg "set" "The set is empty."
@@ -208,10 +207,10 @@ type private PatriciaSet =
         | Br (_, m, t0, t1) ->
             // OPTIMIZE : Just use a bitmask here to check the top bit?
             if (int m) < 0 then t0 else t1
-            |> PatriciaSet.MaxElement
+            |> PatriciaSet32.MaxElement
 
     /// Remove an item from the set.
-    static member Remove (key, set : PatriciaSet) =
+    static member Remove (key, set : PatriciaSet32) =
         match set with
         | Empty ->
             Empty
@@ -222,7 +221,7 @@ type private PatriciaSet =
         | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
-                    match PatriciaSet.Remove (key, t0) with
+                    match PatriciaSet32.Remove (key, t0) with
                     | Empty -> t1
                     | left ->
                         // Only create a new tree when the value was actually removed
@@ -230,7 +229,7 @@ type private PatriciaSet =
                         if left === t0 then set
                         else Br (p, m, left, t1)
                 else
-                    match PatriciaSet.Remove (key, t1) with
+                    match PatriciaSet32.Remove (key, t1) with
                     | Empty -> t0
                     | right ->
                         // Only create a new tree when the value was actually removed
@@ -240,7 +239,7 @@ type private PatriciaSet =
             else set
 
     //
-    static member inline private Join (p0, t0 : PatriciaSet, p1, t1) =
+    static member inline private Join (p0, t0 : PatriciaSet32, p1, t1) =
         let m = branchingBit (p0, p1)
         let p = mask (p0, m)
         if zeroBit (p0, m) then
@@ -259,29 +258,29 @@ type private PatriciaSet =
                 // existing set without modifying it.
                 set
             else
-                PatriciaSet.Join (key, Lf key, j, set)
+                PatriciaSet32.Join (key, Lf key, j, set)
 
         | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
-                    let left = PatriciaSet.Add (key, t0)
+                    let left = PatriciaSet32.Add (key, t0)
 
                     // Only create a new tree when the value was actually added
                     // (i.e., the tree was modified).
                     if left === t0 then set
                     else Br (p, m, left, t1)
                 else
-                    let right = PatriciaSet.Add (key, t1)
+                    let right = PatriciaSet32.Add (key, t1)
 
                     // Only create a new tree when the value was actually added
                     // (i.e., the tree was modified).
                     if right === t1 then set
                     else Br (p, m, t0, right)
             else
-                PatriciaSet.Join (key, Lf key, p, set)
+                PatriciaSet32.Join (key, Lf key, p, set)
 
-    /// Computes the union of two PatriciaSets.
-    static member Union (s, t) : PatriciaSet =
+    /// Computes the union of two PatriciaSet32s.
+    static member Union (s, t) : PatriciaSet32 =
         // If the sets are identical, return immediately.
         if s === t then s else
         match s, t with
@@ -289,8 +288,8 @@ type private PatriciaSet =
             if m = n then
                 if p = q then
                     // The trees have the same prefix. Merge the subtrees.
-                    let left = PatriciaSet.Union (s0, t0)
-                    let right = PatriciaSet.Union (s1, t1)
+                    let left = PatriciaSet32.Union (s0, t0)
+                    let right = PatriciaSet32.Union (s1, t1)
                     
                     // Only create a new tree if some values were actually added
                     // (i.e., the tree was modified).
@@ -299,7 +298,7 @@ type private PatriciaSet =
                     else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
-                    PatriciaSet.Join (p, s, q, t)
+                    PatriciaSet32.Join (p, s, q, t)
             
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -309,66 +308,66 @@ type private PatriciaSet =
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
-                        let left = PatriciaSet.Union (s0, t)
+                        let left = PatriciaSet32.Union (s0, t)
                         
                         // Only create a new tree when the subtree is actually modified.
                         if left === s0 then s
                         else Br (p, m, left, s1)
                     else
-                        let right = PatriciaSet.Union (s1, t)
+                        let right = PatriciaSet32.Union (s1, t)
 
                         // Only create a new tree when the subtree is actually modified.
                         if right === s1 then s
                         else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
-                    PatriciaSet.Join (p, s, q, t)
+                    PatriciaSet32.Join (p, s, q, t)
 
             else
                 if matchPrefix (p, q, n) then
                     // p contains q. Merge s with a subtree of t.
                     if zeroBit (p, n) then
-                        let left = PatriciaSet.Union (s, t0)
+                        let left = PatriciaSet32.Union (s, t0)
                         
                         // Only create a new tree when the subtree is actually modified.
                         if left === t0 then t
                         else Br (q, n, left, t1)
                     else
-                        let right = PatriciaSet.Union (s, t1)
+                        let right = PatriciaSet32.Union (s, t1)
                         
                         // Only create a new tree when the subtree is actually modified.
                         if right === t1 then t
                         else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
-                    PatriciaSet.Join (p, s, q, t)
+                    PatriciaSet32.Join (p, s, q, t)
 
         | Br (p, m, s0, s1), Lf k ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    let left = PatriciaSet.Add (k, s0)
+                    let left = PatriciaSet32.Add (k, s0)
                     
                     // Only create a new tree when the subtree is actually modified.
                     if left === s0 then s
                     else Br (p, m, left, s1)
                 else
-                    let right = PatriciaSet.Add (k, s1)
+                    let right = PatriciaSet32.Add (k, s1)
                     
                     // Only create a new tree when the subtree is actually modified.
                     if right === s1 then s
                     else Br (p, m, s0, right)
             else
-                PatriciaSet.Join (k, t, p, s)
+                PatriciaSet32.Join (k, t, p, s)
 
         | Br (_,_,_,_), Empty ->
             s
         | Lf k, t ->
-            PatriciaSet.Add (k, t)
+            PatriciaSet32.Add (k, t)
         | Empty, t ->
             t
 
-    /// Compute the intersection of two PatriciaSets.
-    static member Intersect (s, t) : PatriciaSet =
+    /// Compute the intersection of two PatriciaSet32s.
+    static member Intersect (s, t) : PatriciaSet32 =
         // If the sets are identical, return immediately.
         if s === t then s else
         match s, t with
@@ -376,8 +375,8 @@ type private PatriciaSet =
             if m = n then
                 if p <> q then Empty
                 else
-                    let left = PatriciaSet.Intersect (s0, t0)
-                    let right = PatriciaSet.Intersect (s1, t1)
+                    let left = PatriciaSet32.Intersect (s0, t0)
+                    let right = PatriciaSet32.Intersect (s1, t1)
                     match left, right with
                     | Empty, r
                     | r, Empty -> r
@@ -395,38 +394,38 @@ type private PatriciaSet =
             #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
-                        PatriciaSet.Intersect (s0, t)
+                        PatriciaSet32.Intersect (s0, t)
                     else
-                        PatriciaSet.Intersect (s1, t)
+                        PatriciaSet32.Intersect (s1, t)
                 else
                     Empty
 
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then
-                        PatriciaSet.Intersect (s, t0)
+                        PatriciaSet32.Intersect (s, t0)
                     else
-                        PatriciaSet.Intersect (s, t1)
+                        PatriciaSet32.Intersect (s, t1)
                 else
                     Empty
 
         | Br (_, m, s0, s1), Lf k ->
             let s' = if zeroBit (k, m) then s0 else s1
-            if PatriciaSet.Contains (k, s') then t
+            if PatriciaSet32.Contains (k, s') then t
             else Empty
             
         | Br (_,_,_,_), Empty ->
             Empty
             
         | Lf k, t ->
-            if PatriciaSet.Contains (k, t) then s
+            if PatriciaSet32.Contains (k, t) then s
             else Empty
 
         | Empty, _ ->
             Empty
 
-    /// Compute the difference of two PatriciaSets.
-    static member Difference (s, t) : PatriciaSet =
+    /// Compute the difference of two PatriciaSet32s.
+    static member Difference (s, t) : PatriciaSet32 =
         // If the sets are identical, return immediately.
         if s === t then Empty else
         match s, t with
@@ -434,8 +433,8 @@ type private PatriciaSet =
             if m = n then
                 if p <> q then s
                 else
-                    let left = PatriciaSet.Difference (s0, t0)
-                    let right = PatriciaSet.Difference (s1, t1)
+                    let left = PatriciaSet32.Difference (s0, t0)
+                    let right = PatriciaSet32.Difference (s1, t1)
                     match left, right with
                     | Empty, r
                     | r, Empty -> r
@@ -452,7 +451,7 @@ type private PatriciaSet =
             #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
-                        match PatriciaSet.Difference (s0, t) with
+                        match PatriciaSet32.Difference (s0, t) with
                         | Empty -> s1
                         | left ->
                             // Only create a new tree some values were actually removed
@@ -460,7 +459,7 @@ type private PatriciaSet =
                             if left === s0 then s
                             else Br (p, m, left, s1)
                     else
-                        match PatriciaSet.Difference (s1, t) with
+                        match PatriciaSet32.Difference (s1, t) with
                         | Empty -> s0
                         | right ->
                             // Only create a new tree some values were actually removed
@@ -472,15 +471,15 @@ type private PatriciaSet =
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then
-                        PatriciaSet.Difference (s, t0)
+                        PatriciaSet32.Difference (s, t0)
                     else
-                        PatriciaSet.Difference (s, t1)
+                        PatriciaSet32.Difference (s, t1)
                 else s
 
         | Br (p, m, s0, s1), Lf k ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    match PatriciaSet.Remove (k, s0) with
+                    match PatriciaSet32.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
                         match s1 with
@@ -491,7 +490,7 @@ type private PatriciaSet =
                             if left === s0 then s
                             else Br (p, m, left, s1)
                 else
-                    match PatriciaSet.Remove (k, s1) with
+                    match PatriciaSet32.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
                         match s0 with
@@ -506,7 +505,7 @@ type private PatriciaSet =
         | Br (_,_,_,_), Empty ->
             s
         | Lf k, t ->
-            if PatriciaSet.Contains (k, t) then Empty
+            if PatriciaSet32.Contains (k, t) then Empty
             else s
         | Empty, _ ->
             Empty
@@ -516,19 +515,19 @@ type private PatriciaSet =
     //  -1 : All values in 't1' are in 't2', and at least one value of 't2' is not in 't1'.
     //   0 : The sets contain _exactly_ the same values.
     //   1 : The sets are disjoint, i.e., 't1' contains at least one value which is not in 't2'.
-    static member private SubsetCompare (t1 : PatriciaSet, t2 : PatriciaSet) : int =
+    static member private SubsetCompare (t1 : PatriciaSet32, t2 : PatriciaSet32) : int =
         match t1, t2 with
         | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then 1
             elif shorter (m2, m1) then
                 if not <| matchPrefix (p1, p2, m2) then 1
                 elif zeroBit (p1, m2) then
-                    match PatriciaSet.SubsetCompare (t1, l2) with 1 -> 1 | _ -> -1
+                    match PatriciaSet32.SubsetCompare (t1, l2) with 1 -> 1 | _ -> -1
                 else
-                    match PatriciaSet.SubsetCompare (t1, r2) with 1 -> 1 | _ -> -1
+                    match PatriciaSet32.SubsetCompare (t1, r2) with 1 -> 1 | _ -> -1
             elif p1 = p2 then
-                let left = PatriciaSet.SubsetCompare (l1, l2)
-                let right = PatriciaSet.SubsetCompare (r1, r2)
+                let left = PatriciaSet32.SubsetCompare (l1, l2)
+                let right = PatriciaSet32.SubsetCompare (r1, r2)
                 match left, right with
                 | 1, _
                 | _, 1 -> 1
@@ -546,9 +545,9 @@ type private PatriciaSet =
         | Lf x, Br (p, m, l, r) ->
             if not <| matchPrefix (x, p, m) then 1
             elif zeroBit (x, m) then
-                match PatriciaSet.SubsetCompare (t1, l) with 1 -> 1 | _ -> -1
+                match PatriciaSet32.SubsetCompare (t1, l) with 1 -> 1 | _ -> -1
             else
-                match PatriciaSet.SubsetCompare (t1, r) with 1 -> 1 | _ -> -1
+                match PatriciaSet32.SubsetCompare (t1, r) with 1 -> 1 | _ -> -1
 
         | Lf _, Empty ->
             // The maps are disjoint.
@@ -560,50 +559,50 @@ type private PatriciaSet =
     /// Is 'set1' a proper subset of 'set2'?
     /// IsProperSubset (set1, set2) returns true if all keys in set1 are in set2,
     /// and at least one element in set2 is not in set1.
-    static member IsProperSubsetOf (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
-        match PatriciaSet.SubsetCompare (set1, set2) with
+    static member IsProperSubsetOf (set1 : PatriciaSet32, set2 : PatriciaSet32) : bool =
+        match PatriciaSet32.SubsetCompare (set1, set2) with
         | -1 -> true
         | _ -> false
 
     /// Is 'set1' a subset of 'set2'?
     /// IsSubset (set1, set2) returns true if all keys in set1 are in set2.
-    static member IsSubsetOf (set1 : PatriciaSet, set2 : PatriciaSet) : bool =
-        match PatriciaSet.SubsetCompare (set1, set2) with
+    static member IsSubsetOf (set1 : PatriciaSet32, set2 : PatriciaSet32) : bool =
+        match PatriciaSet32.SubsetCompare (set1, set2) with
         | -1 | 0 -> true
         | _ -> false
 
     //
-    static member OfSeq (source : seq<int>) : PatriciaSet =
+    static member OfSeq (source : seq<int>) : PatriciaSet32 =
         (Empty, source)
         ||> Seq.fold (fun trie el ->
-            PatriciaSet.Add (uint32 el, trie))
+            PatriciaSet32.Add (uint32 el, trie))
 
     //
-    static member OfList (source : int list) : PatriciaSet =
+    static member OfList (source : int list) : PatriciaSet32 =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> List.fold (fun trie el ->
-            PatriciaSet.Add (uint32 el, trie))
+            PatriciaSet32.Add (uint32 el, trie))
 
     //
-    static member OfArray (source : int[]) : PatriciaSet =
+    static member OfArray (source : int[]) : PatriciaSet32 =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> Array.fold (fun trie el ->
-            PatriciaSet.Add (uint32 el, trie))
+            PatriciaSet32.Add (uint32 el, trie))
 
     //
-    static member OfSet (source : Set<int>) : PatriciaSet =
+    static member OfSet (source : Set<int>) : PatriciaSet32 =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> Set.fold (fun trie el ->
-            PatriciaSet.Add (uint32 el, trie))
+            PatriciaSet32.Add (uint32 el, trie))
 
     //
     static member Iterate (action : int -> unit, set) : unit =
@@ -837,12 +836,12 @@ type private PatriciaSet =
             // Only handle the case where the left child is a leaf
             // -- otherwise the traversal order would be altered.
             yield int k
-            yield! PatriciaSet.ToSeq right
+            yield! PatriciaSet32.ToSeq right
 
         | Br (_, _, left, right) ->
             // Recursively visit the children.
-            yield! PatriciaSet.ToSeq left
-            yield! PatriciaSet.ToSeq right
+            yield! PatriciaSet32.ToSeq left
+            yield! PatriciaSet32.ToSeq right
         }
 
 //
@@ -850,7 +849,7 @@ type private PatriciaSet =
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
 [<DebuggerTypeProxy(typedefof<IntSetDebuggerProxy>)>]
-type IntSet private (trie : PatriciaSet) =
+type IntSet private (trie : PatriciaSet32) =
     /// The empty IntSet instance.
     static let empty = IntSet Empty
 
@@ -865,7 +864,7 @@ type IntSet private (trie : PatriciaSet) =
 
         // OPTIMIZE : Try to cast the sequence to array or list;
         // if it succeeds use the specialized method for that type for better performance.
-        IntSet (PatriciaSet.OfSeq elements)
+        IntSet (PatriciaSet32.OfSeq elements)
 
     //
     member private __.Trie
@@ -874,7 +873,7 @@ type IntSet private (trie : PatriciaSet) =
     /// The number of elements in the IntSet.
     member __.Count
         with get () : int =
-            PatriciaSet.Count trie
+            PatriciaSet32.Count trie
 
     /// Is the map empty?
     member __.IsEmpty
@@ -885,7 +884,7 @@ type IntSet private (trie : PatriciaSet) =
 
     /// Tests if an element is in the domain of the IntSet.
     member __.Contains (key : int) : bool =
-        PatriciaSet.Contains (uint32 key, trie)
+        PatriciaSet32.Contains (uint32 key, trie)
 
     /// The minimum unsigned value stored in the set.
 #if FX_NO_DEBUG_DISPLAYS
@@ -894,7 +893,7 @@ type IntSet private (trie : PatriciaSet) =
 #endif
     member __.MinimumElement
         with get () : int =
-            int <| PatriciaSet.MinElement trie
+            int <| PatriciaSet32.MinElement trie
 
     /// The minimum signed value stored in the set.
 #if FX_NO_DEBUG_DISPLAYS
@@ -903,7 +902,7 @@ type IntSet private (trie : PatriciaSet) =
 #endif
     member __.MinimumElementSigned
         with get () : int =
-            int <| PatriciaSet.MinElementSigned trie
+            int <| PatriciaSet32.MinElementSigned trie
 
     /// The maximum unsigned value stored in the set.
 #if FX_NO_DEBUG_DISPLAYS
@@ -912,7 +911,7 @@ type IntSet private (trie : PatriciaSet) =
 #endif
     member __.MaximumElement
         with get () : int =
-            int <| PatriciaSet.MaxElement trie
+            int <| PatriciaSet32.MaxElement trie
 
     /// The maximum signed value stored in the set.
 #if FX_NO_DEBUG_DISPLAYS
@@ -921,7 +920,7 @@ type IntSet private (trie : PatriciaSet) =
 #endif
     member __.MaximumElementSigned
         with get () : int =
-            int <| PatriciaSet.MaxElementSigned trie
+            int <| PatriciaSet32.MaxElementSigned trie
 
     /// The IntSet containing the given element.
     static member Singleton (element : int) : IntSet =
@@ -930,7 +929,7 @@ type IntSet private (trie : PatriciaSet) =
     /// Returns a new IntSet with the element added to this IntSet.
     member this.Add (key : int) : IntSet =
         // If the trie isn't modified, just return this IntSet instead of creating a new one.
-        let trie' = PatriciaSet.Add (uint32 key, trie)
+        let trie' = PatriciaSet32.Add (uint32 key, trie)
         if trie === trie' then this
         else IntSet (trie')
 
@@ -938,7 +937,7 @@ type IntSet private (trie : PatriciaSet) =
     /// No exception is raised if the element is not present.
     member this.Remove (key : int) : IntSet =
         // If the trie isn't modified, just return this IntSet instead of creating a new one.
-        let trie' = PatriciaSet.Remove (uint32 key, trie)
+        let trie' = PatriciaSet32.Remove (uint32 key, trie)
         if trie === trie' then this
         else IntSet (trie')
 
@@ -949,7 +948,7 @@ type IntSet private (trie : PatriciaSet) =
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new IntSet.
-            let trie' = PatriciaSet.Union (trie, otherSet.Trie)
+            let trie' = PatriciaSet32.Union (trie, otherSet.Trie)
             if trie === trie' then this
             elif otherSet.Trie === trie' then otherSet
             else IntSet (trie')
@@ -961,7 +960,7 @@ type IntSet private (trie : PatriciaSet) =
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new IntSet.
-            let trie' = PatriciaSet.Intersect (trie, otherSet.Trie)
+            let trie' = PatriciaSet32.Intersect (trie, otherSet.Trie)
             if trie === trie' then this
             elif otherSet.Trie === trie' then otherSet
             else IntSet (trie')
@@ -973,7 +972,7 @@ type IntSet private (trie : PatriciaSet) =
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new IntSet.
-            let trie' = PatriciaSet.Difference (trie, otherSet.Trie)
+            let trie' = PatriciaSet32.Difference (trie, otherSet.Trie)
             if trie === trie' then this
             elif otherSet.Trie === trie' then otherSet
             else IntSet (trie')
@@ -984,9 +983,9 @@ type IntSet private (trie : PatriciaSet) =
         checkNonNull "sets" sets
 
         let result =
-            (PatriciaSet.Empty, sets)
+            (PatriciaSet32.Empty, sets)
             ||> Seq.fold (fun combinedSetTree set ->
-                PatriciaSet.Union (combinedSetTree, set.Trie))
+                PatriciaSet32.Union (combinedSetTree, set.Trie))
 
         // If the resulting trie is empty, return the empty IntSet instance
         // instead of creating a new one to allow for better structure sharing.
@@ -1008,28 +1007,28 @@ type IntSet private (trie : PatriciaSet) =
     /// Determines if this set is a subset of the given set.
     // IsSubsetOf (otherSet) returns true if all values in this set are in 'otherSet'.
     member __.IsSubsetOf (otherSet : IntSet) : bool =
-        PatriciaSet.IsSubsetOf (trie, otherSet.Trie)
+        PatriciaSet32.IsSubsetOf (trie, otherSet.Trie)
 
     /// Determines if set1 is a proper subset of set2.
     // IsProperSubsetOf (otherSet) returns true if all values in this set are in 'otherSet',
     // and 'otherSet' contains at least one value which is not in this set.
     member __.IsProperSubsetOf (otherSet : IntSet) : bool =
-        PatriciaSet.IsProperSubsetOf (trie, otherSet.Trie)
+        PatriciaSet32.IsProperSubsetOf (trie, otherSet.Trie)
 
     //
     member __.IsSupersetOf (otherSet : IntSet) : bool =
-        PatriciaSet.IsSubsetOf (otherSet.Trie, trie)
+        PatriciaSet32.IsSubsetOf (otherSet.Trie, trie)
 
     //
     member __.IsProperSupersetOf (otherSet : IntSet) : bool =
-        PatriciaSet.IsProperSubsetOf (otherSet.Trie, trie)
+        PatriciaSet32.IsProperSubsetOf (otherSet.Trie, trie)
 
     /// Returns a new IntSet made from the given elements.
     static member internal OfSeq (source : seq<int>) : IntSet =
         // Preconditions
         checkNonNull "source" source
 
-        IntSet (PatriciaSet.OfSeq source)
+        IntSet (PatriciaSet32.OfSeq source)
 
     /// Returns a new IntSet made from the given elements.
     static member internal OfList (source : int list) : IntSet =
@@ -1040,7 +1039,7 @@ type IntSet private (trie : PatriciaSet) =
         if List.isEmpty source then
             IntSet.Empty
         else
-            IntSet (PatriciaSet.OfList source)
+            IntSet (PatriciaSet32.OfList source)
 
     /// Returns a new IntSet made from the given elements.
     static member internal OfArray (source : int[]) : IntSet =
@@ -1051,7 +1050,7 @@ type IntSet private (trie : PatriciaSet) =
         if Array.isEmpty source then
             IntSet.Empty
         else
-            IntSet (PatriciaSet.OfArray source)
+            IntSet (PatriciaSet32.OfArray source)
 
     /// Returns a new IntSet made from the given elements.
     static member internal OfSet (source : Set<int>) : IntSet =
@@ -1062,45 +1061,45 @@ type IntSet private (trie : PatriciaSet) =
         if Set.isEmpty source then
             IntSet.Empty
         else
-            IntSet (PatriciaSet.OfSet source)
+            IntSet (PatriciaSet32.OfSet source)
 
     //
     member __.ToSeq () =
-        PatriciaSet.ToSeq trie
+        PatriciaSet32.ToSeq trie
 
     //
     member __.ToList () : int list =
-        PatriciaSet.FoldBack ((fun el list -> el :: list), [], trie)
+        PatriciaSet32.FoldBack ((fun el list -> el :: list), [], trie)
 
     //
     member __.ToArray () : int[] =
         let elements = ResizeArray ()
-        PatriciaSet.Iterate (elements.Add, trie)
+        PatriciaSet32.Iterate (elements.Add, trie)
         elements.ToArray ()
 
     //
     member __.ToSet () : Set<int> =
-        PatriciaSet.FoldBack (Set.add, Set.empty, trie)
+        PatriciaSet32.FoldBack (Set.add, Set.empty, trie)
 
     //
     member __.Iterate (action : int -> unit) : unit =
-        PatriciaSet.Iterate (action, trie)
+        PatriciaSet32.Iterate (action, trie)
 
     //
     member __.IterateBack (action : int -> unit) : unit =
-        PatriciaSet.IterateBack (action, trie)
+        PatriciaSet32.IterateBack (action, trie)
 
     //
     member __.Fold (folder : 'State -> int -> 'State, state : 'State) : 'State =
-        PatriciaSet.Fold (folder, state, trie)
+        PatriciaSet32.Fold (folder, state, trie)
 
     //
     member __.FoldBack (folder : int -> 'State -> 'State, state : 'State) : 'State =
-        PatriciaSet.FoldBack (folder, state, trie)
+        PatriciaSet32.FoldBack (folder, state, trie)
 
     //
     member __.TryPick (picker : int -> 'T option) : 'T option =
-        PatriciaSet.TryPick (picker, trie)
+        PatriciaSet32.TryPick (picker, trie)
 
     //
     member this.Pick (picker : int -> 'T option) : 'T =
@@ -1248,19 +1247,19 @@ type IntSet private (trie : PatriciaSet) =
     interface System.Collections.IEnumerable with
         /// <inherit />
         member __.GetEnumerator () =
-            (PatriciaSet.ToSeq trie).GetEnumerator ()
+            (PatriciaSet32.ToSeq trie).GetEnumerator ()
             :> System.Collections.IEnumerator
 
     interface IEnumerable<int> with
         /// <inherit />
         member __.GetEnumerator () =
-            (PatriciaSet.ToSeq trie).GetEnumerator ()
+            (PatriciaSet32.ToSeq trie).GetEnumerator ()
 
     interface ICollection<int> with
         /// <inherit />
         member __.Count
             with get () =
-                PatriciaSet.Count trie
+                PatriciaSet32.Count trie
 
         /// <inherit />
         member __.IsReadOnly
@@ -1276,7 +1275,7 @@ type IntSet private (trie : PatriciaSet) =
 
         /// <inherit />
         member __.Contains (item : int) =
-            PatriciaSet.Contains (uint32 item, trie)
+            PatriciaSet32.Contains (uint32 item, trie)
 
         /// <inherit />
         member this.CopyTo (array, arrayIndex) =
@@ -1285,7 +1284,7 @@ type IntSet private (trie : PatriciaSet) =
             if arrayIndex < 0 then
                 raise <| System.ArgumentOutOfRangeException "arrayIndex"
 
-            let count = PatriciaSet.Count trie
+            let count = PatriciaSet32.Count trie
             if arrayIndex + count > Array.length array then
                 invalidArg "arrayIndex"
                     "There is not enough room in the array to copy the \

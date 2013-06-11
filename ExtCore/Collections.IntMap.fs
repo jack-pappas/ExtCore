@@ -24,24 +24,25 @@ open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
 open PatriciaTrieConstants
-open BitOps
+open BitOps32
 
 
 (* OPTIMIZE :   Some of the functional-style operations on IntMap use direct non-tail-recursion;
-                performance may be improved if we modify these to use CPS instead. *)
+                performance may be improved if we modify these to use CPS instead.
+                Alternatively, we could implement and utilize a zipper which should also be quite fast. *)
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for IntMap (and TagMap).
 [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
-type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> =
+type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> =
     | Empty
     // Key * Value
-    | Lf of uint32 * 'T
+    | Lf of Key32 * 'T
     // Prefix * Mask * Left-Child * Right-Child
-    | Br of uint32 * uint32 * PatriciaMap<'T> * PatriciaMap<'T>
+    | Br of Prefix32 * Mask32 * PatriciaMap32<'T> * PatriciaMap32<'T>
 
     //
-    static member TryFind (key, map : PatriciaMap<'T>) =
+    static member TryFind (key, map : PatriciaMap32<'T>) =
         match map with
         | Empty ->
             None
@@ -49,22 +50,22 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             if j = key then Some x
             else None
         | Br (_, m, t0, t1) ->
-            PatriciaMap.TryFind (
+            PatriciaMap32.TryFind (
                 key, (if zeroBit (key, m) then t0 else t1))
 
     //
-    static member ContainsKey (key, map : PatriciaMap<'T>) =
+    static member ContainsKey (key, map : PatriciaMap32<'T>) =
         match map with
         | Empty ->
             false
         | Lf (j, _) ->
             key = j
         | Br (_, m, t0, t1) ->
-            PatriciaMap.ContainsKey (
+            PatriciaMap32.ContainsKey (
                 key, (if zeroBit (key, m) then t0 else t1))
 
     //
-    static member Count (map : PatriciaMap<'T>) : int =
+    static member Count (map : PatriciaMap32<'T>) : int =
         match map with
         | Empty -> 0
         | Lf (_,_) -> 1
@@ -104,17 +105,17 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             int count
 
     /// Retrieve the minimum key of the map.
-    static member MinKey (map : PatriciaMap<'T>) =
+    static member MinKey (map : PatriciaMap32<'T>) =
         match map with
         | Empty ->
             invalidArg "map" "The map is empty."
         | Lf (j, _) -> j
         | Br (_, _, t0, _) ->
-            PatriciaMap.MinKey t0
+            PatriciaMap32.MinKey t0
 
     /// Retrieve the minimum key of the map, treating the
     /// keys of the map as signed values.
-    static member MinKeySigned (map : PatriciaMap<'T>) =
+    static member MinKeySigned (map : PatriciaMap32<'T>) =
         match map with
         | Empty ->
             invalidArg "map" "The map is empty."
@@ -122,20 +123,20 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Br (_, m, t0, t1) ->
             // OPTIMIZE : Just use a bitmask here to check the top bit?
             if (int m) < 0 then t1 else t0
-            |> PatriciaMap.MinKey
+            |> PatriciaMap32.MinKey
 
     /// Retrieve the maximum key of the map.
-    static member MaxKey (map : PatriciaMap<'T>) =
+    static member MaxKey (map : PatriciaMap32<'T>) =
         match map with
         | Empty ->
             invalidArg "set" "The set is empty."
         | Lf (j, _) -> j
         | Br (_, _, _, t1) ->
-            PatriciaMap.MaxKey t1
+            PatriciaMap32.MaxKey t1
 
     /// Retrieve the maximum element of the map, treating the
     /// keys of the map as signed values.
-    static member MaxKeySigned (map : PatriciaMap<'T>) =
+    static member MaxKeySigned (map : PatriciaMap32<'T>) =
         match map with
         | Empty ->
             invalidArg "map" "The map is empty."
@@ -143,11 +144,11 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Br (_, m, t0, t1) ->
             // OPTIMIZE : Just use a bitmask here to check the top bit?
             if (int m) < 0 then t0 else t1
-            |> PatriciaMap.MaxKey
+            |> PatriciaMap32.MaxKey
 
     /// Remove the binding with the specified key from the map.
     /// No exception is thrown if the map does not contain a binding for the key.
-    static member Remove (key, map : PatriciaMap<'T>) =
+    static member Remove (key, map : PatriciaMap32<'T>) =
         match map with
         | Empty ->
             Empty
@@ -158,7 +159,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
-                    match PatriciaMap.Remove (key, t0) with
+                    match PatriciaMap32.Remove (key, t0) with
                     | Empty -> t1
                     | left ->
                         // Only create a new tree when the value was actually removed
@@ -166,7 +167,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                         if left === t0 then map
                         else Br (p, m, left, t1)
                 else
-                    match PatriciaMap.Remove (key, t1) with
+                    match PatriciaMap32.Remove (key, t1) with
                     | Empty -> t0
                     | right ->
                         // Only create a new tree when the value was actually removed
@@ -176,7 +177,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             else map
 
     //
-    static member inline private Join (p0, t0 : PatriciaMap<'T>, p1, t1) =
+    static member inline private Join (p0, t0 : PatriciaMap32<'T>, p1, t1) =
         let m = branchingBit (p0, p1)
         let p = mask (p0, m)
         if zeroBit (p0, m) then
@@ -199,25 +200,25 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                 if Unchecked.equals y value then map
                 else Lf (key, value)
             else
-                PatriciaMap.Join (key, Lf (key, value), j, map)
+                PatriciaMap32.Join (key, Lf (key, value), j, map)
         | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
-                    let left = PatriciaMap.Add (key, value, t0)
+                    let left = PatriciaMap32.Add (key, value, t0)
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
                     if left === t0 then map
                     else Br (p, m, left, t1)
                 else
-                    let right = PatriciaMap.Add (key, value, t1)
+                    let right = PatriciaMap32.Add (key, value, t1)
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
                     if right === t1 then map
                     else Br (p, m, t0, right)
             else
-                PatriciaMap.Join (key, Lf (key, value), p, map)
+                PatriciaMap32.Join (key, Lf (key, value), p, map)
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
     /// If a binding already exists for the same key, the map is not altered.
@@ -232,28 +233,28 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                 // just return the existing map instead of creating an identical new one.
                 map
             else
-                PatriciaMap.Join (key, Lf (key, value), j, map)
+                PatriciaMap32.Join (key, Lf (key, value), j, map)
         | Br (p, m, t0, t1) ->
             if matchPrefix (key, p, m) then
                 if zeroBit (key, m) then
-                    let left = PatriciaMap.TryAdd (key, value, t0)
+                    let left = PatriciaMap32.TryAdd (key, value, t0)
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
                     if left === t0 then map
                     else Br (p, m, left, t1)
                 else
-                    let right = PatriciaMap.TryAdd (key, value, t1)
+                    let right = PatriciaMap32.TryAdd (key, value, t1)
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
                     if right === t1 then map
                     else Br (p, m, t0, right)
             else
-                PatriciaMap.Join (key, Lf (key, value), p, map)
+                PatriciaMap32.Join (key, Lf (key, value), p, map)
 
     /// Computes the union of two PatriciaMaps.
-    static member Union (s, t) : PatriciaMap<'T> =
+    static member Union (s, t) : PatriciaMap32<'T> =
         // If the maps are identical, return immediately.
         if s === t then s else
         match s, t with
@@ -261,8 +262,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             if m = n then
                 if p = q then
                     // The trees have the same prefix. Merge the subtrees.
-                    let left = PatriciaMap.Union (s0, t0)
-                    let right = PatriciaMap.Union (s1, t1)
+                    let left = PatriciaMap32.Union (s0, t0)
+                    let right = PatriciaMap32.Union (s1, t1)
 
                     // Only create a new tree if some values were actually added
                     // (i.e., the tree was modified).
@@ -271,7 +272,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                     else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
-                    PatriciaMap.Join (p, s, q, t)
+                    PatriciaMap32.Join (p, s, q, t)
 
             #if LITTLE_ENDIAN_TRIES
             elif m < n then
@@ -281,67 +282,67 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
-                        let left = PatriciaMap.Union (s0, t)
+                        let left = PatriciaMap32.Union (s0, t)
 
                         // Only create a new tree when the subtree is actually modified.
                         if left === s0 then s
                         else Br (p, m, left, s1)
                     else
-                        let right = PatriciaMap.Union (s1, t)
+                        let right = PatriciaMap32.Union (s1, t)
 
                         // Only create a new tree when the subtree is actually modified.
                         if right === s1 then s
                         else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
-                    PatriciaMap.Join (p, s, q, t)
+                    PatriciaMap32.Join (p, s, q, t)
 
             else
                 if matchPrefix (p, q, n) then
                     // p contains q. Merge s with a subtree of t.
                     if zeroBit (p, n) then
-                        let left = PatriciaMap.Union (s, t0)
+                        let left = PatriciaMap32.Union (s, t0)
 
                         // Only create a new tree when the subtree is actually modified.
                         if left === t0 then t
                         else Br (q, n, left, t1)
                     else
-                        let right = PatriciaMap.Union (s, t1)
+                        let right = PatriciaMap32.Union (s, t1)
 
                         // Only create a new tree when the subtree is actually modified.
                         if right === t1 then t
                         else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
-                    PatriciaMap.Join (p, s, q, t)
+                    PatriciaMap32.Join (p, s, q, t)
 
         | Br (p, m, s0, s1), Lf (k, x) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    let left = PatriciaMap.TryAdd (k, x, s0)
+                    let left = PatriciaMap32.TryAdd (k, x, s0)
 
                     // Only create a new tree when the subtree is actually modified.
                     if left === s0 then s
                     else Br (p, m, left, s1)
                 else
-                    let right = PatriciaMap.TryAdd (k, x, s1)
+                    let right = PatriciaMap32.TryAdd (k, x, s1)
 
                     // Only create a new tree when the subtree is actually modified.
                     if right === s1 then s
                     else Br (p, m, s0, right)
             else
-                PatriciaMap.Join (k, t, p, s)
+                PatriciaMap32.Join (k, t, p, s)
 
         | Br (_,_,_,_), Empty ->
             s
         | Lf (k, x), _ ->
-            PatriciaMap.Add (k, x, t)
+            PatriciaMap32.Add (k, x, t)
         | Empty, _ -> t
 
     /// Compute the intersection of two PatriciaMaps.
     /// If both maps contain a binding with the same key, the binding from
     /// the first map will be used.
-    static member Intersect (s, t) : PatriciaMap<'T> =
+    static member Intersect (s, t) : PatriciaMap32<'T> =
         // If the maps are identical, return immediately.
         if s === t then s else
         match s, t with
@@ -349,8 +350,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             if m = n then
                 if p <> q then Empty
                 else
-                    let left = PatriciaMap.Intersect (s0, t0)
-                    let right = PatriciaMap.Intersect (s1, t1)
+                    let left = PatriciaMap32.Intersect (s0, t0)
+                    let right = PatriciaMap32.Intersect (s1, t1)
                     match left, right with
                     | Empty, r
                     | r, Empty -> r
@@ -368,24 +369,24 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
-                        PatriciaMap.Intersect (s0, t)
+                        PatriciaMap32.Intersect (s0, t)
                     else
-                        PatriciaMap.Intersect (s1, t)
+                        PatriciaMap32.Intersect (s1, t)
                 else
                     Empty
 
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then
-                        PatriciaMap.Intersect (s, t0)
+                        PatriciaMap32.Intersect (s, t0)
                     else
-                        PatriciaMap.Intersect (s, t1)
+                        PatriciaMap32.Intersect (s, t1)
                 else
                     Empty
 
         | Br (_, m, s0, s1), Lf (k, _) ->
             let s' = if zeroBit (k, m) then s0 else s1
-            match PatriciaMap.TryFind (k, s') with
+            match PatriciaMap32.TryFind (k, s') with
             | Some x ->
                 // OPTIMIZE : If x === y or x = y then just return 't' instead
                 // of creating/returning a new Lf.
@@ -399,14 +400,14 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Lf (k, _), _ ->
             // Here, we always use the value from the left tree, so as long as the
             // right tree contains a binding with the same key, we just return the left tree.
-            if PatriciaMap.ContainsKey (k, t) then s
+            if PatriciaMap32.ContainsKey (k, t) then s
             else Empty
 
         | Empty, _ ->
             Empty
 
     /// Compute the difference of two PatriciaMaps.
-    static member Difference (s, t) : PatriciaMap<'T> =
+    static member Difference (s, t) : PatriciaMap32<'T> =
         // If the maps are identical, return immediately.
         if s === t then Empty else
         match s, t with
@@ -414,8 +415,8 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             if m = n then
                 if p <> q then s
                 else
-                    let left = PatriciaMap.Difference (s0, t0)
-                    let right = PatriciaMap.Difference (s1, t1)
+                    let left = PatriciaMap32.Difference (s0, t0)
+                    let right = PatriciaMap32.Difference (s1, t1)
                     match left, right with
                     | Empty, r
                     | r, Empty -> r
@@ -432,7 +433,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
-                        match PatriciaMap.Difference (s0, t) with
+                        match PatriciaMap32.Difference (s0, t) with
                         | Empty -> s1
                         | left ->
                             // Only create a new tree some values were actually removed
@@ -440,7 +441,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                             if left === s0 then s
                             else Br (p, m, left, s1)
                     else
-                        match PatriciaMap.Difference (s1, t) with
+                        match PatriciaMap32.Difference (s1, t) with
                         | Empty -> s0
                         | right ->
                             // Only create a new tree some values were actually removed
@@ -452,15 +453,15 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             else
                 if matchPrefix (p, q, n) then
                     if zeroBit (p, n) then
-                        PatriciaMap.Difference (s, t0)
+                        PatriciaMap32.Difference (s, t0)
                     else
-                        PatriciaMap.Difference (s, t1)
+                        PatriciaMap32.Difference (s, t1)
                 else s
 
         | Br (p, m, s0, s1), Lf (k, _) ->
             if matchPrefix (k, p, m) then
                 if zeroBit (k, m) then
-                    match PatriciaMap.Remove (k, s0) with
+                    match PatriciaMap32.Remove (k, s0) with
                     | Empty -> s1
                     | left ->
                         // Only create a new tree if the value was actually removed
@@ -468,7 +469,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
                         if left === s0 then s
                         else Br (p, m, left, s1)
                 else
-                    match PatriciaMap.Remove (k, s1) with
+                    match PatriciaMap32.Remove (k, s1) with
                     | Empty -> s0
                     | right ->
                         // Only create a new tree if the value was actually removed
@@ -480,14 +481,14 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Br (_,_,_,_), Empty ->
             s
         | Lf (k, _), _ ->
-            if PatriciaMap.ContainsKey (k, t) then Empty
+            if PatriciaMap32.ContainsKey (k, t) then Empty
             else s
         | Empty, _ ->
             Empty
 
     /// <c>IsSubmapOfBy f t1 t2</c> returns <c>true</c> if all keys in t1 are in t2,
     /// and when 'f' returns <c>true</c> when applied to their respective values.
-    static member IsSubmapOfBy (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap<'T>) (t2 : PatriciaMap<'T>) : bool =
+    static member IsSubmapOfBy (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap32<'T>) (t2 : PatriciaMap32<'T>) : bool =
         match t1, t2 with
         | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then
@@ -495,18 +496,18 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             elif shorter (m2, m1) then
                 matchPrefix (p1, p2, m2) && (
                     if zeroBit (p1, m2) then
-                        PatriciaMap.IsSubmapOfBy predicate t1 l2
+                        PatriciaMap32.IsSubmapOfBy predicate t1 l2
                     else
-                        PatriciaMap.IsSubmapOfBy predicate t1 r2)
+                        PatriciaMap32.IsSubmapOfBy predicate t1 r2)
             else
                 p1 = p2
-                && PatriciaMap.IsSubmapOfBy predicate l1 l2
-                && PatriciaMap.IsSubmapOfBy predicate r1 r2
+                && PatriciaMap32.IsSubmapOfBy predicate l1 l2
+                && PatriciaMap32.IsSubmapOfBy predicate r1 r2
                 
         | Br (_,_,_,_), _ ->
             false
         | Lf (k, x), t ->
-            match PatriciaMap.TryFind (k, t) with
+            match PatriciaMap32.TryFind (k, t) with
             | None ->
                 false
             | Some y ->
@@ -515,19 +516,19 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             true
 
     //
-    static member private SubmapCmp (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap<'T>) (t2 : PatriciaMap<'T>) : int =
+    static member private SubmapCmp (predicate : 'T -> 'T -> bool) (t1 : PatriciaMap32<'T>) (t2 : PatriciaMap32<'T>) : int =
         match t1, t2 with
         | Br (p1, m1, l1, r1), Br (p2, m2, l2, r2) ->
             if shorter (m1, m2) then 1
             elif shorter (m2, m1) then
                 if not <| matchPrefix (p1, p2, m2) then 1
                 elif zeroBit (p1, m2) then
-                    PatriciaMap.SubmapCmp predicate t1 l2
+                    PatriciaMap32.SubmapCmp predicate t1 l2
                 else
-                    PatriciaMap.SubmapCmp predicate t1 r2
+                    PatriciaMap32.SubmapCmp predicate t1 r2
             elif p1 = p2 then
-                let left = PatriciaMap.SubmapCmp predicate l1 l2
-                let right = PatriciaMap.SubmapCmp predicate r1 r2
+                let left = PatriciaMap32.SubmapCmp predicate l1 l2
+                let right = PatriciaMap32.SubmapCmp predicate r1 r2
                 match left, right with
                 | 1, _
                 | _, 1 -> 1
@@ -542,7 +543,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             if kx = ky && predicate x y then 0
             else 1  // The maps are disjoint.
         | Lf (k, x), t ->
-            match PatriciaMap.TryFind (k, t) with
+            match PatriciaMap32.TryFind (k, t) with
             | Some y when predicate x y -> -1
             | _ -> 1    // The maps are disjoint.
 
@@ -550,37 +551,37 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
         | Empty, _ -> -1
 
     //
-    static member OfSeq (source : seq<int * 'T>) : PatriciaMap<'T> =
+    static member OfSeq (source : seq<int * 'T>) : PatriciaMap32<'T> =
         (Empty, source)
         ||> Seq.fold (fun trie (key, value) ->
-            PatriciaMap.Add (uint32 key, value, trie))
+            PatriciaMap32.Add (uint32 key, value, trie))
 
     //
-    static member OfList (source : (int * 'T) list) : PatriciaMap<'T> =
+    static member OfList (source : (int * 'T) list) : PatriciaMap32<'T> =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> List.fold (fun trie (key, value) ->
-            PatriciaMap.Add (uint32 key, value, trie))
+            PatriciaMap32.Add (uint32 key, value, trie))
 
     //
-    static member OfArray (source : (int * 'T)[]) : PatriciaMap<'T> =
+    static member OfArray (source : (int * 'T)[]) : PatriciaMap32<'T> =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> Array.fold (fun trie (key, value) ->
-            PatriciaMap.Add (uint32 key, value, trie))
+            PatriciaMap32.Add (uint32 key, value, trie))
 
     //
-    static member OfMap (source : Map<int, 'T>) : PatriciaMap<'T> =
+    static member OfMap (source : Map<int, 'T>) : PatriciaMap32<'T> =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> Map.fold (fun trie key value ->
-            PatriciaMap.Add (uint32 key, value, trie))
+            PatriciaMap32.Add (uint32 key, value, trie))
 
     //
     static member Iterate (action : int -> 'T -> unit, map) : unit =
@@ -857,7 +858,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             pickedValue
 
     //
-    static member ToSeq (map : PatriciaMap<'T>) =
+    static member ToSeq (map : PatriciaMap32<'T>) =
         seq {
         match map with
         | Empty -> ()
@@ -874,12 +875,12 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
             // Only handle the case where the left child is a leaf
             // -- otherwise the traversal order would be altered.
             yield (int k, x)
-            yield! PatriciaMap.ToSeq right
+            yield! PatriciaMap32.ToSeq right
 
         | Br (_, _, left, right) ->
             // Recursively visit the children.
-            yield! PatriciaMap.ToSeq left
-            yield! PatriciaMap.ToSeq right
+            yield! PatriciaMap32.ToSeq left
+            yield! PatriciaMap32.ToSeq right
         }
 
 /// <summary>Immutable maps with integer keys.</summary>
@@ -888,7 +889,7 @@ type private PatriciaMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T>
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
 [<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]
-type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (trie : PatriciaMap<'T>) =
+type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (trie : PatriciaMap32<'T>) =
     /// The empty IntMap instance.
     static let empty : IntMap<'T> =
         IntMap Empty
@@ -904,7 +905,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
         // OPTIMIZE : Try to cast the sequence to array or list;
         // if it succeeds use the specialized method for that type for better performance.
-        IntMap (PatriciaMap.OfSeq elements)
+        IntMap (PatriciaMap32.OfSeq elements)
 
     /// The internal representation of the IntMap.
     member private __.Trie
@@ -934,7 +935,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     /// if no binding exists in the map.
     member __.Item
         with get key =
-            match PatriciaMap.TryFind (uint32 key, trie) with
+            match PatriciaMap32.TryFind (uint32 key, trie) with
             | Some v -> v
             | None ->
                 keyNotFound "The map does not contain a binding for the specified key."
@@ -942,7 +943,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     /// The number of bindings in the IntMap.
     member __.Count
         with get () : int =
-            PatriciaMap.Count trie
+            PatriciaMap32.Count trie
 
     /// Is the map empty?
     member __.IsEmpty
@@ -958,7 +959,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 #endif
     member __.MinimumKey
         with get () : int =
-            int <| PatriciaMap.MinKey trie
+            int <| PatriciaMap32.MinKey trie
 
     /// The minimum signed key stored in the map.
 #if FX_NO_DEBUG_DISPLAYS
@@ -967,7 +968,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 #endif
     member __.MinimumKeySigned
         with get () : int =
-            int <| PatriciaMap.MinKeySigned trie
+            int <| PatriciaMap32.MinKeySigned trie
 
     /// The maximum unsigned key stored in the map.
 #if FX_NO_DEBUG_DISPLAYS
@@ -976,7 +977,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 #endif
     member __.MaximumKey
         with get () : int =
-            int <| PatriciaMap.MaxKey trie
+            int <| PatriciaMap32.MaxKey trie
 
     /// The maximum signed key stored in the map.
 #if FX_NO_DEBUG_DISPLAYS
@@ -985,17 +986,17 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 #endif
     member __.MaximumKeySigned
         with get () : int =
-            int <| PatriciaMap.MaxKeySigned trie
+            int <| PatriciaMap32.MaxKeySigned trie
 
     /// Look up an element in the map, returning a Some value if the
     /// element is in the domain of the map and None if not.
     member __.TryFind (key : int) : 'T option =
-        PatriciaMap.TryFind (uint32 key, trie)
+        PatriciaMap32.TryFind (uint32 key, trie)
 
     /// Look up an element in the map, raising KeyNotFoundException
     /// if no binding exists in the map.
     member __.Find (key : int) : 'T =
-        match PatriciaMap.TryFind (uint32 key, trie) with
+        match PatriciaMap32.TryFind (uint32 key, trie) with
         | Some x -> x
         | None ->
             // TODO : Add a better error message which includes the key.
@@ -1004,19 +1005,19 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
     /// Tests if an element is in the domain of the map.
     member __.ContainsKey (key : int) : bool =
-        PatriciaMap.ContainsKey (uint32 key, trie)
+        PatriciaMap32.ContainsKey (uint32 key, trie)
 
     /// Returns a new map with the binding added to this map.
     member this.Add (key : int, value : 'T) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
-        let trie' = PatriciaMap.Add (uint32 key, value, trie)
+        let trie' = PatriciaMap32.Add (uint32 key, value, trie)
         if trie === trie' then this
         else IntMap (trie')
 
     /// Returns a new map with the binding added to this map.
     member this.TryAdd (key : int, value : 'T) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
-        let trie' = PatriciaMap.TryAdd (uint32 key, value, trie)
+        let trie' = PatriciaMap32.TryAdd (uint32 key, value, trie)
         if trie === trie' then this
         else IntMap (trie')
 
@@ -1024,7 +1025,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     /// No exception is raised if the element is not present.
     member this.Remove (key : int) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
-        let trie' = PatriciaMap.Remove (uint32 key, trie)
+        let trie' = PatriciaMap32.Remove (uint32 key, trie)
         if trie === trie' then this
         else IntMap (trie')
 
@@ -1032,7 +1033,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     member this.Union (otherMap : IntMap<'T>) : IntMap<'T> =
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
-        let trie' = PatriciaMap.Union (trie, otherMap.Trie)
+        let trie' = PatriciaMap32.Union (trie, otherMap.Trie)
         if trie === trie' then this
         elif otherMap.Trie === trie' then otherMap
         else IntMap (trie')
@@ -1041,7 +1042,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     member this.Intersect (otherMap : IntMap<'T>) : IntMap<'T> =
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
-        let trie' = PatriciaMap.Intersect (trie, otherMap.Trie)
+        let trie' = PatriciaMap32.Intersect (trie, otherMap.Trie)
         if trie === trie' then this
         elif otherMap.Trie === trie' then otherMap
         else IntMap (trie')
@@ -1050,14 +1051,14 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     member this.Difference (otherMap : IntMap<'T>) : IntMap<'T> =
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
-        let trie' = PatriciaMap.Difference (trie, otherMap.Trie)
+        let trie' = PatriciaMap32.Difference (trie, otherMap.Trie)
         if trie === trie' then this
         elif otherMap.Trie === trie' then otherMap
         else IntMap (trie')
 
     /// Returns true if 'other' is a submap of this map.
     member this.IsSubmapOfBy (predicate, other : IntMap<'T>) : bool =
-        PatriciaMap.IsSubmapOfBy predicate other.Trie trie
+        PatriciaMap32.IsSubmapOfBy predicate other.Trie trie
 
     /// The map containing the given binding.
     static member Singleton (key : int, value : 'T) : IntMap<'T> =
@@ -1069,7 +1070,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         // Preconditions
         checkNonNull "source" source
 
-        IntMap (PatriciaMap.OfSeq source)
+        IntMap (PatriciaMap32.OfSeq source)
 
     /// Returns a new IntMap made from the given bindings.
     static member OfList (source : (int * 'T) list) : IntMap<'T> =
@@ -1080,7 +1081,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         if List.isEmpty source then
             IntMap.Empty
         else
-            IntMap (PatriciaMap.OfList source)
+            IntMap (PatriciaMap32.OfList source)
 
     /// Returns a new IntMap made from the given bindings.
     static member OfArray (source : (int * 'T)[]) : IntMap<'T> =
@@ -1091,7 +1092,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         if Array.isEmpty source then
             IntMap.Empty
         else
-            IntMap (PatriciaMap.OfArray source)
+            IntMap (PatriciaMap32.OfArray source)
 
     /// Returns a new IntMap made from the given bindings.
     static member OfMap (source : Map<int, 'T>) : IntMap<'T> =
@@ -1102,31 +1103,31 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         if Map.isEmpty source then
             IntMap.Empty
         else
-            IntMap (PatriciaMap.OfMap source)
+            IntMap (PatriciaMap32.OfMap source)
 
     //
     member __.ToSeq () =
-        PatriciaMap.ToSeq trie
+        PatriciaMap32.ToSeq trie
 
     //
     member __.ToList () : (int * 'T) list =
-        PatriciaMap.FoldBack ((fun k v list -> (k, v) :: list), [], trie)
+        PatriciaMap32.FoldBack ((fun k v list -> (k, v) :: list), [], trie)
 
     //
     member __.ToArray () : (int * 'T)[] =
         let elements = ResizeArray ()
-        PatriciaMap.Iterate (FuncConvert.FuncFromTupled<_,_,_> elements.Add, trie)
+        PatriciaMap32.Iterate (FuncConvert.FuncFromTupled<_,_,_> elements.Add, trie)
         elements.ToArray ()
 
     //
     member __.ToMap () : Map<int, 'T> =
-        PatriciaMap.FoldBack (Map.add, Map.empty, trie)
+        PatriciaMap32.FoldBack (Map.add, Map.empty, trie)
 
     //
     member internal __.ToKvpArray () : KeyValuePair<int, 'T>[] =
         let elements = ResizeArray (1024)
 
-        PatriciaMap.Iterate ((fun key value ->
+        PatriciaMap32.Iterate ((fun key value ->
             elements.Add (
                 KeyValuePair (key, value))), trie)
 
@@ -1134,23 +1135,23 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
     //
     member __.Iterate (action : int -> 'T -> unit) : unit =
-        PatriciaMap.Iterate (action, trie)
+        PatriciaMap32.Iterate (action, trie)
 
     //
     member __.IterateBack (action : int -> 'T -> unit) : unit =
-        PatriciaMap.IterateBack (action, trie)
+        PatriciaMap32.IterateBack (action, trie)
 
     //
     member __.Fold (folder : 'State -> int -> 'T -> 'State, state : 'State) : 'State =
-        PatriciaMap.Fold (folder, state, trie)
+        PatriciaMap32.Fold (folder, state, trie)
 
     //
     member __.FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State) : 'State =
-        PatriciaMap.FoldBack (folder, state, trie)
+        PatriciaMap32.FoldBack (folder, state, trie)
 
     //
     member __.TryFindKey (predicate : int -> 'T -> bool) : int option =
-        PatriciaMap.TryFindKey (predicate, trie)
+        PatriciaMap32.TryFindKey (predicate, trie)
 
     //
     member this.FindKey (predicate : int -> 'T -> bool) : int =
@@ -1175,7 +1176,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
     //
     member __.TryPick (picker : int -> 'T -> 'U option) : 'U option =
-        PatriciaMap.TryPick (picker, trie)
+        PatriciaMap32.TryPick (picker, trie)
 
     //
     member this.Pick (picker : int -> 'T -> 'U option) : 'U =
@@ -1313,21 +1314,21 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     interface System.Collections.IEnumerable with
         /// <inherit />
         member __.GetEnumerator () =
-            (PatriciaMap.ToSeq trie |> Seq.map (fun (k, v) ->
+            (PatriciaMap32.ToSeq trie |> Seq.map (fun (k, v) ->
                 System.Collections.DictionaryEntry (k, v))).GetEnumerator ()
             :> System.Collections.IEnumerator
 
     interface IEnumerable<KeyValuePair<int, 'T>> with
         /// <inherit />
         member __.GetEnumerator () =
-            (PatriciaMap.ToSeq trie |> Seq.map (fun (k, v) ->
+            (PatriciaMap32.ToSeq trie |> Seq.map (fun (k, v) ->
                 KeyValuePair (k, v))).GetEnumerator ()
 
     interface ICollection<KeyValuePair<int, 'T>> with
         /// <inherit />
         member __.Count
             with get () =
-                PatriciaMap.Count trie
+                PatriciaMap32.Count trie
 
         /// <inherit />
         member __.IsReadOnly
@@ -1343,7 +1344,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
         /// <inherit />
         member __.Contains (item : KeyValuePair<int, 'T>) =
-            match PatriciaMap.TryFind (uint32 item.Key, trie) with
+            match PatriciaMap32.TryFind (uint32 item.Key, trie) with
             | None ->
                 false
             | Some value ->
@@ -1356,7 +1357,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             if arrayIndex < 0 then
                 raise <| System.ArgumentOutOfRangeException "arrayIndex"
 
-            let count = PatriciaMap.Count trie
+            let count = PatriciaMap32.Count trie
             if arrayIndex + count > Array.length array then
                 invalidArg "arrayIndex"
                     "There is not enough room in the array to copy the \
@@ -1375,7 +1376,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         /// <inherit />
         member __.Item
             with get key =
-                match PatriciaMap.TryFind (uint32 key, trie) with
+                match PatriciaMap32.TryFind (uint32 key, trie) with
                 | Some value ->
                     value
                 | None ->
@@ -1390,7 +1391,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             with get () =
                 // OPTIMIZE : Change this to use IntSet instead so it'll be faster to test set membership.
                 let keys = ResizeArray ()
-                PatriciaMap.Iterate ((fun k _ -> keys.Add k), trie)
+                PatriciaMap32.Iterate ((fun k _ -> keys.Add k), trie)
                 
                 System.Collections.ObjectModel.ReadOnlyCollection (keys)
                 :> ICollection<int>
@@ -1400,7 +1401,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
             with get () =
                 // OPTIMIZE : Change this to use HashSet instead so it'll be faster to test set membership.
                 let values = ResizeArray ()
-                PatriciaMap.Iterate ((fun _ v -> values.Add v), trie)
+                PatriciaMap32.Iterate ((fun _ v -> values.Add v), trie)
                 
                 System.Collections.ObjectModel.ReadOnlyCollection (values)
                 :> ICollection<'T>
@@ -1411,7 +1412,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
         /// <inherit />
         member __.ContainsKey key =
-            PatriciaMap.ContainsKey (uint32 key, trie)
+            PatriciaMap32.ContainsKey (uint32 key, trie)
 
         /// <inherit />
         member __.Remove _ =
@@ -1419,7 +1420,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
 
         /// <inherit />
         member __.TryGetValue (key, value) =
-            match PatriciaMap.TryFind (uint32 key, trie) with
+            match PatriciaMap32.TryFind (uint32 key, trie) with
             | None ->
                 false
             | Some v ->

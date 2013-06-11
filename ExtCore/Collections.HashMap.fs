@@ -24,11 +24,12 @@ open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
 open PatriciaTrieConstants
-open BitOps
+open BitOps32
 
 
 (* OPTIMIZE :   Some of the functional-style operations on PatriciaHashMap use direct non-tail-recursion;
-                performance may be improved if we modify these to use CPS instead. *)
+                performance may be improved if we modify these to use CPS instead.
+                Alternatively, we could implement and utilize a zipper which should also be quite fast. *)
 
 /// A Patricia trie implementation, modified so each of it's 'values'
 /// is actually a set implemented with a list.
@@ -37,9 +38,9 @@ open BitOps
 type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'Key : comparison> =
     | Empty
     // Key-HashCode * Value
-    | Lf of uint32 * Map<'Key, 'T>
+    | Lf of Key32 * Map<'Key, 'T>
     // Prefix * Mask * Left-Child * Right-Child
-    | Br of uint32 * uint32 * PatriciaHashMap<'Key, 'T> * PatriciaHashMap<'Key, 'T>
+    | Br of Prefix32 * Mask32 * PatriciaHashMap<'Key, 'T> * PatriciaHashMap<'Key, 'T>
 
     //
     static member TryFind (keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
