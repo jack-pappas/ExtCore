@@ -156,7 +156,7 @@ type private PatriciaSet64 =
                     stack.Push left
 
             // Return the computed element count.
-            int64 count
+            Checked.int64 count
 
     /// Retrieve the minimum element of the set.
     static member MinElement (set : PatriciaSet64) =
