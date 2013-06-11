@@ -991,12 +991,12 @@ module SetType =
         Assert.IsTrue(s.IsSubsetOf(fir)) 
         Assert.IsTrue(IntSet.isSubset s fir)
         
-        let s100 = set [0..100]
-        let s101 = set [0..101]
+        let s100 = intSet [0..100]
+        let s101 = intSet [0..101]
         for i = 0 to 100 do 
-            Assert.IsFalse( (set [-1..i]).IsSubsetOf s100)
-            Assert.IsTrue( (set [0..i]).IsSubsetOf s100)
-            Assert.IsTrue( (set [0..i]).IsProperSubsetOf s101)
+            Assert.IsFalse( (intSet [-1..i]).IsSubsetOf s100)
+            Assert.IsTrue( (intSet [0..i]).IsSubsetOf s100)
+            Assert.IsTrue( (intSet [0..i]).IsProperSubsetOf s101)
            
         
     [<Test>]
@@ -1014,12 +1014,12 @@ module SetType =
         Assert.IsFalse(s.IsSupersetOf(fir))  
         Assert.IsFalse(IntSet.isSuperset s fir)
 
-        let s100 = set [0..100]
-        let s101 = set [0..101]
+        let s100 = intSet [0..100]
+        let s101 = intSet [0..101]
         for i = 0 to 100 do 
-            Assert.IsFalse( s100.IsSupersetOf (set [-1..i]))
-            Assert.IsTrue( s100.IsSupersetOf (set [0..i]))
-            Assert.IsTrue( s101.IsSupersetOf (set [0..i]))
+            Assert.IsFalse( s100.IsSupersetOf (intSet [-1..i]))
+            Assert.IsTrue( s100.IsSupersetOf (intSet [0..i]))
+            Assert.IsTrue( s101.IsSupersetOf (intSet [0..i]))
         
     [<Test>]
     let Remove () : unit =    
