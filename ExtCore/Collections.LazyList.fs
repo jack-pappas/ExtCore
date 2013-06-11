@@ -64,7 +64,7 @@ and [<NoEquality; NoComparison>]
 ///
 /// Lazy lists may be matched using the LazyList.Cons and LazyList.Nil active patterns. 
 /// These may force the computation of elements of the list.
-and [<NoEquality; NoComparison; Sealed; CompiledName("FSharpLazyList`1")>]
+and [<NoEquality; NoComparison; Sealed>]
 //[<StructuredFormatDisplay("")>]
     LazyList<'T> internal (initialStatus) =
     //

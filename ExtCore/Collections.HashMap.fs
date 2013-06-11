@@ -810,7 +810,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 /// <summary>Immutable, unordered maps based on PATRICIA tries and binary tries.</summary>
 /// <typeparam name="Key">The type of key used by the map.</typeparam>
 /// <typeparam name="T">The type of the values stored in the map.</typeparam>
-[<Sealed; CompiledName("FSharpHashMap`2")>]
+[<Sealed>]
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
 [<DebuggerTypeProxy(typedefof<HashMapDebuggerProxy<int,int>>)>]

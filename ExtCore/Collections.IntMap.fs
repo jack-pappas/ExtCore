@@ -885,7 +885,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
 
 /// <summary>Immutable maps with integer keys.</summary>
 /// <typeparam name="T">The type of the values stored in the IntMap.</typeparam>
-[<Sealed; CompiledName("FSharpIntMap`1")>]
+[<Sealed>]
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
 [<DebuggerTypeProxy(typedefof<IntMapDebuggerProxy<int>>)>]

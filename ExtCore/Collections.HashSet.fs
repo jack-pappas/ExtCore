@@ -865,7 +865,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
 
 /// <summary>Immutable, unordered sets based on PATRICIA tries and binary tries.</summary>
 /// <typeparam name="T">The type of the values stored in the set.</typeparam>
-[<Sealed; CompiledName("FSharpHashSet`1")>]
+[<Sealed>]
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
 [<DebuggerTypeProxy(typedefof<HashSetDebuggerProxy<int>>)>]

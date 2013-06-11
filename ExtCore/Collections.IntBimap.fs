@@ -27,7 +27,7 @@ open ExtCore
 
 /// <summary>A bi-directional IntMap.</summary>
 /// <typeparam name="Value">The type of the values.</typeparam>
-[<Sealed; CompiledName("FSharpIntBimap`1")>]
+[<Sealed>]
 //[<StructuredFormatDisplay("")>]
 [<DebuggerDisplay("Count = {Count}")>]
 [<DebuggerTypeProxy(typedefof<IntBimapDebuggerProxy<int>>)>]
@@ -296,7 +296,7 @@ type IntBimap<'Value when 'Value : comparison>
             | :? IntBimap<'Value> as other ->
                 IntBimap<_>.Compare (this, other)
             | _ ->
-                invalidArg "other" "The object cannot be compared to FSharpIntBimap`1."
+                invalidArg "other" "The object cannot be compared to IntBimap`1."
 
     interface System.IEquatable<IntBimap<'Value>> with
         member this.Equals other =
