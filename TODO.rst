@@ -14,13 +14,6 @@ Array
   - scan2
   - scanBack2
   - unfold
-  - findBack
-  - pickBack
-  - tryFindBack
-  - tryPickBack
-    Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the array,
-    i.e., from highest to lowest index. This is useful when the array could contain multiple matching
-    values and we want to choose the one with the greatest index.
 
 
 Bimap
@@ -42,6 +35,7 @@ IntMap/IntSet/HashMap/HashSet
 IntBimap
 --------
 
+  - map
   - ofIntMap
   - tryOfIntMap
   - projectKeys
@@ -50,7 +44,8 @@ IntBimap
 
 IntMap
 ------
-
+  
+  - exactlyOne
   - ofKeys
   - ofValues
   - ofIntKeys
@@ -70,6 +65,7 @@ IntMap
 IntSet
 ------
 
+  - exactlyOne
   - extractMin
   - extractMax
   - reduce
@@ -126,6 +122,7 @@ LazyList
 List
 ----
 
+  - exactlyOne
   - insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list
     Creates a new list by inserting the value at a given index in a list.
   - update : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list
@@ -157,6 +154,7 @@ LruCache
 Map
 ---
 
+  - exactlyOne
   - mapi
   - mapiBack
   - foldi
@@ -230,6 +228,7 @@ Seq
 
 Set
 ---
+  - exactlyOne
   - scan : folder:('State -> 'T -> 'State) -> state:'State -> set:Set<'T> -> Set<'State>
   - scanBack
   - allSubsets : Set<'T> -> seq<Set<'T>>
@@ -283,6 +282,7 @@ Substring
 TagBimap
 --------
 
+  - map
   - ofTagMap
   - tryOfTagMap
   - projectKeys
@@ -317,6 +317,14 @@ Workflow Collections -- State.Array
 -----------------------------------
 
   - mapReduce
+
+
+Workflow Collections -- State.List
+-----------------------------------
+
+  - foldi
+  - foldBack
+  - foldiBack
 
 
 TextWriter

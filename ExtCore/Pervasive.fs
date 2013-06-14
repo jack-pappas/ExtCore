@@ -405,6 +405,13 @@ module Option =
         | Some x -> x
         | None -> generator ()
 
+    /// Uses the specified function, if necessary, to attempt to create a default value for an option.
+    [<CompiledName("TryFillWith")>]
+    let inline tryFillWith generator (value : 'T option) =
+        match value with
+        | Some _ -> value
+        | None -> generator ()
+
     //
     [<CompiledName("ToOutAndBool")>]
     let inline toOutAndBool (value, [<Out>] outValue : byref<'T>) : bool =

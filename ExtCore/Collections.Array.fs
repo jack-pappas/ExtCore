@@ -139,6 +139,98 @@ let expandLeft count (array : 'T[]) : 'T[] =
     Array.blit array 0 expandedArr count array.Length
     expandedArr
 
+//
+[<CompiledName("TryFindBack")>]
+let tryFindBack (predicate : 'T -> bool) (array : 'T[]) : 'T option =
+    // Preconditions
+    checkNonNull "array" array
+
+    let len = Array.length array
+    if len = 0 then None
+    else
+        let mutable index = len - 1
+        let mutable result = None
+
+        while index >= 0 && Option.isNone result do
+            let el = array.[index]
+            if predicate el then
+                result <- Some el
+            index <- index - 1
+
+        result
+
+//
+[<CompiledName("FindBack")>]
+let findBack (predicate : 'T -> bool) (array : 'T[]) : 'T =
+    match tryFindBack predicate array with
+    | Some x -> x
+    | None ->
+        // TODO : Provide a better exception message.
+        //keyNotFound ""
+        raise <| System.Collections.Generic.KeyNotFoundException ()
+
+//
+[<CompiledName("TryFindIndexBack")>]
+let tryFindIndexBack (predicate : 'T -> bool) (array : 'T[]) : int option =
+    // Preconditions
+    checkNonNull "array" array
+
+    let len = Array.length array
+    if len = 0 then None
+    else
+        let mutable index = len - 1
+        let mutable result = None
+
+        while index >= 0 && Option.isNone result do
+            let el = array.[index]
+            if predicate el then
+                result <- Some index
+            index <- index - 1
+
+        result
+
+//
+[<CompiledName("FindIndexBack")>]
+let findIndexBack (predicate : 'T -> bool) (array : 'T[]) : int =
+    match tryFindIndexBack predicate array with
+    | Some x -> x
+    | None ->
+        // TODO : Provide a better exception message.
+        //keyNotFound ""
+        raise <| System.Collections.Generic.KeyNotFoundException ()
+
+//
+[<CompiledName("TryPickBack")>]
+let tryPickBack (picker : 'T -> 'U option) (array : 'T[]) : 'U option =
+    // Preconditions
+    checkNonNull "array" array
+    
+    let len = Array.length array
+    if len = 0 then None
+    else
+        let mutable index = len - 1
+        let mutable result = None
+
+        while index >= 0 && Option.isNone result do
+            let el = array.[index]
+            match picker el with
+            | None -> ()
+            | res ->
+                result <- res
+            index <- index - 1
+
+        result
+
+//
+[<CompiledName("PickBack")>]
+let pickBack (picker : 'T -> 'U option) (array : 'T[]) : 'U =
+    match tryPickBack picker array with
+    | Some x -> x
+    | None ->
+        // TODO : Provide a better exception message.
+        //keyNotFound ""
+        raise <| System.Collections.Generic.KeyNotFoundException ()
+
 /// <summary>
 /// Returns a new collection containing the indices of the elements for which
 /// the given predicate returns &quot;true&quot;.

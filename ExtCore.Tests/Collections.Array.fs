@@ -120,6 +120,52 @@ let ``contains (reference type)`` () : unit =
     |> should be False
 
 [<Test>]
+let expandRight () : unit =
+    (Array.empty : int[])
+    |> Array.expandRight 10
+    |> assertEqual <| Array.zeroCreate<int> 10
+
+    [| 0; 1; 1; 2; 3; 5; 8; 13 |]
+    |> Array.expandRight 4
+    |> assertEqual [|
+        0; 1; 1; 2; 3; 5; 8; 13; 0; 0; 0; 0 |]
+
+[<Test>]
+let expandLeft () : unit =
+    (Array.empty : int[])
+    |> Array.expandLeft 10
+    |> assertEqual <| Array.zeroCreate<int> 10
+
+    [| 0; 1; 1; 2; 3; 5; 8; 13 |]
+    |> Array.expandLeft 4
+    |> assertEqual [|
+        0; 0; 0; 0; 0; 1; 1; 2; 3; 5; 8; 13 |]
+
+[<Test>]
+let tryFindBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let findBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let tryFindIndexBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let findIndexBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let tryPickBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let pickBack () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
 let foldi () : unit =
     ("", [| 'a' .. 'f' |])
     ||> Array.foldi (fun str idx c ->
@@ -197,28 +243,6 @@ let segment2 () : unit =
     |> Array.map (fun view ->
         view.Count)
     |> assertEqual [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
-        
-[<Test>]
-let expandRight () : unit =
-    (Array.empty : int[])
-    |> Array.expandRight 10
-    |> assertEqual <| Array.zeroCreate<int> 10
-
-    [| 0; 1; 1; 2; 3; 5; 8; 13 |]
-    |> Array.expandRight 4
-    |> assertEqual [|
-        0; 1; 1; 2; 3; 5; 8; 13; 0; 0; 0; 0 |]
-
-[<Test>]
-let expandLeft () : unit =
-    (Array.empty : int[])
-    |> Array.expandLeft 10
-    |> assertEqual <| Array.zeroCreate<int> 10
-
-    [| 0; 1; 1; 2; 3; 5; 8; 13 |]
-    |> Array.expandLeft 4
-    |> assertEqual [|
-        0; 0; 0; 0; 0; 1; 1; 2; 3; 5; 8; 13 |]
 
 [<Test>]
 let mapPartition () : unit =
