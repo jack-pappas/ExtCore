@@ -782,22 +782,31 @@ type private PatriciaSet64 =
                 match stack.Pop () with
                 | Empty -> ()
                 | Lf k ->
-                    pickedValue <- picker <| int64 k
+                    match picker (int64 k) with
+                    | None -> ()
+                    | res ->
+                        pickedValue <- res
                     
                 (* OPTIMIZATION :   When one or both children of this node are leaves,
                                     we handle them directly since it's a little faster. *)
                 | Br (_, _, Lf k, Lf j) ->
-                    pickedValue <-
-                        match picker (int64 k) with
-                        | (Some _) as value ->
-                            value
-                        | None ->
-                            picker (int64 j)
+                    match picker (int64 k) with
+                    | None ->
+                        match picker (int64 j) with
+                        | None -> ()
+                        | res ->
+                            pickedValue <- res
+                    | res ->
+                        pickedValue <- res
                     
                 | Br (_, _, Lf k, right) ->
                     // Only handle the case where the left child is a leaf
                     // -- otherwise the traversal order would be altered.
-                    pickedValue <- picker (int64 k)
+                    match picker (int64 k) with
+                    | None -> ()
+                    | res ->
+                        pickedValue <- res
+
                     stack.Push right
 
                 | Br (_, _, left, right) ->
@@ -808,6 +817,54 @@ type private PatriciaSet64 =
 
             // Return the picked value.
             pickedValue
+
+    //
+    static member TryFind (predicate : int64 -> bool, set) : int64 option =
+        match set with
+        | Empty ->
+            None
+        | Lf k ->
+            if predicate (int64 k) then Some (int64 k) else None
+        | Br (_,_,_,_) ->
+            /// The stack of trie nodes pending traversal.
+            let stack = Stack (defaultTraversalStackSize)
+
+            // Add the initial tree to the stack.
+            stack.Push set
+
+            /// Loop until we find a key/value that matches the picker,
+            /// or until we've processed the entire tree.
+            let mutable selectedValue = System.Nullable ()
+            while stack.Count <> 0 && not selectedValue.HasValue do
+                match stack.Pop () with
+                | Empty -> ()
+                | Lf k ->
+                    if predicate (int64 k) then
+                        selectedValue <- System.Nullable (int64 k)
+                    
+                (* OPTIMIZATION :   When one or both children of this node are leaves,
+                                    we handle them directly since it's a little faster. *)
+                | Br (_, _, Lf k, Lf j) ->
+                    if predicate (int64 k) then
+                        selectedValue <- System.Nullable (int64 k)
+                    elif predicate (int64 j) then
+                        selectedValue <- System.Nullable (int64 j)
+                    
+                | Br (_, _, Lf k, right) ->
+                    // Only handle the case where the left child is a leaf
+                    // -- otherwise the traversal order would be altered.
+                    if predicate (int64 k) then
+                        selectedValue <- System.Nullable (int64 k)
+                    stack.Push right
+
+                | Br (_, _, left, right) ->
+                    // Push both children onto the stack and recurse to process them.
+                    // NOTE : They're pushed in the opposite order we want to visit them!
+                    stack.Push right
+                    stack.Push left
+
+            // Return the selected value, if any.
+            Option.ofNullable selectedValue
 
     //
     static member ToSeq set =
@@ -1095,6 +1152,20 @@ type LongSet private (trie : PatriciaSet64) =
     //
     member this.Pick (picker : int64 -> 'T option) : 'T =
         match this.TryPick picker with
+        | Some value ->
+            value
+        | None ->
+            // TODO : Provide a better error message
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    member __.TryFind (predicate : int64 -> bool) : int64 option =
+        PatriciaSet64.TryFind (predicate, trie)
+
+    //
+    member this.Find (predicate : int64 -> bool) : int64 =
+        match this.TryFind predicate with
         | Some value ->
             value
         | None ->
@@ -1648,6 +1719,28 @@ module LongSet =
 
         set.Pick picker
 
+    /// <summary>
+    /// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
+    /// Returns None if no such element exists.
+    /// </summary>
+    [<CompiledName("TryFind")>]
+    let inline tryFind (predicate : int64 -> bool) (set : LongSet) : int64 option =
+        // Preconditions
+        checkNonNull "set" set
+        
+        set.TryFind predicate
+
+    /// <summary>
+    /// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
+    /// Raise KeyNotFoundException if no such element exists.
+    /// </summary>
+    [<CompiledName("Find")>]
+    let inline find (predicate : int64 -> bool) (set : LongSet) : int64 =
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Find predicate
+
 
 #if PROTO_COMPILER
 
@@ -2142,6 +2235,34 @@ module LongTagSet =
         checkNonNull "set" set
 
         set.Pick (retype picker)
+
+    /// <summary>
+    /// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
+    /// Returns None if no such element exists.
+    /// </summary>
+    [<CompiledName("TryFind")>]
+    let inline tryFind (predicate : int64<'Tag> -> bool) (set : LongTagSet<'Tag>) : int64<'Tag> option =
+        // Retype as LongSet
+        let set : LongSet = retype set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.TryFind (retype predicate)
+
+    /// <summary>
+    /// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
+    /// Raise KeyNotFoundException if no such element exists.
+    /// </summary>
+    [<CompiledName("Find")>]
+    let inline find (predicate : int64<'Tag> -> bool) (set : LongTagSet<'Tag>) : int64<'Tag> =
+        // Retype as LongSet
+        let set : LongSet = retype set
+
+        // Preconditions
+        checkNonNull "set" set
+
+        set.Find (retype predicate)
 
 #endif
 

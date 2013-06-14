@@ -790,6 +790,14 @@ let ``pick raises exn on empty input`` () : unit =
         else None)
     |> ignore
 
+[<Test>]
+let tryFind () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let find () : unit =
+    Assert.Ignore "Test not yet implemented."
+
 
 (* SetModule and SetType tests from the F# source distribution (in FSharp.Core.Unittests). *)
 

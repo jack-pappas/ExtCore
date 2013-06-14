@@ -246,8 +246,10 @@ let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
+/// <summary>
 /// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
 /// Returns None if no such element exists.
+/// </summary>
 [<CompiledName("TryFind")>]
 let tryFind (predicate : 'T -> bool) (set : Set<'T>) : 'T option =
     // Preconditions
@@ -261,8 +263,10 @@ let tryFind (predicate : 'T -> bool) (set : Set<'T>) : 'T option =
         Set.toSeq set
         |> Seq.tryFind predicate
 
+/// <summary>
 /// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
 /// Raise KeyNotFoundException if no such element exists.
+/// </summary>
 [<CompiledName("Find")>]
 let find (predicate : 'T -> bool) (set : Set<'T>) : 'T =
     // Preconditions
