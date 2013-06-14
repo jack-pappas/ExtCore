@@ -2258,6 +2258,7 @@ module TagSet =
         checkNonNull "set" set
 
         set.TryFind (retype predicate)
+        |> retype
 
     /// <summary>
     /// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
@@ -2272,6 +2273,7 @@ module TagSet =
         checkNonNull "set" set
 
         set.Find (retype predicate)
+        |> retype
 
 #endif
 

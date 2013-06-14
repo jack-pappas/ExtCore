@@ -32,8 +32,8 @@ IntMap/IntSet/HashMap/HashSet
   - Implement serialization/deserialization code for parity with Map and Set.
 
 
-IntBimap
---------
+IntBimap / LongBimap
+--------------------
 
   - map
   - ofIntMap
@@ -42,8 +42,8 @@ IntBimap
   - projectValues
 
 
-IntMap
-------
+IntMap / LongMap
+----------------
   
   - exactlyOne
   - ofKeys
@@ -62,8 +62,8 @@ IntMap
   - Implement IntMap-based versions of our custom Map functions.
 
 
-IntSet
-------
+IntSet / LongSet
+----------------
 
   - exactlyOne
   - extractMin
@@ -72,8 +72,6 @@ IntSet
   - reduceBack
   - tryExtractMin
   - tryExtractMax
-  - tryFind
-  - find
   - scan
   - scanBack
   - allSubsets : IntSet -> seq<IntSet>
