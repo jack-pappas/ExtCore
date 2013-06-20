@@ -262,7 +262,17 @@ module Operators =
             Success res
         | Choice2Of2 err ->
             Error err
-    
+
+    /// Classifies the result of a comparison.
+    let inline (|Less|Equal|Greater|) (comparisonResult : int) =
+        match comparisonResult with
+        | -1 -> Less
+        | 0 -> Equal
+        | 1 -> Greater
+        | invalid ->
+            let msg = sprintf "Invalid comparison value. Comparison operations must return -1, 0, or 1. (Value = %i)" invalid
+            invalidArg "comparisonResult" msg
+
 
 /// Functional operators on enumerations.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
