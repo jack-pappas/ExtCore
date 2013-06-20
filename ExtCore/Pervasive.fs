@@ -169,6 +169,21 @@ module Operators =
 
     (* General functions *)
 
+    /// <summary>
+    /// Applies the specified value to a function which can possibly return an error message.
+    /// If the function returns an error message, it is used to invoke <c>Debug.Fail()</c>;
+    /// otherwise, the value is returned unchanged. This function is designed for implementing
+    /// debugging assertions within a computation 'pipeline'.
+    /// </summary>
+    [<CompiledName("TapAssert")>]
+    let tapAssert (asserter : 'T -> string option) (value : 'T) : 'T =
+        match asserter value with
+        | None ->
+            value
+        | Some errorMsg ->
+            System.Diagnostics.Debug.Fail errorMsg
+            value   // Necessary for type-inference purposes.
+
     /// Attempt to execute the function as a mutual-exclusion region using
     /// the input value as a lock. If the lock cannot be entered within a specified
     /// period of time, the attempt is abandoned and the function returns None.
