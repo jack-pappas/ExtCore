@@ -1,31 +1,31 @@
 References
-##########
+==========
 
 This document provides references to books and academic papers detailing algorithms implemented within ExtCore.
 
-    `General`_
-        General algorithms.
+`General`_
+    General algorithms.
 
-    `String`_
-        String manipulation.
+`String`_
+    String manipulation.
 
-    `IntSet and IntMap`_
-        Maps with integer keys.
+`IntSet and IntMap`_
+    Maps with integer keys.
 
 
 General
-=======
+-------
 
-TODO
+*TODO*
 
 
 String
-======
+------
 
-"A Subsequence Algebra -- First Class Values for Substrings", Wilfred J. Hansen (1991)
+- "A Subsequence Algebra -- First Class Values for Substrings", Wilfred J. Hansen (1991)
 
 
-IntSet and IntMap
-=================
+IntSet / IntMap (and variants)
+------------------------------
 
-"Fast Mergable Integer Maps", Gill, Okasaki (????)
+- "Fast Mergable Integer Maps", Gill, Okasaki (????)
