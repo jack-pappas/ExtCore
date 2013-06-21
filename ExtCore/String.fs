@@ -302,6 +302,11 @@ module String =
     let inline isEmpty (str : string) =
         str.Length < 1
 
+    /// Indicates whether the specified string is null or empty.
+    [<CompiledName("IsNullOrEmpty")>]
+    let inline isNullOrEmpty (str : string) =
+        System.String.IsNullOrEmpty str
+
     /// Creates a string from an F# option value.
     /// If the option value is <c>None</c>, returns an empty string;
     /// returns <c>s</c> when the option value is <c>Some s</c>
@@ -340,6 +345,22 @@ module String =
     let inline toUpper (str : string) : string =
         str.ToUpperInvariant ()
 
+    /// Determines whether the beginning of a string matches the specified string.
+    [<CompiledName("StartsWith")>]
+    let inline startsWith (value : string) (str : string) : bool =
+        str.StartsWith value
+
+    /// Determines whether the end of a string matches the specified string.
+    [<CompiledName("EndsWith")>]
+    let inline endsWith (value : string) (str : string) : bool =
+        str.EndsWith value
+
+    /// Returns a new string in which all occurrences of a specified string
+    /// within the given string are replaced with another specified string.
+    [<CompiledName("Replace")>]
+    let inline replace (oldValue : string) (newValue : string) (str : string) : string =
+        str.Replace (oldValue, newValue)
+
     /// Returns a string array that contains the substrings in a string that are delimited
     /// by elements of the given Unicode character array. The returned array will be empty
     /// if and only if the input string is empty.
@@ -347,6 +368,14 @@ module String =
     let split (chars : char[]) (str : string) =
         if isEmpty str then Array.empty
         else str.Split chars
+
+    /// Returns a string array that contains the substrings in a string that are delimited
+    /// by elements of a specified string array. The returned array will be empty
+    /// if and only if the input string is empty.
+    [<CompiledName("Splits")>]
+    let splits (strings : string[]) (str : string) =
+        if isEmpty str then Array.empty
+        else str.Split (strings, System.StringSplitOptions.None)
 
     /// <summary>Returns a new string created by concatenating the strings in the specified string array.</summary>
     /// <remarks>

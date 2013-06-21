@@ -363,6 +363,10 @@ module String =
             [| "3262"; ""; "John"; "Q"; "Doe"; "1970-Jan-01"; |]
 
     [<Test>]
+    let splits () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let concatArray () : unit =
         // Test case for empty array.
         Array.empty
