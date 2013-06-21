@@ -28,6 +28,6 @@ String
 IntSet and IntMap
 -----------------
 
-*NOTE : These references also apply to variants of `IntSet` and `IntMap`, such as `LongSet` and `TagMap`.
+*NOTE : These references also apply to variants of `IntSet` and `IntMap`, such as `LongSet` and `TagMap`.*
 
 - "Fast Mergable Integer Maps", Gill, Okasaki (????)
