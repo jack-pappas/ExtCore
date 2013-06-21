@@ -25,7 +25,9 @@ String
 - "A Subsequence Algebra -- First Class Values for Substrings", Wilfred J. Hansen (1991)
 
 
-IntSet / IntMap (and variants)
-------------------------------
+IntSet and IntMap
+-----------------
+
+*NOTE : These references also apply to variants of `IntSet` and `IntMap`, such as `LongSet` and `TagMap`.
 
 - "Fast Mergable Integer Maps", Gill, Okasaki (????)
