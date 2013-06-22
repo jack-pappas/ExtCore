@@ -209,6 +209,13 @@ Queue
   - Implement a DebuggerTypeProxy
 
 
+ResizeArray
+-----------
+
+  - ofVector
+  - toVector
+
+
 Seq
 ---
 
@@ -243,6 +250,8 @@ Set
     Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the set,
     i.e., from greatest to least value. This is useful when the set could contain multiple matching
     values and we want to choose the greatest one.
+
+  - Define a type extension for Set<'T> which provides the xor (^^^) operator, via the Set.symmetricDifference function.
 
 
 String
