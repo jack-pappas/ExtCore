@@ -1,27 +1,27 @@
 TODO for ExtCore 1.0
 ####################
 
-    `Library`_
-        General, library-wide TODO items.
+`Library`_
+    General, library-wide TODO items.
 
-    `General`_
-        General-purpose modules, such as ``Operators`` and ``ExtraTopLevelOperators``.
+`General`_
+    General-purpose modules, such as ``Operators`` and ``ExtraTopLevelOperators``.
 
-    `String`_
-        String manipulation.
-        
-    `Collections / Data Structures`_
-        General-purpose and specialized collections and data structures.
+`String`_
+    String manipulation.
+    
+`Collections / Data Structures`_
+    General-purpose and specialized collections and data structures.
 
-    `Caching`_
-        Map-like data structures implementing various caching protocols.
+`Caching`_
+    Map-like data structures implementing various caching protocols.
 
-    `Workflow Collections`_
-        Collections modules from the F# Core Library (e.g., ``Array``) and ExtCore,
-        adapted ("lifted") for compatibility with various F# workflows.
+`Workflow Collections`_
+    Collections modules from the F# Core Library (e.g., ``Array``) and ExtCore,
+    adapted ("lifted") for compatibility with various F# workflows.
 
-    `Parallel`_
-        Functions implementing parallelized operations over collections.
+`Parallel`_
+    Functions implementing parallelized operations over collections.
 
 
 Library
@@ -32,6 +32,7 @@ Documentation
 - Fill out missing documentation comments throughout the library. This is not limited to summaries --
   we also need to fill in descriptions for parameters (<param>), return values (<returns>),
   type parameters (<typeparam>) and so on.
+
 - Generate some nice-looking documentation from the XML documentation file (``ExtCore.XML``) generated
   when the library is compiled. This needs to be done in a way that can be automated so it can be
   added to the build process.
@@ -43,6 +44,7 @@ Build
 - Should we publish separate NuGet packages for F# 2.0 and F# 3.0 versions of the library?
   - If not, we should still include some logic in the NuGet package which adds a binding redirect
     when the package is added to an F# 3.0 project.
+
 - Write some better build scripts using MSBuild or FAKE so we can easily compile multiple
   versions of the library targeting different CLR versions for distribution in the NuGet package.
 
@@ -51,11 +53,13 @@ Tests
 -----
 - Fill out the unit tests and implement more tests with FsCheck.
   - Currently, there are approximately 1200 unit tests in ``ExtCore.Tests``, around 300 of which
-    are just stubs (they only call ``Assert.Ignore()``). There are a small number (~10) failing tests
-    which need to be investigated and fixed.
+    are just stubs (they only call ``Assert.Ignore()``). There are a small number (~10) failing
+    tests which need to be investigated and fixed.
+
 - Clean up the unit tests imported from the F# distribution and the F# PowerPack. This includes:
-  - The Map and Set type and module tests which were imported and adapted for our custom map and set
-    types (e.g., ``IntSet``).
+  - The Map and Set type and module tests which were imported and adapted for our custom
+    map and set types (e.g., ``IntSet``).
+
   - The Array module tests which were imported and adapted for the ``vector`` type.
   - The tests for ``ResizeArray`` and ``LazyList`` which were imported from the F# PowerPack.
 
@@ -258,6 +262,7 @@ Map
   Retrieves the value associated with the specified key in the map; if the key does not exist in the map,
   the key is applied to the generator function to create a value, which is then stored in the map.
   The retrieved/created value is returned along with the (possibly) updated map.
+
 - tryFindOrAdd (generator : 'Key -> 'T option) (key : 'Key) (map : Map<'Key, 'T>) : 'T option * Map<'Key, 'T>
 - extract (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>
 - tryExtract (key : 'Key) (map : Map<'Key, 'T>) : 'T option * Map<'Key, 'T>
@@ -267,6 +272,7 @@ Map
   produce a new value which is stored in the map. (OPTIMIZATION: Only update the map if the generated value
   is different than the original value.)
   The retrieved value is returned along with the (possibly) updated map.
+
 - addOrUpdate (generator : 'Key -> 'T option -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : Map<'Key, 'T>
 - maxKey : (map : Map<'Key, 'T>) : 'Key
 - minKey
@@ -319,6 +325,7 @@ Seq
   in a streaming fashion, rather than Seq.groupBy which needs to see the
   entire stream before returning. Alternatively, this can be thought of
   as a generalized form of Seq.windowed.
+
 - Seq.sample
   Takes a positive integer and a sequence.
   Returns a sequence containing every n-th element of the input sequence.
@@ -403,39 +410,39 @@ modules which ship within the F# Core Library, providing additional functionalit
 
 Array.Parallel
 --------------
-- TODO
+*TODO*
 
 
 IntMap.Parallel
 ---------------
-- TODO
+*TODO*
 
 
 IntSet.Parallel
 ---------------
-- TODO
+*TODO*
 
 
 List.Parallel
 -------------
-- TODO
+*TODO*
 
 
 Map.Parallel
 ------------
-- TODO
+*TODO*
 
 
 Seq.Parallel
 ------------
-- TODO
+*TODO*
 
 
 Set.Parallel
 ------------
-- TODO
+*TODO*
 
 
 Vector.Parallel
 ---------------
-- TODO
+*TODO*
