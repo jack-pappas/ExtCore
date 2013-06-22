@@ -42,6 +42,7 @@ Build
 -----
 - Publish debugging symbols (e.g., on SymbolSource) and add ExtCore.pdb to the NuGet package.
 - Should we publish separate NuGet packages for F# 2.0 and F# 3.0 versions of the library?
+
   - If not, we should still include some logic in the NuGet package which adds a binding redirect
     when the package is added to an F# 3.0 project.
 
@@ -52,14 +53,15 @@ Build
 Tests
 -----
 - Fill out the unit tests and implement more tests with FsCheck.
+
   - Currently, there are approximately 1200 unit tests in ``ExtCore.Tests``, around 300 of which
     are just stubs (they only call ``Assert.Ignore()``). There are a small number (~10) failing
     tests which need to be investigated and fixed.
 
 - Clean up the unit tests imported from the F# distribution and the F# PowerPack. This includes:
+
   - The Map and Set type and module tests which were imported and adapted for our custom
     map and set types (e.g., ``IntSet``).
-
   - The Array module tests which were imported and adapted for the ``vector`` type.
   - The tests for ``ResizeArray`` and ``LazyList`` which were imported from the F# PowerPack.
 
@@ -69,8 +71,8 @@ General
 
 TextWriter
 ----------
-- Add extension methods / overloads of Write and WriteLine which accept a substring value.
-- Add extension methods / overloads of Write and WriteLine which accept a vector<char> value.
+- Add extension methods / overloads of Write and WriteLine which accept a ``substring`` value.
+- Add extension methods / overloads of Write and WriteLine which accept a ``vector<char>`` value.
 
 
 String
@@ -85,16 +87,12 @@ String
 - foldiBack2
 - Split
   - get
+  
     Given an index, gets the substring at that index in the array of substrings created by the split operation.
 
 
 Substring
 ---------
-- IEquatable
-- IEquatable<'T>
-- IComparable
-- IComparable<'T>
-  Implement comparison which works just like the built-in string comparison.
 - toList
 - trim
 - trimStart
@@ -102,9 +100,17 @@ Substring
 - trimWith
 - trimStartWith
 - trimEndWith
-  These should work just like the functions in the String module, except on Substrings.
+
+  These should work like the functions in the String module, except on ``substring``s.
   This makes it so trimming a string doesn't need to create an additional string object,
-  it simply returns a substring which is equal to or smaller than the input substring.
+  it simply returns a ``substring`` which is equal to or smaller than the input substring.
+
+- IEquatable
+- IEquatable<'T>
+- IComparable
+- IComparable<'T>
+
+  Implement comparison which works just like the built-in string comparison.
 
 
 Collections / Data Structures
@@ -147,10 +153,14 @@ IntMap / LongMap
 - ofKeys
 - ofValues
 - ofIntKeys
+
   This should work like 'ofKeys' but with IntSet instead of Set.
+
 - keys
 - values
-  Should this return a multiset?
+
+  Should this return a set or a multiset?
+
 - extractMin
 - extractMax
 - tryExtractMin
@@ -173,12 +183,17 @@ IntSet / LongSet
 - tryExtractMax
 - scan
 - scanBack
-- allSubsets : IntSet -> seq<IntSet>
+- ``allSubsets : IntSet -> seq<IntSet>``
+
   Returns a sequence of all subsets of the given set.
-- subsets : IntSet -> int -> seq<IntSet>
+
+- ``subsets : IntSet -> int -> seq<IntSet>``
+
   Returns a sequence which produces all subsets of the given set, which have the given size.
+
 - lessThan
 - greaterThan
+
   Given an IntSet and a value, returns the subset containing the values less than (or greater than) the value.
 
 - ISet<'T> (.NET 4.0)
@@ -255,35 +270,44 @@ Map
 - mapiBack
 - foldi
 - foldiBack
-- scan (folder : 'State -> 'T -> 'State) (state : 'State) (map : Map<'Key, 'T>) : Map<'Key, 'State>
-- scanBack
+- ``scan (folder : 'State -> 'T -> 'State) (state : 'State) (map : Map<'Key, 'T>) : Map<'Key, 'State>``
+- ``scanBack``
+
   Like Map.fold/Map.foldBack, but returns a new map which holds the intermediate result after processing each key/value pair.
-- findOrAdd (generator : 'Key -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>
+
+- ``findOrAdd (generator : 'Key -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>``
+
   Retrieves the value associated with the specified key in the map; if the key does not exist in the map,
   the key is applied to the generator function to create a value, which is then stored in the map.
   The retrieved/created value is returned along with the (possibly) updated map.
 
-- tryFindOrAdd (generator : 'Key -> 'T option) (key : 'Key) (map : Map<'Key, 'T>) : 'T option * Map<'Key, 'T>
-- extract (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>
-- tryExtract (key : 'Key) (map : Map<'Key, 'T>) : 'T option * Map<'Key, 'T>
-- findAndUpdate (generator : 'Key -> 'T -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>
+- ``tryFindOrAdd (generator : 'Key -> 'T option) (key : 'Key) (map : Map<'Key, 'T>) : 'T option * Map<'Key, 'T>``
+- ``extract (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>``
+- ``tryExtract (key : 'Key) (map : Map<'Key, 'T>) : 'T option * Map<'Key, 'T>``
+- ``findAndUpdate (generator : 'Key -> 'T -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>``
+
   Retrieves the value associated with the specified key in the map; if the key does not exist in the map,
   KeyNotFoundException is raised. The key and original value are applied to the generator function to
   produce a new value which is stored in the map. (OPTIMIZATION: Only update the map if the generated value
   is different than the original value.)
   The retrieved value is returned along with the (possibly) updated map.
 
-- addOrUpdate (generator : 'Key -> 'T option -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : Map<'Key, 'T>
-- maxKey : (map : Map<'Key, 'T>) : 'Key
+- ``addOrUpdate (generator : 'Key -> 'T option -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : Map<'Key, 'T>``
+- ``maxKey : (map : Map<'Key, 'T>) : 'Key``
 - minKey
+
   The minimum/maximum key value in the map.
-- maxKeyBy (projection : 'Key -> 'T -> 'U) (map : Map<'Key, 'T>) : 'Key (where 'U : comparison)
-- minKeyBy
+
+- ``maxKeyBy (projection : 'Key -> 'T -> 'U) (map : Map<'Key, 'T>) : 'Key (where 'U : comparison)``
+- ``minKeyBy (projection : 'Key -> 'T -> 'U) (map : Map<'Key, 'T>) : 'Key (where 'U : comparison)``
+
   The minimum/maximum key value in the map, compared using the given function.
+
 - findKeyBack
 - pickBack
 - tryPickBack
 - tryFindKeyBack
+
   Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the map,
   i.e., from greatest to least key value. This is useful when the map could contain multiple matching
   key/value pairs and we want to choose the one with the greatest key value.
@@ -321,37 +345,47 @@ Seq
 - fold2
 - Seq.choosei
 - Seq.segment
+
   Groups elements of a sequence together "longitudinally" -- i.e., it works
   in a streaming fashion, rather than Seq.groupBy which needs to see the
   entire stream before returning. Alternatively, this can be thought of
   as a generalized form of Seq.windowed.
 
 - Seq.sample
+
   Takes a positive integer and a sequence.
   Returns a sequence containing every n-th element of the input sequence.
 
 
 Set
 ---
-- exactlyOne
-- scan : folder:('State -> 'T -> 'State) -> state:'State -> set:Set<'T> -> Set<'State>
-- scanBack
-- allSubsets : Set<'T> -> seq<Set<'T>>
+- ``exactlyOne``
+- ``scan : folder:('State -> 'T -> 'State) -> state:'State -> set:Set<'T> -> Set<'State>``
+- ``scanBack``
+- ``allSubsets : Set<'T> -> seq<Set<'T>>``
+
   Returns a sequence of all subsets of the given set.
-- subsets : Set<'T> -> int -> seq<Set<'T>>
+
+- ``subsets : Set<'T> -> int -> seq<Set<'T>>``
+
   Returns a sequence which produces all subsets of the given set, which have the given size.
-- lessThan
-- greaterThan
+
+- ``lessThan``
+- ``greaterThan``
+
   Given a Set and a value, returns the subset containing the values less than (or greater than) the value.
-- findBack
-- pickBack
-- tryFindBack
-- tryPickBack
+
+- ``findBack``
+- ``pickBack``
+- ``tryFindBack``
+- ``tryPickBack``
+
   Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the set,
   i.e., from greatest to least value. This is useful when the set could contain multiple matching
   values and we want to choose the greatest one.
 
-- Define a type extension for Set<'T> which provides the xor (^^^) operator, via the Set.symmetricDifference function.
+- Define a type extension for ``Set<'T>`` which provides the xor ``(^^^)`` operator,
+  via the ``Set.symmetricDifference`` function.
 
 
 TagBimap
@@ -370,6 +404,7 @@ Vector
 - pickBack
 - tryFindBack
 - tryPickBack
+
   Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the vector,
   i.e., from highest to lowest index. This is useful when the vector could contain multiple matching
   values and we want to choose the one with the greatest index.
