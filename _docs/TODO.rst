@@ -7,13 +7,13 @@ Library_
 General_
     General-purpose modules, such as ``Operators`` and ``ExtraTopLevelOperators``.
 
-`String`_
+Strings_
     String manipulation.
     
 `Collections and Data Structures`_
     General-purpose and specialized collections and data structures.
 
-`Caching`_
+Caching_
     Map-like data structures implementing various caching protocols.
 
 `Workflow Collections`_
@@ -75,8 +75,8 @@ TextWriter
 - Add extension methods / overloads of Write and WriteLine which accept a ``vector<char>`` value.
 
 
-String
-======
+Strings
+=======
 
 String
 ------
@@ -108,12 +108,13 @@ Substring
   This makes it so trimming a string doesn't need to create an additional string object,
   it simply returns a ``substring`` which is equal to or smaller than the input substring.
 
-- IEquatable
-- IEquatable<'T>
-- IComparable
-- IComparable<'T>
+- Interfaces
+  - IEquatable
+  - IEquatable<'T>
+  - IComparable
+  - IComparable<'T>
 
-  Implement comparison which works just like the built-in string comparison.
+    Implement comparison which works just like the built-in string comparison.
 
 
 Collections and Data Structures
@@ -169,8 +170,9 @@ IntMap / LongMap
 - tryExtractMin
 - tryExtractMax
 
-- IReadOnlyDictionary<TKey, TValue> (.NET 4.5)
-- IReadOnlyCollection<KeyValuePair<TKey, TValue>> (.NET 4.5)
+- Interfaces
+  - IReadOnlyDictionary<TKey, TValue> (.NET 4.5)
+  - IReadOnlyCollection<KeyValuePair<TKey, TValue>> (.NET 4.5)
 
 - Implement IntMap-based versions of our custom Map functions.
 
@@ -199,8 +201,9 @@ IntSet / LongSet
 
   Given an IntSet and a value, returns the subset containing the values less than (or greater than) the value.
 
-- ISet<'T> (.NET 4.0)
-- IReadOnlyCollection<'T> (.NET 4.5)
+- Interfaces
+  - ISet<'T> (.NET 4.0)
+  - IReadOnlyCollection<'T> (.NET 4.5)
 
 - Implement IntSet- and TagSet-based versions of our custom Set functions.
 
@@ -230,12 +233,13 @@ LazyList
   implementations, avoids the possibility of memory leaks, and avoids lazily-evaluating
   list elements when they don't really need it.
 
-- ICollection
-- ICollection<'T>
-- IList
-- IList<'T>
-- IReadOnlyList<'T> (.NET 4.5)
-- IReadOnlyCollection<'T> (.NET 4.5)
+- Interfaces
+  - ICollection
+  - ICollection<'T>
+  - IList
+  - IList<'T>
+  - IReadOnlyList<'T> (.NET 4.5)
+  - IReadOnlyCollection<'T> (.NET 4.5)
 
 - Implement a DebuggerTypeProxy? If so, we need to figure out how to do this in a safe way.
 
@@ -258,26 +262,6 @@ List
 - ``distinct : (list : 'T list) : 'T list (where 'T : equality)``
 
   Returns a new list created by keeping only the first (earliest) instance of each element.
-
-
-LruCache
---------
-- findKey
-- tryFindKey
-
-  These should work like the functions in the Map module.
-
-- findKeyBack
-- pickBack
-- tryPickBack
-- tryFindKeyBack
-
-  Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the cache,
-  i.e., from newest (most-recently-used) to oldest (least-recently-used) key value. This is useful when the
-  cache could contain multiple matching key/value pairs and we want to choose the one with the newest key value.
-
-- Import the MapType and MapModule tests from the F# distribution and adapt them for LruCache.
-- Implement a comparison method similar to how LruCache.Equals is implemented.
 
 
 Map
@@ -339,13 +323,14 @@ Queue
 - toSeq
 - peek
 
-- IEnumerable
-- IEnumerable<'T>
-- ICollection
-- ICollection<'T>
-- IList
-- IList<'T>
-- IReadOnlyList<'T> (.NET 4.5)
+- Interfaces
+  - IEnumerable
+  - IEnumerable<'T>
+  - ICollection
+  - ICollection<'T>
+  - IList
+  - IList<'T>
+  - IReadOnlyList<'T> (.NET 4.5)
 
 - Implement a DebuggerTypeProxy
 
@@ -426,17 +411,41 @@ Vector
   i.e., from highest to lowest index. This is useful when the vector could contain multiple matching
   values and we want to choose the one with the greatest index.
 
-- IEquatable
-- IEquatable<'T>
-- IComparable
-- IComparable<'T>
-- ICollection
-- ICollection<'T>
-- IList
-- IList<'T>
-- ICloneable
-- IStructuralComparable
-- IStructuralEquatable
+- Interfaces
+  - IEquatable
+  - IEquatable<'T>
+  - IComparable
+  - IComparable<'T>
+  - ICollection
+  - ICollection<'T>
+  - IList
+  - IList<'T>
+  - ICloneable
+  - IStructuralComparable
+  - IStructuralEquatable
+
+
+Caching
+=======
+
+LruCache
+--------
+- findKey
+- tryFindKey
+
+  These should work like the functions in the Map module.
+
+- findKeyBack
+- pickBack
+- tryPickBack
+- tryFindKeyBack
+
+  Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the cache,
+  i.e., from newest (most-recently-used) to oldest (least-recently-used) key value. This is useful when the
+  cache could contain multiple matching key/value pairs and we want to choose the one with the newest key value.
+
+- Import the MapType and MapModule tests from the F# distribution and adapt them for LruCache.
+- Implement a comparison method similar to how LruCache.Equals is implemented.
 
 
 Workflow Collections
