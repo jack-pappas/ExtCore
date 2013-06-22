@@ -7,13 +7,13 @@ Library_
 General_
     General-purpose modules, such as ``Operators`` and ``ExtraTopLevelOperators``.
 
-String_
+`String`_
     String manipulation.
     
 `Collections and Data Structures`_
     General-purpose and specialized collections and data structures.
 
-Caching_
+`Caching`_
     Map-like data structures implementing various caching protocols.
 
 `Workflow Collections`_
@@ -85,9 +85,13 @@ String
 - foldiBack
 - foldi2
 - foldiBack2
-- Split
-  - get
-    Given an index, gets the substring at that index in the array of substrings created by the split operation.
+
+
+String.Split
+------------
+- get
+
+  Given an index, gets the substring at that index in the array of substrings created by the split operation.
 
 
 Substring
@@ -205,6 +209,7 @@ LazyList
 --------
 - exactlyOne
 - ``force : LazyList<'T> -> unit``
+
   Traverses the LazyList and forces evaluation of all cells. May not terminate.
 
 - ``forcePartial : int -> LazyList<'T> -> unit``
@@ -239,12 +244,19 @@ List
 ----
 - exactlyOne
 - ``insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
+
   Creates a new list by inserting the value at a given index in a list.
+
 - ``update : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
+
   Creates a new list by setting the element at the specified index to a given value.
+
 - ``splice : (index : int) -> (list1 : 'T list) -> (list2 : 'T list) : 'T list``
+
   Creates a new list by "splicing" the second list into the first at the given index.
+
 - ``distinct : (list : 'T list) : 'T list (where 'T : equality)``
+
   Returns a new list created by keeping only the first (earliest) instance of each element.
 
 
@@ -252,7 +264,9 @@ LruCache
 --------
 - findKey
 - tryFindKey
+
   These should work like the functions in the Map module.
+
 - findKeyBack
 - pickBack
 - tryPickBack
