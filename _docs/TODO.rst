@@ -1,26 +1,26 @@
 TODO for ExtCore 1.0
 ####################
 
-`Library`_
+Library_
     General, library-wide TODO items.
 
-`General`_
+General_
     General-purpose modules, such as ``Operators`` and ``ExtraTopLevelOperators``.
 
-`String`_
+String_
     String manipulation.
     
-`Collections / Data Structures`_
+`Collections and Data Structures`_
     General-purpose and specialized collections and data structures.
 
-`Caching`_
+Caching_
     Map-like data structures implementing various caching protocols.
 
 `Workflow Collections`_
     Collections modules from the F# Core Library (e.g., ``Array``) and ExtCore,
     adapted ("lifted") for compatibility with various F# workflows.
 
-`Parallel`_
+Parallel_
     Functions implementing parallelized operations over collections.
 
 
@@ -87,7 +87,7 @@ String
 - foldiBack2
 - Split
   - get
-  
+
     Given an index, gets the substring at that index in the array of substrings created by the split operation.
 
 
@@ -113,8 +113,8 @@ Substring
   Implement comparison which works just like the built-in string comparison.
 
 
-Collections / Data Structures
-=============================
+Collections and Data Structures
+===============================
 
 Array
 -----
