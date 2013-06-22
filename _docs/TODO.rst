@@ -109,6 +109,7 @@ Substring
   it simply returns a ``substring`` which is equal to or smaller than the input substring.
 
 - Interfaces
+
   - IEquatable
   - IEquatable<'T>
   - IComparable
@@ -171,6 +172,7 @@ IntMap / LongMap
 - tryExtractMax
 
 - Interfaces
+
   - IReadOnlyDictionary<TKey, TValue> (.NET 4.5)
   - IReadOnlyCollection<KeyValuePair<TKey, TValue>> (.NET 4.5)
 
@@ -202,6 +204,7 @@ IntSet / LongSet
   Given an IntSet and a value, returns the subset containing the values less than (or greater than) the value.
 
 - Interfaces
+
   - ISet<'T> (.NET 4.0)
   - IReadOnlyCollection<'T> (.NET 4.5)
 
@@ -234,6 +237,7 @@ LazyList
   list elements when they don't really need it.
 
 - Interfaces
+
   - ICollection
   - ICollection<'T>
   - IList
@@ -324,6 +328,7 @@ Queue
 - peek
 
 - Interfaces
+
   - IEnumerable
   - IEnumerable<'T>
   - ICollection
@@ -412,6 +417,7 @@ Vector
   values and we want to choose the one with the greatest index.
 
 - Interfaces
+
   - IEquatable
   - IEquatable<'T>
   - IComparable
