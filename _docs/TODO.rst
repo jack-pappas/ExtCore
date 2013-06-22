@@ -30,8 +30,8 @@ Library
 Documentation
 -------------
 - Fill out missing documentation comments throughout the library. This is not limited to summaries --
-  we also need to fill in descriptions for parameters (<param>), return values (<returns>),
-  type parameters (<typeparam>) and so on.
+  we also need to fill in descriptions for parameters (``<param>``), return values (``<returns>``),
+  type parameters (``<typeparam>``) and so on.
 
 - Generate some nice-looking documentation from the XML documentation file (``ExtCore.XML``) generated
   when the library is compiled. This needs to be done in a way that can be automated so it can be
@@ -40,7 +40,7 @@ Documentation
 
 Build
 -----
-- Publish debugging symbols (e.g., on SymbolSource) and add ExtCore.pdb to the NuGet package.
+- Publish debugging symbols (e.g., on SymbolSource) and add ``ExtCore.pdb`` to the NuGet package.
 - Should we publish separate NuGet packages for F# 2.0 and F# 3.0 versions of the library?
 
   - If not, we should still include some logic in the NuGet package which adds a binding redirect
@@ -87,7 +87,6 @@ String
 - foldiBack2
 - Split
   - get
-
     Given an index, gets the substring at that index in the array of substrings created by the split operation.
 
 
@@ -101,7 +100,7 @@ Substring
 - trimStartWith
 - trimEndWith
 
-  These should work like the functions in the String module, except on ``substring``s.
+  These should work like the functions in the String module, except on ``substring``.
   This makes it so trimming a string doesn't need to create an additional string object,
   it simply returns a ``substring`` which is equal to or smaller than the input substring.
 
@@ -205,19 +204,22 @@ IntSet / LongSet
 LazyList
 --------
 - exactlyOne
-- force : LazyList<'T> -> unit
+- ``force : LazyList<'T> -> unit``
   Traverses the LazyList and forces evaluation of all cells. May not terminate.
 
-- forcePartial : int -> LazyList<'T> -> unit
+- ``forcePartial : int -> LazyList<'T> -> unit``
+
   Traverses the given number of cells in the LazyList (or to the end), forcing evaluation
   of the traversed cells. May not terminate.
 
-- lazyLength : LazyList<'T> -> int
+- ``lazyLength : LazyList<'T> -> int``
+
   Computes the "lazy" length of the LazyList<'T> -- that is, the number of cells which have
   already been evaluated. Unlike LazyList.length, this does not force evaluation of any cells
   and always terminates.
 
-- ofSeqEager : seq<'T> -> LazyList<'T>
+- ``ofSeqEager : seq<'T> -> LazyList<'T>``
+
   Similar to 'ofSeq', but eagerly enumerates the sequence to build a LazyList.
   This allows us to detect certain sequence types (like 'T[] and 'T list) and use optimized
   implementations, avoids the possibility of memory leaks, and avoids lazily-evaluating
@@ -236,13 +238,13 @@ LazyList
 List
 ----
 - exactlyOne
-- insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list
+- ``insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
   Creates a new list by inserting the value at a given index in a list.
-- update : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list
+- ``update : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
   Creates a new list by setting the element at the specified index to a given value.
-- splice : (index : int) -> (list1 : 'T list) -> (list2 : 'T list) : 'T list
+- ``splice : (index : int) -> (list1 : 'T list) -> (list2 : 'T list) : 'T list``
   Creates a new list by "splicing" the second list into the first at the given index.
-- distinct : (list : 'T list) : 'T list (where 'T : equality)
+- ``distinct : (list : 'T list) : 'T list (where 'T : equality)``
   Returns a new list created by keeping only the first (earliest) instance of each element.
 
 
@@ -255,6 +257,7 @@ LruCache
 - pickBack
 - tryPickBack
 - tryFindKeyBack
+
   Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the cache,
   i.e., from newest (most-recently-used) to oldest (least-recently-used) key value. This is useful when the
   cache could contain multiple matching key/value pairs and we want to choose the one with the newest key value.
@@ -294,7 +297,7 @@ Map
 
 - ``addOrUpdate (generator : 'Key -> 'T option -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : Map<'Key, 'T>``
 - ``maxKey : (map : Map<'Key, 'T>) : 'Key``
-- minKey
+- ``minKey : (map : Map<'Key, 'T>) : 'Key``
 
   The minimum/maximum key value in the map.
 
