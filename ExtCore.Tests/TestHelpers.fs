@@ -113,7 +113,9 @@ type private NUnitRunner () =
 
 /// An FsCheck configuration which logs test results to NUnit.
 let private nUnitConfig = {
-    Config.Default with
+    // Config.Verbose
+    Config.Quick with
+        MaxTest = 5000;
         Runner = NUnitRunner (); }
 
 /// Tests that the specified property is correct.
