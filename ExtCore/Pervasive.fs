@@ -518,6 +518,50 @@ module Choice =
         | Choice2Of2 error ->
             Choice2Of2 error
 
+    //
+    [<CompiledName("Exists")>]
+    let exists (predicate : 'T -> bool) (value : Choice<'T, 'Error>) : bool =
+        match value with
+        | Choice1Of2 result ->
+            predicate result
+        | Choice2Of2 _ ->
+            false
+
+    //
+    [<CompiledName("Forall")>]
+    let forall (predicate : 'T -> bool) (value : Choice<'T, 'Error>) : bool =
+        match value with
+        | Choice1Of2 result ->
+            predicate result
+        | Choice2Of2 _ ->
+            true
+
+    //
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> 'State) (state : 'State) (value : Choice<'T, 'Error>) : 'State =
+        match value with
+        | Choice1Of2 result ->
+            folder state result
+        | Choice2Of2 _ ->
+            state
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'State -> 'State) (value : Choice<'T, 'Error>) (state : 'State) : 'State =
+        match value with
+        | Choice1Of2 result ->
+            folder result state
+        | Choice2Of2 _ ->
+            state
+
+    //
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> unit) (value : Choice<'T, 'Error>) : unit =
+        match value with
+        | Choice2Of2 _ -> ()
+        | Choice1Of2 result ->
+            action result
+
 
 /// Extensible printf-style formatting for numbers and other datatypes.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
