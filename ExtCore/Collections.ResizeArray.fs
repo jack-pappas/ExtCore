@@ -91,15 +91,7 @@ let inline contains (value : 'T) (resizeArray : ResizeArray<'T>) : bool =
 let inline ofSeq (sequence : seq<'T>) : ResizeArray<'T> =
     ResizeArray (sequence)
 
-/// Return a view of the ResizeArray as an enumerable object.
-[<CompiledName("ToSeq")>]
-let toSeq (resizeArray : ResizeArray<'T>) : seq<'T> =
-    // Preconditions
-    checkNonNull "resizeArray" resizeArray
-
-    Seq.readonly resizeArray
-
-/// Build an array from the given list.
+/// Build a ResizeArray from the given list.
 [<CompiledName("OfList")>]
 let ofList (list : 'T list) : ResizeArray<'T> =
     // Preconditions
@@ -113,6 +105,24 @@ let ofList (list : 'T list) : ResizeArray<'T> =
     add list
     res
 
+/// Build a ResizeArray from the given array.
+[<CompiledName("OfArray")>]
+let inline ofArray (arr : 'T[]) : ResizeArray<'T> =
+    ResizeArray (arr)
+
+/// Build a ResizeArray from the given vector.
+[<CompiledName("OfVector")>]
+let inline ofVector (vector : vector<'T>) : ResizeArray<'T> =
+    ResizeArray (vector)
+
+/// Return a view of the ResizeArray as an enumerable object.
+[<CompiledName("ToSeq")>]
+let toSeq (resizeArray : ResizeArray<'T>) : seq<'T> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    Seq.readonly resizeArray
+
 /// Build a list from the given ResizeArray.
 [<CompiledName("ToList")>]
 let toList (resizeArray : ResizeArray<'T>) : 'T list =
@@ -124,15 +134,19 @@ let toList (resizeArray : ResizeArray<'T>) : 'T list =
         res <- resizeArray.[i] :: res
     res
 
-/// Build a ResizeArray from the given elements.
-[<CompiledName("OfArray")>]
-let inline ofArray (arr : 'T[]) : ResizeArray<'T> =
-    ResizeArray (arr)
-
 /// Return a fixed-length array containing the elements of the input ResizeArray.
 [<CompiledName("ToArray")>]
 let inline toArray (resizeArray : ResizeArray<'T>) : 'T[] =
     resizeArray.ToArray ()
+
+/// Build a vector from the given ResizeArray.
+[<CompiledName("ToVector")>]
+let toVector (resizeArray : ResizeArray<'T>) : vector<'T> =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    resizeArray.ToArray ()
+    |> vector.UnsafeCreate
 
 /// Sorts the elements of the ResizeArray by mutating the ResizeArray in-place.
 /// Elements are compared using Operators.compare.
