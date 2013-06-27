@@ -69,6 +69,12 @@ Tests
 General
 =======
 
+Nullable
+--------
+- Implement a ``Nullable`` module similar to the ``Option`` module in the F# Core Library.
+  This'll make it easier to write functional-style code for nullable values.
+
+
 TextWriter
 ----------
 - Add extension methods / overloads of Write and WriteLine which accept a ``substring`` value.
