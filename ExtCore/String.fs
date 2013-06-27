@@ -101,6 +101,33 @@ type substring =
             this.Offset + startIndex,
             finishIndex - startIndex + 1)
 
+    /// Structural comparison on substrings.
+    static member private Compare (x : substring, y : substring) =
+        // OPTIMIZATION : If the substrings have the same (identical) underlying string
+        // and offset, the comparison value will depend only on the length of the substrings.
+        if x.String === y.String && x.Offset = y.Offset then
+            compare x.Length y.Length
+        else
+            (* Structural comparison on substrings -- this uses the same comparison
+               technique as the structural comparison on strings in FSharp.Core. *)
+#if INVARIANT_CULTURE_STRING_COMPARISON
+            // NOTE: we don't have to null check here because System.String.Compare
+            // gives reliable results on null values.
+            System.String.Compare (
+                x.String, x.Offset,
+                y.String, y.Offset,
+                min x.Length y.Length,
+                false,
+                CultureInfo.InvariantCulture)
+#else
+            // NOTE: we don't have to null check here because System.String.CompareOrdinal
+            // gives reliable results on null values.
+            System.String.CompareOrdinal (
+                x.String, x.Offset,
+                y.String, y.Offset,
+                min x.Length y.Length)
+#endif
+
 //    interface IEquatable<substring> with
 //        /// <inherit />
 //        member __.Equals other =
