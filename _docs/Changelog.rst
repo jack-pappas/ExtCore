@@ -1,8 +1,8 @@
 Changelog
 #########
 
-`0.8.x (Alpha)`_
-    General, library-wide TODO items.
+`0.8.x (alpha)`_
+    The *0.8.x* (alpha) branch.
 
 
 
