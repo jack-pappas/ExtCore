@@ -114,14 +114,7 @@ Substring
   This makes it so trimming a string doesn't need to create an additional string object,
   it simply returns a ``substring`` which is equal to or smaller than the input substring.
 
-- Interfaces
-
-  - IEquatable
-  - IEquatable<'T>
-  - IComparable
-  - IComparable<'T>
-
-    Implement comparison which works just like the built-in string comparison.
+- Implement a ``SubstringComparer`` class similar to ``StringComparer``.
 
 
 Collections and Data Structures

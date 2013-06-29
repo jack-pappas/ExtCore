@@ -25,7 +25,7 @@ open System
 
 /// Represents a segment of a string.
 [<Struct; CompiledName("Substring")>]
-//[<CustomEquality; CustomComparison>]
+[<CustomEquality; CustomComparison>]
 type substring =
     /// The underlying string for this substring.
     val String : string
@@ -128,21 +128,40 @@ type substring =
                 min x.Length y.Length)
 #endif
 
-//    interface IEquatable<substring> with
-//        /// <inherit />
-//        member __.Equals other =
-//            notImpl "Substring.Equals"
-//
-//    interface IComparable with
-//        /// <inherit />
-//        member __.CompareTo other =
-//            let other' = other :?> substring
-//            notImpl "Substring.CompareTo"
-//
-//    interface IComparable<substring> with
-//        /// <inherit />
-//        member __.CompareTo other =
-//            notImpl "Substring.CompareTo"
+    /// <inherit />
+    override this.GetHashCode () =
+        if isNull this.String then 0
+        else
+            // OPTIMIZE : This needs to be re-implemented ASAP so it directly computes the
+            // hash value of the substring (i.e., without creating the substring).
+            this.ToString().GetHashCode ()
+
+    /// <inherit />
+    override this.Equals other =
+        match other with
+        | :? substring as other ->
+            substring.Compare (this, other) = 0
+        | _ ->
+            invalidArg "other" "The value is not a substring."
+
+    interface IEquatable<substring> with
+        /// <inherit />
+        member this.Equals other =
+            substring.Compare (this, other) = 0
+
+    interface IComparable with
+        /// <inherit />
+        member this.CompareTo other =
+            match other with
+            | :? substring as other ->
+                substring.Compare (this, other)
+            | _ ->
+                invalidArg "other" "The value is not a substring."
+
+    interface IComparable<substring> with
+        /// <inherit />
+        member this.CompareTo other =
+            substring.Compare (this, other)
 
 
 /// Functional operators related to substrings.
