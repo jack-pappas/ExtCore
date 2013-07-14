@@ -95,9 +95,23 @@ String
 
 String.Split
 ------------
+- foldBack
+- exists
+- forall
+- scan
+- scanBack
+- mapReduce
+- mapScan
 - get
 
   Given an index, gets the substring at that index in the array of substrings created by the split operation.
+
+- toList
+  
+  This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly so it doesn't need to be reversed.
+
+- It might be more simpler to re-implement the existing String.Split functions (and implement the new functions above) to work over ``substring`` instead.
+  Once the functions are implemented for ``substring``, we could just use ``Substring.ofString`` to create a ``substring`` spanning the entire string, then call the ``substring``-based function with it.
 
 
 Substring
@@ -115,6 +129,8 @@ Substring
   it simply returns a ``substring`` which is equal to or smaller than the input substring.
 
 - Implement a ``SubstringComparer`` class similar to ``StringComparer``.
+
+- Implement a ``substring``-compatible version of ``Regex.Matches`` as an extension method on ``Regex``.
 
 
 Collections and Data Structures
