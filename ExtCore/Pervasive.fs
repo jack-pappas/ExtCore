@@ -75,10 +75,16 @@ module Operators =
     (* Operators *)
 
     /// Reference/Physical-equality operator.
+    let inline (==) (x : 'T) y =
+        LanguagePrimitives.PhysicalEquality x y
+
+    /// Reference/Physical-equality operator.
+    [<Obsolete("The (===) operator is deprecated. Please use the (==) operator instead.")>]
     let inline (===) (x : 'T) y =
         LanguagePrimitives.PhysicalEquality x y
 
     /// Negated reference/physical-equality operator.
+    [<Obsolete("The (!==) operator is deprecated. Please use the (==) operator and the 'not' function instead.")>]
     let inline (!==) (x : 'T) y =
         not (LanguagePrimitives.PhysicalEquality x y)
 
