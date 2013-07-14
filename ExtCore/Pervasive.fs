@@ -271,6 +271,7 @@ module Operators =
     (* Active Patterns *)
 
     /// Classifies a Choice`2 value as a successful result or an error.
+    [<CompiledName("SuccessOrErrorPattern")>]
     let inline (|Success|Error|) (result : Choice<'T, 'Error>) =
         match result with
         | Choice1Of2 res ->
@@ -279,6 +280,7 @@ module Operators =
             Error err
 
     /// Classifies the result of a comparison.
+    [<CompiledName("ComparisonPattern")>]
     let inline (|Less|Equal|Greater|) (comparisonResult : int) =
         match comparisonResult with
         | -1 -> Less
