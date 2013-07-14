@@ -21,6 +21,7 @@ namespace ExtCore
 
 open System
 //open System.Diagnostics.Contracts
+open System.Globalization
 
 
 /// Represents a segment of a string.
@@ -86,6 +87,60 @@ type substring =
             // Return the specified character from the underlying string.
             this.String.[this.Offset + index]
 
+    //
+    member this.StartsWith (value : string) : bool =
+        // Preconditions
+        checkNonNull "value" value
+
+        let valueLen = String.length value
+        
+        // If the value string is larger than this substring, the substring cannot start with the value.
+        if valueLen > this.Length then false
+        else
+            let comparisonLength = min valueLen this.Length
+
+#if INVARIANT_CULTURE_STRING_COMPARISON
+            System.String.Compare (
+                this.String, this.Offset,
+                value, 0,
+                comparisonLength,
+                false,
+                CultureInfo.InvariantCulture) = 0
+#else
+            System.String.CompareOrdinal (
+                this.String, this.Offset,
+                value, 0,
+                comparisonLength) = 0
+#endif
+
+    //
+    member this.EndsWith (value : string) : bool =
+        // Preconditions
+        checkNonNull "value" value
+
+        let valueLen = String.length value
+        
+        // If the value string is larger than this substring, the substring cannot start with the value.
+        if valueLen > this.Length then false
+        else
+            let comparisonLength = min valueLen this.Length
+            let thisStartOffset = this.Length - (comparisonLength + 1)
+            let valueStartOffset = valueLen - (comparisonLength + 1)
+
+#if INVARIANT_CULTURE_STRING_COMPARISON
+            System.String.Compare (
+                this.String, thisStartOffset,
+                value, valueStartOffset,
+                comparisonLength,
+                false,
+                CultureInfo.InvariantCulture) = 0
+#else
+            System.String.CompareOrdinal (
+                this.String, thisStartOffset,
+                value, valueStartOffset,
+                comparisonLength) = 0
+#endif
+
     /// <inherit />
     override this.ToString () =
         // OPTIMIZATION : Immediately return if this is an empty substring;
@@ -98,8 +153,13 @@ type substring =
             this.String.Substring (this.Offset, this.Length)
 
     /// Copies the characters in this substring into a Unicode character array.
-    member this.ToArray () : char[] =
+    member this.ToCharArray () : char[] =
         this.String.ToCharArray (this.Offset, this.Length)
+
+    /// Copies the characters in this substring into a Unicode character array.
+    [<Obsolete("This method is deprecated. Please use the new ToCharArray() method instead.")>]
+    member this.ToArray () : char[] =
+        this.ToCharArray ()
 
     /// Implements F# slicing syntax for substrings.
     member this.GetSlice (startIndex, endIndex) : substring =
@@ -238,7 +298,17 @@ module Substring =
     /// Returns the characters in the given substring as a Unicode character array. 
     [<CompiledName("ToArray")>]
     let inline toArray (substr : substring) : char[] =
-        substr.ToArray ()
+        substr.ToCharArray ()
+
+    /// Determines whether the beginning of a substring matches the specified string.
+    [<CompiledName("StartsWith")>]
+    let inline startsWith (value : string) (substr : substring) : bool =
+        substr.StartsWith value
+
+    /// Determines whether the end of a substring matches the specified string.
+    [<CompiledName("EndsWith")>]
+    let inline endsWith (value : string) (substr : substring) : bool =
+        substr.EndsWith value
 
     /// Extracts the first (left-most) character from a substring, returning a Some value
     /// containing the character and the remaining substring. Returns None if the given
@@ -1056,8 +1126,7 @@ module Substring =
         (*
         //
         [<CompiledName("Filter")>]
-        let filter (separator : char[], options : System.StringSplitOptions)
-                (predicate : substring -> bool) (str : string) : substring[] =
+        let filter (separator : char[]) (predicate : substring -> bool) (str : string) : seq<substring> =
             // Preconditions
             checkNonNull "str" str
 
@@ -1068,8 +1137,7 @@ module Substring =
 
         //
         [<CompiledName("Choose")>]
-        let choose (separator : char[], options : System.StringSplitOptions)
-                (chooser : substring -> string option) (str : string) : string[] =
+        let choose (separator : char[]) (chooser : substring -> 'T option) (str : string) : seq<'T> =
             // Preconditions
             checkNonNull "str" str
 
