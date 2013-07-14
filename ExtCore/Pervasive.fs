@@ -440,6 +440,12 @@ module Option =
         | None -> generator ()
 
     //
+    [<CompiledName("Attempt")>]
+    let attempt generator : 'T option =
+        try Some <| generator ()
+        with _ -> None
+
+    //
     [<CompiledName("ToOutAndBool")>]
     let inline toOutAndBool (value, [<Out>] outValue : byref<'T>) : bool =
         match value with
