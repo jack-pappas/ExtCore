@@ -164,7 +164,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     | left ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if left === t0 then map
+                        if left == t0 then map
                         else Br (p, m, left, t1)
                 else
                     match PatriciaMap32.Remove (key, t1) with
@@ -172,7 +172,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     | right ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if right === t1 then map
+                        if right == t1 then map
                         else Br (p, m, t0, right)
             else map
 
@@ -208,14 +208,14 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if left === t0 then map
+                    if left == t0 then map
                     else Br (p, m, left, t1)
                 else
                     let right = PatriciaMap32.Add (key, value, t1)
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if right === t1 then map
+                    if right == t1 then map
                     else Br (p, m, t0, right)
             else
                 PatriciaMap32.Join (key, Lf (key, value), p, map)
@@ -241,14 +241,14 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if left === t0 then map
+                    if left == t0 then map
                     else Br (p, m, left, t1)
                 else
                     let right = PatriciaMap32.TryAdd (key, value, t1)
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if right === t1 then map
+                    if right == t1 then map
                     else Br (p, m, t0, right)
             else
                 PatriciaMap32.Join (key, Lf (key, value), p, map)
@@ -256,7 +256,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
     /// Computes the union of two PatriciaMaps.
     static member Union (s, t) : PatriciaMap32<'T> =
         // If the maps are identical, return immediately.
-        if s === t then s else
+        if s == t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -267,8 +267,8 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
 
                     // Only create a new tree if some values were actually added
                     // (i.e., the tree was modified).
-                    if left === s0 && right === s1 then s
-                    elif left === t0 && right === t1 then t
+                    if left == s0 && right == s1 then s
+                    elif left == t0 && right == t1 then t
                     else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
@@ -285,13 +285,13 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                         let left = PatriciaMap32.Union (s0, t)
 
                         // Only create a new tree when the subtree is actually modified.
-                        if left === s0 then s
+                        if left == s0 then s
                         else Br (p, m, left, s1)
                     else
                         let right = PatriciaMap32.Union (s1, t)
 
                         // Only create a new tree when the subtree is actually modified.
-                        if right === s1 then s
+                        if right == s1 then s
                         else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
@@ -304,13 +304,13 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                         let left = PatriciaMap32.Union (s, t0)
 
                         // Only create a new tree when the subtree is actually modified.
-                        if left === t0 then t
+                        if left == t0 then t
                         else Br (q, n, left, t1)
                     else
                         let right = PatriciaMap32.Union (s, t1)
 
                         // Only create a new tree when the subtree is actually modified.
-                        if right === t1 then t
+                        if right == t1 then t
                         else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
@@ -322,13 +322,13 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     let left = PatriciaMap32.TryAdd (k, x, s0)
 
                     // Only create a new tree when the subtree is actually modified.
-                    if left === s0 then s
+                    if left == s0 then s
                     else Br (p, m, left, s1)
                 else
                     let right = PatriciaMap32.TryAdd (k, x, s1)
 
                     // Only create a new tree when the subtree is actually modified.
-                    if right === s1 then s
+                    if right == s1 then s
                     else Br (p, m, s0, right)
             else
                 PatriciaMap32.Join (k, t, p, s)
@@ -344,7 +344,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
     /// the first map will be used.
     static member Intersect (s, t) : PatriciaMap32<'T> =
         // If the maps are identical, return immediately.
-        if s === t then s else
+        if s == t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -358,8 +358,8 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).
-                        if left === s0 && right === s1 then s
-                        elif left === t0 && right === t1 then t
+                        if left == s0 && right == s1 then s
+                        elif left == t0 && right == t1 then t
                         else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
@@ -388,7 +388,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             let s' = if zeroBit (k, m) then s0 else s1
             match PatriciaMap32.TryFind (k, s') with
             | Some x ->
-                // OPTIMIZE : If x === y or x = y then just return 't' instead
+                // OPTIMIZE : If x == y or x = y then just return 't' instead
                 // of creating/returning a new Lf.
                 Lf (k, x)
             | None ->
@@ -409,7 +409,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
     /// Compute the difference of two PatriciaMaps.
     static member Difference (s, t) : PatriciaMap32<'T> =
         // If the maps are identical, return immediately.
-        if s === t then Empty else
+        if s == t then Empty else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -423,7 +423,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).
-                        if left === s0 && right === s1 then s
+                        if left == s0 && right == s1 then s
                         else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
@@ -438,7 +438,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                         | left ->
                             // Only create a new tree some values were actually removed
                             // (i.e., the tree was modified).
-                            if left === s0 then s
+                            if left == s0 then s
                             else Br (p, m, left, s1)
                     else
                         match PatriciaMap32.Difference (s1, t) with
@@ -446,7 +446,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                         | right ->
                             // Only create a new tree some values were actually removed
                             // (i.e., the tree was modified).
-                            if right === s1 then s
+                            if right == s1 then s
                             else Br (p, m, s0, right)
                 else s
 
@@ -466,7 +466,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     | left ->
                         // Only create a new tree if the value was actually removed
                         // (i.e., the tree was modified).
-                        if left === s0 then s
+                        if left == s0 then s
                         else Br (p, m, left, s1)
                 else
                     match PatriciaMap32.Remove (k, s1) with
@@ -474,7 +474,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     | right ->
                         // Only create a new tree if the value was actually removed
                         // (i.e., the tree was modified).
-                        if right === s1 then s
+                        if right == s1 then s
                         else Br (p, m, s0, right)
             else s
             
@@ -1011,14 +1011,14 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     member this.Add (key : int, value : 'T) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
         let trie' = PatriciaMap32.Add (uint32 key, value, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else IntMap (trie')
 
     /// Returns a new map with the binding added to this map.
     member this.TryAdd (key : int, value : 'T) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
         let trie' = PatriciaMap32.TryAdd (uint32 key, value, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else IntMap (trie')
 
     /// Removes an element from the domain of the map.
@@ -1026,7 +1026,7 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
     member this.Remove (key : int) : IntMap<'T> =
         // If the trie isn't modified, just return this IntMap instead of creating a new one.
         let trie' = PatriciaMap32.Remove (uint32 key, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else IntMap (trie')
 
     /// Returns a new map created by merging the two specified maps.
@@ -1034,8 +1034,8 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
         let trie' = PatriciaMap32.Union (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
+        if trie == trie' then this
+        elif otherMap.Trie == trie' then otherMap
         else IntMap (trie')
 
     /// Returns the intersection of two maps.
@@ -1043,8 +1043,8 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
         let trie' = PatriciaMap32.Intersect (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
+        if trie == trie' then this
+        elif otherMap.Trie == trie' then otherMap
         else IntMap (trie')
 
     /// Returns a new map created by removing the second map from the first.
@@ -1052,8 +1052,8 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
         // If the result is the same (physical equality) to one of the inputs,
         // return that input instead of creating a new IntMap.
         let trie' = PatriciaMap32.Difference (trie, otherMap.Trie)
-        if trie === trie' then this
-        elif otherMap.Trie === trie' then otherMap
+        if trie == trie' then this
+        elif otherMap.Trie == trie' then otherMap
         else IntMap (trie')
 
     /// Returns true if 'other' is a submap of this map.

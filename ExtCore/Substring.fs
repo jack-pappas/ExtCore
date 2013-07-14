@@ -191,7 +191,7 @@ type substring =
     static member private Compare (x : substring, y : substring) =
         // OPTIMIZATION : If the substrings have the same (identical) underlying string
         // and offset, the comparison value will depend only on the length of the substrings.
-        if x.String === y.String && x.Offset = y.Offset then
+        if x.String == y.String && x.Offset = y.Offset then
             compare x.Length y.Length
         else
             (* Structural comparison on substrings -- this uses the same comparison

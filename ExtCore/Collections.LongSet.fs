@@ -217,7 +217,7 @@ type private PatriciaSet64 =
                     | left ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if left === t0 then set
+                        if left == t0 then set
                         else Br (p, m, left, t1)
                 else
                     match PatriciaSet64.Remove (key, t1) with
@@ -225,7 +225,7 @@ type private PatriciaSet64 =
                     | right ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if right === t1 then set
+                        if right == t1 then set
                         else Br (p, m, t0, right)
             else set
 
@@ -258,14 +258,14 @@ type private PatriciaSet64 =
 
                     // Only create a new tree when the value was actually added
                     // (i.e., the tree was modified).
-                    if left === t0 then set
+                    if left == t0 then set
                     else Br (p, m, left, t1)
                 else
                     let right = PatriciaSet64.Add (key, t1)
 
                     // Only create a new tree when the value was actually added
                     // (i.e., the tree was modified).
-                    if right === t1 then set
+                    if right == t1 then set
                     else Br (p, m, t0, right)
             else
                 PatriciaSet64.Join (key, Lf key, p, set)
@@ -273,7 +273,7 @@ type private PatriciaSet64 =
     /// Computes the union of two PatriciaSet64s.
     static member Union (s, t) : PatriciaSet64 =
         // If the sets are identical, return immediately.
-        if s === t then s else
+        if s == t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -284,8 +284,8 @@ type private PatriciaSet64 =
                     
                     // Only create a new tree if some values were actually added
                     // (i.e., the tree was modified).
-                    if left === s0 && right === s1 then s
-                    elif left === t0 && right === t1 then t
+                    if left == s0 && right == s1 then s
+                    elif left == t0 && right == t1 then t
                     else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
@@ -302,13 +302,13 @@ type private PatriciaSet64 =
                         let left = PatriciaSet64.Union (s0, t)
                         
                         // Only create a new tree when the subtree is actually modified.
-                        if left === s0 then s
+                        if left == s0 then s
                         else Br (p, m, left, s1)
                     else
                         let right = PatriciaSet64.Union (s1, t)
 
                         // Only create a new tree when the subtree is actually modified.
-                        if right === s1 then s
+                        if right == s1 then s
                         else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
@@ -321,13 +321,13 @@ type private PatriciaSet64 =
                         let left = PatriciaSet64.Union (s, t0)
                         
                         // Only create a new tree when the subtree is actually modified.
-                        if left === t0 then t
+                        if left == t0 then t
                         else Br (q, n, left, t1)
                     else
                         let right = PatriciaSet64.Union (s, t1)
                         
                         // Only create a new tree when the subtree is actually modified.
-                        if right === t1 then t
+                        if right == t1 then t
                         else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
@@ -339,13 +339,13 @@ type private PatriciaSet64 =
                     let left = PatriciaSet64.Add (k, s0)
                     
                     // Only create a new tree when the subtree is actually modified.
-                    if left === s0 then s
+                    if left == s0 then s
                     else Br (p, m, left, s1)
                 else
                     let right = PatriciaSet64.Add (k, s1)
                     
                     // Only create a new tree when the subtree is actually modified.
-                    if right === s1 then s
+                    if right == s1 then s
                     else Br (p, m, s0, right)
             else
                 PatriciaSet64.Join (k, t, p, s)
@@ -360,7 +360,7 @@ type private PatriciaSet64 =
     /// Compute the intersection of two PatriciaSet64s.
     static member Intersect (s, t) : PatriciaSet64 =
         // If the sets are identical, return immediately.
-        if s === t then s else
+        if s == t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -374,8 +374,8 @@ type private PatriciaSet64 =
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).
-                        if left === s0 && right === s1 then s
-                        elif left === t0 && right === t1 then t
+                        if left == s0 && right == s1 then s
+                        elif left == t0 && right == t1 then t
                         else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
@@ -418,7 +418,7 @@ type private PatriciaSet64 =
     /// Compute the difference of two PatriciaSet64s.
     static member Difference (s, t) : PatriciaSet64 =
         // If the sets are identical, return immediately.
-        if s === t then Empty else
+        if s == t then Empty else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -432,7 +432,7 @@ type private PatriciaSet64 =
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).
-                        if left === s0 && right === s1 then s
+                        if left == s0 && right == s1 then s
                         else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
@@ -447,7 +447,7 @@ type private PatriciaSet64 =
                         | left ->
                             // Only create a new tree some values were actually removed
                             // (i.e., the tree was modified).
-                            if left === s0 then s
+                            if left == s0 then s
                             else Br (p, m, left, s1)
                     else
                         match PatriciaSet64.Difference (s1, t) with
@@ -455,7 +455,7 @@ type private PatriciaSet64 =
                         | right ->
                             // Only create a new tree some values were actually removed
                             // (i.e., the tree was modified).
-                            if right === s1 then s
+                            if right == s1 then s
                             else Br (p, m, s0, right)
                 else s
 
@@ -478,7 +478,7 @@ type private PatriciaSet64 =
                         | _ ->
                             // Only create a new tree if the value was actually removed
                             // (i.e., the tree was modified).
-                            if left === s0 then s
+                            if left == s0 then s
                             else Br (p, m, left, s1)
                 else
                     match PatriciaSet64.Remove (k, s1) with
@@ -489,7 +489,7 @@ type private PatriciaSet64 =
                         | _ ->
                             // Only create a new tree if the value was actually removed
                             // (i.e., the tree was modified).
-                            if right === s1 then s
+                            if right == s1 then s
                             else Br (p, m, s0, right)
             else s
             
@@ -978,7 +978,7 @@ type LongSet private (trie : PatriciaSet64) =
     member this.Add (key : int64) : LongSet =
         // If the trie isn't modified, just return this LongSet instead of creating a new one.
         let trie' = PatriciaSet64.Add (uint64 key, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else LongSet (trie')
 
     /// Removes an element from the domain of the LongSet.
@@ -986,43 +986,43 @@ type LongSet private (trie : PatriciaSet64) =
     member this.Remove (key : int64) : LongSet =
         // If the trie isn't modified, just return this LongSet instead of creating a new one.
         let trie' = PatriciaSet64.Remove (uint64 key, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else LongSet (trie')
 
     /// Computes the union of two LongSets.
     member this.Union (otherSet : LongSet) : LongSet =
         // If this set's trie is the same as the other set's trie, we can return immediately.
-        if trie === otherSet.Trie then this
+        if trie == otherSet.Trie then this
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new LongSet.
             let trie' = PatriciaSet64.Union (trie, otherSet.Trie)
-            if trie === trie' then this
-            elif otherSet.Trie === trie' then otherSet
+            if trie == trie' then this
+            elif otherSet.Trie == trie' then otherSet
             else LongSet (trie')
 
     /// Computes the intersection of two LongSets.
     member this.Intersect (otherSet : LongSet) : LongSet =
         // If this set's trie is the same as the other set's trie, we can return immediately.
-        if trie === otherSet.Trie then this
+        if trie == otherSet.Trie then this
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new LongSet.
             let trie' = PatriciaSet64.Intersect (trie, otherSet.Trie)
-            if trie === trie' then this
-            elif otherSet.Trie === trie' then otherSet
+            if trie == trie' then this
+            elif otherSet.Trie == trie' then otherSet
             else LongSet (trie')
 
     /// Removes the elements of the specified LongSet from this LongSet.
     member this.Difference (otherSet : LongSet) : LongSet =
         // If this set's trie is the same as the other set's trie, we can return immediately.
-        if trie === otherSet.Trie then LongSet.Empty
+        if trie == otherSet.Trie then LongSet.Empty
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new LongSet.
             let trie' = PatriciaSet64.Difference (trie, otherSet.Trie)
-            if trie === trie' then this
-            elif otherSet.Trie === trie' then otherSet
+            if trie == trie' then this
+            elif otherSet.Trie == trie' then otherSet
             else LongSet (trie')
 
     /// Computes the union of a sequence of LongSets.

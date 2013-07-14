@@ -131,7 +131,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                 else
                     // OPTIMIZATION : If the result is the same as the input, return the
                     // original set.since it wasn't modified.
-                    if result === valueSet then set
+                    if result == valueSet then set
                     else
                         Lf (j, result)
             else set
@@ -144,7 +144,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                     | left ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if left === t0 then set
+                        if left == t0 then set
                         else Br (p, m, left, t1)
                 else
                     match PatriciaHashSet.Remove (valueHash, value, t1) with
@@ -152,7 +152,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                     | right ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if right === t1 then set
+                        if right == t1 then set
                         else Br (p, m, t0, right)
             else set
 
@@ -180,7 +180,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
 
                 // OPTIMIZATION : If the result is the same as the input,
                 // return the original set instead since it wasn't modified.
-                if result === valueSet then set
+                if result == valueSet then set
                 else
                     Lf (j, result)
             else
@@ -192,14 +192,14 @@ type private PatriciaHashSet<'T when 'T : comparison> =
 
                     // Only create a new tree when the value was actually added
                     // (i.e., the tree was modified).
-                    if left === t0 then set
+                    if left == t0 then set
                     else Br (p, m, left, t1)
                 else
                     let right = PatriciaHashSet.Add (valueHash, value, t1)
 
                     // Only create a new tree when the value was actually added
                     // (i.e., the tree was modified).
-                    if right === t1 then set
+                    if right == t1 then set
                     else Br (p, m, t0, right)
             else
                 PatriciaHashSet.Join (valueHash, PatriciaHashSet.Singleton (valueHash, value), p, set)
@@ -207,7 +207,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
     /// Computes the union of two PatriciaHashSets.
     static member Union (s, t) : PatriciaHashSet<'T> =
         // If the sets are identical, return immediately.
-        if s === t then s else
+        if s == t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -218,8 +218,8 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                     
                     // Only create a new tree if some values were actually added
                     // (i.e., the tree was modified).
-                    if left === s0 && right === s1 then s
-                    elif left === t0 && right === t1 then t
+                    if left == s0 && right == s1 then s
+                    elif left == t0 && right == t1 then t
                     else Br (p, m, left, right)
                 else
                     // The prefixes disagree.
@@ -236,13 +236,13 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                         let left = PatriciaHashSet.Union (s0, t)
                         
                         // Only create a new tree when the subtree is actually modified.
-                        if left === s0 then s
+                        if left == s0 then s
                         else Br (p, m, left, s1)
                     else
                         let right = PatriciaHashSet.Union (s1, t)
                         
                         // Only create a new tree when the subtree is actually modified.
-                        if right === s1 then s
+                        if right == s1 then s
                         else Br (p, m, s0, right)
                 else
                     // The prefixes disagree.
@@ -255,13 +255,13 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                         let left = PatriciaHashSet.Union (s, t0)
                         
                         // Only create a new tree when the subtree is actually modified.
-                        if left === t0 then t
+                        if left == t0 then t
                         else Br (q, n, left, t1)
                     else
                         let right = PatriciaHashSet.Union (s, t1)
                         
                         // Only create a new tree when the subtree is actually modified.
-                        if right === t1 then t
+                        if right == t1 then t
                         else Br (q, n, t0, right)
                 else
                     // The prefixes disagree.
@@ -273,13 +273,13 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                     let left = PatriciaHashSet.Union (s0, t)
                     
                     // Only create a new tree when the subtree is actually modified.
-                    if left === s0 then s
+                    if left == s0 then s
                     else Br (p, m, left, s1)
                 else
                     let right = PatriciaHashSet.Union (s1, t)
                     
                     // Only create a new tree when the subtree is actually modified.
-                    if right === s1 then s
+                    if right == s1 then s
                     else Br (p, m, s0, right)
             else
                 PatriciaHashSet.Join (k, t, p, s)
@@ -290,13 +290,13 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                     let left = PatriciaHashSet.Union (s, t0)
 
                     // Only create a new tree when the subtree is actually modified.
-                    if left === t0 then t
+                    if left == t0 then t
                     else Br (q, n, left, t1)
                 else
                     let right = PatriciaHashSet.Union (s, t1)
 
                     // Only create a new tree when the subtree is actually modified.
-                    if right === t1 then t
+                    if right == t1 then t
                     else Br (q, n, t0, right)
             else
                 PatriciaHashSet.Join (k, s, q, t)
@@ -307,8 +307,8 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                 let result = Set.union valueSet1 valueSet2
                 
                 // Only create a new tree if we can't re-use one of the input trees.
-                if result === valueSet1 then s
-                elif result === valueSet2 then t
+                if result == valueSet1 then s
+                elif result == valueSet2 then t
                 else
                     Lf (j, result)
             else
@@ -320,7 +320,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
     /// Compute the intersection of two PatriciaHashSets.
     static member Intersect (s, t) : PatriciaHashSet<'T> =
         // If the sets are identical, return immediately.
-        if s === t then s else
+        if s == t then s else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -334,8 +334,8 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).
-                        if left === s0 && right === s1 then s
-                        elif left === t0 && right === t1 then t
+                        if left == s0 && right == s1 then s
+                        elif left == t0 && right == t1 then t
                         else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
@@ -379,8 +379,8 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                 if Set.isEmpty result then Empty
                 else
                     // Only create a new tree if we can't re-use one of the input trees.
-                    if result === valueSet1 then s
-                    elif result === valueSet2 then t
+                    if result == valueSet1 then s
+                    elif result == valueSet2 then t
                     else
                         Lf (j, result)
 
@@ -391,7 +391,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
     /// Compute the difference of two PatriciaHashSets.
     static member Difference (s, t) : PatriciaHashSet<'T> =
         // If the sets are identical, return immediately.
-        if s === t then Empty else
+        if s == t then Empty else
         match s, t with
         | Br (p, m, s0, s1), Br (q, n, t0, t1) ->
             if m = n then
@@ -405,7 +405,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                     | left, right ->
                         // Only create a new tree if some values were actually removed
                         // (i.e., the tree was modified).
-                        if left === s0 && right === s1 then s
+                        if left == s0 && right == s1 then s
                         else Br (p, m, left, right)
 
             #if LITTLE_ENDIAN_TRIES
@@ -420,7 +420,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                         | left ->
                             // Only create a new tree some values were actually removed
                             // (i.e., the tree was modified).
-                            if left === s0 then s
+                            if left == s0 then s
                             else Br (p, m, left, s1)
                     else
                         match PatriciaHashSet.Difference (s1, t) with
@@ -428,7 +428,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                         | right ->
                             // Only create a new tree some values were actually removed
                             // (i.e., the tree was modified).
-                            if right === s1 then s
+                            if right == s1 then s
                             else Br (p, m, s0, right)
                 else s
 
@@ -451,7 +451,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                         | _ ->
                             // Only create a new tree if the value was actually removed
                             // (i.e., the tree was modified).
-                            if left === s0 then s
+                            if left == s0 then s
                             else Br (p, m, left, s1)
                 else
                     match PatriciaHashSet.Difference (s1, t) with
@@ -462,7 +462,7 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                         | _ ->
                             // Only create a new tree if the value was actually removed
                             // (i.e., the tree was modified).
-                            if right === s1 then s
+                            if right == s1 then s
                             else Br (p, m, s0, right)
             else s
 
@@ -479,8 +479,8 @@ type private PatriciaHashSet<'T when 'T : comparison> =
                 if Set.isEmpty result then Empty
                 else
                     // Only create a new tree if we can't re-use one of the input trees.
-                    if result === valueSet1 then s
-                    elif result === valueSet2 then t
+                    if result == valueSet1 then s
+                    elif result == valueSet2 then t
                     else
                         Lf (j, result)
         
@@ -955,7 +955,7 @@ type HashSet<'T when 'T : comparison> private (trie : PatriciaHashSet<'T>) =
         // If the trie isn't modified, just return this HashSet instead of creating a new one.
         let valueHash = uint32 <| hash value
         let trie' = PatriciaHashSet.Add (valueHash, value, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else HashSet (trie')
 
     /// Removes an element from the domain of the HashSet.
@@ -964,43 +964,43 @@ type HashSet<'T when 'T : comparison> private (trie : PatriciaHashSet<'T>) =
         // If the trie isn't modified, just return this HashSet instead of creating a new one.
         let valueHash = uint32 <| hash value
         let trie' = PatriciaHashSet.Remove (valueHash, value, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else HashSet (trie')
 
     /// Returns a new HashSet created by merging the two specified HashSets.
     member this.Union (otherSet : HashSet<'T>) : HashSet<'T> =
         // If this set's trie is the same as the other set's trie, we can return immediately.
-        if trie === otherSet.Trie then this
+        if trie == otherSet.Trie then this
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashSet.
             let trie' = PatriciaHashSet.Union (trie, otherSet.Trie)
-            if trie === trie' then this
-            elif otherSet.Trie === trie' then otherSet
+            if trie == trie' then this
+            elif otherSet.Trie == trie' then otherSet
             else HashSet (trie')
 
     /// Returns the intersection of two HashSets.
     member this.Intersect (otherSet : HashSet<'T>) : HashSet<'T> =
         // If this set's trie is the same as the other set's trie, we can return immediately.
-        if trie === otherSet.Trie then this
+        if trie == otherSet.Trie then this
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashSet.
             let trie' = PatriciaHashSet.Intersect (trie, otherSet.Trie)
-            if trie === trie' then this
-            elif otherSet.Trie === trie' then otherSet
+            if trie == trie' then this
+            elif otherSet.Trie == trie' then otherSet
             else HashSet (trie')
 
     /// Returns a new HashSet created by removing the second HashSet from the first.
     member this.Difference (otherSet : HashSet<'T>) : HashSet<'T> =
         // If this set's trie is the same as the other set's trie, we can return immediately.
-        if trie === otherSet.Trie then HashSet.Empty
+        if trie == otherSet.Trie then HashSet.Empty
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashSet.
             let trie' = PatriciaHashSet.Difference (trie, otherSet.Trie)
-            if trie === trie' then this
-            elif otherSet.Trie === trie' then otherSet
+            if trie == trie' then this
+            elif otherSet.Trie == trie' then otherSet
             else HashSet (trie')
 
     /// Computes the union of a sequence of HashSets.

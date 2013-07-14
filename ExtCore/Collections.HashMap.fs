@@ -124,7 +124,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                 else
                     // OPTIMIZATION : If the result is the same as the input, return the
                     // original map since it wasn't modified.
-                    if result === valueMap then map
+                    if result == valueMap then map
                     else
                         Lf (j, result)
             else map
@@ -137,7 +137,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     | left ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if left === t0 then map
+                        if left == t0 then map
                         else Br (p, m, left, t1)
                 else
                     match PatriciaHashMap.Remove (keyHash, key, t1) with
@@ -145,7 +145,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     | right ->
                         // Only create a new tree when the value was actually removed
                         // (i.e., the tree was modified).
-                        if right === t1 then map
+                        if right == t1 then map
                         else Br (p, m, t0, right)
             else map
 
@@ -173,7 +173,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
                 // OPTIMIZATION : If the result is the same as the input, return the original
                 // map instead since it wasn't modified.
-                if result === valueMap then map
+                if result == valueMap then map
                 else
                     Lf (j, result)
             else
@@ -185,14 +185,14 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if left === t0 then map
+                    if left == t0 then map
                     else Br (p, m, left, t1)
                 else
                     let right = PatriciaHashMap.Add (keyHash, key, value, t1)
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if right === t1 then map
+                    if right == t1 then map
                     else Br (p, m, t0, right)
             else
                 PatriciaHashMap.Join (keyHash, PatriciaHashMap.Singleton (keyHash, key, value), p, map)
@@ -209,7 +209,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
                 // OPTIMIZATION : If the result is the same as the input, return the original
                 // map instead since it wasn't modified.
-                if result === valueMap then map
+                if result == valueMap then map
                 else
                     Lf (j, result)
             else
@@ -221,14 +221,14 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if left === t0 then map
+                    if left == t0 then map
                     else Br (p, m, left, t1)
                 else
                     let right = PatriciaHashMap.TryAdd (keyHash, key, value, t1)
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
-                    if right === t1 then map
+                    if right == t1 then map
                     else Br (p, m, t0, right)
             else
                 PatriciaHashMap.Join (keyHash, PatriciaHashMap.Singleton (keyHash, key, value), p, map)
@@ -905,7 +905,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
         let keyHash = uint32 <| hash key
         let trie' = PatriciaHashMap.Add (keyHash, key, value, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else HashMap (trie')
 
     /// Returns a new HashMap with the binding added to this HashMap.
@@ -913,7 +913,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
         //let keyHash = uint32 <| hash key
         let trie' = PatriciaHashMap.TryAdd (key, value, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else HashMap (trie')
 
     /// Removes an element from the domain of the HashMap.
@@ -922,43 +922,43 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
         let keyHash = uint32 <| hash key
         let trie' = PatriciaHashMap.Remove (keyHash, key, trie)
-        if trie === trie' then this
+        if trie == trie' then this
         else HashMap (trie')
 (*
     /// Returns a new HashMap created by merging the two specified HashMaps.
     member this.Union (otherMap : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
         // If this map's trie is the same as the other map's trie, we can return immediately.
-        if trie === otherSet.Trie then this
+        if trie == otherSet.Trie then this
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashMap.
             let trie' = PatriciaHashMap.Union (trie, otherMap.Trie)
-            if trie === trie' then this
-            elif otherMap.Trie === trie' then otherMap
+            if trie == trie' then this
+            elif otherMap.Trie == trie' then otherMap
             else HashMap (trie')
 
     /// Returns the intersection of two HashMaps.
     member this.Intersect (otherMap : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
         // If this map's trie is the same as the other map's trie, we can return immediately.
-        if trie === otherSet.Trie then this
+        if trie == otherSet.Trie then this
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashMap.
             let trie' = PatriciaHashMap.Intersect (trie, otherMap.Trie)
-            if trie === trie' then this
-            elif otherMap.Trie === trie' then otherMap
+            if trie == trie' then this
+            elif otherMap.Trie == trie' then otherMap
             else HashMap (trie')
 
     /// Returns a new HashMap created by removing the second HashMap from the first.
     member this.Difference (otherMap : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
         // If this map's trie is the same as the other map's trie, we can return immediately.
-        if trie === otherSet.Trie then this
+        if trie == otherSet.Trie then this
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashMap.
             let trie' = PatriciaHashMap.Difference (trie, otherMap.Trie)
-            if trie === trie' then this
-            elif otherMap.Trie === trie' then otherMap
+            if trie == trie' then this
+            elif otherMap.Trie == trie' then otherMap
             else HashMap (trie')
 
     /// Returns true if 'other' is a submap of this map.

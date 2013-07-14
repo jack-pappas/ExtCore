@@ -589,7 +589,7 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
     /// Compare two LruCache instances for equality.
     static member private Equals (cache1 : LruCache<'Key, 'T>, cache2 : LruCache<'Key, 'T>) : bool =
         // Check for physical (reference) equality first, since it's very quick.
-        if cache1 === cache2 then true
+        if cache1 == cache2 then true
         // Caches must have the same capacity to be equal.
         elif cache1.Capacity <> cache2.Capacity then false
         else
