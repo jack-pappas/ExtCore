@@ -45,6 +45,7 @@
     <None Include="packages.config" />
     <Compile Include="TestHelpers.fs" />
     <Compile Include="Pervasive.fs" />
+    <Compile Include="Substring.fs" />
     <Compile Include="String.fs" />
     <Compile Include="Control.fs" />
     <Compile Include="Control.Cps.fs" />
