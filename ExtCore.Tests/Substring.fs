@@ -319,6 +319,25 @@ module SubstringModule =
         Assert.Ignore "Test not yet implemented."
 
 
+    /// Unit tests for the Substring.Split module.
+    module Split =
+        [<Test>]
+        let iter () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+        [<Test>]
+        let iteri () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+        [<Test>]
+        let fold () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+        [<Test>]
+        let foldi () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+
 /// Unit tests for the extension methods in the SubstringExtensions module.
 module SubstringExtensions =
     /// Unit tests for the substring extension methods for System.String.
