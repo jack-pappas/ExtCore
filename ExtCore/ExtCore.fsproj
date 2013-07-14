@@ -117,6 +117,7 @@
     <Compile Include="ControlCollections.StateCont.fs" />
     <Compile Include="Caching.LruCache.fs" />
     <Compile Include="NativeInterop.fs" />
+    <Compile Include="IO.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="ExtraPervasives.fs" />
     <Compile Include="AssemblyInfo.fs" />

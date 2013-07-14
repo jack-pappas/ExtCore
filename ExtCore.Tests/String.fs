@@ -129,6 +129,38 @@ module Substring =
             |> assertEqual "The quick brown fox jumps over the World! Hello lazy dog."
 
     [<Test>]
+    let tryFindIndexOf () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let findIndexOf () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tryFindIndex () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let findIndex () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tryFind () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let find () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tryPick () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let pick () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let iter () : unit =
         // Test case for empty substring.
         do
