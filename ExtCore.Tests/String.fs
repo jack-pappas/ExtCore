@@ -161,10 +161,10 @@ amet"
 [<Test>]
 let toLines () : unit =
     // Test case for empty string.
-    String.empty
-    |> String.toLines
-    |> Array.isEmpty
-    |> should be True
+    match String.toLines String.empty with
+    | [| "" |] -> true
+    | _ -> false
+    |> assertTrue
 
     // Test case for a single-line string.
     "The quick brown fox jumps over the lazy dog."
@@ -376,7 +376,7 @@ let iteri () : unit =
             elements.Add (
                 if idx % 2 = 0 then System.Char.ToUpper c else c))
 
-        elements.ToArray ()
+        ResizeArray.toArray elements
         |> Array.isEmpty
         |> should be True
 
@@ -389,8 +389,8 @@ let iteri () : unit =
             elements.Add (
                 if idx % 2 = 0 then System.Char.ToUpper c else c))
 
-        elements.ToArray ()
-        |> assertEqual
+        ResizeArray.toArray elements
+        |> Collection.assertEqual
             [| 'T'; 'h'; 'E'; ' '; 'Q'; 'u'; 'I'; 'c'; 'K'; ' '; 'B'; 'r'; 'O'; 'w'; 'N';
                 ' '; 'F'; 'o'; 'X'; ' '; 'J'; 'u'; 'M'; 'p'; 'S'; ' '; 'O'; 'v'; 'E'; 'r';
                 ' '; 't'; 'H'; 'e'; ' '; 'l'; 'A'; 'z'; 'Y'; ' '; 'D'; 'o'; 'G'; '.'; |]
