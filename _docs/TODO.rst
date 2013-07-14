@@ -65,6 +65,12 @@ Tests
   - The Array module tests which were imported and adapted for the ``vector`` type.
   - The tests for ``ResizeArray`` and ``LazyList`` which were imported from the F# PowerPack.
 
+- Modify the rest of the unit tests so they use our strongly-typed fluent assertion functions
+  from ``TestHelpers.fs``.
+
+  - Change all equality/equivalence assertions on collections to use the helper functions in the
+    ``Collections`` module (they provide better error messages on failure).
+
 
 General
 =======
@@ -108,25 +114,23 @@ String.Split
 
 - toList
   
-  This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly so it doesn't need to be reversed.
+  This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly
+  so it doesn't need to be reversed.
 
-- It might be more simpler to re-implement the existing String.Split functions (and implement the new functions above) to work over ``substring`` instead.
-  Once the functions are implemented for ``substring``, we could just use ``Substring.ofString`` to create a ``substring`` spanning the entire string, then call the ``substring``-based function with it.
+- It might be more simpler to re-implement the existing String.Split functions (and implement the
+  new functions above) to work over ``substring`` instead. Once the functions are implemented for
+  ``substring``, we could just use ``Substring.ofString`` to create a ``substring`` spanning the
+  entire string, then call the ``substring``-based function with it.
 
 
 Substring
 ---------
+- exactlyOne
+- foldi
+- foldiBack
+- foldi2
+- foldiBack2
 - toList
-- trim
-- trimStart
-- trimEnd
-- trimWith
-- trimStartWith
-- trimEndWith
-
-  These should work like the functions in the String module, except on ``substring``.
-  This makes it so trimming a string doesn't need to create an additional string object,
-  it simply returns a ``substring`` which is equal to or smaller than the input substring.
 
 - Implement a ``SubstringComparer`` class similar to ``StringComparer``.
 
