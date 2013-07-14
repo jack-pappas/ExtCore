@@ -117,14 +117,11 @@ String.Split
   This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly
   so it doesn't need to be reversed.
 
-- It might be more simpler to re-implement the existing String.Split functions (and implement the
-  new functions above) to work over ``substring`` instead. Once the functions are implemented for
-  ``substring``, we could just use ``Substring.ofString`` to create a ``substring`` spanning the
-  entire string, then call the ``substring``-based function with it.
-
 
 Substring
 ---------
+- split
+- splits
 - exactlyOne
 - foldi
 - foldiBack
@@ -137,6 +134,25 @@ Substring
 - Implement a ``substring``-compatible version of ``Regex.Matches`` as an extension method on ``Regex``.
 
 
+Substring.Split
+---------------
+- foldBack
+- exists
+- forall
+- scan
+- scanBack
+- mapReduce
+- mapScan
+- get
+
+  Given an index, gets the substring at that index in the array of substrings created by the split operation.
+
+- toList
+  
+  This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly
+  so it doesn't need to be reversed.
+
+
 Collections and Data Structures
 ===============================
 
@@ -146,6 +162,20 @@ Array
 - scan2
 - scanBack2
 - unfold
+
+
+ArrayView
+---------
+- tryFindBack
+- findBack
+- tryFindIndexBack
+- findIndexBack
+- tryFindIndexOfBack
+- findIndexOfBack
+- tryPickBack
+- pickBack
+
+- Re-implement ArrayView as a new struct type instead of an abbreviation for System.ArraySegment<T>. Then, we can implement structural equality and comparison on it.
 
 
 Bimap
