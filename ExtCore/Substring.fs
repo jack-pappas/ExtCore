@@ -250,6 +250,11 @@ module Substring =
             // "Extract" the first (left-most) character from the substring.
             Some (substr.[0], substr.[1..])
 
+    //
+    let inline private subUnsafe (substr : substring) offset count : substring =
+        // Create a new substring based on the input substring.
+        substring (substr.String, substr.Offset + offset, count)
+
     /// Gets a substring of a substring.
     [<CompiledName("Sub")>]
     let sub (substr : substring) offset count : substring =
@@ -265,7 +270,7 @@ module Substring =
                                    input substring when starting at the given offset."
 
         // Create a new substring based on the input substring.
-        substring (substr.String, substr.Offset + offset, count)
+        subUnsafe substr offset count
 
     /// Builds a new string by concatenating the given sequence of substrings.
     [<CompiledName("Concat")>]
@@ -656,6 +661,423 @@ module Substring =
         if substr.IsEmpty then substr
         else
             trimWith (fun c -> Array.exists ((=) c) chars) substr
+
+    /// Substring-splitting functions.
+    /// These functions are analagous calling the String.Split method with StringSplitOptions.None,
+    /// but are faster because they avoid creating the intermediate array of substrings.
+    [<RequireQualifiedAccess>]
+    module Split =
+        open System
+
+        // OPTIMIZE : The functions below could be modified to include optimized cases
+        // for when the separator array contains just one or two characters.
+
+        //
+        let private iterDefault (action : substring -> unit) (substr : substring) : unit =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Char.IsWhiteSpace substr.[i] then
+                    // Apply the function to the current substring.
+                    action <| subUnsafe substr offset length
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                action <| subUnsafe substr offset length
+
+        //
+        let private iterSeparators (separator : char[]) (action : substring -> unit) (substr : substring) : unit =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            /// A sorted copy of the separator array. Used with Array.BinarySearch
+            /// to quickly determine if a given character is a separator.
+            let sortedSeparators = Array.sort separator
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Array.BinarySearch (sortedSeparators, substr.[i]) >= 0 then
+                    // Apply the function to the current substring.
+                    action <| subUnsafe substr offset length
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                action <| subUnsafe substr offset length
+
+        /// Applies the given function to each of the substrings in the input string that are
+        /// delimited by elements of a specified Unicode character array.
+        [<CompiledName("Iterate")>]
+        let iter (separator : char[]) (action : substring -> unit) (substr : substring) : unit =
+            // Preconditions
+            // (None)
+
+            // OPTIMIZATION : If the input substring is empty, return immediately.
+            if isEmpty substr then ()
+            elif isNull separator || Array.isEmpty separator then
+                // The case where the separator array is null or empty needs special handling
+                // to maintain drop-in compatibilty with String.Split; in this case, any whitespace
+                // character is treated as a separator.
+                iterDefault action substr
+            else
+                iterSeparators separator action substr
+                
+        //
+        let private iteriDefault (action : FSharpFunc<_,_,_>) (substr : substring) : unit =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            /// The current substring index (amongst the delimited substrings in the input string).
+            let mutable substringIndex = 0
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Char.IsWhiteSpace substr.[i] then
+                    // Apply the function to the current substring.
+                    action.Invoke (substringIndex, subUnsafe substr offset length)
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                    // Increment the substring index.
+                    substringIndex <- substringIndex + 1
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                action.Invoke (substringIndex, subUnsafe substr offset length)
+
+        //
+        let private iteriSeparators (separator : char[]) (action : FSharpFunc<_,_,_>) (substr : substring) : unit =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            /// A sorted copy of the separator array. Used with Array.BinarySearch
+            /// to quickly determine if a given character is a separator.
+            let sortedSeparators = Array.sort separator
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            /// The current substring index (amongst the delimited substrings in the input string).
+            let mutable substringIndex = 0
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Array.BinarySearch (sortedSeparators, substr.[i]) >= 0 then
+                    // Apply the function to the current substring.
+                    action.Invoke (substringIndex, subUnsafe substr offset length)
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                    // Increment the substring index.
+                    substringIndex <- substringIndex + 1
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                action.Invoke (substringIndex, subUnsafe substr offset length)
+
+        /// Applies the given function to each of the substrings in the input string that are
+        /// delimited by elements of a specified Unicode character array. The integer index
+        /// applied to the function is the index of the substring within the virtual array of
+        /// substrings in the input string. For example, if the newline character (\n) is used
+        /// as the separator, the index of each substring would be the line number.
+        [<CompiledName("IterateIndexed")>]
+        let iteri (separator : char[]) (action : int -> substring -> unit) (substr : substring) : unit =
+            // Preconditions
+            // (None)
+
+            // OPTIMIZATION : If the input substring is empty, call the action with an empty substring and return.
+            if isEmpty substr then
+                action 0 substr
+            else
+                let action = FSharpFunc<_,_,_>.Adapt action
+                if isNull separator || Array.isEmpty separator then
+                    // The case where the separator array is null or empty needs special handling
+                    // to maintain drop-in compatibilty with String.Split; in this case, any whitespace
+                    // character is treated as a separator.
+                    iteriDefault action substr
+                else
+                    iteriSeparators separator action substr
+
+        //
+        let private foldDefault (folder : FSharpFunc<_,_,_>) (state : 'State) (substr : substring) : 'State =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            /// The current state value.
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Char.IsWhiteSpace substr.[i] then
+                    // Apply the function to the current substring.
+                    state <- folder.Invoke (state, subUnsafe substr offset length)
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                state <- folder.Invoke (state, subUnsafe substr offset length)
+            state
+
+        //
+        let private foldSeparators (separator : char[]) (folder : FSharpFunc<_,_,_>) (state : 'State) (substr : substring) : 'State =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            /// A sorted copy of the separator array. Used with Array.BinarySearch
+            /// to quickly determine if a given character is a separator.
+            let sortedSeparators = Array.sort separator
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            /// The current state value.
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Array.BinarySearch (sortedSeparators, substr.[i]) >= 0 then
+                    // Apply the function to the current substring.
+                    state <- folder.Invoke (state, subUnsafe substr offset length)
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                state <- folder.Invoke (state, subUnsafe substr offset length)
+            state
+
+        /// Applies the given function to each of the substrings in the input string that are
+        /// delimited by elements of a specified Unicode character array, threading an accumulator
+        /// argument through the computation.
+        [<CompiledName("Fold")>]
+        let fold (separator : char[]) (folder : 'State -> substring -> 'State) (state : 'State) (substr : substring) : 'State =
+            // Preconditions
+            // (None)
+
+            // OPTIMIZATION : If the input substring is empty, just call the folder with an empty substring then return.
+            if isEmpty substr then
+                folder state substr
+            else
+                let folder = FSharpFunc<_,_,_>.Adapt folder
+
+                // The case where the separator array is null or empty needs special handling
+                // to maintain drop-in compatibilty with String.Split; in this case, any whitespace
+                // character is treated as a separator.
+                if isNull separator || Array.isEmpty separator then
+                    foldDefault folder state substr
+                else
+                    foldSeparators separator folder state substr
+
+        let private foldiDefault (folder : FSharpFunc<_,_,_,_>) (state : 'State) (substr : substring) : 'State =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            /// The current substring index (amongst the delimited substrings in the input string).
+            let mutable substringIndex = 0
+
+            /// The current state value.
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Char.IsWhiteSpace substr.[i] then
+                    // Apply the function to the current substring.
+                    state <- folder.Invoke (state, substringIndex, subUnsafe substr offset length)
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                    // Increment the substring index.
+                    substringIndex <- substringIndex + 1
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                state <- folder.Invoke (state, substringIndex, subUnsafe substr offset length)
+            state
+
+        let private foldiSeparators (separator : char[]) (folder : FSharpFunc<_,_,_,_>) (state : 'State) (substr : substring) : 'State =
+            /// The length of the input substring.
+            let len = substr.Length
+
+            /// A sorted copy of the separator array. Used with Array.BinarySearch
+            /// to quickly determine if a given character is a separator.
+            let sortedSeparators = Array.sort separator
+
+            // The offset and length of the current substring.
+            let mutable offset = 0
+            let mutable length = 0
+
+            /// The current substring index (amongst the delimited substrings in the input string).
+            let mutable substringIndex = 0
+
+            /// The current state value.
+            let mutable state = state
+
+            for i = 0 to len - 1 do
+                // Is the current character a separator?
+                if Array.BinarySearch (sortedSeparators, substr.[i]) >= 0 then
+                    // Apply the function to the current substring.
+                    state <- folder.Invoke (state, substringIndex, subUnsafe substr offset length)
+
+                    // Update the offset to just past the end of this substring
+                    // and reset the length to zero to begin a new substring.
+                    offset <- i + 1
+                    length <- 0
+
+                    // Increment the substring index.
+                    substringIndex <- substringIndex + 1
+
+                else
+                    // "Add" this character to the current substring by
+                    // incrementing the substring length.
+                    length <- length + 1
+
+            // If the length is nonzero, then the last substring is still "in-progress"
+            // so apply the function to it.
+            if length > 0 then
+                state <- folder.Invoke (state, substringIndex, subUnsafe substr offset length)
+            state
+
+        /// Applies the given function to each of the substrings in the input string that are
+        /// delimited by elements of a specified Unicode character array, threading an accumulator
+        /// argument through the computation. The integer index
+        /// applied to the function is the index of the substring within the virtual array of
+        /// substrings in the input string. For example, if the newline character (\n) is used
+        /// as the separator, the index of each substring would be the line number.
+        [<CompiledName("FoldIndexed")>]
+        let foldi (separator : char[]) (folder : 'State -> int -> substring -> 'State) (state : 'State) (substr : substring) : 'State =
+            // Preconditions
+            // (None)
+
+            // OPTIMIZATION : If the input substring is empty, just call the folder with an empty substring then return.
+            if isEmpty substr then
+                folder state 0 substr
+            else
+                let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+                // The case where the separator array is null or empty needs special handling
+                // to maintain drop-in compatibilty with String.Split; in this case, any whitespace
+                // character is treated as a separator.
+                if isNull separator || Array.isEmpty separator then
+                    foldiDefault folder state substr
+                else
+                    foldiSeparators separator folder state substr
+
+        (*
+        //
+        [<CompiledName("Filter")>]
+        let filter (separator : char[], options : System.StringSplitOptions)
+                (predicate : substring -> bool) (str : string) : substring[] =
+            // Preconditions
+            checkNonNull "str" str
+
+            // OPTIMIZATION : If the input string is empty, return immediately.
+            if isEmpty str then Array.empty
+            else
+                notImpl "String.Split.filter"
+
+        //
+        [<CompiledName("Choose")>]
+        let choose (separator : char[], options : System.StringSplitOptions)
+                (chooser : substring -> string option) (str : string) : string[] =
+            // Preconditions
+            checkNonNull "str" str
+
+            // OPTIMIZATION : If the input string is empty, return immediately.
+            if isEmpty str then Array.empty
+            else
+                notImpl "String.Split.choose"
+        *)
 
 
 /// Extension methods for System.String and System.Text.StringBuilder

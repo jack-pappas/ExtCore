@@ -610,34 +610,22 @@ module Split =
             let elements = ResizeArray ()
 
             String.empty
-            |> String.Split.iter
-                ([| ','; |], StringSplitOptions.None)
+            |> String.Split.iter [| ','; |]
                 (Substring.length >> elements.Add)
 
-            ResizeArray.isEmpty elements
-            |> should be True
+            ResizeArray.toArray elements
+            |> Collection.assertEqual [| 0 |]
 
         do
             // Test cases for a string which does contain the specified characters.
             let elements = ResizeArray ()
 
             "Id,Title,First,MI,Last,DOB"
-            |> String.Split.iter ([| ','; |], StringSplitOptions.None)
+            |> String.Split.iter [| ','; |]
                 (Substring.length >> elements.Add)
 
             ResizeArray.toArray elements
-            |> assertEqual
-                [| 2; 5; 5; 2; 4; 3; |]
-
-            // Re-test using the option to remove empty strings.
-            let elements = ResizeArray ()
-                
-            "Id,Title,First,MI,Last,DOB"
-            |> String.Split.iter ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
-                (Substring.length >> elements.Add)
-
-            ResizeArray.toArray elements
-            |> assertEqual
+            |> Collection.assertEqual
                 [| 2; 5; 5; 2; 4; 3; |]
 
         do
@@ -646,23 +634,12 @@ module Split =
             let elements = ResizeArray ()
 
             "3262,,John,Q,Doe,1970-Jan-01"
-            |> String.Split.iter ([| ','; |], StringSplitOptions.None)
+            |> String.Split.iter [| ','; |]
                 (Substring.length >> elements.Add)
 
             ResizeArray.toArray elements
-            |> assertEqual
+            |> Collection.assertEqual
                 [| 4; 0; 4; 1; 3; 11; |]
-
-            // Re-test using the option to remove empty strings.
-            let elements = ResizeArray ()
-                
-            "3262,,John,Q,Doe,1970-Jan-01"
-            |> String.Split.iter ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
-                (Substring.length >> elements.Add)
-
-            ResizeArray.toArray elements
-            |> assertEqual
-                [| 4; 4; 1; 3; 11; |]
 
     [<Test>]
     let iteri () : unit =
@@ -671,39 +648,26 @@ module Split =
             let elements = ResizeArray ()
 
             String.empty
-            |> String.Split.iteri ([| ','; |], StringSplitOptions.None)
+            |> String.Split.iteri [| ','; |]
                 (fun index substr ->
                     index + Substring.length substr
                     |> elements.Add)
 
-            ResizeArray.isEmpty elements
-            |> should be True
+            ResizeArray.toArray elements
+            |> Collection.assertEqual [| 0 |]
 
         do
             // Test cases for a string which does contain the specified characters.
             let elements = ResizeArray ()
 
             "Id,Title,First,MI,Last,DOB"
-            |> String.Split.iteri ([| ','; |], StringSplitOptions.None)
+            |> String.Split.iteri [| ','; |]
                 (fun index substr ->
                     index + Substring.length substr
                     |> elements.Add)
 
             ResizeArray.toArray elements
-            |> assertEqual
-                [| 2; 6; 7; 5; 8; 8; |]
-
-            // Re-test using the option to remove empty strings.
-            let elements = ResizeArray ()
-                
-            "Id,Title,First,MI,Last,DOB"
-            |> String.Split.iteri ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
-                (fun index substr ->
-                    index + Substring.length substr
-                    |> elements.Add)
-
-            ResizeArray.toArray elements
-            |> assertEqual
+            |> Collection.assertEqual
                 [| 2; 6; 7; 5; 8; 8; |]
 
         do
@@ -712,35 +676,21 @@ module Split =
             let elements = ResizeArray ()
 
             "3262,,John,Q,Doe,1970-Jan-01"
-            |> String.Split.iteri ([| ','; |], StringSplitOptions.None)
+            |> String.Split.iteri [| ','; |]
                 (fun index substr ->
                     index + Substring.length substr
                     |> elements.Add)
 
             ResizeArray.toArray elements
-            |> assertEqual
+            |> Collection.assertEqual
                 [| 4; 1; 6; 4; 7; 16; |]
-
-            // Re-test using the option to remove empty strings.
-            let elements = ResizeArray ()
-                
-            "3262,,John,Q,Doe,1970-Jan-01"
-            |> String.Split.iteri ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
-                (fun index substr ->
-                    index + Substring.length substr
-                    |> elements.Add)
-
-            ResizeArray.toArray elements
-            |> assertEqual
-                [| 4; 6; 4; 7; 16; |]
 
     [<Test>]
     let fold () : unit =
         do
             // Test case for the empty string.
             (String.empty, String.empty)
-            ||> String.Split.fold
-                ([| ','; |], StringSplitOptions.None)
+            ||> String.Split.fold [| ','; |]
                 (fun state substr ->
                     state + ExtCore.Substring.toString substr)
             |> String.isEmpty
@@ -749,14 +699,7 @@ module Split =
         do
             // Test cases for a string which does contain the specified characters.
             (String.empty, "Id,Title,First,MI,Last,DOB")
-            ||> String.Split.fold ([| ','; |], StringSplitOptions.None)
-                (fun state substr ->
-                    state + ExtCore.Substring.toString substr)
-            |> assertEqual "IdTitleFirstMILastDOB"
-
-            // Re-test using the option to remove empty strings.
-            (String.empty, "Id,Title,First,MI,Last,DOB")
-            ||> String.Split.fold ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+            ||> String.Split.fold [| ','; |]
                 (fun state substr ->
                     state + ExtCore.Substring.toString substr)
             |> assertEqual "IdTitleFirstMILastDOB"
@@ -765,47 +708,28 @@ module Split =
             // Test case for a string which does contain the specified characters,
             // and where there are adjacent occurrences of the characters.
             (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
-            ||> String.Split.fold ([| ','; |], StringSplitOptions.None)
+            ||> String.Split.fold [| ','; |]
                 (fun state substr ->
                     state + (
                         if ExtCore.Substring.isEmpty substr then "(NULL)"
                         else ExtCore.Substring.toString substr))
             |> assertEqual "3262(NULL)JohnQDoe1970-Jan-01"
 
-            // Re-test using the option to remove empty strings.
-            (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
-            ||> String.Split.fold ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
-                (fun state substr ->
-                    state + (
-                        if ExtCore.Substring.isEmpty substr then "(NULL)"
-                        else ExtCore.Substring.toString substr))
-            |> assertEqual "3262JohnQDoe1970-Jan-01"
-
     [<Test>]
     let foldi () : unit =
         do
             // Test case for the empty string.
             (String.empty, String.empty)
-            ||> String.Split.foldi
-                ([| ','; |], StringSplitOptions.None)
+            ||> String.Split.foldi [| ','; |]
                 (fun state index substr ->
                     state + (
                         index.ToString() + ExtCore.Substring.toString substr))
-            |> String.isEmpty
-            |> should be True
+            |> assertEqual "0"
 
         do
             // Test cases for a string which does contain the specified characters.
             (String.empty, "Id,Title,First,MI,Last,DOB")
-            ||> String.Split.foldi ([| ','; |], StringSplitOptions.None)
-                (fun state index substr ->
-                    state + (
-                        index.ToString() + ExtCore.Substring.toString substr))
-            |> assertEqual "0Id1Title2First3MI4Last5DOB"
-
-            // Re-test using the option to remove empty strings.
-            (String.empty, "Id,Title,First,MI,Last,DOB")
-            ||> String.Split.foldi ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
+            ||> String.Split.foldi [| ','; |]
                 (fun state index substr ->
                     state + (
                         index.ToString() + ExtCore.Substring.toString substr))
@@ -815,21 +739,10 @@ module Split =
             // Test case for a string which does contain the specified characters,
             // and where there are adjacent occurrences of the characters.
             (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
-            ||> String.Split.foldi ([| ','; |], StringSplitOptions.None)
+            ||> String.Split.foldi [| ','; |]
                 (fun state index substr ->
                     state + (
                         index.ToString() + (
                             if ExtCore.Substring.isEmpty substr then "(NULL)"
                             else ExtCore.Substring.toString substr)))
             |> assertEqual "032621(NULL)2John3Q4Doe51970-Jan-01"
-
-            // Re-test using the option to remove empty strings.
-            (String.empty, "3262,,John,Q,Doe,1970-Jan-01")
-            ||> String.Split.foldi ([| ','; |], StringSplitOptions.RemoveEmptyEntries)
-                (fun state index substr ->
-                    state + (
-                        index.ToString() + (
-                            if ExtCore.Substring.isEmpty substr then "(NULL)"
-                            else ExtCore.Substring.toString substr)))
-            |> assertEqual "032622John3Q4Doe51970-Jan-01"
-
