@@ -29,22 +29,22 @@ open ExtCore
 
 /// Views the keys of the Dictionary as a sequence.
 [<CompiledName("Keys")>]
-let inline keys (dictionary : IDictionary<'Key, 'T>) =
+let inline keys (dictionary : dict<'Key, 'T>) =
     dictionary.Keys :> IEnumerable<'Key>
 
 /// Views the values of the Dictionary as a sequence.
 [<CompiledName("Values")>]
-let inline values (dictionary : IDictionary<'Key, 'T>) =
+let inline values (dictionary : dict<'Key, 'T>) =
     dictionary.Values :> IEnumerable<'T>
 
 /// Determines whether the Dictionary is empty.
 [<CompiledName("IsEmpty")>]
-let inline isEmpty (dictionary : IDictionary<'Key,'T>) =
+let inline isEmpty (dictionary : dict<'Key,'T>) =
     dictionary.Count = 0
 
 /// Gets the number of entries in the Dictionary.
 [<CompiledName("Count")>]
-let inline count (dictionary : IDictionary<'Key, 'T>) =
+let inline count (dictionary : dict<'Key, 'T>) =
     dictionary.Count
 
 /// Creates a mutable dictionary with the specified capacity.
@@ -54,7 +54,7 @@ let inline createMutable<'Key, 'T when 'Key : equality> (capacity : int) =
 
 /// Determines whether the Dictionary contains an element with the specified key.
 [<CompiledName("ContainsKey")>]
-let inline containsKey k (dictionary : IDictionary<'Key, 'T>) =
+let inline containsKey k (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -62,7 +62,7 @@ let inline containsKey k (dictionary : IDictionary<'Key, 'T>) =
 
 /// Adds a new entry to the dictionary.
 [<CompiledName("Add")>]
-let inline add k v (dictionary : IDictionary<'Key, 'T>) =
+let inline add k v (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -72,7 +72,7 @@ let inline add k v (dictionary : IDictionary<'Key, 'T>) =
 /// Removes the entry with the specified key from the Dictionary.
 /// An exception is raised if the entry cannot be removed.
 [<CompiledName("Remove")>]
-let inline remove (k : 'Key) (dictionary : IDictionary<'Key, 'T>) =
+let inline remove (k : 'Key) (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -85,7 +85,7 @@ let inline remove (k : 'Key) (dictionary : IDictionary<'Key, 'T>) =
 /// Lookup an element in the Dictionary, raising KeyNotFoundException if
 /// the dictionary does not contain an element with the specified key.
 [<CompiledName("Find")>]
-let inline find k (dictionary : IDictionary<'Key, 'T>) =
+let inline find k (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -93,7 +93,7 @@ let inline find k (dictionary : IDictionary<'Key, 'T>) =
             
 /// Attempts to retrieve the value associated with the specified key.
 [<CompiledName("TryFind")>]
-let inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
+let inline tryFind k (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -104,7 +104,7 @@ let inline tryFind k (dictionary : IDictionary<'Key, 'T>) =
 /// Updates the value of an entry (which has the specified key) in the Dictionary.
 /// Raises a KeyNotFoundException if the Dictionary does not contain an entry with the specified key.
 [<CompiledName("Update")>]
-let update k v (dictionary : IDictionary<'Key, 'T>) =
+let update k v (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -119,7 +119,7 @@ let update k v (dictionary : IDictionary<'Key, 'T>) =
 /// Updates the value of an entry (which has the specified key) in
 /// the Dictionary, or creates a new entry if one doesn't exist.
 [<CompiledName("UpdateOrAdd")>]
-let inline updateOrAdd k v (dictionary : IDictionary<'Key, 'T>) =
+let inline updateOrAdd k v (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
         
@@ -129,7 +129,7 @@ let inline updateOrAdd k v (dictionary : IDictionary<'Key, 'T>) =
 /// Applies the given function to successive entries, returning the
 /// first result where the function returns "Some(x)".
 [<CompiledName("TryPick")>]
-let tryPick picker (dictionary : IDictionary<'Key, 'T>) =
+let tryPick picker (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -142,7 +142,7 @@ let tryPick picker (dictionary : IDictionary<'Key, 'T>) =
 /// Applies the given function to sucecssive entries, returning the
 /// first x where the function returns "Some(x)".
 [<CompiledName("Pick")>]
-let pick picker (dictionary : IDictionary<'Key, 'T>) =
+let pick picker (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -155,7 +155,7 @@ let pick picker (dictionary : IDictionary<'Key, 'T>) =
 
 /// Views the Dictionary as a sequence of tuples.
 [<CompiledName("ToSeq")>]
-let toSeq (dictionary : IDictionary<'Key, 'T>) =
+let toSeq (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -165,7 +165,7 @@ let toSeq (dictionary : IDictionary<'Key, 'T>) =
 
 /// Applies the given function to each entry in the Dictionary.
 [<CompiledName("Iterate")>]
-let iter (action : 'Key -> 'T -> unit) (dictionary : IDictionary<'Key, 'T>) =
+let iter (action : 'Key -> 'T -> unit) (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -178,7 +178,7 @@ let iter (action : 'Key -> 'T -> unit) (dictionary : IDictionary<'Key, 'T>) =
 /// Returns a new Dictionary containing only the entries of the
 /// Dictionary for which the predicate returns 'true'.
 [<CompiledName("Filter")>]
-let filter (predicate : 'Key -> 'T -> bool) (dictionary : IDictionary<'Key, 'T>) =
+let filter (predicate : 'Key -> 'T -> bool) (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -194,7 +194,7 @@ let filter (predicate : 'Key -> 'T -> bool) (dictionary : IDictionary<'Key, 'T>)
 /// Builds a new Dictionary whose entries are the results of applying
 /// the given function to each element of the Dictionary.
 [<CompiledName("Map")>]
-let map (mapping : 'Key -> 'T -> 'U) (dictionary : IDictionary<'Key, 'T>) =
+let map (mapping : 'Key -> 'T -> 'U) (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -209,7 +209,7 @@ let map (mapping : 'Key -> 'T -> 'U) (dictionary : IDictionary<'Key, 'T>) =
 /// Returns a Dictionary comprised of the results "x,y" for each
 /// entry where the function returns Some(y).
 [<CompiledName("Choose")>]
-let choose (chooser : 'Key -> 'T -> 'U option) (dictionary : IDictionary<'Key, 'T>) =
+let choose (chooser : 'Key -> 'T -> 'U option) (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -224,7 +224,7 @@ let choose (chooser : 'Key -> 'T -> 'U option) (dictionary : IDictionary<'Key, '
 /// Applies a function to each entry of the Dictionary,
 /// threading an accumulator argument through the computation.
 [<CompiledName("Fold")>]
-let fold folder (state : 'State) (dict : IDictionary<'Key, 'T>) =
+let fold folder (state : 'State) (dict : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dict" dict
 
@@ -237,7 +237,7 @@ let fold folder (state : 'State) (dict : IDictionary<'Key, 'T>) =
 /// Splits the Dictionary into two Dictionaries, containing the entries
 /// for which the given predicate evaluates to "true" and "false".
 [<CompiledName("Partition")>]
-let partition partitioner (dictionary : IDictionary<'Key, 'T>) =
+let partition partitioner (dictionary : dict<'Key, 'T>) =
     // Preconditions
     checkNonNull "dictionary" dictionary
 
@@ -255,7 +255,7 @@ let partition partitioner (dictionary : IDictionary<'Key, 'T>) =
 
 /// Returns a read-only view of a dictionary.
 [<CompiledName("Readonly")>]
-let readonly (dictionary : IDictionary<'Key, 'T>) =
+let readonly (dictionary : dict<'Key, 'T>) =
     dict <| toSeq dictionary
 
 
@@ -263,7 +263,7 @@ let readonly (dictionary : IDictionary<'Key, 'T>) =
 module Safe =
     /// Attempts to retrieve the value associated with the specified key.
     [<CompiledName("TryFind")>]
-    let tryFind key (dict : IDictionary<'Key, 'T>) =
+    let tryFind key (dict : dict<'Key, 'T>) =
         // Preconditions
         checkNonNull "dict" dict
 
@@ -276,7 +276,7 @@ module Safe =
     /// Lookup an element in the Dictionary, raising KeyNotFoundException if
     /// the Dictionary does not contain an element with the specified key.
     [<CompiledName("Find")>]
-    let inline find key (dict : IDictionary<'Key, 'T>) =
+    let inline find key (dict : dict<'Key, 'T>) =
         // Preconditions
         checkNonNull "dict" dict
 
@@ -284,7 +284,7 @@ module Safe =
 
     /// Adds a new entry to the Dictionary.
     [<CompiledName("Add")>]
-    let add key value (dict : IDictionary<'Key, 'T>) =
+    let add key value (dict : dict<'Key, 'T>) =
         // Preconditions
         checkNonNull "dict" dict
 
@@ -297,7 +297,7 @@ module Safe =
     /// raising KeyNotFoundException if the Dictionary does not
     /// contain an element with the specified key.
     [<CompiledName("Update")>]
-    let update key value (dict : IDictionary<'Key, 'T>) =
+    let update key value (dict : dict<'Key, 'T>) =
         // Preconditions
         checkNonNull "dict" dict
 
@@ -314,7 +314,7 @@ module Safe =
     /// Removes the entry with the specified key from the Dictionary,
     /// returning a value indicating the success of the operation.
     [<CompiledName("Remove")>]
-    let remove (key : 'Key) (dict : IDictionary<'Key, 'T>) =
+    let remove (key : 'Key) (dict : dict<'Key, 'T>) =
         // Preconditions
         checkNonNull "dict" dict
 
@@ -327,7 +327,7 @@ module Safe =
     /// in the Dictionary, or creates a new entry if one doesn't exist.
     /// If the Dictionary is read-only, an InvalidOperationException is raised.
     [<CompiledName("UpdateOrAdd")>]
-    let updateOrAdd key value (dict : IDictionary<'Key, 'T>) =
+    let updateOrAdd key value (dict : dict<'Key, 'T>) =
         // Preconditions
         checkNonNull "dict" dict
             
@@ -341,7 +341,7 @@ module Safe =
     /// reference-typed keys and values will reference the same instances as
     /// in the mutable Dictionary, so care should be taken when using mutable keys and values.
     [<CompiledName("Immutable")>]
-    let immutable (dictionary : IDictionary<'Key, 'T>) =
+    let immutable (dictionary : dict<'Key, 'T>) =
         // Preconditions
         checkNonNull "dictionary" dictionary
 
