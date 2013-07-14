@@ -309,8 +309,6 @@ module String =
     let iteri (action : int -> char -> unit) (str : string) : unit =
         // Preconditions
         checkNonNull "str" str
-
-        Substring.iteri action (substring (str))
         
         let action = FSharpFunc<_,_,_>.Adapt action
 
