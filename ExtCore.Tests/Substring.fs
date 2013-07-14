@@ -23,10 +23,12 @@ open FsUnit
 //open FsCheck
 
 
-/// Tests for the ExtCore.Substring module.
-module Substring =
-    // TODO : Implement equality/comparison tests for substring.
+(* TODO :   Implement unit tests for the methods/properties of the substring type; these should
+            include equality/comparison tests and tests for interfaces implemented by substring. *)
 
+
+/// Tests for the ExtCore.Substring module.
+module SubstringModule =
     [<Test>]
     let get () : unit =
         do
@@ -291,3 +293,56 @@ module Substring =
                 index + 1)
             |> fst  // Discard the index
             |> assertEqual -8792059055315210054L
+
+    [<Test>]
+    let trimStartWith () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let trimEndWith () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let trimWith () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let trimStart () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let trimEnd () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let trim () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+
+/// Unit tests for the extension methods in the SubstringExtensions module.
+module SubstringExtensions =
+    /// Unit tests for the substring extension methods for System.String.
+    module String =
+        [<Test>]
+        let GetSlice () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+    /// Unit tests for the substring extension methods for System.Text.StringBuilder.
+    module StringBuilder =
+        [<Test>]
+        let Append () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+        [<Test>]
+        let AppendLine () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+    /// Unit tests for the substring extension methods for System.Text.RegularExpressions.Regex.
+    module Regex =
+        [<Test>]
+        let Match () : unit =
+            Assert.Ignore "Test not yet implemented."
+
+
+(* TODO :   Implement some randomized tests with FsCheck. *)
+

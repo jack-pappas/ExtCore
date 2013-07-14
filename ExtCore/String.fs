@@ -582,31 +582,9 @@ module String =
     let trimStartWith (predicate : char -> bool) (str : string) =
         // Preconditions
         checkNonNull "str" str
-        
-        /// The length of the string.
-        let len = String.length str
 
-        // OPTIMIZATION : If the string is empty, return immediately.
-        if len = 0 then empty
-        else
-            let mutable index = 0
-            let mutable foundMatch = false
-
-            // Loop until we find a character which _does_ match the predicate.
-            while index < len && not foundMatch do
-                foundMatch <- predicate str.[index]
-                index <- index + 1
-
-            // If none of the characters matched the predicate, don't bother
-            // calling .substring(), just return an empty string.
-            if foundMatch then
-                // If the predicate was immediately matched, there's nothing
-                // to trim so return the initial string.
-                if index = 1 then str
-                else
-                    str.Substring (index - 1)
-            else
-                empty
+        Substring.trimStartWith predicate (substring (str))
+        |> Substring.toString
 
     /// Removes all trailing occurrences of characters satisfying the given predicate from a string.
     [<CompiledName("TrimEndWith")>]
@@ -614,30 +592,8 @@ module String =
         // Preconditions
         checkNonNull "str" str
 
-        /// The length of the string.
-        let len = String.length str
-
-        // OPTIMIZATION : If the string is empty, return immediately.
-        if len = 0 then empty
-        else
-            let mutable index = len - 1
-            let mutable foundMatch = false
-
-            // Loop until we find a character which _does_ match the predicate.
-            while index >= 0 && not foundMatch do
-                foundMatch <- predicate str.[index]
-                index <- index - 1
-
-            // If none of the characters matched the predicate, don't bother
-            // calling .substring(), just return an empty string.
-            if foundMatch then
-                // If the predicate was immediately matched, there's nothing
-                // to trim so return the initial string.
-                if index = len - 2 then str
-                else
-                    str.Substring (0, index + 2)
-            else
-                empty
+        Substring.trimEndWith predicate (substring (str))
+        |> Substring.toString
 
     /// Removes all leading and trailing occurrences of characters satisfying the given predicate from a string.
     [<CompiledName("TrimWith")>]
@@ -645,54 +601,8 @@ module String =
         // Preconditions
         checkNonNull "str" str
 
-        /// The length of the string.
-        let len = String.length str
-
-        // OPTIMIZATION : If the string is empty, return immediately.
-        match len with
-        | 0 -> empty
-        | 1 ->
-            if predicate str.[0] then str else empty
-        | len ->
-            let mutable index = 0
-            let mutable foundLeftMatch = false
-
-            // Loop until we find a character which _does_ match the predicate.
-            while index < len && not foundLeftMatch do
-                foundLeftMatch <- predicate str.[index]
-                index <- index + 1
-
-            // If none of the characters matched the predicate, don't bother
-            // calling .substring(), just return an empty string.
-            if foundLeftMatch then
-                /// The starting index of the trimmed string.
-                let trimmedStartIndex = index - 1
-
-                // Loop backwards to trim the right side of the string.
-                let mutable index = len - 1
-                let mutable foundRightMatch = false
-
-                while index > trimmedStartIndex && not foundRightMatch do
-                    foundRightMatch <- predicate str.[index]
-                    index <- index - 1
-
-                // Return the trimmed string.
-                if foundRightMatch then
-                    /// The index of the last character in the trimmed string.
-                    let trimmedEndIndex = index + 1
-
-                    /// The length of the trimmed string.
-                    let trimmedLength =
-                        trimmedEndIndex - trimmedStartIndex + 1
-
-                    // If nothing was trimmed, just return the original string.
-                    if trimmedLength = len then str
-                    else
-                        str.Substring (trimmedStartIndex, trimmedLength)
-                else
-                    str.[trimmedStartIndex].ToString ()
-            else
-                empty
+        Substring.trimWith predicate (substring (str))
+        |> Substring.toString
 
     
     /// String-splitting functions.

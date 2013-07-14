@@ -102,14 +102,30 @@ type substring =
         this.String.ToCharArray (this.Offset, this.Length)
 
     /// Implements F# slicing syntax for substrings.
-    member this.GetSlice (startIndex, finishIndex) : substring =
+    member this.GetSlice (startIndex, endIndex) : substring =
+        let len = this.Length
         let startIndex = defaultArg startIndex 0
-        let finishIndex = defaultArg finishIndex this.Length
+        let endIndex = defaultArg endIndex (len - 1)
 
-        substring (
-            this.String,
-            this.Offset + startIndex,
-            finishIndex - startIndex + 1)
+        // Validate preconditions.
+        if startIndex < 0 then
+            invalidArg "startIndex" "The start index cannot be negative."
+        elif startIndex >= len then
+            invalidArg "startIndex" "The start index must be less than the length of the substring."
+        elif endIndex < 0 then
+            invalidArg "endIndex" "The end index cannot be negative."
+        elif endIndex >= len then
+            invalidArg "endIndex" "The end index must be less than the length of the substring."
+
+        // To emulate the same behavior used in other F# slicing operators (e.g., on array),
+        // when 'startIndex' > 'endIndex' it's not considered an error --
+        // just return an empty substring based on the input substring.
+        if startIndex > endIndex then
+            substring (this.String, 0, 0)
+        else
+            let startOffset = this.Offset + startIndex
+            let sliceLength = this.Offset + ((endIndex - startIndex) + 1)
+            substring (this.String, startOffset, sliceLength)
 
     /// Structural comparison on substrings.
     static member private Compare (x : substring, y : substring) =
@@ -178,6 +194,11 @@ type substring =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Substring =
     open OptimizedClosures
+
+    /// An empty substring value.
+    [<CompiledName("Empty")>]
+    let empty : substring =
+        substring (System.String.Empty, 0, 0)
 
     /// Returns the string underlying the given substring.
     [<CompiledName("String")>]
@@ -294,6 +315,40 @@ module Substring =
                 raise <| System.Collections.Generic.KeyNotFoundException ()
             | idx -> idx
 
+    /// Returns the index of the last occurrence of a specified character within a substring.
+    [<CompiledName("TryFindIndexOfBack")>]
+    let tryFindIndexOfBack (c : char) (substr : substring) =
+        // Preconditions
+        // (None)
+
+        // OPTIMIZATION : Return immediately if the substring is empty.
+        match substr.Length with
+        | 0 -> None
+        | len ->
+            match substr.String.LastIndexOf (c, substr.Offset, len) with
+            | -1 -> None
+            | idx -> Some idx
+
+    /// Returns the index of the last occurrence of a specified character within a substring.
+    [<CompiledName("FindIndexOfBack")>]
+    let findIndexOfBack (c : char) (substr : substring) =
+        // Preconditions
+        // (None)
+
+        // OPTIMIZATION : Return immediately if the substring is empty.
+        match substr.Length with
+        | 0 ->
+            // TODO : Return a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+        | len ->
+            match substr.String.LastIndexOf (c, substr.Offset, len) with
+            | -1 ->
+                // TODO : Return a better error message.
+                //keyNotFound ""
+                raise <| System.Collections.Generic.KeyNotFoundException ()
+            | idx -> idx
+
     /// Returns the index of the first character in the substring which satisfies the given predicate.
     [<CompiledName("TryFindIndex")>]
     let tryFindIndex (predicate : char -> bool) (substr : substring) : int option =
@@ -324,6 +379,43 @@ module Substring =
 
         // Use tryFindIndex to find the match; raise an exception if one is not found.
         match tryFindIndex predicate substr with
+        | Some index ->
+            index
+        | None ->
+            // TODO : Return a better error message.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    /// Returns the index of the last character in the substring which satisfies the given predicate.
+    [<CompiledName("TryFindIndexBack")>]
+    let tryFindIndexBack (predicate : char -> bool) (substr : substring) : int option =
+        // Preconditions
+        // (None)
+
+        let len = substr.Length
+
+        let mutable index = len - 1
+        let mutable foundMatch = false
+
+        while index >= 0 && not foundMatch do
+            foundMatch <- predicate substr.[index]
+            index <- index - 1
+
+        // Return the index of the matching character, if any.
+        if foundMatch then
+            // Increment the index since it was decremented after finding
+            // the match but before the loop terminated.
+            Some (index + 1)
+        else None
+
+    /// Returns the index of the last character in the substring which satisfies the given predicate.
+    [<CompiledName("FindIndexBack")>]
+    let findIndexBack (predicate : char -> bool) (substr : substring) : int =
+        // Preconditions
+        // (None)
+
+        // Use tryFindIndexBack to find the match; raise an exception if one is not found.
+        match tryFindIndexBack predicate substr with
         | Some index ->
             index
         | None ->
@@ -491,6 +583,79 @@ module Substring =
             for i = len - 1 downto 0 do
                 state <- folder.Invoke (substr.[i], state)
             state
+
+    /// Removes all leading occurrences of characters not satisfying the given predicate from a substring.
+    [<CompiledName("TrimStartWith")>]
+    let trimStartWith (predicate : char -> bool) (substr : substring) =
+        // Preconditions
+        // (None)
+
+        // OPTIMIZATION : If the substring is empty, return immediately.
+        if substr.IsEmpty then substr
+        else
+            match tryFindIndex predicate substr with
+            | None ->
+                // No characters matched, return an empty substring based on the input substring.
+                substring (substr.String, 0, 0)
+            | Some index ->
+                substr.[index..]
+
+    /// Removes all trailing occurrences of characters not satisfying the given predicate from a substring.
+    [<CompiledName("TrimEndWith")>]
+    let trimEndWith (predicate : char -> bool) (substr : substring) =
+        // Preconditions
+        // (None)
+
+        // OPTIMIZATION : If the substring is empty, return immediately.
+        if substr.IsEmpty then substr
+        else
+            match tryFindIndexBack predicate substr with
+            | None ->
+                // No characters matched, return an empty substring based on the input substring.
+                substring (substr.String, 0, 0)
+            | Some index ->
+                substr.[..index]
+
+    /// Removes all leading and trailing occurrences of characters not satisfying the given predicate from a substring.
+    [<CompiledName("TrimWith")>]
+    let trimWith (predicate : char -> bool) (substr : substring) =
+        // Preconditions
+        // (None)
+
+        trimStartWith predicate (trimEndWith predicate substr)
+
+    /// Removes all leading occurrences of the specified set of characters from a substring.
+    [<CompiledName("TrimStart")>]
+    let trimStart (chars : char[]) (substr : substring) =
+        // Preconditions
+        checkNonNull "chars" chars
+
+        // OPTIMIZATION : If the substring is empty, return immediately.
+        if substr.IsEmpty then substr
+        else
+            trimStartWith (fun c -> Array.exists ((=) c) chars) substr
+
+    /// Removes all trailing occurrences of the specified set of characters from a substring.
+    [<CompiledName("TrimEnd")>]
+    let trimEnd (chars : char[]) (substr : substring) =
+        // Preconditions
+        checkNonNull "chars" chars
+        
+        // OPTIMIZATION : If the substring is empty, return immediately.
+        if substr.IsEmpty then substr
+        else
+            trimEndWith (fun c -> Array.exists ((=) c) chars) substr
+
+    /// Removes all leading and trailing occurrences of the specified characters from a substring.
+    [<CompiledName("Trim")>]
+    let trim (chars : char[]) (substr : substring) =
+        // Preconditions
+        checkNonNull "chars" chars
+
+        // OPTIMIZATION : If the substring is empty, return immediately.
+        if substr.IsEmpty then substr
+        else
+            trimWith (fun c -> Array.exists ((=) c) chars) substr
 
 
 /// Extension methods for System.String and System.Text.StringBuilder
