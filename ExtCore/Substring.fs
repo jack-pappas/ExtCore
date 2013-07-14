@@ -124,8 +124,8 @@ type substring =
         if valueLen > this.Length then false
         else
             let comparisonLength = min valueLen this.Length
-            let thisStartOffset = this.Length - (comparisonLength + 1)
-            let valueStartOffset = valueLen - (comparisonLength + 1)
+            let thisStartOffset = this.Length - comparisonLength
+            let valueStartOffset = valueLen - comparisonLength
 
 #if INVARIANT_CULTURE_STRING_COMPARISON
             System.String.Compare (
