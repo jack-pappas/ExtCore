@@ -484,19 +484,50 @@ module Option =
 /// Additional functional operators on Choice<_,_> values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
-    //
+    /// Does the Choice value represent a result value?
     [<CompiledName("IsResult")>]
-    let inline isResult (choice : Choice<'T, 'Error>) : bool =
-        match choice with
+    let inline isResult (value : Choice<'T, 'Error>) : bool =
+        match value with
         | Choice1Of2 _ -> true
         | Choice2Of2 _ -> false
 
-    //
+    /// Does the Choice value represent an error value?
     [<CompiledName("IsError")>]
-    let inline isError (choice : Choice<'T, 'Error>) : bool =
-        match choice with
+    let inline isError (value : Choice<'T, 'Error>) : bool =
+        match value with
         | Choice1Of2 _ -> false
         | Choice2Of2 _ -> true
+
+    /// Gets the result value associated with the Choice.
+    [<CompiledName("Get")>]
+    let get (value : Choice<'T, 'Error>) =
+        match value with
+        | Choice1Of2 result ->
+            result
+        | Choice2Of2 _ ->
+            invalidArg "value" "Cannot get the result because the Choice`2 instance is an error value."
+
+    /// Creates a Choice from a result value.
+    [<CompiledName("Result")>]
+    let inline result value : Choice<'T, 'Error> =
+        Choice1Of2 value
+
+    /// Creates a Choice from an error value.
+    [<CompiledName("Error")>]
+    let inline error value : Choice<'T, 'Error> =
+        Choice2Of2 value
+
+    /// Creates a Choice representing an error value.
+    /// The error value in the Choice is a new exception created with the specified message.
+    [<CompiledName("FailWith")>]
+    let inline failwith msg =
+        Choice2Of2 <| exn msg
+
+    /// Creates a Choice representing an error value.
+    /// The error value in the Choice is a new exception created with the specified formatted message.
+    [<CompiledName("PrintFormatToStringThenFail")>]
+    let inline failwithf (fmt : Printf.StringFormat<'T, Choice<'U, exn>>) =
+        Printf.ksprintf failwith fmt
 
     /// <summary>
     /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
@@ -530,6 +561,19 @@ module Choice =
         | Choice1Of2 result ->
             binding result
         | Choice2Of2 error ->
+            Choice2Of2 error
+
+    /// Applies the specified binding function to a choice value representing a pair of result values
+    /// (Choice1Of2). If the first component of the pair represents an error value, the error is passed
+    /// through without modification; otherwise, if the second component of the pair represents an error
+    /// value, the error is passed through without modification; otherwise, both components represent
+    /// result values, which are applied to the specified binding function.
+    let bind2 (binding : 'T -> 'U -> Choice<'V, 'Error>) value1 value2 =
+        match value1, value2 with
+        | Choice1Of2 result1, Choice1Of2 result2 ->
+            binding result1 result2
+        | Choice1Of2 _, Choice2Of2 error
+        | Choice2Of2 error, _ ->
             Choice2Of2 error
 
     //
