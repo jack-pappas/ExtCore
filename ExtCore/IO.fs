@@ -20,7 +20,9 @@ namespace ExtCore.IO
 
 open System
 open System.IO
+open OptimizedClosures
 open ExtCore
+open ExtCore.Collections
 
 
 (* TODO :   Implement PathZipper type and module. *)
@@ -37,21 +39,305 @@ module File =
         let iter (action : string -> unit) (path : string) : unit =
             // Preconditions
             checkNonNull "path" path
+            // TODO : Check file exists
 
-            notImpl "File.Lines.iter"
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                action <| streamReader.ReadLine ()
+
+        //
+        [<CompiledName("IterateIndexed")>]
+        let iteri (action : int -> string -> unit) (path : string) : unit =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let action = FSharpFunc<_,_,_>.Adapt action
+
+            /// The current line index.
+            let mutable lineIndex = 0
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                action.Invoke (lineIndex, streamReader.ReadLine ())
+                lineIndex <- lineIndex + 1
 
         //
         [<CompiledName("Fold")>]
         let fold (folder : 'State -> string -> 'State) (state : 'State) (path : string) : 'State =
             // Preconditions
             checkNonNull "path" path
+            // TODO : Check file exists
 
-            notImpl "File.Lines.fold"
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
 
-        // iteri
-        // foldi
-        // choose
-        // choosei
-        // exists
-        // forall
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let folder = FSharpFunc<_,_,_>.Adapt folder
+            let mutable state = state
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                state <- folder.Invoke (state, streamReader.ReadLine ())
+
+            // Return the final state
+            state
+
+        //
+        [<CompiledName("FoldIndexed")>]
+        let foldi (folder : 'State -> int -> string -> 'State) (state : 'State) (path : string) : 'State =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            let mutable state = state
+            
+            /// The current line index.
+            let mutable lineIndex = 0
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                state <- folder.Invoke (state, lineIndex, streamReader.ReadLine ())
+                lineIndex <- lineIndex + 1
+
+            // Return the final state
+            state
+
+        //
+        [<CompiledName("Filter")>]
+        let filter (predicate : string -> bool) (path : string) : string[] =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            /// The filtered lines.
+            let filteredLines = ResizeArray ()
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                let currentLine = streamReader.ReadLine ()
+                if predicate currentLine then
+                    ResizeArray.add currentLine filteredLines
+
+            // Return the filtered lines.
+            ResizeArray.toArray filteredLines
+
+        //
+        [<CompiledName("Choose")>]
+        let choose (chooser : string -> 'T option) (path : string) : 'T[] =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            /// The chosen values.
+            let chosenValues = ResizeArray ()
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                match chooser <| streamReader.ReadLine () with
+                | None -> ()
+                | Some result ->
+                    ResizeArray.add result chosenValues
+
+            // Return the chosen values.
+            ResizeArray.toArray chosenValues
+
+        //
+        [<CompiledName("ChooseIndexed")>]
+        let choosei (chooser : int -> string -> 'T option) (path : string) : 'T[] =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+            /// The chosen values.
+            let chosenValues = ResizeArray ()
+
+            /// The current line index.
+            let mutable lineIndex = 0
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                match chooser.Invoke (lineIndex, streamReader.ReadLine ()) with
+                | None -> ()
+                | Some result ->
+                    ResizeArray.add result chosenValues
+
+                lineIndex <- lineIndex + 1
+
+            // Return the chosen values.
+            ResizeArray.toArray chosenValues
+
+        //
+        [<CompiledName("Exists")>]
+        let exists (predicate : string -> bool) (path : string) : bool =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let mutable foundMatch = false
+
+            // Iterate over the lines of the file until we find one that matches the predicate.
+            while not foundMatch && not streamReader.EndOfStream do
+                if predicate <| streamReader.ReadLine () then
+                    foundMatch <- true
+
+            // Return the value indicating whether a match was found.
+            foundMatch
+
+        //
+        [<CompiledName("Forall")>]
+        let forall (predicate : string -> bool) (path : string) : bool =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let mutable allMatches = true
+
+            // Iterate over the lines of the file until we find one that does not match the predicate.
+            while allMatches && not streamReader.EndOfStream do
+                if not (predicate <| streamReader.ReadLine ()) then
+                    allMatches <- false
+
+            // Return the value indicating whether all lines matched the predicate.
+            allMatches
+
+        //
+        [<CompiledName("TryFind")>]
+        let tryFind (predicate : string -> bool) (path : string) : string option =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let mutable result = None
+
+            // Iterate over the lines of the file until we find one that matches the predicate.
+            while Option.isNone result && not streamReader.EndOfStream do
+                let currentLine = streamReader.ReadLine ()
+                if predicate currentLine then
+                    result <- Some currentLine
+
+            // Return the result.
+            result
+
+        //
+        [<CompiledName("Find")>]
+        let find (predicate : string -> bool) (path : string) : string =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Call tryFind; raise an exception if no matching line was found.
+            match tryFind predicate path with
+            | Some str -> str
+            | None ->
+                // TODO : Provide a better exception message.
+                //keyNotFound ""
+                raise <| System.Collections.Generic.KeyNotFoundException ()
+
+        //
+        [<CompiledName("TryPick")>]
+        let tryPick (picker : string -> 'T option) (path : string) : 'T option =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            let mutable result = None
+
+            // Iterate over the lines of the file until we find one that matches the predicate.
+            while Option.isNone result && not streamReader.EndOfStream do
+                match picker <| streamReader.ReadLine () with
+                | None -> ()
+                | Some _ as res ->
+                    result <- res
+
+            // Return the result.
+            result
+
+        //
+        [<CompiledName("Pick")>]
+        let pick (picker : string -> 'T option) (path : string) : 'T =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
+
+            // Call tryPick; raise an exception if no matching line was found.
+            match tryPick picker path with
+            | Some x -> x
+            | None ->
+                // TODO : Provide a better exception message.
+                //keyNotFound ""
+                raise <| System.Collections.Generic.KeyNotFoundException ()
+
+
+        // map
+        // reduce
 
