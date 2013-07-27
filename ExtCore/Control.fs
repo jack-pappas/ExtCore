@@ -1618,10 +1618,8 @@ module Maybe =
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
-    (* TODO :   Move these functions into the Choice module in Pervasives.fs --
-                there's no real reason to have a separate module here. *)
-
     //
+    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.bindOrRaise function instead.")>]
     [<CompiledName("BindOrRaise")>]
     let inline bindOrRaise (x : Choice<'T, #exn>) : 'T =
         match x with
@@ -1631,6 +1629,7 @@ module Choice =
             r
 
     //
+    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.bindOrFail function instead.")>]
     [<CompiledName("BindOrFail")>]
     let inline bindOrFail (x : Choice<'T, string>) : 'T =
         match x with
@@ -1639,11 +1638,13 @@ module Choice =
             raise <| exn msg
 
     //
+    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.error function instead.")>]
     [<CompiledName("SetError")>]
     let inline setError error : Choice<'T, 'Error> =
         Choice2Of2 error
 
     //
+    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.failwith function instead.")>]
     [<CompiledName("Failwith")>]
     let inline failwith errorMsg : Choice<'T, string> =
         Choice2Of2 errorMsg

@@ -545,15 +545,15 @@ module Choice =
         Choice2Of2 value
 
     /// Creates a Choice representing an error value.
-    /// The error value in the Choice is a new exception created with the specified message.
+    /// The error value in the Choice is the specified error message.
     [<CompiledName("FailWith")>]
-    let inline failwith msg : Choice<'T, exn> =
-        Choice2Of2 <| exn msg
+    let inline failwith errorMsg : Choice<'T, string> =
+        Choice2Of2 errorMsg
 
     /// Creates a Choice representing an error value.
-    /// The error value in the Choice is a new exception created with the specified formatted message.
+    /// The error value in the Choice is the specified formatted error message.
     [<CompiledName("PrintFormatToStringThenFail")>]
-    let inline failwithf (fmt : Printf.StringFormat<'T, Choice<'U, exn>>) =
+    let inline failwithf (fmt : Printf.StringFormat<'T, Choice<'U, string>>) =
         Printf.ksprintf failwith fmt
 
     //
@@ -665,6 +665,29 @@ module Choice =
         | Choice2Of2 _ -> ()
         | Choice1Of2 result ->
             action result
+
+    //
+    [<CompiledName("BindOrRaise")>]
+    let inline bindOrRaise (x : Choice<'T, #exn>) : 'T =
+        match x with
+        | Choice2Of2 e ->
+            raise e
+        | Choice1Of2 r ->
+            r
+
+    //
+    [<CompiledName("BindOrFail")>]
+    let inline bindOrFail (x : Choice<'T, string>) : 'T =
+        match x with
+        | Choice1Of2 r -> r
+        | Choice2Of2 msg ->
+            raise <| exn msg
+
+    //
+    [<CompiledName("Attempt")>]
+    let attempt generator : Choice<'T, _> =
+        try Choice1Of2 <| generator ()
+        with ex -> Choice2Of2 ex
 
 
 /// Extensible printf-style formatting for numbers and other datatypes.
