@@ -398,6 +398,33 @@ module Option =
         | Some x -> Nullable<_> x
         | None -> Nullable<_> ()
 
+    //
+    [<CompiledName("OfChoice")>]
+    let ofChoice (value : Choice<'T, 'Error>) : 'T option =
+        match value with
+        | Choice1Of2 result ->
+            Some result
+        | Choice2Of2 _ ->
+            None
+
+    //
+    [<CompiledName("ToChoice")>]
+    let toChoice (value : 'T option) : Choice<'T, unit> =
+        match value with
+        | Some result ->
+            Choice1Of2 result
+        | None ->
+            Choice2Of2 ()
+
+    //
+    [<CompiledName("ToChoiceWith")>]
+    let toChoiceWith (errorValue : 'Error) (value : 'T option) : Choice<'T, 'Error> =
+        match value with
+        | Some result ->
+            Choice1Of2 result
+        | None ->
+            Choice2Of2 errorValue
+
     /// Creates an F# option from a value 'x'.
     /// When the specified condition is true, returns Some x; otherwise, None.
     [<CompiledName("Conditional")>]
@@ -520,7 +547,7 @@ module Choice =
     /// Creates a Choice representing an error value.
     /// The error value in the Choice is a new exception created with the specified message.
     [<CompiledName("FailWith")>]
-    let inline failwith msg =
+    let inline failwith msg : Choice<'T, exn> =
         Choice2Of2 <| exn msg
 
     /// Creates a Choice representing an error value.
@@ -528,6 +555,24 @@ module Choice =
     [<CompiledName("PrintFormatToStringThenFail")>]
     let inline failwithf (fmt : Printf.StringFormat<'T, Choice<'U, exn>>) =
         Printf.ksprintf failwith fmt
+
+    //
+    [<CompiledName("OfOption")>]
+    let ofOption (value : 'T option) : Choice<'T, unit> =
+        match value with
+        | Some result ->
+            Choice1Of2 result
+        | None ->
+            Choice2Of2 ()
+
+    //
+    [<CompiledName("ToOption")>]
+    let toOption (value : Choice<'T, 'Error>) : 'T option =
+        match value with
+        | Choice1Of2 result ->
+            Some result
+        | Choice2Of2 _ ->
+            None
 
     /// <summary>
     /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
@@ -568,6 +613,7 @@ module Choice =
     /// through without modification; otherwise, if the second component of the pair represents an error
     /// value, the error is passed through without modification; otherwise, both components represent
     /// result values, which are applied to the specified binding function.
+    [<CompiledName("Bind2")>]
     let bind2 (binding : 'T -> 'U -> Choice<'V, 'Error>) value1 value2 =
         match value1, value2 with
         | Choice1Of2 result1, Choice1Of2 result2 ->
