@@ -337,7 +337,54 @@ module File =
                 //keyNotFound ""
                 raise <| System.Collections.Generic.KeyNotFoundException ()
 
+        //
+        [<CompiledName("Map")>]
+        let map (mapping : string -> 'T) (path : string) : 'T[] =
+            // Preconditions
+            checkNonNull "path" path
+            // TODO : Check file exists
 
-        // map
-        // reduce
+            // Create a FileStream and wrap it in a StreamReader so we can read the file line-by-line.
+            // FileStream is used instead of creating the StreamReader directly from the path because
+            // it allows us to relax the FileAccess and FileShare settings.
+            use fileStream = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.Read)
+            use streamReader = new StreamReader (fileStream)
+
+            /// The mapped values.
+            let mappedValues = ResizeArray ()
+
+            // Iterate over the lines of the file, applying the function to each of them.
+            while not streamReader.EndOfStream do
+                let mappedValue = mapping <| streamReader.ReadLine ()
+                ResizeArray.add mappedValue mappedValues
+
+            // Return the chosen values.
+            ResizeArray.toArray mappedValues
+
+//        //
+//        [<CompiledName("Partition")>]
+//        let partition (predicate : string -> bool) (path : string) : string[] * string[] =
+//            // Preconditions
+//            checkNonNull "path" path
+//            // TODO : Check file exists
+//
+//            notImpl "IO.File.Lines.partition"
+//
+//        //
+//        [<CompiledName("MapPartition")>]
+//        let mapPartition (partitioner : string -> Choice<'T, 'U>) (path : string) : 'T[] * 'U[] =
+//            // Preconditions
+//            checkNonNull "path" path
+//            // TODO : Check file exists
+//
+//            notImpl "IO.File.Lines.mapPartition"
+//
+//        //
+//        [<CompiledName("MapReduce")>]
+//        let mapReduce (mapReducer : IMapReduction<string, 'T>) (path : string) : 'T =
+//            // Preconditions
+//            checkNonNull "path" path
+//            // TODO : Check file exists
+//
+//            notImpl "IO.File.Lines.mapPartition"
 
