@@ -576,6 +576,62 @@ module List =
 
             !iterationCount |> assertEqual 3
 
+    [<Test>]
+    let foldBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let fold2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let foldBack2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let exists () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let exists2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let forall () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let forall2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let filter () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let choose () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tryFind () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let find () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tryPick () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let pick () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let partition () : unit =
+        Assert.Ignore "Test not yet implemented."
+
 
 /// Tests for the ExtCore.Control.Collections.Choice.Seq module.
 module Seq =

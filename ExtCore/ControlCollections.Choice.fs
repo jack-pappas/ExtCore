@@ -338,8 +338,6 @@ module List =
         // Preconditions
         checkNonNull "list1" list1
         checkNonNull "list2" list2
-        if List.length list1 <> List.length list2 then
-            invalidArg "list2" "The lists have different lengths."
 
         let action = FSharpFunc<_,_,_>.Adapt action
 
@@ -359,7 +357,7 @@ module List =
                     iterRec (tl1, tl2)
 
             | _, _ ->
-                failwith "The lists have differing lengths -- they may have been modified in some invalid way."
+                failwith "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         iterRec (list1, list2)
@@ -371,8 +369,6 @@ module List =
         // Preconditions
         checkNonNull "list1" list1
         checkNonNull "list2" list2
-        if List.length list1 <> List.length list2 then
-            invalidArg "list2" "The lists have different lengths."
 
         let action = FSharpFunc<_,_,_,_>.Adapt action
 
@@ -392,7 +388,7 @@ module List =
                     iterRec (tl1, tl2, index + 1)
 
             | _, _ ->
-                failwith "The lists have differing lengths -- they may have been modified in some invalid way."
+                failwith "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         iterRec (list1, list2, 0)
@@ -451,8 +447,6 @@ module List =
         // Preconditions
         checkNonNull "list1" list1
         checkNonNull "list2" list2
-        if List.length list1 <> List.length list2 then
-            invalidArg "list2" "The lists have different lengths."
 
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
@@ -472,7 +466,7 @@ module List =
                     mapRec (result :: acc, tl1, tl2)
 
             | _, _ ->
-                failwith "The lists have differing lengths -- they may have been modified in some invalid way."
+                failwith "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         mapRec (List.empty, list1, list2)
@@ -483,8 +477,6 @@ module List =
         // Preconditions
         checkNonNull "list1" list1
         checkNonNull "list2" list2
-        if List.length list1 <> List.length list2 then
-            invalidArg "list2" "The lists have different lengths."
 
         let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
 
@@ -504,10 +496,41 @@ module List =
                     mapRec (result :: acc, index + 1, tl1, tl2)
 
             | _, _ ->
-                failwith "The lists have differing lengths -- they may have been modified in some invalid way."
+                failwith "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         mapRec (List.empty, 0, list1, list2)
+
+    //
+    [<CompiledName("Map3")>]
+    let map3 (mapping : 'T1 -> 'T2 -> 'T3 -> Choice<'U, 'Error>) (list1 : 'T1 list) (list2 : 'T2 list) (list3 : 'T3 list) =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+        checkNonNull "list3" list3
+
+        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+
+        let rec mapRec (acc, list1, list2, list3) =
+            match list1, list2, list3 with
+            | [], [], [] ->
+                Choice1Of2 <| List.rev acc
+                
+            | hd1 :: tl1, hd2 :: tl2, hd3 :: tl3 ->
+                // Apply the function to the heads of the lists.
+                // If the result is an error, return it;
+                // otherwise continue processing recursively.
+                match mapping.Invoke (hd1, hd2, hd3) with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 result ->
+                    mapRec (result :: acc, tl1, tl2, tl3)
+
+            | _, _, _ ->
+                failwith "The lists have different lengths."
+                        
+        // Call the recursive implementation function. 
+        mapRec (List.empty, list1, list2, list3)
 
     //
     [<CompiledName("Fold")>]
@@ -533,6 +556,351 @@ module List =
 
         // Call the recursive implementation function.
         foldRec (state, lst)
+
+    //
+    [<CompiledName("Fold2")>]
+    let fold2 (folder : 'State -> 'T1 -> 'T2 -> Choice<'State, 'Error>) (state : 'State) (list1 : 'T1 list) (list2 : 'T2 list) =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        let rec foldRec (list1, list2, state) =
+            match list1, list2 with
+            | [], [] ->
+                Choice1Of2 state
+                
+            | hd1 :: tl1, hd2 :: tl2 ->
+                // Apply the function to the heads of the lists.
+                // If the result is an error, return it;
+                // otherwise continue processing recursively.
+                match folder.Invoke (state, hd1, hd2) with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 state ->
+                    foldRec (tl1, tl2, state)
+
+            | _, _ ->
+                failwith "The lists have different lengths."
+                        
+        // Call the recursive implementation function. 
+        foldRec (list1, list2, state)
+
+    //
+    [<CompiledName("FoldBack")>]
+    let foldBack (folder : 'T -> 'State -> Choice<'State, 'Error>) (list : 'T list) (state : 'State) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+            
+        let rec foldRec (lst, state) =
+            match lst with
+            | [] ->
+                Choice1Of2 state
+            | hd :: tl ->
+                // Apply the function to the head of the list.
+                // If the result is an error, return it;
+                // otherwise, continue processing recursively.
+                match folder.Invoke (hd, state) with
+                | (Choice2Of2 _) as error ->
+                    error
+                | Choice1Of2 state ->
+                    foldRec (tl, state)
+
+        // Call the recursive implementation function.
+        foldRec (List.rev list, state)
+
+    //
+    [<CompiledName("FoldBack2")>]
+    let foldBack2 (folder : 'T1 -> 'T2 -> 'State -> Choice<'State, 'Error>) (list1 : 'T1 list) (list2 : 'T2 list) (state : 'State) =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        let folder = FSharpFunc<_,_,_,_>.Adapt folder
+
+        let rec foldRec (list1, list2, state) =
+            match list1, list2 with
+            | [], [] ->
+                Choice1Of2 state
+                
+            | hd1 :: tl1, hd2 :: tl2 ->
+                // Apply the function to the heads of the lists.
+                // If the result is an error, return it;
+                // otherwise continue processing recursively.
+                match folder.Invoke (hd1, hd2, state) with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 state ->
+                    foldRec (tl1, tl2, state)
+
+            | _, _ ->
+                failwith "The lists have different lengths."
+                        
+        // Call the recursive implementation function. 
+        foldRec (List.rev list1, List.rev list2, state)
+
+    //
+    [<CompiledName("Exists")>]
+    let exists (predicate : 'T -> Choice<bool, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec existsRec list =
+            match list with
+            | [] ->
+                Choice1Of2 false
+            | hd :: tl ->
+                // Apply the predicate to the head of the list.
+                // If the result is an error, return it; otherwise, if the result value
+                // is 'true', return immediately; otherwise, continue processing recursively.
+                match predicate hd with
+                | Choice2Of2 _ as error ->
+                    error
+                | Choice1Of2 true as result ->
+                    result
+                | Choice1Of2 false ->
+                    existsRec tl
+
+        // Call the recursive implementation function.
+        existsRec list
+
+    //
+    [<CompiledName("Exists2")>]
+    let exists2 (predicate : 'T1 -> 'T2 -> Choice<bool, 'Error>) (list1 : 'T1 list) (list2 : 'T2 list) =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        let rec existsRec (list1, list2) =
+            match list1, list2 with
+            | [], [] ->
+                Choice1Of2 false
+            | hd1 :: tl1, hd2 :: tl2 ->
+                // Apply the predicate to the heads of the lists.
+                // If the result is an error, return it; otherwise, if the result value
+                // is 'true', return immediately; otherwise, continue processing recursively.
+                match predicate.Invoke (hd1, hd2) with
+                | Choice2Of2 _ as error ->
+                    error
+                | Choice1Of2 true as result ->
+                    result
+                | Choice1Of2 false ->
+                    existsRec (tl1, tl2)
+            | _, _ ->
+                failwith "The lists have different lengths."
+
+        // Call the recursive implementation function.
+        existsRec (list1, list2)
+
+    //
+    [<CompiledName("Forall")>]
+    let forall (predicate : 'T -> Choice<bool, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec existsRec list =
+            match list with
+            | [] ->
+                Choice1Of2 true
+            | hd :: tl ->
+                // Apply the predicate to the head of the list.
+                // If the result is an error, return it; otherwise, if the result value
+                // is 'false', return immediately; otherwise, continue processing recursively.
+                match predicate hd with
+                | Choice2Of2 _ as error ->
+                    error
+                | Choice1Of2 false as result ->
+                    result
+                | Choice1Of2 true ->
+                    existsRec tl
+
+        // Call the recursive implementation function.
+        existsRec list
+
+    //
+    [<CompiledName("Forall2")>]
+    let forall2 (predicate : 'T1 -> 'T2 -> Choice<bool, 'Error>) (list1 : 'T1 list) (list2 : 'T2 list) =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        let rec existsRec (list1, list2) =
+            match list1, list2 with
+            | [], [] ->
+                Choice1Of2 true
+            | hd1 :: tl1, hd2 :: tl2 ->
+                // Apply the predicate to the heads of the lists.
+                // If the result is an error, return it; otherwise, if the result value
+                // is 'false', return immediately; otherwise, continue processing recursively.
+                match predicate.Invoke (hd1, hd2) with
+                | Choice2Of2 _ as error ->
+                    error
+                | Choice1Of2 false as result ->
+                    result
+                | Choice1Of2 true ->
+                    existsRec (tl1, tl2)
+            | _, _ ->
+                failwith "The lists have different lengths."
+
+        // Call the recursive implementation function.
+        existsRec (list1, list2)
+
+    //
+    [<CompiledName("Filter")>]
+    let filter (predicate : 'T -> Choice<bool, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec filterRec (acc, list) =
+            match list with
+            | [] ->
+                Choice1Of2 <| List.rev acc
+            | hd :: tl ->
+                // Apply the predicate to the head of the list.
+                // If the result is an error, return it.
+                // Otherwise, if the result value is 'true', cons the element onto the accumulator
+                // and continue processing; otherwise, just continue processing.
+                match predicate hd with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 true ->
+                    filterRec (hd :: acc, tl)
+                | Choice1Of2 false ->
+                    filterRec (acc, tl)
+
+        // Call the recursive implementation function.
+        filterRec ([], list)
+
+    //
+    [<CompiledName("Choose")>]
+    let choose (chooser : 'T -> Choice<'U option, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec chooseRec (acc, list) =
+            match list with
+            | [] ->
+                Choice1Of2 <| List.rev acc
+            | hd :: tl ->
+                // Apply the chooser to the head of the list.
+                // If the result is an error, return it.
+                // Otherwise, if the result value is 'Some', cons the element onto the accumulator
+                // and continue processing; otherwise, just continue processing.
+                match chooser hd with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 result ->
+                    chooseRec (result %? acc, tl)
+
+        // Call the recursive implementation function.
+        chooseRec ([], list)
+
+    //
+    [<CompiledName("TryFind")>]
+    let tryFind (predicate : 'T -> Choice<bool, 'Error>) (list : 'T list) : Choice<'T option, 'Error> =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec tryFindRec list =
+            match list with
+            | [] ->
+                Choice1Of2 None
+            | hd :: tl ->
+                match predicate hd with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 true ->
+                    Choice1Of2 <| Some hd
+                | Choice1Of2 false ->
+                    tryFindRec tl
+
+        // Call the recursive implementation function.
+        tryFindRec list
+
+    //
+    [<CompiledName("Find")>]
+    let find (predicate : 'T -> Choice<bool, 'Error>) (list : 'T list) : Choice<'T, 'Error> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call tryFind -- if it returns None, raise an exception.
+        match tryFind predicate list with
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 (Some result) ->
+            Choice1Of2 result
+        | Choice1Of2 None ->
+            // TODO : Provide a better error message here.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("TryPick")>]
+    let tryPick (picker : 'T -> Choice<'U option, 'Error>) (list : 'T list) : Choice<'U option, 'Error> =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec tryPickRec list =
+            match list with
+            | [] ->
+                Choice1Of2 None
+            | hd :: tl ->
+                match picker hd with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 (Some _ as result) ->
+                    Choice1Of2 result
+                | Choice1Of2 None ->
+                    tryPickRec tl
+
+        // Call the recursive implementation function.
+        tryPickRec list
+
+    //
+    [<CompiledName("Pick")>]
+    let pick (picker : 'T -> Choice<'U option, 'Error>) (list : 'T list) : Choice<'U, 'Error> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call tryPick -- if it returns None, raise an exception.
+        match tryPick picker list with
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 (Some result) ->
+            Choice1Of2 result
+        | Choice1Of2 None ->
+            // TODO : Provide a better error message here.
+            //keyNotFound ""
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+
+    //
+    [<CompiledName("Partition")>]
+    let partition (predicate : 'T -> Choice<bool, 'Error>) (list : 'T list) : Choice<'T list * 'T list, 'Error> =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec partitionRec (trueAcc, falseAcc, list) =
+            match list with
+            | [] ->
+                Choice1Of2 (List.rev trueAcc, List.rev falseAcc)
+            | hd :: tl ->
+                match predicate hd with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 true ->
+                    partitionRec (hd :: trueAcc, falseAcc, tl)
+                | Choice1Of2 false ->
+                    partitionRec (trueAcc, hd :: falseAcc, tl)
+
+        // Call the recursive implementation function.
+        partitionRec ([], [], list)
 
 
 /// The standard F# Seq module, lifted into the Choice monad.
