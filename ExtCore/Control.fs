@@ -1618,6 +1618,9 @@ module Maybe =
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
+    (* TODO :   Move these functions into the Choice module in Pervasives.fs --
+                there's no real reason to have a separate module here. *)
+
     //
     [<CompiledName("BindOrRaise")>]
     let inline bindOrRaise (x : Choice<'T, #exn>) : 'T =

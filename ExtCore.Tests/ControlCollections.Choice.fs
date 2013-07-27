@@ -379,37 +379,12 @@ module Array =
 /// Tests for the ExtCore.Control.Collections.Choice.List module.
 module List =
     [<Test>]
-    let fold () : unit =
-        // Test case for an empty list.
-        ("", List.empty)
-        ||> Choice.List.fold (fun _ _ -> Choice2Of2 "Error!")
-        |> assertEqual (Choice1Of2 "")
+    let iter () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-        // Sample usage test cases.
-        ("", [0..4])
-        ||> Choice.List.fold (fun str x ->
-            if x <> 0 && x % 5 = 0 then Choice2Of2 x
-            else Choice1Of2 (str + ((char (int 'a' + x)).ToString ())))
-        |> assertEqual (Choice1Of2 "abcde")
-
-        ("", [0..5])
-        ||> Choice.List.fold (fun str x ->
-            if x <> 0 && x % 5 = 0 then Choice2Of2 x
-            else Choice1Of2 (str + ((char (int 'a' + x)).ToString ())))
-        |> assertEqual (Choice2Of2 5)
-
-        // Test case for short-circuiting.
-        do
-            let iterationCount = ref 0
-
-            ("", [0..5])
-            ||> Choice.List.fold (fun str x ->
-                incr iterationCount
-                if x <> 0 && x % 2 = 0 then Choice2Of2 x
-                else Choice1Of2 (str + ((char (int 'a' + x)).ToString ())))
-            |> assertEqual (Choice2Of2 2)
-
-            !iterationCount |> assertEqual 3
+    [<Test>]
+    let iteri () : unit =
+        Assert.Ignore "Test not yet implemented."
 
     [<Test>]
     let iter2 () : unit =
@@ -471,6 +446,18 @@ module List =
         ([0..4], [0..7])
         ||> Choice.List.iter2 (fun _ _ -> Choice2Of2 "Error")
         |> ignore
+
+    [<Test>]
+    let iteri2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let map () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let mapi () : unit =
+        Assert.Ignore "Test not yet implemented."
 
     [<Test>]
     let map2 () : unit =
@@ -555,6 +542,39 @@ module List =
         ([0..4], [0..7])
         ||> Choice.List.mapi2 (fun _ _ _ -> Choice2Of2 "Error!")
         |> ignore
+
+    [<Test>]
+    let fold () : unit =
+        // Test case for an empty list.
+        ("", List.empty)
+        ||> Choice.List.fold (fun _ _ -> Choice2Of2 "Error!")
+        |> assertEqual (Choice1Of2 "")
+
+        // Sample usage test cases.
+        ("", [0..4])
+        ||> Choice.List.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then Choice2Of2 x
+            else Choice1Of2 (str + ((char (int 'a' + x)).ToString ())))
+        |> assertEqual (Choice1Of2 "abcde")
+
+        ("", [0..5])
+        ||> Choice.List.fold (fun str x ->
+            if x <> 0 && x % 5 = 0 then Choice2Of2 x
+            else Choice1Of2 (str + ((char (int 'a' + x)).ToString ())))
+        |> assertEqual (Choice2Of2 5)
+
+        // Test case for short-circuiting.
+        do
+            let iterationCount = ref 0
+
+            ("", [0..5])
+            ||> Choice.List.fold (fun str x ->
+                incr iterationCount
+                if x <> 0 && x % 2 = 0 then Choice2Of2 x
+                else Choice1Of2 (str + ((char (int 'a' + x)).ToString ())))
+            |> assertEqual (Choice2Of2 2)
+
+            !iterationCount |> assertEqual 3
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.Seq module.

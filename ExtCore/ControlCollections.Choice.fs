@@ -284,29 +284,166 @@ module Array =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
     //
-    [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> Choice<'State, 'Error>) (state : 'State) (lst : 'T list) =
+    [<CompiledName("Iterate")>]
+    let iter (action : 'T -> Choice<unit, 'Error>) (list : 'T list) : Choice<unit, 'Error> =
         // Preconditions
-        checkNonNull "lst" lst
+        checkNonNull "list" list
 
-        let folder = FSharpFunc<_,_,_>.Adapt folder
-            
-        let rec foldRec (state, lst) =
+        let rec iterRec lst =
             match lst with
             | [] ->
-                Choice1Of2 state
+                Choice1Of2 ()
             | hd :: tl ->
-                // Apply the function to the head of the list.
-                // If the result is an error, return it;
-                // otherwise, continue processing recursively.
-                match folder.Invoke (state, hd) with
-                | (Choice2Of2 _) as error ->
-                    error
-                | Choice1Of2 state ->
-                    foldRec (state, tl)
+                // Apply the action to the head of the list.
+                // If the result is an error, return it immediately;
+                // otherwise, continue processing the list recursively.
+                match action hd with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 () ->
+                    iterRec tl
 
         // Call the recursive implementation function.
-        foldRec (state, lst)
+        iterRec list
+
+    //
+    [<CompiledName("IterateIndexed")>]
+    let iteri (action : int -> 'T -> Choice<unit, 'Error>) (list : 'T list) : Choice<unit, 'Error> =
+        // Preconditions
+        checkNonNull "list" list
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let rec iterRec lst index =
+            match lst with
+            | [] ->
+                Choice1Of2 ()
+            | hd :: tl ->
+                // Apply the action to the head of the list.
+                // If the result is an error, return it immediately;
+                // otherwise, continue processing the list recursively.
+                match action.Invoke (index, hd) with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 () ->
+                    iterRec tl (index + 1)
+
+        // Call the recursive implementation function.
+        iterRec list 0
+
+    //
+    [<CompiledName("Iterate2")>]
+    let iter2 (action : 'T1 -> 'T2 -> Choice<unit, 'Error>)
+            (list1 : 'T1 list) (list2 : 'T2 list) : Choice<unit, 'Error> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+        if List.length list1 <> List.length list2 then
+            invalidArg "list2" "The lists have different lengths."
+
+        let action = FSharpFunc<_,_,_>.Adapt action
+
+        let rec iterRec (list1, list2) =
+            match list1, list2 with
+            | [], [] ->
+                Choice1Of2 ()
+                
+            | hd1 :: tl1, hd2 :: tl2 ->
+                // Apply the function to the heads of the lists.
+                // If the result is an error, return it;
+                // otherwise continue processing recursively.
+                match action.Invoke (hd1, hd2) with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 () ->
+                    iterRec (tl1, tl2)
+
+            | _, _ ->
+                failwith "The lists have differing lengths -- they may have been modified in some invalid way."
+                        
+        // Call the recursive implementation function. 
+        iterRec (list1, list2)
+
+    //
+    [<CompiledName("IterateIndexed2")>]
+    let iteri2 (action : int -> 'T1 -> 'T2 -> Choice<unit, 'Error>)
+            (list1 : 'T1 list) (list2 : 'T2 list) : Choice<unit, 'Error> =
+        // Preconditions
+        checkNonNull "list1" list1
+        checkNonNull "list2" list2
+        if List.length list1 <> List.length list2 then
+            invalidArg "list2" "The lists have different lengths."
+
+        let action = FSharpFunc<_,_,_,_>.Adapt action
+
+        let rec iterRec (list1, list2, index) =
+            match list1, list2 with
+            | [], [] ->
+                Choice1Of2 ()
+                
+            | hd1 :: tl1, hd2 :: tl2 ->
+                // Apply the function to the heads of the lists.
+                // If the result is an error, return it;
+                // otherwise continue processing recursively.
+                match action.Invoke (index, hd1, hd2) with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 () ->
+                    iterRec (tl1, tl2, index + 1)
+
+            | _, _ ->
+                failwith "The lists have differing lengths -- they may have been modified in some invalid way."
+                        
+        // Call the recursive implementation function. 
+        iterRec (list1, list2, 0)
+
+    //
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> Choice<'U, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let rec mapRec acc lst =
+            match lst with
+            | [] ->
+                Choice1Of2 <| List.rev acc
+            | hd :: tl ->
+                // Apply the mapping to the head of the list.
+                // If the result is an error, return it immediately;
+                // otherwise, cons the result onto the accumulator and recurse.
+                match mapping hd with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 result ->
+                    mapRec (result :: acc) tl
+
+        // Call the recursive implementation function.
+        mapRec [] list
+
+    //
+    [<CompiledName("MapIndexed")>]
+    let mapi (mapping : int -> 'T -> Choice<'U, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        let rec mapRec acc lst index =
+            match lst with
+            | [] ->
+                Choice1Of2 <| List.rev acc
+            | hd :: tl ->
+                // Apply the mapping to the head of the list.
+                // If the result is an error, return it immediately;
+                // otherwise, cons the result onto the accumulator and recurse.
+                match mapping.Invoke (index, hd) with
+                | Choice2Of2 error ->
+                    Choice2Of2 error
+                | Choice1Of2 result ->
+                    mapRec (result :: acc) tl (index + 1)
+
+        // Call the recursive implementation function.
+        mapRec [] list 0
         
     //
     [<CompiledName("Map2")>]
@@ -373,37 +510,30 @@ module List =
         mapRec (List.empty, 0, list1, list2)
 
     //
-    [<CompiledName("Iterate2")>]
-    let iter2 (action : 'T1 -> 'T2 -> Choice<unit, 'Error>)
-            (list1 : 'T1 list) (list2 : 'T2 list) : Choice<unit, 'Error> =
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> Choice<'State, 'Error>) (state : 'State) (lst : 'T list) =
         // Preconditions
-        checkNonNull "list1" list1
-        checkNonNull "list2" list2
-        if List.length list1 <> List.length list2 then
-            invalidArg "list2" "The lists have different lengths."
+        checkNonNull "lst" lst
 
-        let action = FSharpFunc<_,_,_>.Adapt action
-
-        let rec mapRec (list1, list2) =
-            match list1, list2 with
-            | [], [] ->
-                Choice1Of2 ()
-                
-            | hd1 :: tl1, hd2 :: tl2 ->
-                // Apply the function to the heads of the lists.
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+            
+        let rec foldRec (state, lst) =
+            match lst with
+            | [] ->
+                Choice1Of2 state
+            | hd :: tl ->
+                // Apply the function to the head of the list.
                 // If the result is an error, return it;
-                // otherwise continue processing recursively.
-                match action.Invoke (hd1, hd2) with
-                | Choice2Of2 error ->
-                    Choice2Of2 error
-                | Choice1Of2 () ->
-                    mapRec (tl1, tl2)
+                // otherwise, continue processing recursively.
+                match folder.Invoke (state, hd) with
+                | (Choice2Of2 _) as error ->
+                    error
+                | Choice1Of2 state ->
+                    foldRec (state, tl)
 
-            | _, _ ->
-                failwith "The lists have differing lengths -- they may have been modified in some invalid way."
-                        
-        // Call the recursive implementation function. 
-        mapRec (list1, list2)
+        // Call the recursive implementation function.
+        foldRec (state, lst)
+
 
 /// The standard F# Seq module, lifted into the Choice monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
