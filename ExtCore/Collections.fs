@@ -26,14 +26,61 @@ open ExtCore
 
 
 //
+type IMapFolder<'State, 'Key, 'T> =
+    //
+    abstract Map : key:'Key -> 'T
+    //
+    abstract Fold : state:'State -> value:'T -> 'State
+
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module MapFolder =
+    //
+    [<CompiledName("FromFunctions")>]
+    let inline fromFunctions (mapping : 'Key -> 'T) (folder : 'State -> 'T -> 'State) =
+        { new IMapFolder<'State, 'Key, 'T> with
+            member __.Map (key : 'Key) : 'T =
+                mapping key
+            member __.Fold (state : 'State) (value : 'T) : 'State =
+                folder state value }
+
+    //
+    [<CompiledName("FromFunctions")>]
+    let inline fromFunctionsTupled (mapping : 'Key -> 'T) (folder : 'State * 'T -> 'State) =
+        { new IMapFolder<'State, 'Key, 'T> with
+            member __.Map (key : 'Key) : 'T =
+                mapping key
+            member __.Fold (state : 'State) (value : 'T) : 'State =
+                folder (state, value) }
+
+
+//
 type IMapReduction<'Key, 'T> =
     //
-    abstract Map : 'Key -> 'T
+    abstract Map : key:'Key -> 'T
     //
-    abstract Reduce : 'T -> 'T -> 'T    // or 'T * 'T -> 'T
+    abstract Reduce : value1:'T -> value2:'T -> 'T
 
-// TODO : Implement a MapReduction module:
-// MapReduction.fromFunctions
+//
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module MapReduction =
+    //
+    [<CompiledName("FromFunctions")>]
+    let inline fromFunctions (mapping : 'Key -> 'T) (reduction : 'T -> 'T -> 'T) =
+        { new IMapReduction<'Key, 'T> with
+            member __.Map (key : 'Key) : 'T =
+                mapping key
+            member __.Reduce (value1 : 'T) (value2 : 'T) : 'T =
+                reduction value1 value2 }
+
+    //
+    [<CompiledName("FromFunctions")>]
+    let inline fromFunctionsTupled (mapping : 'Key -> 'T) (reduction : 'T * 'T -> 'T) =
+        { new IMapReduction<'Key, 'T> with
+            member __.Map (key : 'Key) : 'T =
+                mapping key
+            member __.Reduce (value1 : 'T) (value2 : 'T) : 'T =
+                reduction (value1, value2) }
 
 
 /// Functional operators over a range of values.
