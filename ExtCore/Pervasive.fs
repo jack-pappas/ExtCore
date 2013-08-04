@@ -566,6 +566,15 @@ module Choice =
             Choice2Of2 ()
 
     //
+    [<CompiledName("OfOptionWith")>]
+    let ofOptionWith (errorValue : 'Error) (value : 'T option) : Choice<'T, 'Error> =
+        match value with
+        | Some result ->
+            Choice1Of2 result
+        | None ->
+            Choice2Of2 errorValue
+
+    //
     [<CompiledName("ToOption")>]
     let toOption (value : Choice<'T, 'Error>) : 'T option =
         match value with
@@ -688,6 +697,16 @@ module Choice =
     let attempt generator : Choice<'T, _> =
         try Choice1Of2 <| generator ()
         with ex -> Choice2Of2 ex
+
+    /// Composes two functions designed for use with the 'choice' workflow.
+    /// This function is analagous to the F# (>>) operator.
+    let compose (f : 'T -> Choice<'U, 'Error>) (g : 'U -> Choice<'V, 'Error>) =
+        f >> (bind g)
+
+    /// Composes two functions designed for use with the 'choice' workflow.
+    /// This function is analagous to the F# (<<) operator.
+    let composeBack (f : 'U -> Choice<'V, 'Error>) (g : 'T -> Choice<'U, 'Error>) =
+        g >> (bind f)
 
 
 /// Extensible printf-style formatting for numbers and other datatypes.
