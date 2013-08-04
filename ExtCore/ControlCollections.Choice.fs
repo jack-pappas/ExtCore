@@ -642,6 +642,57 @@ module List =
         // Call the recursive implementation function. 
         foldRec (List.rev list1, List.rev list2, state)
 
+    /// <summary>Apply a function to each element of the collection, threading an accumulator argument
+    /// through the computation. Apply the function to the first two elements of the list.
+    /// Then feed this result into the function along with the third element and so on.
+    /// Return the final result. If the input function is <c>f</c> and the elements are <c>i0...iN</c> then computes
+    /// <c>f (... (f i0 i1) i2 ...) iN</c>.
+    /// </summary>
+    /// <remarks>Raises <c>System.ArgumentException</c> if <c>list</c> is empty</remarks>
+    /// <param name="reduction">The function to reduce two list elements to a single element.</param>
+    /// <param name="list">The input list.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the list is empty.</exception>
+    /// <returns>The final reduced value.</returns>
+    [<CompiledName("Reduce")>]
+    let reduce (reduction : 'T -> 'T -> Choice<'T, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Extract the first element in the list then fold over the tail, using the first element
+        // as the initial state value. If the list contains only one element, we return immediately.
+        match list with
+        | [] ->
+            invalidArg "list" "The input list was empty."
+        | [x] ->
+            Choice1Of2 x
+        | hd :: tl ->
+            fold reduction hd tl
+
+    /// <summary>Applies a function to each element of the collection, threading an accumulator argument
+    /// through the computation. If the input function is <c>f</c> and the elements are <c>i0...iN</c> then computes 
+    /// <c>f i0 (...(f iN-1 iN))</c>.
+    /// </summary>
+    /// <remarks>Raises <c>System.ArgumentException</c> if <c>list</c> is empty</remarks>
+    /// <param name="reduction">The function to reduce two list elements to a single element.</param>
+    /// <param name="list">The input list.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the list is empty.</exception>
+    /// <returns>The final reduced value.</returns>
+    [<CompiledName("ReduceBack")>]
+    let reduceBack (reduction : 'T -> 'T -> Choice<'T, 'Error>) (list : 'T list) =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Extract the first element in the list then fold over the tail, using the first element
+        // as the initial state value. If the list contains only one element, we return immediately.
+        // NOTE : In order to reduce _backwards_ over the list, we reverse the list before calling fold.
+        match List.rev list with
+        | [] ->
+            invalidArg "list" "The input list was empty."
+        | [x] ->
+            Choice1Of2 x
+        | hd :: tl ->
+            fold reduction hd tl
+
     //
     [<CompiledName("Exists")>]
     let exists (predicate : 'T -> Choice<bool, 'Error>) (list : 'T list) =

@@ -589,6 +589,14 @@ module List =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
+    let reduce () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let reduceBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let exists () : unit =
         Assert.Ignore "Test not yet implemented."
 
