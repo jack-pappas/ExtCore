@@ -86,6 +86,12 @@ TextWriter
 - Add extension methods / overloads of Write and WriteLine which accept a ``substring`` value.
 - Add extension methods / overloads of Write and WriteLine which accept a ``vector<char>`` value.
 
+Control
+-------
+- Some of the methods in the ``ChoiceBuilder`` type may need to be reworked; for example, the
+  ``TryWith``, ``TryFinally``, and ``Using`` methods don't seem to work correctly when used
+  in practice. The ``For`` method depends on ``Using`` so it'll need to be fixed too.
+
 
 Strings
 =======
