@@ -1289,7 +1289,7 @@ let choosei () : unit =
         if String.length colorName <= idx then
             Some <| colorName.ToLower ()
         else None)
-    |> assertEqual
+    |> Collection.assertEqual
         <| vector [| "darkred"; "gray"; "green" |]
 
 [<Test>]
@@ -1303,12 +1303,30 @@ let choose2 () : unit =
         if (x + String.length colorName) % 2 = 0 then
             Some <| colorName.ToLower ()
         else None)
-    |> assertEqual
+    |> Collection.assertEqual
        <| vector [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
 
 [<Test>]
 let countWith () : unit =
     Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let unfold () : unit =
+    5
+    |> Vector.unfold (function
+        | 0 -> None
+        | n ->
+            Some (n.ToString(), n - 1))
+    |> Collection.assertEqual (Vector.ofList ["5"; "4"; "3"; "2"; "1"])
+
+[<Test>]
+let unfoldBack () : unit =
+    5
+    |> Vector.unfoldBack (function
+        | 0 -> None
+        | n ->
+            Some (n.ToString(), n - 1))
+    |> Collection.assertEqual (Vector.ofList ["1"; "2"; "3"; "4"; "5"])
 
 
 (* TODO : Implement tests which are missing from the ArrayModule tests in FSharp.Core. *)

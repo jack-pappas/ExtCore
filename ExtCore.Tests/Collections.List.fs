@@ -208,6 +208,15 @@ let unfold () : unit =
     |> assertEqual ["5"; "4"; "3"; "2"; "1"]
 
 [<Test>]
+let unfoldBack () : unit =
+    5
+    |> List.unfoldBack (function
+        | 0 -> None
+        | n ->
+            Some (n.ToString(), n - 1))
+    |> assertEqual ["1"; "2"; "3"; "4"; "5"]
+
+[<Test>]
 let unzipWith () : unit =
     let left, right =
         ["Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";]

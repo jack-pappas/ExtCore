@@ -518,3 +518,22 @@ let foldBackPairwise () : unit =
     ||> Array.foldBackPairwise (fun x y count ->
         if x = y then count + 1 else count)
     |> assertEqual 3
+
+[<Test>]
+let unfold () : unit =
+    5
+    |> Array.unfold (function
+        | 0 -> None
+        | n ->
+            Some (n.ToString(), n - 1))
+    |> Collection.assertEqual (Array.ofList ["5"; "4"; "3"; "2"; "1"])
+
+[<Test>]
+let unfoldBack () : unit =
+    5
+    |> Array.unfoldBack (function
+        | 0 -> None
+        | n ->
+            Some (n.ToString(), n - 1))
+    |> Collection.assertEqual (Array.ofList ["1"; "2"; "3"; "4"; "5"])
+
