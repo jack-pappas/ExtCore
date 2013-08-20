@@ -117,6 +117,10 @@ type AsyncStateFunc<'State, 'T> =
 type AsyncProtectedStateFunc<'State, 'T, 'Error> =
     'State -> Async<Choice<'T * 'State, 'Error>>
 
+//
+type AsyncChoice<'T, 'Error> =
+    Async<Choice<'T, 'Error>>
+
 
 (*** Workflow Builders ***)
 
@@ -1806,3 +1810,57 @@ module Async =
         return mapping x
         }
 
+
+/// Functions for working with AsyncChoice workflows.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module AsyncChoice =
+    open Microsoft.FSharp.Control
+
+
+    /// Creates an AsyncChoice from an error value.
+    [<CompiledName("Error")>]
+    let inline error value : AsyncChoice<'T, 'Error> =
+        async.Return (Choice2Of2 value)
+
+    /// Creates an AsyncChoice representing an error value.
+    /// The error value in the Choice is the specified error message.
+    [<CompiledName("FailWith")>]
+    let inline failwith errorMsg : AsyncChoice<'T, string> =
+        async.Return (Choice2Of2 errorMsg)
+
+    /// <summary>
+    /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
+    /// </summary>
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> 'U) (value : AsyncChoice<'T, 'Error>) : AsyncChoice<'U, 'Error> =
+        async {
+        // Get the input value.
+        let! x = value
+
+        // Apply the mapping function and return the result.
+        match x with
+        | Choice1Of2 result ->
+            return Choice1Of2 (mapping result)
+        | Choice2Of2 error ->
+            return (Choice2Of2 error)
+        }
+
+    /// <summary>
+    /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
+    /// </summary>
+    [<CompiledName("MapAsync")>]
+    let mapAsync (mapping : 'T -> Async<'U>) (value : AsyncChoice<'T, 'Error>) : AsyncChoice<'U, 'Error> =
+        async {
+        // Get the input value.
+        let! x = value
+
+        // Apply the mapping function and return the result.
+        match x with
+        | Choice1Of2 result ->
+            let! mappedResult = mapping result
+            return Choice1Of2 mappedResult
+        | Choice2Of2 error ->
+            return (Choice2Of2 error)
+        }
