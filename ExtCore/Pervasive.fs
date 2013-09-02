@@ -32,6 +32,9 @@ type nullable<'T when 'T : struct and 'T : (new : unit -> 'T) and 'T :> System.V
 /// Represents a generic collection of key/value pairs.
 type dict<'Key, 'Value> = System.Collections.Generic.IDictionary<'Key, 'Value>
 
+/// A value whose computation has been 'protected' by capturing any raised exception.
+type Protected<'T> = Choice<'T, exn>
+
 /// <summary>
 /// Array views are similar to array slices, but instead of creating a copy of the
 /// 'sliced' elements they simply provide convienient access to some section of the
@@ -231,18 +234,17 @@ module Operators =
 
         if mapped_x < mapped_y then mapped_y else mapped_x
 
-    (*
     #if PROTO_COMPILER
+    (*
     /// Returns the RuntimeTypeHandle of the specified type.
-    [<NoDynamicInvocation>]
+    [<CompiledName("TypeHandleOf")>]
     let inline typehandleof<'T> : System.RuntimeTypeHandle =
-        let tok = (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
-        tok
-    #endif
+        (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
     *)
+    #endif
 
     (* Exception-related functions *)
-
+    
     /// Raises a new exception of the specified type.
     [<CompiledName("RaiseNew")>]
     let inline raiseNew<'T when 'T :> exn and 'T : (new : unit -> 'T)> () : 'T =
@@ -273,6 +275,16 @@ module Operators =
     [<CompiledName("RaiseKeyNotFoundException")>]
     let inline keyNotFound (msg : string) : 'T =
         raise <| System.Collections.Generic.KeyNotFoundException msg
+
+    #if PROTO_COMPILER
+    /// Checks if a floating-point value represents a finite number.
+    /// If not, a 'System.NotFiniteNumberException' is raised.
+    [<CompiledName("CheckFinite")>]
+    let inline checkFinite (value : ^T) : 'U =
+        ()
+        when ^T : float32 = (# "ckfinite" value : 'U #)
+        when ^T : float = (# "ckfinite" value : 'U #)
+    #endif
 
     (* Active Patterns *)
 
