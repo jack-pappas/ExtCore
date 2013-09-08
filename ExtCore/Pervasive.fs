@@ -276,15 +276,20 @@ module Operators =
     let inline keyNotFound (msg : string) : 'T =
         raise <| System.Collections.Generic.KeyNotFoundException msg
 
+(* The 'checkFinite' function is disabled for now until we add 'open' declarations
+   to every file in this project to allow us to use the --compiling-fslib flag
+   with the proto-compiler. *)
+(*
     #if PROTO_COMPILER
     /// Checks if a floating-point value represents a finite number.
     /// If not, a 'System.NotFiniteNumberException' is raised.
     [<CompiledName("CheckFinite")>]
-    let inline checkFinite (value : ^T) : 'U =
+    let inline checkFinite (value : ^T) : unit =
         ()
-        when ^T : float32 = (# "ckfinite" value : 'U #)
-        when ^T : float = (# "ckfinite" value : 'U #)
+        when ^T : float32 = (# "ckfinite" value : float32 #) |> ignore
+        when ^T : float = (# "ckfinite" value : float #) |> ignore
     #endif
+*)
 
     (* Active Patterns *)
 
