@@ -368,7 +368,7 @@ module Lazy =
             Some lazyValue.Value
         else None
 
-    /// Transforms a lazily-initialized value by it to the given mapping function.
+    /// Transforms a lazily-initialized value by applying it to the given mapping function.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (lazyValue : Lazy<'T>) : Lazy<'U> =
         // If the value has already been created, perform the mapping
@@ -379,6 +379,28 @@ module Lazy =
         else
             lazy (mapping <| lazyValue.Force ())
 
+    /// Transforms two (2) lazily-initialized values by applying them to the given mapping function.
+    [<CompiledName("Map2")>]
+    let map2 (mapping : 'T1 -> 'T2 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) : Lazy<'U> =
+        // If both values have already been created, perform the mapping
+        // 'eagerly' for better performance (e.g., by avoiding the thunk).
+        if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated then
+            mapping lazyValue1.Value lazyValue2.Value
+            |> System.Lazy.CreateFromValue
+        else
+            lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()))
+
+    /// Transforms three (3) lazily-initialized values by applying them to the given mapping function.
+    [<CompiledName("Map3")>]
+    let map3 (mapping : 'T1 -> 'T2 -> 'T3 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) (lazyValue3 : Lazy<'T3>) : Lazy<'U> =
+        // If all values have already been created, perform the mapping
+        // 'eagerly' for better performance (e.g., by avoiding the thunk).
+        if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated && lazyValue3.IsValueCreated then
+            mapping lazyValue1.Value lazyValue2.Value lazyValue3.Value
+            |> System.Lazy.CreateFromValue
+        else
+            lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()) (lazyValue3.Force ()))
+            
 
 /// Additional functional operators on options.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
