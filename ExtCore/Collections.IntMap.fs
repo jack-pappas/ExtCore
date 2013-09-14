@@ -69,40 +69,9 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
         match map with
         | Empty -> 0
         | Lf (_,_) -> 1
-        | Br (_,_,_,_) as t ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push t
-
-            // Traverse the tree, counting the elements by using the mutable stack.
-            let mutable count = 0u
-
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_,_) ->
-                    count <- count + 1u
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_,_), Lf (_,_)) ->
-                    count <- count + 2u
-                    
-                | Br (_, _, Lf (_,_), child)
-                | Br (_, _, child, Lf (_,_)) ->
-                    count <- count + 1u
-                    stack.Push child
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the computed element count.
-            int count
+        | Br (_, _, left, right) ->
+            // Count the number of elements in the left and right subtrees.
+            PatriciaMap32.Count left + PatriciaMap32.Count right
 
     /// Retrieve the minimum key of the map.
     static member MinKey (map : PatriciaMap32<'T>) =
@@ -589,39 +558,23 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
         | Empty -> ()
         | Lf (k, x) ->
             action (int k) x
-        | Br (_,_,_,_) as t ->
-            let action = FSharpFunc<_,_,_>.Adapt action
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push t
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (k, x) ->
-                    action.Invoke (int k, x)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    action.Invoke (int k, x)
-                    action.Invoke (int j, y)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf (k, x), Lf (j, y)) ->
+            action (int k) x
+            action (int j) y
                     
-                | Br (_, _, Lf (k, x), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    action.Invoke (int k, x)
-                    stack.Push right
+        | Br (_, _, Lf (k, x), right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            action (int k) x
+            PatriciaMap32.Iterate (action, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
+        | Br (_, _, left, right) ->
+            // Iterate over the left and right subtrees.
+            PatriciaMap32.Iterate (action, left)
+            PatriciaMap32.Iterate (action, right)
 
     //
     static member IterateBack (action : int -> 'T -> unit, map) : unit =
@@ -629,39 +582,23 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
         | Empty -> ()
         | Lf (k, x) ->
             action (int k) x
-        | Br (_,_,_,_) as t ->
-            let action = FSharpFunc<_,_,_>.Adapt action
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push t
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (k, x) ->
-                    action.Invoke (int k, x)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    action.Invoke (int j, y)
-                    action.Invoke (int k, x)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf (k, x), Lf (j, y)) ->
+            action (int j) y
+            action (int k) x
                     
-                | Br (_, _, left, Lf (k, x)) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    action.Invoke (int k, x)
-                    stack.Push left
+        | Br (_, _, left, Lf (k, x)) ->
+            // Only handle the case where the right child is a leaf
+            // -- otherwise the traversal order would be altered.
+            action (int k) x
+            PatriciaMap32.Iterate (action, left)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
+        | Br (_, _, left, right) ->
+            // Iterate over the right and left subtrees.
+            PatriciaMap32.Iterate (action, right)
+            PatriciaMap32.Iterate (action, left)
 
     //
     static member Fold (folder : 'State -> int -> 'T -> 'State, state : 'State, map) : 'State =
@@ -670,43 +607,23 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             state
         | Lf (k, x) ->
             folder state (int k) x
-        | Br (_,_,_,_) as t ->
-            let folder = FSharpFunc<_,_,_,_>.Adapt folder
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push t
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (k, x) ->
-                    state <- folder.Invoke (state, int k, x)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    state <- folder.Invoke (state, int k, x)
-                    state <- folder.Invoke (state, int j, y)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf (k, x), Lf (j, y)) ->
+            let state = folder state (int k) x
+            folder state (int j) y
                     
-                | Br (_, _, Lf (k, x), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (state, int k, x)
-                    stack.Push right
+        | Br (_, _, Lf (k, x), right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            let state = folder state (int k) x
+            PatriciaMap32.Fold (folder, state, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the left and right subtrees.
+            let state = PatriciaMap32.Fold (folder, state, left)
+            PatriciaMap32.Fold (folder, state, right)
 
     //
     static member FoldBack (folder : int -> 'T -> 'State -> 'State, state : 'State, map) : 'State =
@@ -715,43 +632,23 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             state
         | Lf (k, x) ->
             folder (int k) x state
-        | Br (_,_,_,_) as t ->
-            let folder = FSharpFunc<_,_,_,_>.Adapt folder
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push t
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (k, x) ->
-                    state <- folder.Invoke (int k, x, state)
+        
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf (k, x), Lf (j, y)) ->
+            let state = folder (int j) y state
+            folder (int k) x state
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    state <- folder.Invoke (int j, y, state)
-                    state <- folder.Invoke (int k, x, state)
-                    
-                | Br (_, _, left, Lf (k, x)) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (int k, x, state)
-                    stack.Push left
+        | Br (_, _, left, Lf (k, x)) ->
+            // Only handle the case where the right child is a leaf
+            // -- otherwise the traversal order would be altered.
+            let state = folder (int k) x state
+            PatriciaMap32.FoldBack (folder, state, left)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the right and left subtrees.
+            let state = PatriciaMap32.FoldBack (folder, state, right)
+            PatriciaMap32.FoldBack (folder, state, left)
 
     //
     static member TryFindKey (predicate : int -> 'T -> bool, map) : int option =
@@ -763,49 +660,30 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                 Some (int k)
             else
                 None
-        | Br (_,_,_,_) as t ->
-            let predicate = FSharpFunc<_,_,_>.Adapt predicate
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push t
-
-            /// Loop until we find a key/value that matches the predicate,
-            /// or until we've processed the entire tree.
-            let mutable matchingKey = None
-            while stack.Count <> 0 && Option.isNone matchingKey do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (k, x) ->
-                    if predicate.Invoke (int k, x) then
-                        matchingKey <- Some (int k)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf (k, x), Lf (j, y)) ->
+            if predicate (int k) x then
+                Some (int k)
+            elif predicate (int j) y then
+                Some (int j)
+            else None
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    if predicate.Invoke (int k, x) then
-                        matchingKey <- Some (int k)
-                    elif predicate.Invoke (int j, y) then
-                        matchingKey <- Some (int j)
-                    
-                | Br (_, _, Lf (k, x), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    if predicate.Invoke (int k, x) then
-                        matchingKey <- Some (int k)
+        | Br (_, _, Lf (k, x), right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            if predicate (int k) x then
+                Some (int k)
+            else
+                PatriciaMap32.TryFindKey (predicate, right)
 
-                    stack.Push right
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the matching key, if one was found.
-            matchingKey
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, and if necessary, the right subtree.
+            match PatriciaMap32.TryFindKey (predicate, left) with
+            | None ->
+                PatriciaMap32.TryFindKey (predicate, right)
+            | result ->
+                result
 
     //
     static member TryPick (picker : int -> 'T -> 'U option, map) : 'U option =
@@ -814,48 +692,32 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             None
         | Lf (k, x) ->
             picker (int k) x
-        | Br (_,_,_,_) as t ->
-            let picker = FSharpFunc<_,_,_>.Adapt picker
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push t
-
-            /// Loop until we find a key/value that matches the picker,
-            /// or until we've processed the entire tree.
-            let mutable pickedValue = None
-            while stack.Count <> 0 && Option.isNone pickedValue do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (k, x) ->
-                    pickedValue <- picker.Invoke (int k, x)
+        
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf (k, x), Lf (j, y)) ->
+            match picker (int k) x with
+            | None ->
+                picker (int j) y
+            | result ->
+                result
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (k, x), Lf (j, y)) ->
-                    pickedValue <-
-                        match picker.Invoke (int k, x) with
-                        | (Some _) as value ->
-                            value
-                        | None ->
-                            picker.Invoke (int j, y)
-                    
-                | Br (_, _, Lf (k, x), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    pickedValue <- picker.Invoke (int k, x)
-                    stack.Push right
+        | Br (_, _, Lf (k, x), right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            match picker (int k) x with
+            | None ->
+                PatriciaMap32.TryPick (picker, right)
+            | result ->
+                result
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the picked value.
-            pickedValue
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, and if necessary, the right subtree.
+            match PatriciaMap32.TryPick (picker, left) with
+            | None ->
+                PatriciaMap32.TryPick (picker, right)
+            | result ->
+                result
 
     //
     static member ToSeq (map : PatriciaMap32<'T>) =

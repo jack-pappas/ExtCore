@@ -132,40 +132,9 @@ type private PatriciaSet32 =
         match set with
         | Empty -> 0
         | Lf _ -> 1
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            // Traverse the tree, counting the elements by using the mutable stack.
-            let mutable count = 0u
-
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf _ ->
-                    count <- count + 1u
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf _, Lf _) ->
-                    count <- count + 2u
-                    
-                | Br (_, _, Lf _, child)
-                | Br (_, _, child, Lf _) ->
-                    count <- count + 1u
-                    stack.Push child
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the computed element count.
-            int count
+        | Br (_, _, left, right) ->
+            // Count the number of items in the left and right subtrees.
+            PatriciaSet32.Count left + PatriciaSet32.Count right
 
     /// Retrieve the minimum element of the set.
     static member MinElement (set : PatriciaSet32) =
@@ -610,37 +579,23 @@ type private PatriciaSet32 =
         | Empty -> ()
         | Lf k ->
             action (int k)
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    action (int k)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    action (int k)
-                    action (int j)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            action (int k)
+            action (int j)
                     
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    action (int k)
-                    stack.Push right
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            action (int k)
+            PatriciaSet32.Iterate (action, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
+        | Br (_, _, left, right) ->
+            // Iterate over the left and right subtrees.
+            PatriciaSet32.Iterate (action, left)
+            PatriciaSet32.Iterate (action, right)
 
     //
     static member IterateBack (action : int -> unit, set) : unit =
@@ -648,127 +603,73 @@ type private PatriciaSet32 =
         | Empty -> ()
         | Lf k ->
             action (int k)
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    action (int k)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    action (int j)
-                    action (int k)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            action (int j)
+            action (int k)
                     
-                | Br (_, _, left, Lf k) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    action (int k)
-                    stack.Push left
+        | Br (_, _, left, Lf k) ->
+            // Only handle the case where the right child is a leaf
+            // -- otherwise the traversal order would be altered.
+            action (int k)
+            PatriciaSet32.Iterate (action, left)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
+        | Br (_, _, left, right) ->
+            // Iterate over the right and left subtrees.
+            PatriciaSet32.Iterate (action, right)
+            PatriciaSet32.Iterate (action, left)
 
     //
-    static member Fold (folder : 'State -> int -> 'State, state : 'State, set) : 'State =
+    static member Fold (folder : FSharpFunc<'State, int, 'State>, state : 'State, set) : 'State =
         match set with
         | Empty ->
             state
         | Lf k ->
-            folder state (int k)
-        | Br (_,_,_,_) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    state <- folder.Invoke (state, int k)
+            folder.Invoke (state, int k)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    state <- folder.Invoke (state, int k)
-                    state <- folder.Invoke (state, int j)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            let state = folder.Invoke (state, int k)
+            folder.Invoke (state, int j)
                     
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (state, int k)
-                    stack.Push right
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            let state = folder.Invoke (state, int k)
+            PatriciaSet32.Fold (folder, state, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the left subtree, then the right subtree.
+            let state = PatriciaSet32.Fold (folder, state, left)
+            PatriciaSet32.Fold (folder, state, right)
 
     //
-    static member FoldBack (folder : int -> 'State -> 'State, state : 'State, set) : 'State =
+    static member FoldBack (folder : FSharpFunc<int, 'State, 'State>, state : 'State, set) : 'State =
         match set with
         | Empty ->
             state
         | Lf k ->
-            folder (int k) state
-        | Br (_,_,_,_) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    state <- folder.Invoke (int k, state)
+            folder.Invoke (int k, state)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    state <- folder.Invoke (int j, state)
-                    state <- folder.Invoke (int k, state)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            let state = folder.Invoke (int j, state)
+            folder.Invoke (int k, state)
                     
-                | Br (_, _, left, Lf k) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (int k, state)
-                    stack.Push left
+        | Br (_, _, left, Lf k) ->
+            // Only handle the case where the right child is a leaf
+            // -- otherwise the traversal order would be altered.
+            let state = folder.Invoke (int k, state)
+            PatriciaSet32.FoldBack (folder, state, left)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the right subtree, then the left subtree.
+            let state = PatriciaSet32.FoldBack (folder, state, right)
+            PatriciaSet32.FoldBack (folder, state, left)
 
     //
     static member TryPick (picker : int -> 'T option, set) : 'T option =
@@ -777,55 +678,32 @@ type private PatriciaSet32 =
             None
         | Lf k ->
             picker (int k)
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we find a key/value that matches the picker,
-            /// or until we've processed the entire tree.
-            let mutable pickedValue = None
-            while stack.Count <> 0 && Option.isNone pickedValue do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    match picker (int k) with
-                    | None -> ()
-                    | res ->
-                        pickedValue <- res
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    match picker (int k) with
-                    | None ->
-                        match picker (int j) with
-                        | None -> ()
-                        | res ->
-                            pickedValue <- res
-                    | res ->
-                        pickedValue <- res
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            match picker (int k) with
+            | None ->
+                picker (int j)
+            | res ->
+                res
                     
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    match picker (int k) with
-                    | None -> ()
-                    | res ->
-                        pickedValue <- res
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            match picker (int k) with
+            | None ->
+                PatriciaSet32.TryPick (picker, right)
+            | res ->
+                res
 
-                    stack.Push right
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the picked value.
-            pickedValue
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, then the right subtree if necessary.
+            match PatriciaSet32.TryPick (picker, left) with
+            | None ->
+                PatriciaSet32.TryPick (picker, right)
+            | res ->
+                res
 
     //
     static member TryFind (predicate : int -> bool, set) : int option =
@@ -834,46 +712,31 @@ type private PatriciaSet32 =
             None
         | Lf k ->
             if predicate (int k) then Some (int k) else None
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
 
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we find a key/value that matches the picker,
-            /// or until we've processed the entire tree.
-            let mutable selectedValue = System.Nullable ()
-            while stack.Count <> 0 && not selectedValue.HasValue do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    if predicate (int k) then
-                        selectedValue <- System.Nullable (int k)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            if predicate (int k) then
+                Some (int k)
+            elif predicate (int j) then
+                Some (int j)
+            else None
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    if predicate (int k) then
-                        selectedValue <- System.Nullable (int k)
-                    elif predicate (int j) then
-                        selectedValue <- System.Nullable (int j)
-                    
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    if predicate (int k) then
-                        selectedValue <- System.Nullable (int k)
-                    stack.Push right
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            if predicate (int k) then
+                Some (int k)
+            else
+                PatriciaSet32.TryFind (predicate, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the selected value, if any.
-            Option.ofNullable selectedValue
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, then the right subtree if necessary.
+            match PatriciaSet32.TryFind (predicate, left) with
+            | None ->
+                PatriciaSet32.TryFind (predicate, right)
+            | res ->
+                res
 
     //
     static member ToSeq set =
@@ -1126,7 +989,8 @@ type IntSet private (trie : PatriciaSet32) =
 
     //
     member __.ToList () : int list =
-        PatriciaSet32.FoldBack ((fun el list -> el :: list), [], trie)
+        let folder = FSharpFunc<_,_,_>.Adapt (fun el list -> el :: list)
+        PatriciaSet32.FoldBack (folder, [], trie)
 
     //
     member __.ToArray () : int[] =
@@ -1136,7 +1000,8 @@ type IntSet private (trie : PatriciaSet32) =
 
     //
     member __.ToSet () : Set<int> =
-        PatriciaSet32.FoldBack (Set.add, Set.empty, trie)
+        let folder = FSharpFunc<_,_,_>.Adapt Set.add
+        PatriciaSet32.FoldBack (folder, Set.empty, trie)
 
     //
     member __.Iterate (action : int -> unit) : unit =
@@ -1148,10 +1013,12 @@ type IntSet private (trie : PatriciaSet32) =
 
     //
     member __.Fold (folder : 'State -> int -> 'State, state : 'State) : 'State =
+        let folder = FSharpFunc<_,_,_>.Adapt folder
         PatriciaSet32.Fold (folder, state, trie)
 
     //
     member __.FoldBack (folder : int -> 'State -> 'State, state : 'State) : 'State =
+        let folder = FSharpFunc<_,_,_>.Adapt folder
         PatriciaSet32.FoldBack (folder, state, trie)
 
     //
