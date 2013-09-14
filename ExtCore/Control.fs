@@ -127,6 +127,88 @@ type AsyncChoice<'T, 'Error> =
 /// <summary>
 /// </summary>
 [<Sealed>]
+type LazyBuilder () =
+    // 'T -> M<'T>
+    member inline __.Return (x)
+        : Lazy<'T> =
+        notlazy x
+
+    // M<'T> -> M<'T>
+    member inline __.ReturnFrom (lazyValue : Lazy<'T>)
+        : Lazy<'T> =
+        lazyValue
+
+    // unit -> M<'T>
+    member inline this.Zero ()
+        : Lazy<unit> =
+        notlazy ()
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member inline __.Bind (m : Lazy<'T>, k : 'T -> Lazy<'U>)
+        : Lazy<'U> =
+        k <| Lazy.force m
+
+    // (unit -> M<'T>) -> M<'T>
+    member inline this.Delay (f : unit -> Lazy<_>)
+        : Lazy<'T> =
+        this.Bind (this.Return (), f)
+
+    // M<'T> -> M<'T> -> M<'T>
+    // or
+    // M<unit> -> M<'T> -> M<'T>
+    member inline this.Combine (r1 : Lazy<_>, r2 : Lazy<_>)
+        : Lazy<'T> =
+        this.Bind (r1, fun () -> r2)
+
+    // M<'T> -> M<'T> -> M<'T>
+    member (*inline*) __.TryWith (body : Lazy<'T>, handler : exn -> 'T)
+        : Lazy<'T> =
+        lazy
+            try
+                Lazy.force body
+            with ex ->
+                handler ex
+
+    // M<'T> -> M<'T> -> M<'T>
+    member (*inline*) __.TryFinally (body : Lazy<_>, handler)
+        : Lazy<'T> =
+        lazy
+            try
+                Lazy.force body
+            finally
+                handler ()
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    member (*inline*) this.Using (resource : ('T :> System.IDisposable), body : 'T -> Lazy<_>)
+        : Lazy<'U> =
+        this.TryFinally (body resource, (fun () ->
+            if not <| isNull (box resource) then
+                resource.Dispose ()))
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : Lazy<_>)
+        : Lazy<_> =
+        if guard () then
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member (*inline*) this.For (sequence : seq<_>, body : 'T -> Lazy<_>)
+        : Lazy<_> =
+        this.Using (sequence.GetEnumerator (),
+            (fun enum ->
+                this.While (
+                    enum.MoveNext,
+                    this.Delay (fun () ->
+                        body enum.Current))))
+
+
+/// <summary>
+/// </summary>
+[<Sealed>]
 type StateBuilder () =
     // 'T -> M<'T>
     member inline __.Return (x)
@@ -1399,6 +1481,9 @@ type AsyncProtectedStateBuilder () =
 /// </summary>
 [<AutoOpen>]
 module WorkflowBuilders =
+    //
+    [<CompiledName("Lazy")>]
+    let lazily = LazyBuilder ()
     //
     [<CompiledName("State")>]
     let state = StateBuilder ()
