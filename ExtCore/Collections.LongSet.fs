@@ -123,40 +123,9 @@ type private PatriciaSet64 =
         match set with
         | Empty -> 0L
         | Lf _ -> 1L
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            // Traverse the tree, counting the elements by using the mutable stack.
-            let mutable count = 0UL
-
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf _ ->
-                    count <- count + 1UL
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf _, Lf _) ->
-                    count <- count + 2UL
-                    
-                | Br (_, _, Lf _, child)
-                | Br (_, _, child, Lf _) ->
-                    count <- count + 1UL
-                    stack.Push child
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the computed element count.
-            Checked.int64 count
+        | Br (_, _, left, right) ->
+            // Count the number of elements in the left and right subtrees.
+            PatriciaSet64.Count left + PatriciaSet64.Count right
 
     /// Retrieve the minimum element of the set.
     static member MinElement (set : PatriciaSet64) =
@@ -601,37 +570,23 @@ type private PatriciaSet64 =
         | Empty -> ()
         | Lf k ->
             action (int64 k)
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    action (int64 k)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    action (int64 k)
-                    action (int64 j)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            action (int64 k)
+            action (int64 j)
                     
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    action (int64 k)
-                    stack.Push right
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            action (int64 k)
+            PatriciaSet64.Iterate (action, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
+        | Br (_, _, left, right) ->
+            // Iterate over the left and right subtrees.
+            PatriciaSet64.Iterate (action, left)
+            PatriciaSet64.Iterate (action, right)
 
     //
     static member IterateBack (action : int64 -> unit, set) : unit =
@@ -639,37 +594,23 @@ type private PatriciaSet64 =
         | Empty -> ()
         | Lf k ->
             action (int64 k)
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    action (int64 k)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    action (int64 j)
-                    action (int64 k)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            action (int64 j)
+            action (int64 k)
                     
-                | Br (_, _, left, Lf k) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    action (int64 k)
-                    stack.Push left
+        | Br (_, _, left, Lf k) ->
+            // Only handle the case where the right child is a leaf
+            // -- otherwise the traversal order would be altered.
+            action (int64 k)
+            PatriciaSet64.Iterate (action, left)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
+        | Br (_, _, left, right) ->
+            // Iterate over the right and left subtrees.
+            PatriciaSet64.Iterate (action, right)
+            PatriciaSet64.Iterate (action, left)
 
     //
     static member Fold (folder : 'State -> int64 -> 'State, state : 'State, set) : 'State =
@@ -678,43 +619,23 @@ type private PatriciaSet64 =
             state
         | Lf k ->
             folder state (int64 k)
-        | Br (_,_,_,_) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    state <- folder.Invoke (state, int64 k)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    state <- folder.Invoke (state, int64 k)
-                    state <- folder.Invoke (state, int64 j)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            let state = folder state (int64 k)
+            folder state (int64 j)
                     
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (state, int64 k)
-                    stack.Push right
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            let state = folder state (int64 k)
+            PatriciaSet64.Fold (folder, state, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the left subtree, then the right subtree.
+            let state = PatriciaSet64.Fold (folder, state, left)
+            PatriciaSet64.Fold (folder, state, right)
 
     //
     static member FoldBack (folder : int64 -> 'State -> 'State, state : 'State, set) : 'State =
@@ -723,43 +644,23 @@ type private PatriciaSet64 =
             state
         | Lf k ->
             folder (int64 k) state
-        | Br (_,_,_,_) ->
-            let folder = FSharpFunc<_,_,_>.Adapt folder
-
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    state <- folder.Invoke (int64 k, state)
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    state <- folder.Invoke (int64 j, state)
-                    state <- folder.Invoke (int64 k, state)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            let state = folder (int64 j) state
+            folder (int64 k) state
                     
-                | Br (_, _, left, Lf k) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- folder.Invoke (int64 k, state)
-                    stack.Push left
+        | Br (_, _, left, Lf k) ->
+            // Only handle the case where the right child is a leaf
+            // -- otherwise the traversal order would be altered.
+            let state = folder (int64 k) state
+            PatriciaSet64.FoldBack (folder, state, left)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the right subtree, then the left subtree.
+            let state = PatriciaSet64.FoldBack (folder, state, right)
+            PatriciaSet64.FoldBack (folder, state, left)
 
     //
     static member TryPick (picker : int64 -> 'T option, set) : 'T option =
@@ -768,55 +669,32 @@ type private PatriciaSet64 =
             None
         | Lf k ->
             picker (int64 k)
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we find a key/value that matches the picker,
-            /// or until we've processed the entire tree.
-            let mutable pickedValue = None
-            while stack.Count <> 0 && Option.isNone pickedValue do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    match picker (int64 k) with
-                    | None -> ()
-                    | res ->
-                        pickedValue <- res
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    match picker (int64 k) with
-                    | None ->
-                        match picker (int64 j) with
-                        | None -> ()
-                        | res ->
-                            pickedValue <- res
-                    | res ->
-                        pickedValue <- res
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            match picker (int64 k) with
+            | None ->
+                picker (int64 j)
+            | res ->
+                res
                     
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    match picker (int64 k) with
-                    | None -> ()
-                    | res ->
-                        pickedValue <- res
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            match picker (int64 k) with
+            | None ->
+                PatriciaSet64.TryPick (picker, right)
+            | res ->
+                res
 
-                    stack.Push right
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the picked value.
-            pickedValue
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, then the right subtree if necessary.
+            match PatriciaSet64.TryPick (picker, left) with
+            | None ->
+                PatriciaSet64.TryPick (picker, right)
+            | res ->
+                res
 
     //
     static member TryFind (predicate : int64 -> bool, set) : int64 option =
@@ -825,46 +703,31 @@ type private PatriciaSet64 =
             None
         | Lf k ->
             if predicate (int64 k) then Some (int64 k) else None
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
 
-            // Add the initial tree to the stack.
-            stack.Push set
-
-            /// Loop until we find a key/value that matches the picker,
-            /// or until we've processed the entire tree.
-            let mutable selectedValue = System.Nullable ()
-            while stack.Count <> 0 && not selectedValue.HasValue do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf k ->
-                    if predicate (int64 k) then
-                        selectedValue <- System.Nullable (int64 k)
+        (* OPTIMIZATION :   When one or both children of this node are leaves,
+                            we handle them directly since it's a little faster. *)
+        | Br (_, _, Lf k, Lf j) ->
+            if predicate (int64 k) then
+                Some (int64 k)
+            elif predicate (int64 j) then
+                Some (int64 j)
+            else None
                     
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf k, Lf j) ->
-                    if predicate (int64 k) then
-                        selectedValue <- System.Nullable (int64 k)
-                    elif predicate (int64 j) then
-                        selectedValue <- System.Nullable (int64 j)
-                    
-                | Br (_, _, Lf k, right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    if predicate (int64 k) then
-                        selectedValue <- System.Nullable (int64 k)
-                    stack.Push right
+        | Br (_, _, Lf k, right) ->
+            // Only handle the case where the left child is a leaf
+            // -- otherwise the traversal order would be altered.
+            if predicate (int64 k) then
+                Some (int64 k)
+            else
+                PatriciaSet64.TryFind (predicate, right)
 
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the selected value, if any.
-            Option.ofNullable selectedValue
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, then the right subtree if necessary.
+            match PatriciaSet64.TryFind (predicate, left) with
+            | None ->
+                PatriciaSet64.TryFind (predicate, right)
+            | res ->
+                res
 
     //
     static member ToSeq set =
