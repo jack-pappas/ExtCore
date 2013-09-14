@@ -27,10 +27,6 @@ open PatriciaTrieConstants
 open BitOps32
 
 
-(* OPTIMIZE :   Some of the functional-style operations on PatriciaHashMap use direct non-tail-recursion;
-                performance may be improved if we modify these to use CPS instead.
-                Alternatively, we could implement and utilize a zipper which should also be quite fast. *)
-
 /// A Patricia trie implementation, modified so each of it's 'values'
 /// is actually a set implemented with a list.
 /// Used as the underlying data structure for HashMap.
@@ -73,43 +69,9 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty -> 0
         | Lf (_, valueMap) ->
             Map.count valueMap
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push map
-
-            // Traverse the tree, counting the elements by using the mutable stack.
-            let mutable count = 0u
-
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_, valueMap) ->
-                    count <- count + (uint32 <| Map.count valueMap)
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-                    count <-
-                        count
-                        + (uint32 <| Map.count valueMap1)
-                        + (uint32 <| Map.count valueMap2)
-                    
-                | Br (_, _, Lf (_, valueMap), child)
-                | Br (_, _, child, Lf (_, valueMap)) ->
-                    count <- count + (uint32 <| Map.count valueMap)
-                    stack.Push child
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the computed element count.
-            int count
+        | Br (_, _, left, right) ->
+            // Count the number of elements in the left and right subtrees.
+            PatriciaHashMap.Count left + PatriciaHashMap.Count right
 
     /// Remove the binding with the specified key from the map.
     /// No exception is thrown if the map does not contain a binding for the key.
@@ -494,37 +456,10 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty -> ()
         | Lf (_, valueMap) ->
             Map.iter action valueMap
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push map
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_, valueMap) ->
-                    Map.iter action valueMap
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-                    Map.iter action valueMap1
-                    Map.iter action valueMap2
-                    
-                | Br (_, _, Lf (_, valueMap), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    Map.iter action valueMap
-                    stack.Push right
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
+        | Br (_, _, left, right) ->
+            // Iterate over the left and right subtrees.
+            PatriciaHashMap.Iterate (action, left)
+            PatriciaHashMap.Iterate (action, right)
 
     //
     static member IterateBack (action : 'Key -> 'T -> unit, map) : unit =
@@ -532,37 +467,10 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty -> ()
         | Lf (_, valueMap) ->
             Map.iterBack action valueMap
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push map
-
-            // Loop until we've processed the entire tree.
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_, valueMap) ->
-                    Map.iterBack action valueMap
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-                    Map.iterBack action valueMap1
-                    Map.iterBack action valueMap2
-                    
-                | Br (_, _, left, Lf (_, valueMap)) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    Map.iterBack action valueMap
-                    stack.Push left
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
+        | Br (_, _, left, right) ->
+            // Iterate over the right and left subtrees.
+            PatriciaHashMap.Iterate (action, right)
+            PatriciaHashMap.Iterate (action, left)
 
     //
     static member Fold (folder : 'State -> 'Key -> 'T -> 'State, state : 'State, map) : 'State =
@@ -571,41 +479,10 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             state
         | Lf (_, valueMap) ->
             Map.fold folder state valueMap
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push map
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_, valueMap) ->
-                    state <- Map.fold folder state valueMap
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-                    state <- Map.fold folder state valueMap1
-                    state <- Map.fold folder state valueMap2
-                    
-                | Br (_, _, Lf (_, valueMap), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- Map.fold folder state valueMap
-                    stack.Push right
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the left and right subtrees.
+            let state = PatriciaHashMap.Fold (folder, state, left)
+            PatriciaHashMap.Fold (folder, state, right)
 
     //
     static member FoldBack (folder : 'Key -> 'T -> 'State -> 'State, state : 'State, map) : 'State =
@@ -614,41 +491,10 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             state
         | Lf (_, valueMap) ->
             Map.foldBack folder valueMap state
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push map
-
-            /// Loop until we've processed the entire tree.
-            let mutable state = state
-            while stack.Count <> 0 do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_, valueMap) ->
-                    state <- Map.foldBack folder valueMap state
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-                    state <- Map.foldBack folder valueMap2 state
-                    state <- Map.foldBack folder valueMap1 state
-                    
-                | Br (_, _, left, Lf (_, valueMap)) ->
-                    // Only handle the case where the right child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    state <- Map.foldBack folder valueMap state
-                    stack.Push left
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push left
-                    stack.Push right
-
-            // Return the final state value.
-            state
+        | Br (_, _, left, right) ->
+            // Fold over the right and left subtrees.
+            let state = PatriciaHashMap.FoldBack (folder, state, right)
+            PatriciaHashMap.FoldBack (folder, state, left)
 
     //
     static member TryFindKey (predicate : 'Key -> 'T -> bool, map) : 'Key option =
@@ -657,43 +503,13 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             None
         | Lf (_, valueMap) ->
             Map.tryFindKey predicate valueMap
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push map
-
-            /// Loop until we find a key/value that matches the predicate,
-            /// or until we've processed the entire tree.
-            let mutable matchingKey = None
-            while stack.Count <> 0 && Option.isNone matchingKey do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_, valueMap) ->
-                    matchingKey <- Map.tryFindKey predicate valueMap
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-                    matchingKey <- Map.tryFindKey predicate valueMap1
-                    if Option.isNone matchingKey then
-                        matchingKey <- Map.tryFindKey predicate valueMap2
-                    
-                | Br (_, _, Lf (_, valueMap), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    matchingKey <- Map.tryFindKey predicate valueMap
-                    stack.Push right
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the matching key, if one was found.
-            matchingKey
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, and if necessary, the right subtree.
+            match PatriciaHashMap.TryFindKey (predicate, left) with
+            | None ->
+                PatriciaHashMap.TryFindKey (predicate, right)
+            | result ->
+                result
 
     //
     static member TryPick (picker : 'Key -> 'T -> 'U option, map) : 'U option =
@@ -702,46 +518,13 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             None
         | Lf (_, valueMap) ->
             Map.tryPick picker valueMap
-        | Br (_,_,_,_) ->
-            /// The stack of trie nodes pending traversal.
-            let stack = Stack (defaultTraversalStackSize)
-
-            // Add the initial tree to the stack.
-            stack.Push map
-
-            /// Loop until we find a key/value that matches the picker,
-            /// or until we've processed the entire tree.
-            let mutable pickedValue = None
-            while stack.Count <> 0 && Option.isNone pickedValue do
-                match stack.Pop () with
-                | Empty -> ()
-                | Lf (_, valueMap) ->
-                    pickedValue <- Map.tryPick picker valueMap
-                    
-                (* OPTIMIZATION :   When one or both children of this node are leaves,
-                                    we handle them directly since it's a little faster. *)
-                | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-                    pickedValue <-
-                        match Map.tryPick picker valueMap1 with
-                        | (Some _) as value ->
-                            value
-                        | None ->
-                            Map.tryPick picker valueMap2
-                    
-                | Br (_, _, Lf (_, valueMap), right) ->
-                    // Only handle the case where the left child is a leaf
-                    // -- otherwise the traversal order would be altered.
-                    pickedValue <- Map.tryPick picker valueMap
-                    stack.Push right
-
-                | Br (_, _, left, right) ->
-                    // Push both children onto the stack and recurse to process them.
-                    // NOTE : They're pushed in the opposite order we want to visit them!
-                    stack.Push right
-                    stack.Push left
-
-            // Return the picked value.
-            pickedValue
+        | Br (_, _, left, right) ->
+            // Visit the left subtree, and if necessary, the right subtree.
+            match PatriciaHashMap.TryPick (picker, left) with
+            | None ->
+                PatriciaHashMap.TryPick (picker, right)
+            | result ->
+                result
 
     //
     static member OfSeq (source : seq<'Key * 'T>) : PatriciaHashMap<'Key, 'T> =
