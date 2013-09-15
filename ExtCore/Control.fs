@@ -1701,44 +1701,7 @@ module ReaderWriterState =
 module Maybe =
     //
     let dummy () = ()
-*)
 
-/// <summary>
-/// </summary>
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Choice =
-    //
-    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.bindOrRaise function instead.")>]
-    [<CompiledName("BindOrRaise")>]
-    let inline bindOrRaise (x : Choice<'T, #exn>) : 'T =
-        match x with
-        | Choice2Of2 e ->
-            raise e
-        | Choice1Of2 r ->
-            r
-
-    //
-    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.bindOrFail function instead.")>]
-    [<CompiledName("BindOrFail")>]
-    let inline bindOrFail (x : Choice<'T, string>) : 'T =
-        match x with
-        | Choice1Of2 r -> r
-        | Choice2Of2 msg ->
-            raise <| exn msg
-
-    //
-    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.error function instead.")>]
-    [<CompiledName("SetError")>]
-    let inline setError error : Choice<'T, 'Error> =
-        Choice2Of2 error
-
-    //
-    [<System.Obsolete("This function is deprecated. Use the ExtCore.Choice.failwith function instead.")>]
-    [<CompiledName("Failwith")>]
-    let inline failwith errorMsg : Choice<'T, string> =
-        Choice2Of2 errorMsg
-
-(*
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
