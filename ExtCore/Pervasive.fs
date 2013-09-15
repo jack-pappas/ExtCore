@@ -253,17 +253,31 @@ module Operators =
     /// Raises a System.NotImplementedException.
     [<CompiledName("RaiseNotImplementedException")>]
     let inline notImpl msg : 'T =
-        raise <| System.NotImplementedException msg
+        if System.String.IsNullOrEmpty msg then
+            raise <| System.NotImplementedException ()
+        else
+            raise <| System.NotImplementedException msg
 
     /// Raises a System.NotSupportedException.
     [<CompiledName("RaiseNotSupportedException")>]
     let inline notSupported msg : 'T =
-        raise <| System.NotSupportedException msg
+        if System.String.IsNullOrEmpty msg then
+            raise <| System.NotSupportedException ()
+        else
+            raise <| System.NotSupportedException msg
 
     /// Raises a System.ArgumentOutOfRangeException.
     [<CompiledName("RaiseArgumentOutOfRangeException")>]
-    let inline argOutOfRange (paramName : string) (message : string) : 'T =
-        raise <| System.ArgumentOutOfRangeException (paramName, message)    
+    let argOutOfRange (paramName : string) (message : string) : 'T =
+        match System.String.IsNullOrEmpty paramName, System.String.IsNullOrEmpty message with
+        | false, false ->
+            raise <| System.ArgumentOutOfRangeException (paramName, message)
+        | false, true ->
+            raise <| System.ArgumentOutOfRangeException (paramName)
+        | true, true ->
+            raise <| System.ArgumentOutOfRangeException ()
+        | true, false ->
+            raise <| System.ArgumentOutOfRangeException ("(Unspecified parameter)", message)
 
     /// Determines if a reference is a null reference, and if it is, throws an ArgumentNullException.
     [<CompiledName("CheckNonNull")>]
@@ -274,7 +288,10 @@ module Operators =
     /// Raises a System.Collections.Generic.KeyNotFoundException.
     [<CompiledName("RaiseKeyNotFoundException")>]
     let inline keyNotFound (msg : string) : 'T =
-        raise <| System.Collections.Generic.KeyNotFoundException msg
+        if System.String.IsNullOrEmpty msg then
+            raise <| System.Collections.Generic.KeyNotFoundException ()
+        else
+            raise <| System.Collections.Generic.KeyNotFoundException msg
 
 (* The 'checkFinite' function is disabled for now until we add 'open' declarations
    to every file in this project to allow us to use the --compiling-fslib flag
