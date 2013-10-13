@@ -80,6 +80,7 @@
     <Compile Include="Collections.Vector.fs" />
     <Compile Include="Collections.VectorView.fs" />
     <Compile Include="Collections.Array.fs" />
+    <Compile Include="Collections.Array2D.fs" />
     <Compile Include="Collections.TaggedArray.fs" />
     <Compile Include="Collections.ArrayView.fs" />
     <Compile Include="Collections.Set.fs" />
