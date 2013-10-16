@@ -131,7 +131,7 @@ module Operators =
     /// Returns true when both values are 'false'; otherwise, returns false.
     [<CompiledName("Nor")>]
     let inline nor (p : bool) (q : bool) =
-        not (p && q)
+        not (p || q)
 
     /// Exclusive-or (XOR) of two boolean values.
     [<CompiledName("Xor")>]
