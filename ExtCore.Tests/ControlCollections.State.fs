@@ -22,7 +22,6 @@ module Tests.ExtCore.Control.Collections.State
 open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
-open FsUnit
 
 
 /// Helper functions for implementing tests.
@@ -117,7 +116,7 @@ module Array =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -151,7 +150,7 @@ module Array =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -189,7 +188,7 @@ module Array =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -223,7 +222,7 @@ module Array =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -261,7 +260,7 @@ module Array =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -307,7 +306,7 @@ module Array =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -356,7 +355,7 @@ module Array =
                     })
             let foldResult, finalState = State.run testFunc 7
 
-            String.isEmpty foldResult |> should be True
+            String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
             
@@ -388,7 +387,7 @@ module Array =
                     })
             let foldResult, finalState = State.run testFunc 7
 
-            String.isEmpty foldResult |> should be True
+            String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
             
@@ -491,7 +490,7 @@ module List =
                     })
             let results, finalState = State.run testFunc 7
 
-            List.isEmpty results |> should be True
+            List.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -525,7 +524,7 @@ module List =
                     })
             let results, finalState = State.run testFunc 7
 
-            List.isEmpty results |> should be True
+            List.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -563,7 +562,7 @@ module List =
                     })
             let foldResult, finalState = State.run testFunc 7
 
-            String.isEmpty foldResult |> should be True
+            String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
             
@@ -604,7 +603,7 @@ module TaggedArray =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -642,7 +641,7 @@ module TaggedArray =
                     })
             let results, finalState = State.run testFunc 7
 
-            Array.isEmpty results |> should be True
+            Array.isEmpty results |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
 
@@ -680,7 +679,7 @@ module TaggedArray =
                     })
             let foldResult, finalState = State.run testFunc 7
 
-            String.isEmpty foldResult |> should be True
+            String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
             

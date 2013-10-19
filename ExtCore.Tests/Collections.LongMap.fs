@@ -31,18 +31,17 @@ open System
 open System.Collections
 open System.Collections.Generic
 open NUnit.Framework
-open FsUnit
 
 
 [<Test>]
 let isEmpty () : unit =
     LongMap.empty
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     LongMap.singleton 1L 'a'
     |> LongMap.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let count () : unit =
@@ -76,13 +75,13 @@ let containsKey () : unit =
         (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); |]
     |> LongMap.ofArray
     |> LongMap.containsKey 5L
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd');
         (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); |]
     |> LongMap.ofArray
     |> LongMap.containsKey 1L
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let tryFind () : unit =
@@ -171,7 +170,7 @@ let remove () : unit =
     (LongMap.empty : LongMap<string>)
     |> LongMap.remove 5L
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [(5L, "a"); (3L, "b")]
     |> LongMap.ofList
@@ -201,7 +200,7 @@ let intersect () : unit =
         (LongMap.ofArray [| (3L, 'b'); (11L, 'F'); (2L, 'd'); (4L, 'G'); (12L, 'b'); |])
         LongMap.empty
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     LongMap.intersect
         (LongMap.ofArray [| (3L, 'b'); (11L, 'F'); (2L, 'd'); (4L, 'G'); (12L, 'b'); |])
@@ -229,29 +228,29 @@ let isSubmapOfBy () : unit =
         
     map1.IsSubmapOfBy ((=),
         LongMap.ofList [(1L,1)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((<=),
         LongMap.ofList [(1L,1)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((=),
         LongMap.ofList [(1L,1);(2L,2)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((=),
         LongMap.ofList [(1L,2)])
-    |> should be False
+    |> assertFalse
 
     map1.IsSubmapOfBy ((<),
         LongMap.ofList [(1L,1)])
-    |> should be False
+    |> assertFalse
 
     let map2 = LongMap.ofList [(1L,1)]
 
     map2.IsSubmapOfBy ((=),
         LongMap.ofList [(1L,1);(2L,2)])
-    |> should be False
+    |> assertFalse
 
 
 [<Test>]
@@ -259,7 +258,7 @@ let ofSeq () : unit =
     (Seq.empty : seq<int64 * string>)
     |> LongMap.ofSeq
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> Seq.ofArray
@@ -271,7 +270,7 @@ let ofSeq () : unit =
 let ofList () : unit =
     LongMap.ofList []
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [(5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G')]
     |> LongMap.ofList
@@ -283,7 +282,7 @@ let ofArray () : unit =
     Array.empty
     |> LongMap.ofArray
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
@@ -295,7 +294,7 @@ let ofMap () : unit =
     Map.empty
     |> LongMap.ofMap
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'F'); (2L, 'd'); (17L, 'a'); (4L, 'G'); (12L, 'b'); (14L, 'c'); |]
     |> Map.ofArray
@@ -308,7 +307,7 @@ let toSeq () : unit =
     LongMap.empty
     |> LongMap.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
@@ -322,7 +321,7 @@ let toList () : unit =
     LongMap.empty
     |> LongMap.toList
     |> List.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
@@ -335,7 +334,7 @@ let toArray () : unit =
     LongMap.empty
     |> LongMap.toArray
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
@@ -348,7 +347,7 @@ let toMap () : unit =
     LongMap.empty
     |> LongMap.toMap
     |> Map.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
@@ -437,7 +436,7 @@ let map () : unit =
     LongMap.empty
     |> LongMap.map (sprintf "%i:%c")
     |> LongMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); |]
     |> LongMap.ofArray
@@ -477,7 +476,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -503,7 +502,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -531,7 +530,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -564,7 +563,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -589,38 +588,38 @@ let exists () : unit =
     LongMap.empty
     |> LongMap.exists (fun k v ->
         (k + int64 v) % 2L = 0L)
-    |> should be False
+    |> assertFalse
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
     |> LongMap.exists (fun k v ->
         (k + int64 v) > 200L)
-    |> should be False
+    |> assertFalse
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
     |> LongMap.exists (fun k v ->
         (k + int64 v) % 2L = 0L)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
     LongMap.empty
     |> LongMap.forall (fun k v ->
         (k + int64 v) < 200L)
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
     |> LongMap.forall (fun k v ->
         (k + int64 v) < 200L)
-    |> should be True
+    |> assertTrue
 
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
     |> LongMap.forall (fun k v ->
         (k + int64 v) % 2L = 0L)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let partition () : unit =
@@ -632,11 +631,11 @@ let partition () : unit =
 
         evens
         |> LongMap.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> LongMap.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =
@@ -667,11 +666,11 @@ let mapPartition () : unit =
 
         evens
         |> LongMap.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> LongMap.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =

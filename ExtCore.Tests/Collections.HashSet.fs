@@ -23,7 +23,6 @@ module Tests.ExtCore.Collections.HashSet
 open System
 open System.Collections
 open System.Collections.Generic
-open FsUnit
 open NUnit.Framework
 open ExtCore.Collections    // Necessary because of naming conflict with System.Collections.Generic.HashSet.
 
@@ -32,11 +31,11 @@ open ExtCore.Collections    // Necessary because of naming conflict with System.
 let isEmpty () : unit =
     HashSet.empty
     |> HashSet.isEmpty
-    |> should be True
+    |> assertTrue
     
     HashSet.singleton 5
     |> HashSet.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let count () : unit =
@@ -65,12 +64,12 @@ let contains () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.contains 11
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.contains 6
-    |> should be False
+    |> assertFalse
 (*
 [<Test>]
 let minElement () : unit =
@@ -211,40 +210,40 @@ let isSubset () : unit =
     HashSet.isSubset
         HashSet.empty
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     HashSet.isSubset
         HashSet.empty HashSet.empty
-    |> should be True
+    |> assertTrue
 
     // A set is a subset of itself (this distinguishes isSubset from isProperSubset).
     HashSet.isSubset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Basic tests.
     HashSet.isSubset
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     HashSet.isSubset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Partially-overlapping sets.
     HashSet.isSubset
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     HashSet.isSubset
         (HashSet.ofArray [| 1..5 |])
         (HashSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isProperSubset () : unit =
@@ -252,40 +251,40 @@ let isProperSubset () : unit =
     HashSet.isProperSubset
         HashSet.empty
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     HashSet.isProperSubset
         HashSet.empty HashSet.empty
-    |> should be False
+    |> assertFalse
 
     // A set is not a proper subset of itself (this distinguishes isSubset from isProperSubset).
     HashSet.isProperSubset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Basic tests.
     HashSet.isProperSubset
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     HashSet.isProperSubset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Partially-overlapping sets.
     HashSet.isProperSubset
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     HashSet.isProperSubset
         (HashSet.ofArray [| 1..5 |])
         (HashSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isSuperset () : unit =
@@ -293,40 +292,40 @@ let isSuperset () : unit =
     HashSet.isSuperset
         HashSet.empty
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     HashSet.isSuperset
         HashSet.empty HashSet.empty
-    |> should be True
+    |> assertTrue
 
     // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
     HashSet.isSuperset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Basic tests.
     HashSet.isSuperset
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     HashSet.isSuperset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Partially-overlapping sets.
     HashSet.isSuperset
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     HashSet.isSuperset
         (HashSet.ofArray [| 1..5 |])
         (HashSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isProperSuperset () : unit =
@@ -334,40 +333,40 @@ let isProperSuperset () : unit =
     HashSet.isProperSuperset
         HashSet.empty
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     HashSet.isProperSuperset
         HashSet.empty HashSet.empty
-    |> should be False
+    |> assertFalse
 
     // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
     HashSet.isProperSuperset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Basic tests.
     HashSet.isProperSuperset
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     HashSet.isProperSuperset
         (HashSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Partially-overlapping sets.
     HashSet.isProperSuperset
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (HashSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     HashSet.isProperSuperset
         (HashSet.ofArray [| 1..5 |])
         (HashSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ofSeq () : unit =
@@ -432,7 +431,7 @@ let toSeq () : unit =
     HashSet.empty
     |> HashSet.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
@@ -518,7 +517,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -551,7 +550,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -595,7 +594,7 @@ let filter () : unit =
     |> HashSet.filter (fun el ->
         el % 2 <> 0)
     |> HashSet.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
@@ -610,7 +609,7 @@ let map () : unit =
     |> HashSet.map (fun el ->
         el * 2)
     |> HashSet.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
@@ -633,11 +632,11 @@ let partition () : unit =
 
         evens
         |> HashSet.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> HashSet.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =
@@ -659,38 +658,38 @@ let exists () : unit =
     HashSet.empty
     |> HashSet.exists (fun el ->
         el % 7 = 0)
-    |> should be False
+    |> assertFalse
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.exists (fun el ->
         el = 6)
-    |> should be False
+    |> assertFalse
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.exists (fun el ->
         el % 7 = 0)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
     HashSet.empty
     |> HashSet.forall (fun el ->
         el % 7 = 0)
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.forall (fun el ->
         el < 100)
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> HashSet.ofArray
     |> HashSet.forall (fun el ->
         el % 2 = 0)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let tryPick () : unit =

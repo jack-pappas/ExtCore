@@ -22,7 +22,6 @@ module Tests.ExtCore.Collections.Map
 open System
 open System.Collections.Generic
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -312,7 +311,7 @@ let inverse () : unit =
     Map.empty
     |> Map.inverse
     |> Map.isEmpty
-    |> should be True
+    |> assertTrue
 
     do
         // Sample usage test case.
@@ -341,7 +340,7 @@ let pivot () : unit =
     Map.empty
     |> Map.pivot
     |> Map.isEmpty
-    |> should be True
+    |> assertTrue
 
     do
         // Sample usage test case.

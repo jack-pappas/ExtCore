@@ -23,7 +23,6 @@ module Tests.ExtCore.Collections.LongBimap
 open System
 open System.Collections
 open System.Collections.Generic
-open FsUnit
 open NUnit.Framework
 
 

@@ -20,7 +20,6 @@ namespace Tests.ExtCore.Control
 
 open ExtCore.Control
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -80,7 +79,7 @@ module Reader =
 
             keywords
             |> Reader.run testFunc
-            |> should be True
+            |> assertTrue
 
         do
             let testFunc =

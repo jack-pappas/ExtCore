@@ -19,7 +19,6 @@ limitations under the License.
 namespace Tests.ExtCore
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -44,11 +43,11 @@ module SubstringModule =
     let isEmpty () : unit =
         substring ("Hello World!", 4, 0)
         |> Substring.isEmpty
-        |> should be True
+        |> assertTrue
 
         substring ("Hello World!", 3, 4)
         |> Substring.isEmpty
-        |> should be False
+        |> assertFalse
 
     [<Test>]
     let ofString () : unit =
@@ -173,7 +172,7 @@ module SubstringModule =
 
             elements.ToArray ()
             |> Array.isEmpty
-            |> should be True
+            |> assertTrue
 
         // Test case for "normal" usage of this function.
         do
@@ -199,7 +198,7 @@ module SubstringModule =
 
             elements.ToArray ()
             |> Array.isEmpty
-            |> should be True
+            |> assertTrue
 
         // Test case for "normal" usage of this function.
         do
@@ -225,7 +224,7 @@ module SubstringModule =
 
             elements.ToArray ()
             |> Array.isEmpty
-            |> should be True
+            |> assertTrue
 
         // Test case for "normal" usage of this function.
         do

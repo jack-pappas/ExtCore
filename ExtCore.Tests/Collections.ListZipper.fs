@@ -20,7 +20,6 @@ limitations under the License.
 module Tests.ExtCore.Collections.ListZipper
 
 open NUnit.Framework
-open FsUnit
 
 
 [<Test>]

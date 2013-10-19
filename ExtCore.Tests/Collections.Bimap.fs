@@ -21,7 +21,6 @@ module Tests.ExtCore.Collections.Bimap
 
 open System.Collections.Generic
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 // TODO : Implement tests for equality/comparison.
@@ -29,7 +28,7 @@ open FsUnit
 [<Test>]
 let equality () : unit =
     Bimap.empty = Bimap.empty
-    |> should be True
+    |> assertTrue
 
     Bimap.singleton "Hello" "World!"
     |> Bimap.remove "Hello"
@@ -56,11 +55,11 @@ let singleton () : unit =
 let isEmpty () : unit =
     Bimap.empty
     |> Bimap.isEmpty
-    |> should be True
+    |> assertTrue
 
     Bimap.singleton 5 'f'
     |> Bimap.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let count () : unit =
@@ -81,33 +80,33 @@ let count () : unit =
 let containsKey () : unit =
     Bimap.empty
     |> Bimap.containsKey "foo"
-    |> should be False
+    |> assertFalse
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.containsKey "Hello"
-    |> should be False
+    |> assertFalse
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.containsKey "bar"
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let containsValue () : unit =
     Bimap.empty
     |> Bimap.containsValue 5
-    |> should be False
+    |> assertFalse
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.containsValue 4
-    |> should be False
+    |> assertFalse
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.containsValue 8
-    |> should be True
+    |> assertTrue
 
     // Update one of the existing bindings with a new value then
     // check to make sure it was actually changed.
@@ -115,43 +114,43 @@ let containsValue () : unit =
     |> Bimap.ofArray
     |> Bimap.add "bar" 7
     |> Bimap.containsValue 8
-    |> should be False
+    |> assertFalse
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.add "bar" 7
     |> Bimap.containsValue 7
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let paired () : unit =
     Bimap.empty
     |> Bimap.paired "foo" 5
-    |> should be False
+    |> assertFalse
 
     // Test case for when the map contains neither the key nor the value.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.paired "Hello" 99
-    |> should be False
+    |> assertFalse
 
     // Test case for when the map contains the key, but it is paired with a different value.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.paired "car" 99
-    |> should be False
+    |> assertFalse
 
     // Test case for when the map contains both the key and the value, but they are not paired.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.paired "car" 2
-    |> should be False
+    |> assertFalse
 
     // Test case for when the map contains both the key and the value and they are paired.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
     |> Bimap.paired "bar" 8
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let tryFind () : unit =
@@ -247,7 +246,7 @@ let remove () : unit =
     |> Bimap.ofArray
     |> Bimap.remove "cdr"
     |> Bimap.containsKey "cdr"
-    |> should be False
+    |> assertFalse
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
@@ -272,7 +271,7 @@ let removeValue () : unit =
     |> Bimap.ofArray
     |> Bimap.removeValue 9
     |> Bimap.containsValue 9
-    |> should be False
+    |> assertFalse
 
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
@@ -296,7 +295,7 @@ let add () : unit =
     Bimap.empty
     |> Bimap.add "foo" 5
     |> Bimap.isEmpty
-    |> should be False
+    |> assertFalse
 
     // Test case for when neither the key nor the value being added exist in the Bimap.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
@@ -342,7 +341,7 @@ let tryAdd () : unit =
     Bimap.empty
     |> Bimap.tryAdd "foo" 5
     |> Bimap.isEmpty
-    |> should be False
+    |> assertFalse
 
     // Test case for when neither the key nor the value being added exist in the Bimap.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
@@ -387,7 +386,7 @@ let ofSeq () : unit =
     Seq.empty
     |> Bimap.ofSeq
     |> Bimap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| ("foo", 5) |]
     |> Seq.ofArray
@@ -412,7 +411,7 @@ let ofList () : unit =
     List.empty
     |> Bimap.ofList
     |> Bimap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [("foo", 5)]
     |> Bimap.ofList
@@ -435,7 +434,7 @@ let ofArray () : unit =
     Array.empty
     |> Bimap.ofArray
     |> Bimap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| ("foo", 5) |]
     |> Bimap.ofArray
@@ -458,7 +457,7 @@ let ofMap () : unit =
     Map.empty
     |> Bimap.ofMap
     |> Bimap.isEmpty
-    |> should be True
+    |> assertTrue
 
     Map.singleton "foo" 5
     |> Bimap.ofMap
@@ -483,7 +482,7 @@ let toSeq () : unit =
     Bimap.empty
     |> Bimap.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     Bimap.singleton "foo" 5
     |> Bimap.toSeq
@@ -507,7 +506,7 @@ let toList () : unit =
     Bimap.empty
     |> Bimap.toList
     |> List.isEmpty
-    |> should be True
+    |> assertTrue
 
     Bimap.singleton "foo" 5
     |> Bimap.toList
@@ -529,7 +528,7 @@ let toArray () : unit =
     Bimap.empty
     |> Bimap.toArray
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     Bimap.singleton "foo" 5
     |> Bimap.toArray
@@ -551,7 +550,7 @@ let toMap () : unit =
     Bimap.empty
     |> Bimap.toMap
     |> Map.isEmpty
-    |> should be True
+    |> assertTrue
 
     Bimap.singleton "foo" 5
     |> Bimap.toMap
@@ -580,7 +579,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -608,7 +607,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -641,7 +640,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -680,11 +679,11 @@ let partition () : unit =
 
         evens
         |> Bimap.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> Bimap.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =

@@ -22,7 +22,6 @@ module Tests.ExtCore.Control.Collections.Maybe
 open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
-open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Array module.
@@ -74,7 +73,7 @@ module Array =
                 if x > 0 && x % 5 = 0 then None
                 else Some ())
             |> Option.isSome
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 5
 
@@ -87,7 +86,7 @@ module Array =
                 if x > 0 && x % 5 = 0 then None
                 else Some ())
             |> Option.isNone
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 6
 
@@ -101,7 +100,7 @@ module Array =
                 if x > 0 && x % 2 = 0 then None
                 else Some ())
             |> Option.isNone
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 3
 
@@ -130,7 +129,7 @@ module Array =
                 if y > 0 && y % 5 = 0 then None
                 else Some ())
             |> Option.isSome
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 5
 
@@ -144,7 +143,7 @@ module Array =
                 if y > 0 && y % 5 = 0 then None
                 else Some ())
             |> Option.isNone
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 6
 
@@ -159,7 +158,7 @@ module Array =
                 if y > 0 && y % 2 = 0 then None
                 else Some ())
             |> Option.isNone
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 3
 
@@ -589,7 +588,7 @@ module Seq =
                 if x > 0 && x % 5 = 0 then None
                 else Some ())
             |> Option.isSome
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 5
 
@@ -603,7 +602,7 @@ module Seq =
                 if x > 0 && x % 5 = 0 then None
                 else Some ())
             |> Option.isNone
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 6
 
@@ -618,7 +617,7 @@ module Seq =
                 if x > 0 && x % 2 = 0 then None
                 else Some ())
             |> Option.isNone
-            |> should be True
+            |> assertTrue
 
             !iterationCount |> assertEqual 3
 

@@ -21,7 +21,7 @@ module Tests.ExtCore.Collections.List
 
 open System
 open NUnit.Framework
-open FsUnit
+
 
 
 [<Test>]

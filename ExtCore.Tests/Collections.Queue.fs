@@ -20,7 +20,6 @@ limitations under the License.
 module Tests.ExtCore.Collections.Queue
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -28,13 +27,13 @@ open FsUnit
 let isEmpty () : unit =
     Queue.empty
     |> Queue.isEmpty
-    |> should be True
+    |> assertTrue
 
     Queue.empty
     |> Queue.enqueue "Hello"
     |> Queue.enqueue "World!"
     |> Queue.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let length () : unit =
@@ -196,7 +195,7 @@ let ofList () : unit =
     List.empty
     |> Queue.ofList
     |> Queue.isEmpty
-    |> should be True
+    |> assertTrue
 
     ["foo"; "bar"; "baz"; "cdr"; "car"]
     |> Queue.ofList
@@ -210,7 +209,7 @@ let ofArray () : unit =
     List.empty
     |> Queue.ofList
     |> Queue.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
     |> Queue.ofArray
@@ -224,7 +223,7 @@ let toSeq () : unit =
     Queue.empty
     |> Queue.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     Queue.empty
     |> Queue.enqueue "foo"
@@ -244,7 +243,7 @@ let toList () : unit =
     Queue.empty
     |> Queue.toList
     |> List.isEmpty
-    |> should be True
+    |> assertTrue
 
     Queue.empty
     |> Queue.enqueue "foo"
@@ -263,7 +262,7 @@ let toArray () : unit =
     Queue.empty
     |> Queue.toArray
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     Queue.empty
     |> Queue.enqueue "foo"

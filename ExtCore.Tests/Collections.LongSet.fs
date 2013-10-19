@@ -23,7 +23,6 @@ module Tests.ExtCore.Collections.LongSet
 open System
 open System.Collections
 open System.Collections.Generic
-open FsUnit
 open NUnit.Framework
 
 
@@ -31,11 +30,11 @@ open NUnit.Framework
 let isEmpty () : unit =
     LongSet.empty
     |> LongSet.isEmpty
-    |> should be True
+    |> assertTrue
     
     LongSet.singleton 5L
     |> LongSet.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let count () : unit =
@@ -64,12 +63,12 @@ let contains () : unit =
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
     |> LongSet.contains 11L
-    |> should be True
+    |> assertTrue
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
     |> LongSet.contains 6L
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let minElement () : unit =
@@ -253,40 +252,40 @@ let isSubset () : unit =
     LongSet.isSubset
         LongSet.empty
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     LongSet.isSubset
         LongSet.empty LongSet.empty
-    |> should be True
+    |> assertTrue
 
     // A set is a subset of itself (this distinguishes isSubset from isProperSubset).
     LongSet.isSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     // Basic tests.
     LongSet.isSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     LongSet.isSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     // Partially-overlapping sets.
     LongSet.isSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 22L; 42L; 25L; |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 32L; 57L; 53L; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     LongSet.isSubset
         (LongSet.ofArray [| 1L..5L |])
         (LongSet.ofArray [| 6L..10L |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isProperSubset () : unit =
@@ -294,40 +293,40 @@ let isProperSubset () : unit =
     LongSet.isProperSubset
         LongSet.empty
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     LongSet.isProperSubset
         LongSet.empty LongSet.empty
-    |> should be False
+    |> assertFalse
 
     // A set is not a proper subset of itself (this distinguishes isSubset from isProperSubset).
     LongSet.isProperSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     // Basic tests.
     LongSet.isProperSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     LongSet.isProperSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     // Partially-overlapping sets.
     LongSet.isProperSubset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 22L; 42L; 25L; |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 32L; 57L; 53L; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     LongSet.isProperSubset
         (LongSet.ofArray [| 1L..5L |])
         (LongSet.ofArray [| 6L..10L |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isSuperset () : unit =
@@ -335,40 +334,40 @@ let isSuperset () : unit =
     LongSet.isSuperset
         LongSet.empty
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     LongSet.isSuperset
         LongSet.empty LongSet.empty
-    |> should be True
+    |> assertTrue
 
     // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
     LongSet.isSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     // Basic tests.
     LongSet.isSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     LongSet.isSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     // Partially-overlapping sets.
     LongSet.isSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 22L; 42L; 25L; |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 32L; 57L; 53L; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     LongSet.isSuperset
         (LongSet.ofArray [| 1L..5L |])
         (LongSet.ofArray [| 6L..10L |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isProperSuperset () : unit =
@@ -376,40 +375,40 @@ let isProperSuperset () : unit =
     LongSet.isProperSuperset
         LongSet.empty
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     LongSet.isProperSuperset
         LongSet.empty LongSet.empty
-    |> should be False
+    |> assertFalse
 
     // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
     LongSet.isProperSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     // Basic tests.
     LongSet.isProperSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
-    |> should be False
+    |> assertFalse
 
     LongSet.isProperSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L |])
-    |> should be True
+    |> assertTrue
 
     // Partially-overlapping sets.
     LongSet.isProperSuperset
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 22L; 42L; 25L; |])
         (LongSet.ofArray [| 5L; 3L; 11L; 12L; 14L; 32L; 57L; 53L; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     LongSet.isProperSuperset
         (LongSet.ofArray [| 1L..5L |])
         (LongSet.ofArray [| 6L..10L |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ofSeq () : unit =
@@ -474,7 +473,7 @@ let toSeq () : unit =
     LongSet.empty
     |> LongSet.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
@@ -560,7 +559,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -593,7 +592,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -637,7 +636,7 @@ let filter () : unit =
     |> LongSet.filter (fun el ->
         el % 2L <> 0L)
     |> LongSet.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
@@ -652,7 +651,7 @@ let map () : unit =
     |> LongSet.map (fun el ->
         el * 2L)
     |> LongSet.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
@@ -675,11 +674,11 @@ let partition () : unit =
 
         evens
         |> LongSet.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> LongSet.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =
@@ -701,38 +700,38 @@ let exists () : unit =
     LongSet.empty
     |> LongSet.exists (fun el ->
         el % 7L = 0L)
-    |> should be False
+    |> assertFalse
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
     |> LongSet.exists (fun el ->
         el = 6L)
-    |> should be False
+    |> assertFalse
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
     |> LongSet.exists (fun el ->
         el % 7L = 0L)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
     LongSet.empty
     |> LongSet.forall (fun el ->
         el % 7L = 0L)
-    |> should be True
+    |> assertTrue
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
     |> LongSet.forall (fun el ->
         el < 100L)
-    |> should be True
+    |> assertTrue
 
     [| 5L; 3L; 11L; 2L; 17L; 4L; 12L; 14L |]
     |> LongSet.ofArray
     |> LongSet.forall (fun el ->
         el % 2L = 0L)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let tryPick () : unit =

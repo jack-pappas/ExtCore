@@ -19,7 +19,6 @@ limitations under the License.
 namespace Tests.ExtCore
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 

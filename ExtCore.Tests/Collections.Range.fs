@@ -20,7 +20,6 @@ limitations under the License.
 module Tests.ExtCore.Collections.Range
 
 open NUnit.Framework
-open FsUnit
 
 
 [<Test>]
@@ -36,7 +35,7 @@ let iter () : unit =
             |> elements.Add)
 
         ResizeArray.isEmpty elements
-        |> should be True
+        |> assertTrue
 
     do
         // Test case for a single-element range.
@@ -181,26 +180,26 @@ let exists () : unit =
         (5, 2)
         ||> Range.exists (fun x ->
             Set.contains x primes)
-        |> should be False
+        |> assertFalse
 
     do
         // Test cases for a single-element range.
         (4, 4)
         ||> Range.exists (fun x ->
             Set.contains x primes)
-        |> should be False
+        |> assertFalse
 
         (5, 5)
         ||> Range.exists (fun x ->
             Set.contains x primes)
-        |> should be True
+        |> assertTrue
 
     do
         // Sample usage test case.
         (2, 7)
         ||> Range.exists (fun x ->
             Set.contains x primes)
-        |> should be True
+        |> assertTrue
 
 [<Test>]
 let forall () : unit =
@@ -214,28 +213,28 @@ let forall () : unit =
         (5, 2)
         ||> Range.forall (fun x ->
             not <| Set.contains x primes)
-        |> should be True
+        |> assertTrue
 
     do
         // Test cases for a single-element range.
         (4, 4)
         ||> Range.forall (fun x ->
             not <| Set.contains x primes)
-        |> should be True
+        |> assertTrue
 
         (5, 5)
         ||> Range.forall (fun x ->
             not <| Set.contains x primes)
-        |> should be False
+        |> assertFalse
 
     do
         // Sample usage test cases.
         (14, 18)
         ||> Range.forall (fun x ->
             not <| Set.contains x primes)
-        |> should be False
+        |> assertFalse
 
         (24, 28)
         ||> Range.forall (fun x ->
             not <| Set.contains x primes)
-        |> should be True
+        |> assertTrue

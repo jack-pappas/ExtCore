@@ -20,7 +20,6 @@ limitations under the License.
 module Tests.ExtCore.Collections.ArrayView
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -29,19 +28,19 @@ let isEmpty () : unit =
     (2, 0)
     ||> ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |]
     |> ArrayView.isEmpty
-    |> should be True
+    |> assertTrue
 
     (2, 3)
     ||> ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |]
     |> ArrayView.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ofArray () : unit =
     Array.empty
     |> ArrayView.ofArray
     |> ArrayView.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14; |]
     |> ArrayView.ofArray
@@ -53,13 +52,13 @@ let create () : unit =
     // Create an empty ArrayView of an empty array.
     ArrayView.create Array.empty 0 0
     |> ArrayView.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Create an empty ArrayView of a non-empty array.
     (2, 0)
     ||> ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |]
     |> ArrayView.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Create a non-empty ArrayView.
     (2, 3)
@@ -333,24 +332,24 @@ let exists () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
     |> ArrayView.exists (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should be False
+    |> assertFalse
 
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.exists (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should be True
+    |> assertTrue
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.exists (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should be False
+    |> assertFalse
 
     // Test case for multiple matching values.
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.exists (fun x ->
         x % 2 = 0 && x % 3 = 0)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
@@ -358,24 +357,24 @@ let forall () : unit =
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 0
     |> ArrayView.forall (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should be True
+    |> assertTrue
 
     // Test case for multiple matching values.
     ArrayView.create [| 5; 3; 11; 2; 16; 4; 12; 14; |] 3 4
     |> ArrayView.forall (fun x ->
         x % 2 = 0)
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.forall (fun x ->
         x % 3 = 0 && x % 4 = 0)
-    |> should be False
+    |> assertFalse
     
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 48; |] 4 5
     |> ArrayView.forall (fun x ->
         x % 2 = 0 && x % 3 = 0)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let iter () : unit =
@@ -388,7 +387,7 @@ let iter () : unit =
             elements.Add (x * 3))
 
         ResizeArray.isEmpty elements
-        |> should be True
+        |> assertTrue
 
     do
         // Sample usage test case.

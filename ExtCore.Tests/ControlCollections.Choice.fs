@@ -22,7 +22,6 @@ module Tests.ExtCore.Control.Collections.Choice
 open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
-open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.Array module.

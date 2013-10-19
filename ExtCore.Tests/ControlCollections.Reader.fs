@@ -22,7 +22,6 @@ module Tests.ExtCore.Control.Collections.Reader
 open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
-open FsUnit
 
 
 /// Helper functions for implementing tests.
@@ -116,7 +115,7 @@ module Array =
             keywords
             |> Reader.run testFunc
             |> Array.isEmpty
-            |> should be True
+            |> assertTrue
 
         // Sample usage test cases.
         do
@@ -146,7 +145,7 @@ module Array =
             keywords
             |> Reader.run testFunc
             |> Array.isEmpty
-            |> should be True
+            |> assertTrue
 
         // Sample usage test cases.
         do

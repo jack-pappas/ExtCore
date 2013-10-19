@@ -20,7 +20,6 @@ limitations under the License.
 module Tests.ExtCore.Collections.Seq
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -69,7 +68,7 @@ let replicate () : unit =
     // Replicating an empty sequence should return an empty sequence.
     Seq.replicate 4 Seq.empty
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Basic usage test.
     seq {

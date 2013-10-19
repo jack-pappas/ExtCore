@@ -25,7 +25,6 @@ module Tests.ExtCore.Collections.LazyList
 #nowarn "40"
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -148,7 +147,7 @@ let array () : unit =
     test "array"  (LazyList.toList (LazyList.ofArray [|1;2;3;4|]) = LazyList.toList (LazyList.ofList [1;2;3;4]))
 
 // TODO : Remove this -- replace all calls with Assert.AreEqual.
-let inline private check msg v1 v2 =
+let inline private check msg (v1 : 'T) (v2 : 'T) =
     Assert.AreEqual (v1, v2, msg)
 
 [<Test>]

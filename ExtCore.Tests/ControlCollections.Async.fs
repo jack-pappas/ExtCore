@@ -22,7 +22,6 @@ module Tests.ExtCore.Control.Collections.Async
 open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
-open FsUnit
 
 
 /// Tests for the ExtCore.Control.Collections.Async.Array module.
@@ -45,7 +44,7 @@ module Array =
             }
         |> Async.RunSynchronously
         |> Array.isEmpty
-        |> should be True
+        |> assertTrue
 
         // Sample usage test cases.
         Async.Array.init 4 <| fun x ->
@@ -187,7 +186,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.isEmpty elements
-            |> should be True
+            |> assertTrue
 
         do
             // Sample usage test case.
@@ -248,7 +247,7 @@ module Array =
             |> Async.RunSynchronously
 
             ResizeArray.isEmpty elements
-            |> should be True
+            |> assertTrue
 
         do
             // Sample usage test case.
@@ -304,7 +303,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
 
         // Sample usage test cases.
         [| 2; 17; 4; 12; |]
@@ -313,7 +312,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
         [| 11; 23; 47; |]
         |> Async.Array.exists (fun x ->
@@ -321,7 +320,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
 
         // Test case for multiple matching values.
         [| 7; 11; 18; 29; 48; |]
@@ -330,7 +329,7 @@ module Array =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
     [<Test>]
     let find () : unit =
@@ -381,7 +380,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
         // Test case for multiple matching values.
         [| 2; 16; 4; 12; |]
@@ -390,7 +389,7 @@ module Array =
             return x % 2 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
         // Sample usage test cases.
         [| 11; 23; 47; |]
@@ -399,7 +398,7 @@ module Array =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
     
         [| 7; 11; 18; 29; 48; |]
         |> Async.Array.forall (fun x ->
@@ -407,7 +406,7 @@ module Array =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
 
     [<Test>]
     let pick () : unit =
@@ -633,7 +632,7 @@ module List =
             })
         |> Async.RunSynchronously
         |> List.isEmpty
-        |> should be True
+        |> assertTrue
 
         // Sample usage test cases.
         [2; 17; 4; 12]
@@ -657,7 +656,7 @@ module List =
             })
         |> Async.RunSynchronously
         |> List.isEmpty
-        |> should be True
+        |> assertTrue
 
         // Test case for multiple matching values.
         [7; 11; 18; 29; 48]
@@ -696,7 +695,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
 
         // Sample usage test cases.
         [2; 17; 4; 12]
@@ -705,7 +704,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
         [11; 23; 47]
         |> Async.List.exists (fun x ->
@@ -713,7 +712,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
 
         // Test case for multiple matching values.
         [7; 11; 18; 29; 48]
@@ -722,7 +721,7 @@ module List =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
     [<Test>]
     let exists2 () : unit =
@@ -737,7 +736,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
         // Test case for multiple matching values.
         [2; 16; 4; 12]
@@ -746,7 +745,7 @@ module List =
             return x % 2 = 0
             })
         |> Async.RunSynchronously
-        |> should be True
+        |> assertTrue
 
         // Sample usage test cases.
         [11; 23; 47]
@@ -755,7 +754,7 @@ module List =
             return x % 3 = 0 && x % 4 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
     
         [7; 11; 18; 29; 48]
         |> Async.List.forall (fun x ->
@@ -763,7 +762,7 @@ module List =
             return x % 2 = 0 && x % 3 = 0
             })
         |> Async.RunSynchronously
-        |> should be False
+        |> assertFalse
 
     [<Test>]
     let forall2 () : unit =
@@ -779,7 +778,7 @@ module List =
             })
         |> Async.RunSynchronously
         |> List.isEmpty
-        |> should be True
+        |> assertTrue
 
         // Sample usage test cases.
         [2; 17; 4; 12]
@@ -797,7 +796,7 @@ module List =
             })
         |> Async.RunSynchronously
         |> List.isEmpty
-        |> should be True
+        |> assertTrue
 
         // Test case for multiple matching values.
         [7; 11; 18; 29; 48]
@@ -931,7 +930,7 @@ module List =
             }
         |> Async.RunSynchronously
         |> List.isEmpty
-        |> should be True
+        |> assertTrue
 
         // Sample usage test cases.
         Async.List.init 4 <| fun x ->
@@ -956,7 +955,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.isEmpty elements
-            |> should be True
+            |> assertTrue
 
         do
             // Sample usage test case.
@@ -1021,7 +1020,7 @@ module List =
             |> Async.RunSynchronously
 
             ResizeArray.isEmpty elements
-            |> should be True
+            |> assertTrue
 
         do
             // Sample usage test case.

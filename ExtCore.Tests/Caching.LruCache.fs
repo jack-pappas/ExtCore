@@ -22,7 +22,6 @@ module Tests.ExtCore.Caching.LruCache
 open System.Collections.Generic
 open ExtCore.Caching
 open NUnit.Framework
-open FsUnit
 
 
 [<Test>]
@@ -89,13 +88,13 @@ let containsKey () : unit =
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> LruCache.ofArray 100u
     |> LruCache.containsKey 5
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> LruCache.ofArray 100u
     |> LruCache.containsKey 1
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let tryFind () : unit =
@@ -157,7 +156,7 @@ let remove () : unit =
     (LruCache.empty : LruCache<int, string>)
     |> LruCache.remove 5
     |> LruCache.isEmpty
-    |> should be True
+    |> assertTrue
 
     [(5, "a"); (3, "b")]
     |> LruCache.ofList 100u
@@ -184,7 +183,7 @@ let ofSeq () : unit =
     (Seq.empty : seq<int * string>)
     |> LruCache.ofSeq 100u
     |> LruCache.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> Seq.ofArray
@@ -197,7 +196,7 @@ let ofSeq () : unit =
 let ofList () : unit =
     LruCache.ofList 100u []
     |> LruCache.isEmpty
-    |> should be True
+    |> assertTrue
 
     [(5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G')]
     |> LruCache.ofList 100u
@@ -210,7 +209,7 @@ let ofArray () : unit =
     Array.empty
     |> LruCache.ofArray 100u
     |> LruCache.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
@@ -223,7 +222,7 @@ let ofMap () : unit =
     Map.empty
     |> LruCache.ofMap 100u
     |> LruCache.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
     |> Map.ofArray
@@ -237,7 +236,7 @@ let toSeq () : unit =
     LruCache.empty
     |> LruCache.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
@@ -251,7 +250,7 @@ let toList () : unit =
     LruCache.empty
     |> LruCache.toList
     |> List.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
@@ -264,7 +263,7 @@ let toArray () : unit =
     LruCache.empty
     |> LruCache.toArray
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
@@ -277,7 +276,7 @@ let toMap () : unit =
     LruCache.empty
     |> LruCache.toMap
     |> Map.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
@@ -366,7 +365,7 @@ let map () : unit =
     LruCache.empty
     |> LruCache.map (sprintf "%i:%c")
     |> LruCache.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> LruCache.ofArray 100u
@@ -409,7 +408,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -435,7 +434,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -463,7 +462,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -496,7 +495,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -521,38 +520,38 @@ let exists () : unit =
     LruCache.empty
     |> LruCache.exists (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be False
+    |> assertFalse
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
     |> LruCache.exists (fun k v ->
         (k + int v) > 200)
-    |> should be False
+    |> assertFalse
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
     |> LruCache.exists (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
     LruCache.empty
     |> LruCache.forall (fun k v ->
         (k + int v) < 200)
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
     |> LruCache.forall (fun k v ->
         (k + int v) < 200)
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> LruCache.ofArray 100u
     |> LruCache.forall (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let partition () : unit =
@@ -564,11 +563,11 @@ let partition () : unit =
 
         evens
         |> LruCache.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> LruCache.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =
@@ -601,11 +600,11 @@ let mapPartition () : unit =
 
         evens
         |> LruCache.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> LruCache.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =

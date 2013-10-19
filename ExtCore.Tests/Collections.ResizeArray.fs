@@ -23,7 +23,6 @@ limitations under the License.
 module Tests.ExtCore.Collections.ResizeArray
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 

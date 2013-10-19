@@ -21,17 +21,8 @@ module Tests.ExtCore.Collections.Array2D
 
 open System
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
-
-[<Test>]
-let rowCount () : unit =
-    Assert.Ignore "Test not yet implemented."
-
-[<Test>]
-let columnCount () : unit =
-    Assert.Ignore "Test not yet implemented."
 
 [<Test>]
 let count () : unit =

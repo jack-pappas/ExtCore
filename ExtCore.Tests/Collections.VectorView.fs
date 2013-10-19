@@ -21,7 +21,6 @@ module Tests.ExtCore.Collections.VectorView
 
 open System
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 

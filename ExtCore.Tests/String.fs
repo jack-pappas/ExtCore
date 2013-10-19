@@ -20,7 +20,6 @@ limitations under the License.
 module Tests.ExtCore.String
 
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -28,25 +27,25 @@ open FsUnit
 let isEmpty () : unit =
     // Test case for empty string.
     String.isEmpty String.empty
-    |> should be True
+    |> assertTrue
 
     // Test case for any other string.
     "The quick brown fox jumps over the lazy dog."
     |> String.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ofOption () : unit =
     // Test case for None.
     String.ofOption None
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for Some containing an empty string.
     Some String.empty
     |> String.ofOption
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for Some containing a non-empty string.
     Some "Hello World!"
@@ -59,7 +58,7 @@ let ofArray () : unit =
     Array.empty
     |> String.ofArray
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for a non-empty array.
     [| 'H'; 'e'; 'l'; 'l'; 'o'; ' '; 'W'; 'o'; 'r'; 'l'; 'd'; '!'; |]
@@ -71,12 +70,12 @@ let toOption () : unit =
     // Test case for null.
     String.toOption null
     |> Option.isNone
-    |> should be True
+    |> assertTrue
 
     // Test case for empty string.
     String.toOption String.empty
     |> Option.isNone
-    |> should be True
+    |> assertTrue
 
     // Test case for a non-empty string.
     "Hello World!"
@@ -89,7 +88,7 @@ let toArray () : unit =
     String.empty
     |> String.toArray
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for a non-empty string.
     "Hello World!"
@@ -103,7 +102,7 @@ let split () : unit =
     String.empty
     |> String.split [| ','; |]
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for a non-empty string which does not contain the specified characters.
     "Hello World!"
@@ -133,7 +132,7 @@ let concatArray () : unit =
     Array.empty
     |> String.concatArray
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for non-empty array.
     [| "The"; "quick"; "brown"; "fox"; "jumps"; "over"; "the"; "lazy"; "dog."; |]
@@ -147,7 +146,7 @@ let ofLines () : unit =
     Array.empty
     |> String.ofLines
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test case.
     [| "Lorem"; "ipsum"; "dolor"; "sit"; "amet"; |]
@@ -187,13 +186,13 @@ let sub () : unit =
     // Test case for empty substring of an empty string.
     String.sub String.empty 0 0
     |> ExtCore.Substring.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for empty substring of a non-empty string.
     String.sub "The quick brown fox jumps over the lazy dog." 4 0
     |> ExtCore.Substring.toString
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for a non-empty substring of a non-empty string.
     String.sub "The quick brown fox jumps over the lazy dog." 4 15
@@ -350,7 +349,7 @@ let iter () : unit =
 
         elements.ToArray ()
         |> Array.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Test case for "normal" usage of this function.
     do
@@ -378,7 +377,7 @@ let iteri () : unit =
 
         ResizeArray.toArray elements
         |> Array.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Test case for "normal" usage of this function.
     do
@@ -479,7 +478,7 @@ let trimChars () : unit =
     String.empty
     |> String.trim [| ' '; '.'; ','; |]
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for a string which DOES NOT start or end with any of the specified characters.
     "Hello World!"
@@ -531,7 +530,7 @@ let trimStartWith () : unit =
     String.empty
     |> String.trimStartWith (not << System.Char.IsWhiteSpace)
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for non-empty string with leading characters which
     // don't match the predicate (i.e., they'll be filtered out of the string).
@@ -545,7 +544,7 @@ let trimEndWith () : unit =
     String.empty
     |> String.trimEndWith (not << System.Char.IsPunctuation)
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for non-empty string with trailing characters which
     // don't match the predicate (i.e., they'll be filtered out of the string).
@@ -559,7 +558,7 @@ let trimWith () : unit =
     String.empty
     |> String.trimWith System.Char.IsLetterOrDigit
     |> String.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Test case for non-empty string with leading AND trailing characters which
     // don't match the predicate (i.e., they'll be filtered out of the string).
@@ -694,7 +693,7 @@ module Split =
                 (fun state substr ->
                     state + ExtCore.Substring.toString substr)
             |> String.isEmpty
-            |> should be True
+            |> assertTrue
 
         do
             // Test cases for a string which does contain the specified characters.

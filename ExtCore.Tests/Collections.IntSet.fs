@@ -23,7 +23,6 @@ module Tests.ExtCore.Collections.IntSet
 open System
 open System.Collections
 open System.Collections.Generic
-open FsUnit
 open NUnit.Framework
 
 
@@ -31,11 +30,11 @@ open NUnit.Framework
 let isEmpty () : unit =
     IntSet.empty
     |> IntSet.isEmpty
-    |> should be True
+    |> assertTrue
     
     IntSet.singleton 5
     |> IntSet.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let count () : unit =
@@ -64,12 +63,12 @@ let contains () : unit =
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.contains 11
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.contains 6
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let minElement () : unit =
@@ -253,40 +252,40 @@ let isSubset () : unit =
     IntSet.isSubset
         IntSet.empty
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     IntSet.isSubset
         IntSet.empty IntSet.empty
-    |> should be True
+    |> assertTrue
 
     // A set is a subset of itself (this distinguishes isSubset from isProperSubset).
     IntSet.isSubset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Basic tests.
     IntSet.isSubset
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     IntSet.isSubset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Partially-overlapping sets.
     IntSet.isSubset
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     IntSet.isSubset
         (IntSet.ofArray [| 1..5 |])
         (IntSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isProperSubset () : unit =
@@ -294,40 +293,40 @@ let isProperSubset () : unit =
     IntSet.isProperSubset
         IntSet.empty
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     IntSet.isProperSubset
         IntSet.empty IntSet.empty
-    |> should be False
+    |> assertFalse
 
     // A set is not a proper subset of itself (this distinguishes isSubset from isProperSubset).
     IntSet.isProperSubset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Basic tests.
     IntSet.isProperSubset
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     IntSet.isProperSubset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Partially-overlapping sets.
     IntSet.isProperSubset
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     IntSet.isProperSubset
         (IntSet.ofArray [| 1..5 |])
         (IntSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isSuperset () : unit =
@@ -335,40 +334,40 @@ let isSuperset () : unit =
     IntSet.isSuperset
         IntSet.empty
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     IntSet.isSuperset
         IntSet.empty IntSet.empty
-    |> should be True
+    |> assertTrue
 
     // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
     IntSet.isSuperset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Basic tests.
     IntSet.isSuperset
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     IntSet.isSuperset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Partially-overlapping sets.
     IntSet.isSuperset
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     IntSet.isSuperset
         (IntSet.ofArray [| 1..5 |])
         (IntSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let isProperSuperset () : unit =
@@ -376,40 +375,40 @@ let isProperSuperset () : unit =
     IntSet.isProperSuperset
         IntSet.empty
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     IntSet.isProperSuperset
         IntSet.empty IntSet.empty
-    |> should be False
+    |> assertFalse
 
     // A set is a superset of itself (this distinguishes isSuperset from isProperSuperset).
     IntSet.isProperSuperset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     // Basic tests.
     IntSet.isProperSuperset
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
-    |> should be False
+    |> assertFalse
 
     IntSet.isProperSuperset
         (IntSet.ofArray [| 5; 3; 11; 2; 17; 4; 12; 14 |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14 |])
-    |> should be True
+    |> assertTrue
 
     // Partially-overlapping sets.
     IntSet.isProperSuperset
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 22; 42; 25; |])
         (IntSet.ofArray [| 5; 3; 11; 12; 14; 32; 57; 53; |])
-    |> should be False
+    |> assertFalse
 
     // Disjoint sets.
     IntSet.isProperSuperset
         (IntSet.ofArray [| 1..5 |])
         (IntSet.ofArray [| 6..10 |])
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ofSeq () : unit =
@@ -474,7 +473,7 @@ let toSeq () : unit =
     IntSet.empty
     |> IntSet.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
@@ -560,7 +559,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -593,7 +592,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -637,7 +636,7 @@ let filter () : unit =
     |> IntSet.filter (fun el ->
         el % 2 <> 0)
     |> IntSet.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
@@ -652,7 +651,7 @@ let map () : unit =
     |> IntSet.map (fun el ->
         el * 2)
     |> IntSet.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
@@ -675,11 +674,11 @@ let partition () : unit =
 
         evens
         |> IntSet.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> IntSet.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =
@@ -701,38 +700,38 @@ let exists () : unit =
     IntSet.empty
     |> IntSet.exists (fun el ->
         el % 7 = 0)
-    |> should be False
+    |> assertFalse
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.exists (fun el ->
         el = 6)
-    |> should be False
+    |> assertFalse
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.exists (fun el ->
         el % 7 = 0)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
     IntSet.empty
     |> IntSet.forall (fun el ->
         el % 7 = 0)
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.forall (fun el ->
         el < 100)
-    |> should be True
+    |> assertTrue
 
     [| 5; 3; 11; 2; 17; 4; 12; 14 |]
     |> IntSet.ofArray
     |> IntSet.forall (fun el ->
         el % 2 = 0)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let tryPick () : unit =

@@ -22,7 +22,7 @@ module Tests.ExtCore.Control.Collections.AsyncProtectedState
 open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
-open FsUnit
+
 
 
 (* TODO : Implement tests for the AsyncProtectedState collections. *)

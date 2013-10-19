@@ -21,7 +21,6 @@ module Tests.ExtCore.Collections.Array
 
 open System
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -84,11 +83,11 @@ let ``contains (value type)`` () : unit =
 
     ``0 to 10``
     |> Array.contains 5
-    |> should be True
+    |> assertTrue
 
     ``0 to 10``
     |> Array.contains 15
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ``contains (reference type with IEquatable<T>)`` () : unit =
@@ -99,11 +98,11 @@ let ``contains (reference type with IEquatable<T>)`` () : unit =
 
     colors
     |> Array.contains "DarkBlue"
-    |> should be True
+    |> assertTrue
 
     colors
     |> Array.contains "Aquamarine"
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ``contains (reference type)`` () : unit =
@@ -113,11 +112,11 @@ let ``contains (reference type)`` () : unit =
 
     [| exn (); exn (); exn (); ex; exn (); |]
     |> Array.contains ex
-    |> should be True
+    |> assertTrue
 
     [| exn (); exn (); exn (); exn (); exn (); |]
     |> Array.contains ex
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let expandRight () : unit =
@@ -236,7 +235,7 @@ let segment2 () : unit =
     (intSegments, charSegments)
     ||> Array.forall2 (fun intSeg charSeg ->
         intSeg.Count = charSeg.Count)
-    |> should be True
+    |> assertTrue
 
     // Now check that the array was segmented correctly.
     intSegments

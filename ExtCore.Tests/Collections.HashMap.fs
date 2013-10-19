@@ -24,7 +24,6 @@ open System
 open System.Collections
 open System.Collections.Generic
 open NUnit.Framework
-open FsUnit
 
 
 /// A type which uses the same hash value for every instance.
@@ -64,12 +63,12 @@ let isEmpty () : unit =
     // Test case for an empty map.
     HashMap.empty
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     HashMap.singleton 1 'a'
     |> HashMap.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let count () : unit =
@@ -107,13 +106,13 @@ let containsKey () : unit =
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> HashMap.ofArray
     |> HashMap.containsKey 5
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> HashMap.ofArray
     |> HashMap.containsKey 1
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let tryFind () : unit =
@@ -210,7 +209,7 @@ let remove () : unit =
     (HashMap.empty : HashMap<int, string>)
     |> HashMap.remove 5
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [(5, "a"); (3, "b")]
@@ -241,7 +240,7 @@ let intersect () : unit =
         (HashMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
         HashMap.empty
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     HashMap.intersect
         (HashMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
@@ -269,29 +268,29 @@ let isSubmapOfBy () : unit =
         
     map1.IsSubmapOfBy ((=),
         HashMap.ofList [(1,1)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((<=),
         HashMap.ofList [(1,1)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((=),
         HashMap.ofList [(1,1);(2,2)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((=),
         HashMap.ofList [(1,2)])
-    |> should be False
+    |> assertFalse
 
     map1.IsSubmapOfBy ((<),
         HashMap.ofList [(1,1)])
-    |> should be False
+    |> assertFalse
 
     let map2 = HashMap.ofList [(1,1)]
 
     map2.IsSubmapOfBy ((=),
         HashMap.ofList [(1,1);(2,2)])
-    |> should be False
+    |> assertFalse
 *)
 
 [<Test>]
@@ -300,7 +299,7 @@ let ofSeq () : unit =
     (Seq.empty : seq<int * string>)
     |> HashMap.ofSeq
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -314,7 +313,7 @@ let ofList () : unit =
     // Test case for an empty list.
     HashMap.ofList []
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [(5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G')]
@@ -328,7 +327,7 @@ let ofArray () : unit =
     Array.empty
     |> HashMap.ofArray
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -342,7 +341,7 @@ let ofMap () : unit =
     Map.empty
     |> HashMap.ofMap
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
@@ -357,7 +356,7 @@ let toSeq () : unit =
     HashMap.empty
     |> HashMap.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -373,7 +372,7 @@ let toList () : unit =
     HashMap.empty
     |> HashMap.toList
     |> List.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -388,7 +387,7 @@ let toArray () : unit =
     HashMap.empty
     |> HashMap.toArray
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -403,7 +402,7 @@ let toMap () : unit =
     HashMap.empty
     |> HashMap.toMap
     |> Map.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
@@ -494,7 +493,7 @@ let map () : unit =
     HashMap.empty
     |> HashMap.map (sprintf "%i:%c")
     |> HashMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
@@ -538,7 +537,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Sample usage test cases.
     do
@@ -566,7 +565,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Sample usage test cases.
     do
@@ -596,7 +595,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Sample usage test cases.
     do
@@ -631,7 +630,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Sample usage test cases.
     do
@@ -658,20 +657,20 @@ let exists () : unit =
     HashMap.empty
     |> HashMap.exists (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be False
+    |> assertFalse
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.exists (fun k v ->
         (k + int v) > 200)
-    |> should be False
+    |> assertFalse
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.exists (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
@@ -679,20 +678,20 @@ let forall () : unit =
     HashMap.empty
     |> HashMap.forall (fun k v ->
         (k + int v) < 200)
-    |> should be True
+    |> assertTrue
 
     // Sample usage test cases.
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.forall (fun k v ->
         (k + int v) < 200)
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> HashMap.ofArray
     |> HashMap.forall (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let partition () : unit =
@@ -705,11 +704,11 @@ let partition () : unit =
 
         evens
         |> HashMap.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> HashMap.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Sample usage test cases.
     do
@@ -742,11 +741,11 @@ let mapPartition () : unit =
 
         evens
         |> HashMap.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> HashMap.isEmpty
-        |> should be True
+        |> assertTrue
 
     // Sample usage test cases.
     do

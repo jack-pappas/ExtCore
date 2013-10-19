@@ -22,7 +22,6 @@ module Tests.ExtCore.Control.Collections.ProtectedState
 open ExtCore.Control
 open ExtCore.Control.Collections
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 

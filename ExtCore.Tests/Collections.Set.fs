@@ -21,7 +21,6 @@ module Tests.ExtCore.Collections.Set
 
 open System
 open NUnit.Framework
-open FsUnit
 //open FsCheck
 
 
@@ -267,15 +266,15 @@ let condense () : unit =
 [<Test>]
 let disjoint () : unit =
     Set.disjoint Set.empty Set.empty
-    |> should be True
+    |> assertTrue
 
     Set.disjoint (Set.ofArray [| 3; 6; 9; 12; 15 |]) (Set.ofArray [| 7; 14; 21; 28; 35 |])
-    |> should be True
+    |> assertTrue
 
     Set.disjoint
         (Set.ofArray [| 0..20 |] |> Set.filter (fun el -> el % 2 = 0))
         (Set.ofArray [| 0..20 |] |> Set.filter (fun el -> el % 3 = 0))
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let countWith () : unit =

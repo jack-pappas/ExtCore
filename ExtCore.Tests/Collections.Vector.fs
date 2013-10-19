@@ -24,7 +24,7 @@ module Tests.ExtCore.Collections.Vector
 
 open System
 open NUnit.Framework
-open FsUnit
+
 
 (*
 [Test Strategy]
@@ -1079,11 +1079,11 @@ let ``contains (value type)`` () : unit =
 
     ``0 to 10``
     |> Vector.contains 5
-    |> should be True
+    |> assertTrue
 
     ``0 to 10``
     |> Vector.contains 15
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ``contains (reference type with IEquatable<T>)`` () : unit =
@@ -1094,11 +1094,11 @@ let ``contains (reference type with IEquatable<T>)`` () : unit =
 
     colors
     |> Vector.contains "DarkBlue"
-    |> should be True
+    |> assertTrue
 
     colors
     |> Vector.contains "Aquamarine"
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let ``contains (reference type)`` () : unit =
@@ -1109,12 +1109,12 @@ let ``contains (reference type)`` () : unit =
     [| exn (); exn (); exn (); ex; exn (); |]
     |> vector
     |> Vector.contains ex
-    |> should be True
+    |> assertTrue
 
     [| exn (); exn (); exn (); exn (); exn (); |]
     |> vector
     |> Vector.contains ex
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let foldi () : unit =
@@ -1189,7 +1189,7 @@ let split () : unit =
 //    (intSegments, charSegments)
 //    ||> Array.forall2 (fun intSeg charSeg ->
 //        intSeg.Count = charSeg.Count)
-//    |> should be True
+//    |> assertTrue
 //
 //    // Now check that the array was segmented correctly.
 //    intSegments

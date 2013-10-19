@@ -31,18 +31,17 @@ open System
 open System.Collections
 open System.Collections.Generic
 open NUnit.Framework
-open FsUnit
 
 
 [<Test>]
 let isEmpty () : unit =
     IntMap.empty
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     IntMap.singleton 1 'a'
     |> IntMap.isEmpty
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let count () : unit =
@@ -76,13 +75,13 @@ let containsKey () : unit =
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.containsKey 5
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
         (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
     |> IntMap.containsKey 1
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let tryFind () : unit =
@@ -171,7 +170,7 @@ let remove () : unit =
     (IntMap.empty : IntMap<string>)
     |> IntMap.remove 5
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [(5, "a"); (3, "b")]
     |> IntMap.ofList
@@ -201,7 +200,7 @@ let intersect () : unit =
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
         IntMap.empty
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     IntMap.intersect
         (IntMap.ofArray [| (3, 'b'); (11, 'F'); (2, 'd'); (4, 'G'); (12, 'b'); |])
@@ -229,29 +228,29 @@ let isSubmapOfBy () : unit =
         
     map1.IsSubmapOfBy ((=),
         IntMap.ofList [(1,1)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((<=),
         IntMap.ofList [(1,1)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((=),
         IntMap.ofList [(1,1);(2,2)])
-    |> should be True
+    |> assertTrue
 
     map1.IsSubmapOfBy ((=),
         IntMap.ofList [(1,2)])
-    |> should be False
+    |> assertFalse
 
     map1.IsSubmapOfBy ((<),
         IntMap.ofList [(1,1)])
-    |> should be False
+    |> assertFalse
 
     let map2 = IntMap.ofList [(1,1)]
 
     map2.IsSubmapOfBy ((=),
         IntMap.ofList [(1,1);(2,2)])
-    |> should be False
+    |> assertFalse
 
 
 [<Test>]
@@ -259,7 +258,7 @@ let ofSeq () : unit =
     (Seq.empty : seq<int * string>)
     |> IntMap.ofSeq
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> Seq.ofArray
@@ -271,7 +270,7 @@ let ofSeq () : unit =
 let ofList () : unit =
     IntMap.ofList []
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [(5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G')]
     |> IntMap.ofList
@@ -283,7 +282,7 @@ let ofArray () : unit =
     Array.empty
     |> IntMap.ofArray
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -295,7 +294,7 @@ let ofMap () : unit =
     Map.empty
     |> IntMap.ofMap
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'F'); (2, 'd'); (17, 'a'); (4, 'G'); (12, 'b'); (14, 'c'); |]
     |> Map.ofArray
@@ -308,7 +307,7 @@ let toSeq () : unit =
     IntMap.empty
     |> IntMap.toSeq
     |> Seq.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -322,7 +321,7 @@ let toList () : unit =
     IntMap.empty
     |> IntMap.toList
     |> List.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -335,7 +334,7 @@ let toArray () : unit =
     IntMap.empty
     |> IntMap.toArray
     |> Array.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -348,7 +347,7 @@ let toMap () : unit =
     IntMap.empty
     |> IntMap.toMap
     |> Map.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
@@ -437,7 +436,7 @@ let map () : unit =
     IntMap.empty
     |> IntMap.map (sprintf "%i:%c")
     |> IntMap.isEmpty
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); |]
     |> IntMap.ofArray
@@ -477,7 +476,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -503,7 +502,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -531,7 +530,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -564,7 +563,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let elements = ResizeArray ()
@@ -589,38 +588,38 @@ let exists () : unit =
     IntMap.empty
     |> IntMap.exists (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be False
+    |> assertFalse
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
     |> IntMap.exists (fun k v ->
         (k + int v) > 200)
-    |> should be False
+    |> assertFalse
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
     |> IntMap.exists (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be True
+    |> assertTrue
 
 [<Test>]
 let forall () : unit =
     IntMap.empty
     |> IntMap.forall (fun k v ->
         (k + int v) < 200)
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
     |> IntMap.forall (fun k v ->
         (k + int v) < 200)
-    |> should be True
+    |> assertTrue
 
     [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
     |> IntMap.ofArray
     |> IntMap.forall (fun k v ->
         (k + int v) % 2 = 0)
-    |> should be False
+    |> assertFalse
 
 [<Test>]
 let partition () : unit =
@@ -632,11 +631,11 @@ let partition () : unit =
 
         evens
         |> IntMap.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> IntMap.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =
@@ -667,11 +666,11 @@ let mapPartition () : unit =
 
         evens
         |> IntMap.isEmpty
-        |> should be True
+        |> assertTrue
 
         odds
         |> IntMap.isEmpty
-        |> should be True
+        |> assertTrue
 
     do
         let evens, odds =
