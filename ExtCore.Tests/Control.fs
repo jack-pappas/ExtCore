@@ -138,31 +138,6 @@ module ReaderState =
         Assert.Ignore "Test not yet implemented."
 
 
-/// Tests for the ExtCore.Control.Choice module.
-module Choice =
-    [<Test>]
-    let bindOrFail () : unit =
-        Assert.Ignore "Test not yet implemented."
-
-    [<Test>]
-    let bindOrRaise () : unit =
-        Assert.Ignore "Test not yet implemented."
-
-    [<Test; ExpectedException(typeof<exn>)>]
-    let ``bindOrRaise raises exn for Choice2Of2`` () : unit =
-        Choice2Of2 (exn "An error occurred within the computation.")
-        |> Choice.bindOrRaise
-        |> ignore
-
-    [<Test>]
-    let failwith () : unit =
-        Assert.Ignore "Test not yet implemented."
-
-    [<Test>]
-    let setError () : unit =
-        Assert.Ignore "Test not yet implemented."
-
-
 /// Tests for the ExtCore.Control.ProtectedState module.
 module ProtectedState =
     [<Test>]
