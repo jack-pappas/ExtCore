@@ -55,3 +55,32 @@ module Array =
         let folder = FSharpFunc<_,_,_>.Adapt folder
         foldImpl (folder, array, state, 0)
 
+
+/// The standard F# List module, adapted for use within 'cont' workflows.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module List =
+    /// Cont implementation of List.fold.
+    let rec private foldImpl (folder : FSharpFunc<_,_,_>, list : 'T list, state : 'State) : ContFunc<'State, 'K> =
+        cont {
+        match list with
+        | [] ->
+            // We've reached the end of the list so return the final state value.
+            return state
+        | hd :: tl ->
+            // Invoke the folder with the head element of the list and the current state value.
+            let! state = folder.Invoke (state, hd)
+
+            // Continue folding over the rest of the list.
+            return! foldImpl (folder, tl, state)
+        }
+
+    /// Cont implementation of List.fold.
+    [<CompiledName("Fold")>]
+    let fold (folder : 'State -> 'T -> ContFunc<'State, 'K>) (state : 'State) (list : 'T list) : ContFunc<'State, 'K> =
+        // Preconditions
+        checkNonNull "list" list
+
+        // Call the recursive implementation.
+        let folder = FSharpFunc<_,_,_>.Adapt folder
+        foldImpl (folder, list, state)
+
