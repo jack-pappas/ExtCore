@@ -1009,51 +1009,53 @@ type LongMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tr
                 map2.Add (key, value)), (LongMap.Empty, LongMap.Empty))
 
     /// Formats an element value for use within the ToString() method.
-    static member (*inline*) private ElementString (element : obj) =
-        match box element with
-        | null -> "null"
+    static member private ElementString (kvp : KeyValuePair<int64, 'T>) =
+        match box kvp.Value with
+        | null ->
+            sprintf "(%iL, null)" kvp.Key
         | :? System.IFormattable as formattable ->
-            formattable.ToString (
+            sprintf "(%iL, %s)" kvp.Key
+            <| formattable.ToString (
                 null, System.Globalization.CultureInfo.InvariantCulture)
         | _ ->
-            element.ToString ()
+            sprintf "(%iL, %O)" kvp.Key kvp.Value
 
     override this.ToString () =
         (* NOTE :   Like Map, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
         match List.ofSeq (Seq.truncate 4 this) with
         | [] -> "longMap []"
-        | [KeyValue h1] ->
+        | [kvp1] ->
             System.Text.StringBuilder()
                 .Append("longMap [")
-                .Append(LongMap<_>.ElementString h1)
+                .Append(LongMap<_>.ElementString kvp1)
                 .Append("]")
                 .ToString()
-        | [KeyValue h1; KeyValue h2] ->
+        | [kvp1; kvp2] ->
             System.Text.StringBuilder()
                 .Append("longMap [")
-                .Append(LongMap<_>.ElementString h1)
+                .Append(LongMap<_>.ElementString kvp1)
                 .Append("; ")
-                .Append(LongMap<_>.ElementString h2)
+                .Append(LongMap<_>.ElementString kvp2)
                 .Append("]")
                 .ToString()
-        | [KeyValue h1; KeyValue h2; KeyValue h3] ->
+        | [kvp1; kvp2; kvp3] ->
             System.Text.StringBuilder()
                 .Append("longMap [")
-                .Append(LongMap<_>.ElementString h1)
+                .Append(LongMap<_>.ElementString kvp1)
                 .Append("; ")
-                .Append(LongMap<_>.ElementString h2)
+                .Append(LongMap<_>.ElementString kvp2)
                 .Append("; ")
-                .Append(LongMap<_>.ElementString h3)
+                .Append(LongMap<_>.ElementString kvp3)
                 .Append("]")
                 .ToString()
-        | KeyValue h1 :: KeyValue h2 :: KeyValue h3 :: _ ->
+        | kvp1 :: kvp2 :: kvp3 :: _ ->
             System.Text.StringBuilder()
                 .Append("longMap [")
-                .Append(LongMap<_>.ElementString h1)
+                .Append(LongMap<_>.ElementString kvp1)
                 .Append("; ")
-                .Append(LongMap<_>.ElementString h2)
+                .Append(LongMap<_>.ElementString kvp2)
                 .Append("; ")
-                .Append(LongMap<_>.ElementString h3)
+                .Append(LongMap<_>.ElementString kvp3)
                 .Append("; ... ]")
                 .ToString()
 

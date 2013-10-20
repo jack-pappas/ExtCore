@@ -980,14 +980,8 @@ type LongSet private (trie : PatriciaSet64) =
                 falseSet.Add el), (LongSet.Empty, LongSet.Empty))
 
     /// Formats an element value for use within the ToString() method.
-    static member (*inline*) private ElementString (element : obj) =
-        match box element with
-        | null -> "null"
-        | :? System.IFormattable as formattable ->
-            formattable.ToString (
-                null, System.Globalization.CultureInfo.InvariantCulture) + "L"
-        | _ ->
-            element.ToString ()
+    static member (*inline*) private ElementString (value : int64) =
+        (value.ToString System.Globalization.CultureInfo.InvariantCulture) + "L"
 
     override this.ToString () =
         (* NOTE :   Like Set, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)

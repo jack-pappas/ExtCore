@@ -1005,51 +1005,53 @@ type IntMap< [<EqualityConditionalOn; ComparisonConditionalOn>] 'T> private (tri
                 map2.Add (key, value)), (IntMap.Empty, IntMap.Empty))
 
     /// Formats an element value for use within the ToString() method.
-    static member (*inline*) private ElementString (element : obj) =
-        match box element with
-        | null -> "null"
+    static member private ElementString (kvp : KeyValuePair<int, 'T>) =
+        match box kvp.Value with
+        | null ->
+            sprintf "(%i, null)" kvp.Key
         | :? System.IFormattable as formattable ->
-            formattable.ToString (
+            sprintf "(%i, %s)" kvp.Key
+            <| formattable.ToString (
                 null, System.Globalization.CultureInfo.InvariantCulture)
         | _ ->
-            element.ToString ()
+            sprintf "(%i, %O)" kvp.Key kvp.Value
 
     override this.ToString () =
         (* NOTE :   Like Map, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
         match List.ofSeq (Seq.truncate 4 this) with
         | [] -> "intMap []"
-        | [KeyValue h1] ->
+        | [kvp1] ->
             System.Text.StringBuilder()
                 .Append("intMap [")
-                .Append(IntMap<_>.ElementString h1)
+                .Append(IntMap<_>.ElementString kvp1)
                 .Append("]")
                 .ToString()
-        | [KeyValue h1; KeyValue h2] ->
+        | [kvp1; kvp2] ->
             System.Text.StringBuilder()
                 .Append("intMap [")
-                .Append(IntMap<_>.ElementString h1)
+                .Append(IntMap<_>.ElementString kvp1)
                 .Append("; ")
-                .Append(IntMap<_>.ElementString h2)
+                .Append(IntMap<_>.ElementString kvp2)
                 .Append("]")
                 .ToString()
-        | [KeyValue h1; KeyValue h2; KeyValue h3] ->
+        | [kvp1; kvp2; kvp3] ->
             System.Text.StringBuilder()
                 .Append("intMap [")
-                .Append(IntMap<_>.ElementString h1)
+                .Append(IntMap<_>.ElementString kvp1)
                 .Append("; ")
-                .Append(IntMap<_>.ElementString h2)
+                .Append(IntMap<_>.ElementString kvp2)
                 .Append("; ")
-                .Append(IntMap<_>.ElementString h3)
+                .Append(IntMap<_>.ElementString kvp3)
                 .Append("]")
                 .ToString()
-        | KeyValue h1 :: KeyValue h2 :: KeyValue h3 :: _ ->
+        | kvp1 :: kvp2 :: kvp3 :: _ ->
             System.Text.StringBuilder()
                 .Append("intMap [")
-                .Append(IntMap<_>.ElementString h1)
+                .Append(IntMap<_>.ElementString kvp1)
                 .Append("; ")
-                .Append(IntMap<_>.ElementString h2)
+                .Append(IntMap<_>.ElementString kvp2)
                 .Append("; ")
-                .Append(IntMap<_>.ElementString h3)
+                .Append(IntMap<_>.ElementString kvp3)
                 .Append("; ... ]")
                 .ToString()
 

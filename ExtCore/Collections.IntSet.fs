@@ -993,14 +993,8 @@ type IntSet private (trie : PatriciaSet32) =
                 falseSet.Add el), (IntSet.Empty, IntSet.Empty))
 
     /// Formats an element value for use within the ToString() method.
-    static member (*inline*) private ElementString (element : obj) =
-        match box element with
-        | null -> "null"
-        | :? System.IFormattable as formattable ->
-            formattable.ToString (
-                null, System.Globalization.CultureInfo.InvariantCulture)
-        | _ ->
-            element.ToString ()
+    static member (*inline*) private ElementString (value : int) =
+        value.ToString System.Globalization.CultureInfo.InvariantCulture
 
     override this.ToString () =
         (* NOTE :   Like Set, we have specific cases for 0, 1, 2, 3, and 4+ elements. *)
