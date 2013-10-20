@@ -357,7 +357,7 @@ module List =
                     iterRec (tl1, tl2)
 
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         iterRec (list1, list2)
@@ -388,7 +388,7 @@ module List =
                     iterRec (tl1, tl2, index + 1)
 
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         iterRec (list1, list2, 0)
@@ -466,7 +466,7 @@ module List =
                     mapRec (result :: acc, tl1, tl2)
 
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         mapRec (List.empty, list1, list2)
@@ -496,7 +496,7 @@ module List =
                     mapRec (result :: acc, index + 1, tl1, tl2)
 
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         mapRec (List.empty, 0, list1, list2)
@@ -527,7 +527,9 @@ module List =
                     mapRec (result :: acc, tl1, tl2, tl3)
 
             | _, _, _ ->
-                failwith "The lists have different lengths."
+                // TODO : Perhaps provide a better error message here, so we can
+                // easily tell which list was shorter than the others.
+                invalidArg "list2" "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         mapRec (List.empty, list1, list2, list3)
@@ -582,7 +584,7 @@ module List =
                     foldRec (tl1, tl2, state)
 
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         foldRec (list1, list2, state)
@@ -637,7 +639,7 @@ module List =
                     foldRec (tl1, tl2, state)
 
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
                         
         // Call the recursive implementation function. 
         foldRec (List.rev list1, List.rev list2, state)
@@ -743,7 +745,7 @@ module List =
                 | Choice1Of2 false ->
                     existsRec (tl1, tl2)
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
 
         // Call the recursive implementation function.
         existsRec (list1, list2)
@@ -798,7 +800,7 @@ module List =
                 | Choice1Of2 true ->
                     existsRec (tl1, tl2)
             | _, _ ->
-                failwith "The lists have different lengths."
+                invalidArg "list2" "The lists have different lengths."
 
         // Call the recursive implementation function.
         existsRec (list1, list2)
