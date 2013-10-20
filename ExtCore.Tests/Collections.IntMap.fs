@@ -488,7 +488,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 'D'; 'B'; 'G'; 'A'; 'F'; 'B'; 'C'; 'A'; |]
 
 [<Test>]
@@ -514,7 +514,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 'A'; 'C'; 'B'; 'F'; 'A'; 'G'; 'B'; 'D'; |]
 
 [<Test>]
@@ -547,7 +547,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 102; 102; 77; 105; 85; 115; 119; 121; |]
 
 [<Test>]
@@ -580,7 +580,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 114; 114; 112; 84; 106; 80; 107; 109; |]
 
 [<Test>]
@@ -700,7 +700,7 @@ let mapPartition () : unit =
 module MapType =
     // Interfaces
     [<Test>]
-    let IEnumerable() =        
+    let IEnumerable() =
         // Legit IE
         let ie = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable
         let enum = ie.GetEnumerator()

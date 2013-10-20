@@ -529,7 +529,7 @@ let iter () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [|4L; 5L; 6L; 7L; 13L; 14L; 16L; 19L|]
 
 [<Test>]
@@ -543,7 +543,7 @@ let iterBack () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [|19L; 16L; 14L; 13L; 7L; 6L; 5L; 4L|]
 
 [<Test>]
@@ -576,7 +576,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [|4L; 6L; 8L; 10L; 17L; 19L; 22L; 26L|]
 
 [<Test>]
@@ -609,7 +609,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [|19L; 17L; 16L; 16L; 11L; 11L; 11L; 11L|]
 
 [<Test>]
