@@ -579,19 +579,6 @@ type private PatriciaSet32 =
         | Empty -> ()
         | Lf k ->
             action (int k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            action (int k)
-            action (int j)
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            action (int k)
-            PatriciaSet32.Iterate (action, right)
-
         | Br (_, _, left, right) ->
             // Iterate over the left and right subtrees.
             PatriciaSet32.Iterate (action, left)
@@ -603,19 +590,6 @@ type private PatriciaSet32 =
         | Empty -> ()
         | Lf k ->
             action (int k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            action (int j)
-            action (int k)
-                    
-        | Br (_, _, left, Lf k) ->
-            // Only handle the case where the right child is a leaf
-            // -- otherwise the traversal order would be altered.
-            action (int k)
-            PatriciaSet32.Iterate (action, left)
-
         | Br (_, _, left, right) ->
             // Iterate over the right and left subtrees.
             PatriciaSet32.Iterate (action, right)
@@ -628,19 +602,6 @@ type private PatriciaSet32 =
             state
         | Lf k ->
             folder.Invoke (state, int k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            let state = folder.Invoke (state, int k)
-            folder.Invoke (state, int j)
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            let state = folder.Invoke (state, int k)
-            PatriciaSet32.Fold (folder, state, right)
-
         | Br (_, _, left, right) ->
             // Fold over the left subtree, then the right subtree.
             let state = PatriciaSet32.Fold (folder, state, left)
@@ -653,19 +614,6 @@ type private PatriciaSet32 =
             state
         | Lf k ->
             folder.Invoke (int k, state)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            let state = folder.Invoke (int j, state)
-            folder.Invoke (int k, state)
-                    
-        | Br (_, _, left, Lf k) ->
-            // Only handle the case where the right child is a leaf
-            // -- otherwise the traversal order would be altered.
-            let state = folder.Invoke (int k, state)
-            PatriciaSet32.FoldBack (folder, state, left)
-
         | Br (_, _, left, right) ->
             // Fold over the right subtree, then the left subtree.
             let state = PatriciaSet32.FoldBack (folder, state, right)
@@ -678,25 +626,6 @@ type private PatriciaSet32 =
             None
         | Lf k ->
             picker (int k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            match picker (int k) with
-            | None ->
-                picker (int j)
-            | res ->
-                res
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            match picker (int k) with
-            | None ->
-                PatriciaSet32.TryPick (picker, right)
-            | res ->
-                res
-
         | Br (_, _, left, right) ->
             // Visit the left subtree, then the right subtree if necessary.
             match PatriciaSet32.TryPick (picker, left) with
@@ -712,24 +641,6 @@ type private PatriciaSet32 =
             None
         | Lf k ->
             if predicate (int k) then Some (int k) else None
-
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            if predicate (int k) then
-                Some (int k)
-            elif predicate (int j) then
-                Some (int j)
-            else None
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            if predicate (int k) then
-                Some (int k)
-            else
-                PatriciaSet32.TryFind (predicate, right)
-
         | Br (_, _, left, right) ->
             // Visit the left subtree, then the right subtree if necessary.
             match PatriciaSet32.TryFind (predicate, left) with
@@ -745,19 +656,6 @@ type private PatriciaSet32 =
         | Empty -> ()
         | Lf k ->
             yield int k
-        
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            yield int k
-            yield int j
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            yield int k
-            yield! PatriciaSet32.ToSeq right
-
         | Br (_, _, left, right) ->
             // Recursively visit the children.
             yield! PatriciaSet32.ToSeq left

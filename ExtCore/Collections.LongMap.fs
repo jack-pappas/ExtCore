@@ -558,19 +558,6 @@ type private PatriciaMap64< [<EqualityConditionalOn; ComparisonConditionalOn>] '
         | Empty -> ()
         | Lf (k, x) ->
             action (int64 k) x
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            action (int64 k) x
-            action (int64 j) y
-                    
-        | Br (_, _, Lf (k, x), right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            action (int64 k) x
-            PatriciaMap64.Iterate (action, right)
-
         | Br (_, _, left, right) ->
             // Iterate over the left and right subtrees.
             PatriciaMap64.Iterate (action, left)
@@ -582,19 +569,6 @@ type private PatriciaMap64< [<EqualityConditionalOn; ComparisonConditionalOn>] '
         | Empty -> ()
         | Lf (k, x) ->
             action (int64 k) x
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            action (int64 j) y
-            action (int64 k) x
-                    
-        | Br (_, _, left, Lf (k, x)) ->
-            // Only handle the case where the right child is a leaf
-            // -- otherwise the traversal order would be altered.
-            action (int64 k) x
-            PatriciaMap64.Iterate (action, left)
-
         | Br (_, _, left, right) ->
             // Iterate over the right and left subtrees.
             PatriciaMap64.Iterate (action, right)
@@ -607,19 +581,6 @@ type private PatriciaMap64< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             state
         | Lf (k, x) ->
             folder state (int64 k) x
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            let state = folder state (int64 k) x
-            folder state (int64 j) y
-                    
-        | Br (_, _, Lf (k, x), right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            let state = folder state (int64 k) x
-            PatriciaMap64.Fold (folder, state, right)
-
         | Br (_, _, left, right) ->
             // Fold over the left and right subtrees.
             let state = PatriciaMap64.Fold (folder, state, left)
@@ -632,19 +593,6 @@ type private PatriciaMap64< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             state
         | Lf (k, x) ->
             folder (int64 k) x state
-        
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            let state = folder (int64 j) y state
-            folder (int64 k) x state
-                    
-        | Br (_, _, left, Lf (k, x)) ->
-            // Only handle the case where the right child is a leaf
-            // -- otherwise the traversal order would be altered.
-            let state = folder (int64 k) x state
-            PatriciaMap64.FoldBack (folder, state, left)
-
         | Br (_, _, left, right) ->
             // Fold over the right and left subtrees.
             let state = PatriciaMap64.FoldBack (folder, state, right)
@@ -660,23 +608,6 @@ type private PatriciaMap64< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                 Some (int64 k)
             else
                 None
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            if predicate (int64 k) x then
-                Some (int64 k)
-            elif predicate (int64 j) y then
-                Some (int64 j)
-            else None
-                    
-        | Br (_, _, Lf (k, x), right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            if predicate (int64 k) x then
-                Some (int64 k)
-            else
-                PatriciaMap64.TryFindKey (predicate, right)
-
         | Br (_, _, left, right) ->
             // Visit the left subtree, and if necessary, the right subtree.
             match PatriciaMap64.TryFindKey (predicate, left) with
@@ -692,25 +623,6 @@ type private PatriciaMap64< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             None
         | Lf (k, x) ->
             picker (int64 k) x
-        
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            match picker (int64 k) x with
-            | None ->
-                picker (int64 j) y
-            | result ->
-                result
-                    
-        | Br (_, _, Lf (k, x), right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            match picker (int64 k) x with
-            | None ->
-                PatriciaMap64.TryPick (picker, right)
-            | result ->
-                result
-
         | Br (_, _, left, right) ->
             // Visit the left subtree, and if necessary, the right subtree.
             match PatriciaMap64.TryPick (picker, left) with
@@ -726,19 +638,6 @@ type private PatriciaMap64< [<EqualityConditionalOn; ComparisonConditionalOn>] '
         | Empty -> ()
         | Lf (k, x) ->
             yield (int64 k, x)
-        
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (k, x), Lf (j, y)) ->
-            yield (int64 k, x)
-            yield (int64 j, y)
-                    
-        | Br (_, _, Lf (k, x), right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            yield (int64 k, x)
-            yield! PatriciaMap64.ToSeq right
-
         | Br (_, _, left, right) ->
             // Recursively visit the children.
             yield! PatriciaMap64.ToSeq left

@@ -570,19 +570,6 @@ type private PatriciaSet64 =
         | Empty -> ()
         | Lf k ->
             action (int64 k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            action (int64 k)
-            action (int64 j)
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            action (int64 k)
-            PatriciaSet64.Iterate (action, right)
-
         | Br (_, _, left, right) ->
             // Iterate over the left and right subtrees.
             PatriciaSet64.Iterate (action, left)
@@ -594,19 +581,6 @@ type private PatriciaSet64 =
         | Empty -> ()
         | Lf k ->
             action (int64 k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            action (int64 j)
-            action (int64 k)
-                    
-        | Br (_, _, left, Lf k) ->
-            // Only handle the case where the right child is a leaf
-            // -- otherwise the traversal order would be altered.
-            action (int64 k)
-            PatriciaSet64.Iterate (action, left)
-
         | Br (_, _, left, right) ->
             // Iterate over the right and left subtrees.
             PatriciaSet64.Iterate (action, right)
@@ -619,19 +593,6 @@ type private PatriciaSet64 =
             state
         | Lf k ->
             folder state (int64 k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            let state = folder state (int64 k)
-            folder state (int64 j)
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            let state = folder state (int64 k)
-            PatriciaSet64.Fold (folder, state, right)
-
         | Br (_, _, left, right) ->
             // Fold over the left subtree, then the right subtree.
             let state = PatriciaSet64.Fold (folder, state, left)
@@ -644,19 +605,6 @@ type private PatriciaSet64 =
             state
         | Lf k ->
             folder (int64 k) state
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            let state = folder (int64 j) state
-            folder (int64 k) state
-                    
-        | Br (_, _, left, Lf k) ->
-            // Only handle the case where the right child is a leaf
-            // -- otherwise the traversal order would be altered.
-            let state = folder (int64 k) state
-            PatriciaSet64.FoldBack (folder, state, left)
-
         | Br (_, _, left, right) ->
             // Fold over the right subtree, then the left subtree.
             let state = PatriciaSet64.FoldBack (folder, state, right)
@@ -669,25 +617,6 @@ type private PatriciaSet64 =
             None
         | Lf k ->
             picker (int64 k)
-                    
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            match picker (int64 k) with
-            | None ->
-                picker (int64 j)
-            | res ->
-                res
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            match picker (int64 k) with
-            | None ->
-                PatriciaSet64.TryPick (picker, right)
-            | res ->
-                res
-
         | Br (_, _, left, right) ->
             // Visit the left subtree, then the right subtree if necessary.
             match PatriciaSet64.TryPick (picker, left) with
@@ -703,24 +632,6 @@ type private PatriciaSet64 =
             None
         | Lf k ->
             if predicate (int64 k) then Some (int64 k) else None
-
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            if predicate (int64 k) then
-                Some (int64 k)
-            elif predicate (int64 j) then
-                Some (int64 j)
-            else None
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            if predicate (int64 k) then
-                Some (int64 k)
-            else
-                PatriciaSet64.TryFind (predicate, right)
-
         | Br (_, _, left, right) ->
             // Visit the left subtree, then the right subtree if necessary.
             match PatriciaSet64.TryFind (predicate, left) with
@@ -736,19 +647,6 @@ type private PatriciaSet64 =
         | Empty -> ()
         | Lf k ->
             yield int64 k
-        
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf k, Lf j) ->
-            yield int64 k
-            yield int64 j
-                    
-        | Br (_, _, Lf k, right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            yield int64 k
-            yield! PatriciaSet64.ToSeq right
-
         | Br (_, _, left, right) ->
             // Recursively visit the children.
             yield! PatriciaSet64.ToSeq left
@@ -1087,7 +985,7 @@ type LongSet private (trie : PatriciaSet64) =
         | null -> "null"
         | :? System.IFormattable as formattable ->
             formattable.ToString (
-                null, System.Globalization.CultureInfo.InvariantCulture)
+                null, System.Globalization.CultureInfo.InvariantCulture) + "L"
         | _ ->
             element.ToString ()
 
