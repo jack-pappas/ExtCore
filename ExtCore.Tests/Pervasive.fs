@@ -163,7 +163,7 @@ module Choice =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let getChoice () : unit =
+    let getError () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]

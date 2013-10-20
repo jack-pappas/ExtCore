@@ -590,6 +590,15 @@ module Choice =
         | Choice2Of2 _ ->
             invalidArg "value" "Cannot get the result because the Choice`2 instance is an error value."
 
+    /// Gets the error value associated with the Choice.
+    [<CompiledName("GetChoice")>]
+    let getChoice (value : Choice<'T, 'Error>) =
+        match value with
+        | Choice1Of2 _ ->
+            invalidArg "value" "Cannot get the error because the Choice`2 instance is a result value."
+        | Choice2Of2 error ->
+            error
+
     /// Creates a Choice from a result value.
     [<CompiledName("Result")>]
     let inline result value : Choice<'T, 'Error> =
@@ -622,6 +631,8 @@ module Choice =
             Choice2Of2 ()
 
     //
+    // TODO :   Rename this to 'ofOptionDefault' or similar. The "With" suffix should be reserved for
+    //          higher-order functions. 
     [<CompiledName("OfOptionWith")>]
     let ofOptionWith (errorValue : 'Error) (value : 'T option) : Choice<'T, 'Error> =
         match value with
@@ -733,18 +744,19 @@ module Choice =
 
     //
     [<CompiledName("BindOrRaise")>]
-    let inline bindOrRaise (x : Choice<'T, #exn>) : 'T =
-        match x with
-        | Choice2Of2 e ->
-            raise e
-        | Choice1Of2 r ->
-            r
+    let inline bindOrRaise (value : Choice<'T, #exn>) : 'T =
+        match value with
+        | Choice1Of2 result ->
+            result
+        | Choice2Of2 ex ->
+            raise ex
 
     //
     [<CompiledName("BindOrFail")>]
-    let inline bindOrFail (x : Choice<'T, string>) : 'T =
-        match x with
-        | Choice1Of2 r -> r
+    let inline bindOrFail (value : Choice<'T, string>) : 'T =
+        match value with
+        | Choice1Of2 result ->
+            result
         | Choice2Of2 msg ->
             raise <| exn msg
 
@@ -756,11 +768,13 @@ module Choice =
 
     /// Composes two functions designed for use with the 'choice' workflow.
     /// This function is analagous to the F# (>>) operator.
+    [<CompiledName("Compose")>]
     let compose (f : 'T -> Choice<'U, 'Error>) (g : 'U -> Choice<'V, 'Error>) =
         f >> (bind g)
 
     /// Composes two functions designed for use with the 'choice' workflow.
     /// This function is analagous to the F# (<<) operator.
+    [<CompiledName("ComposeBack")>]
     let composeBack (f : 'U -> Choice<'V, 'Error>) (g : 'T -> Choice<'U, 'Error>) =
         g >> (bind f)
 
