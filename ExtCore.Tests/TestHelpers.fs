@@ -209,6 +209,13 @@ let private checkThrowsExn<'Exn when 'Exn :> exn> (f : unit -> unit) : unit =
         let msg = sprintf "The function did not throw an exception. (Expected: %s)" typeof<'Exn>.FullName
         Assert.Fail msg
     with
+    | :? AssertionException ->
+        // If an assertion exception is thrown, don't handle it -- the exception should
+        // propagate back up through the call stack to the next handler.
+        // Without this, calls to Assert.Fail() within the 'try' block would be captured by
+        // the catch-all case below.
+        reraise ()
+
     | :? 'Exn ->
         // The expected exception type was raised, so there's nothing to do.
         Assert.Pass ()
