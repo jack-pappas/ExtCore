@@ -591,8 +591,8 @@ module Choice =
             invalidArg "value" "Cannot get the result because the Choice`2 instance is an error value."
 
     /// Gets the error value associated with the Choice.
-    [<CompiledName("GetChoice")>]
-    let getChoice (value : Choice<'T, 'Error>) =
+    [<CompiledName("GetError")>]
+    let getError (value : Choice<'T, 'Error>) =
         match value with
         | Choice1Of2 _ ->
             invalidArg "value" "Cannot get the error because the Choice`2 instance is a result value."
