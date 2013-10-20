@@ -313,7 +313,7 @@ let toSeq () : unit =
     |> LongMap.ofArray
     |> LongMap.toSeq
     |> Seq.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| (2L, 'd'); (3L, 'b'); (4L, 'G'); (5L, 'a'); (11L, 'F'); (12L, 'b'); (14L, 'c'); (17L, 'a'); |]
 
 [<Test>]
@@ -326,7 +326,7 @@ let toList () : unit =
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
     |> LongMap.toList
-    |> assertEqual
+    |> Collection.assertEqual
         [(2L, 'd'); (3L, 'b'); (4L, 'G'); (5L, 'a'); (11L, 'F'); (12L, 'b'); (14L, 'c'); (17L, 'a')]
 
 [<Test>]
@@ -339,7 +339,7 @@ let toArray () : unit =
     [| (5L, 'a'); (3L, 'b'); (11L, 'f'); (2L, 'd'); (17L, 'a'); (4L, 'g'); (12L, 'b'); (14L, 'c'); (11L, 'F'); (4L, 'G'); |]
     |> LongMap.ofArray
     |> LongMap.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| (2L, 'd'); (3L, 'b'); (4L, 'G'); (5L, 'a'); (11L, 'F'); (12L, 'b'); (14L, 'c'); (17L, 'a'); |]
 
 [<Test>]
@@ -488,7 +488,7 @@ let iter () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 'D'; 'B'; 'G'; 'A'; 'F'; 'B'; 'C'; 'A'; |]
 
 [<Test>]
@@ -514,7 +514,7 @@ let iterBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 'A'; 'C'; 'B'; 'F'; 'A'; 'G'; 'B'; 'D'; |]
 
 [<Test>]
@@ -547,7 +547,7 @@ let fold () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 102L; 102L; 77L; 105L; 85L; 115L; 119L; 121L; |]
 
 [<Test>]
@@ -580,7 +580,7 @@ let foldBack () : unit =
 
         elements
         |> ResizeArray.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 114L; 114L; 112L; 84L; 106L; 80L; 107L; 109L; |]
 
 [<Test>]
