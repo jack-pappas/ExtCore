@@ -71,6 +71,10 @@ Tests
   - Change all equality/equivalence assertions on collections to use the helper functions in the
     ``Collections`` module (they provide better error messages on failure).
 
+- Strengthen some of the IntSet, IntMap, etc. unit tests so they use ``assertSame`` to check that
+  the collection is returned without being modified unless necessary. E.g., inserting a value into
+  an ``IntSet`` should return the *same* ``IntSet`` instance when the set already contains that value.
+
 
 General
 =======
@@ -117,6 +121,8 @@ String.Split
 - get
 
   Given an index, gets the substring at that index in the array of substrings created by the split operation.
+
+  **NOTE:** These should not be implemented directly; implement the ``Substring.Split`` functions first, then these functions can simply wrap those.
 
 - toList
   
@@ -196,6 +202,7 @@ Bimap
 IntMap/IntSet/HashMap/HashSet
 -----------------------------
 - Implement serialization/deserialization code for parity with Map and Set.
+- Fix the private ``ElementString`` method implementations so they take the specific element type for that collection, or use generics, instead of boxing values and casting.
 
 
 IntBimap / LongBimap
