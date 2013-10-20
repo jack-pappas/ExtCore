@@ -40,7 +40,7 @@ let dropLast () : unit =
 let indexed () : unit =
     ["Red"; "Green"; "Blue"; "Yellow"]
     |> List.indexed
-    |> assertEqual
+    |> Collection.assertEqual
        [0, "Red";
         1, "Green";
         2, "Blue";
@@ -54,7 +54,7 @@ let revIntoArray () : unit =
 
     ["Red"; "Green"; "Blue"; "Yellow"]
     |> List.revIntoArray
-    |> assertEqual
+    |> Collection.assertEqual
        [| "Yellow"; "Blue"; "Green"; "Red" |]
 
 [<Test>]
@@ -65,7 +65,7 @@ let revMapIntoArray () : unit =
 
     ["Red"; "Green"; "Blue"; "Yellow"]
     |> List.revMapIntoArray String.length
-    |> assertEqual [| 6; 4; 5; 3 |]
+    |> Collection.assertEqual [| 6; 4; 5; 3 |]
 
 [<Test>]
 let projectValues () : unit =
@@ -78,7 +78,7 @@ let projectValues () : unit =
       ConsoleColor.Cyan;
       ConsoleColor.Black; ]
     |> List.projectValues (sprintf "%O")
-    |> assertEqual
+    |> Collection.assertEqual
        [ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -94,7 +94,7 @@ let projectKeys () : unit =
     |> List.projectKeys (fun colorName ->
         Enum.Parse (typeof<ConsoleColor>, colorName)
         :?> System.ConsoleColor)
-    |> assertEqual
+    |> Collection.assertEqual
        [ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -107,10 +107,10 @@ let take () : unit =
         |> List.take 5
 
     taken
-    |> assertEqual [0; 1; 1; 2; 3]
+    |> Collection.assertEqual [0; 1; 1; 2; 3]
 
     remaining
-    |> assertEqual [5; 8; 13; 21; 34; 55; 89; 144]
+    |> Collection.assertEqual [5; 8; 13; 21; 34; 55; 89; 144]
 
 [<Test>]
 let takeArray () : unit =
@@ -119,10 +119,10 @@ let takeArray () : unit =
         |> List.takeArray 5
 
     taken
-    |> assertEqual [| 0; 1; 1; 2; 3 |]
+    |> Collection.assertEqual [| 0; 1; 1; 2; 3 |]
 
     remaining
-    |> assertEqual [5; 8; 13; 21; 34; 55; 89; 144]
+    |> Collection.assertEqual [5; 8; 13; 21; 34; 55; 89; 144]
 
 [<Test>]
 let foldPairwise () : unit =
@@ -156,10 +156,10 @@ let mapPartition () : unit =
                 Choice2Of2 <| x * x * x)
 
     left
-    |> assertEqual ["0"; "2"; "4"; "6"; "8"; "10"]
+    |> Collection.assertEqual ["0"; "2"; "4"; "6"; "8"; "10"]
 
     right
-    |> assertEqual [1; 27; 125; 343; 729]
+    |> Collection.assertEqual [1; 27; 125; 343; 729]
 
 [<Test>]
 let mapPartition3 () : unit =
@@ -175,13 +175,13 @@ let mapPartition3 () : unit =
                 Choice3Of3 <| x * x)
 
     left
-    |> assertEqual [1; 8; 64; 512; 4096; 32768]
+    |> Collection.assertEqual [1; 8; 64; 512; 4096; 32768]
 
     middle
-    |> assertEqual ["1"; "4"; "7"; "10"; "13"]
+    |> Collection.assertEqual ["1"; "4"; "7"; "10"; "13"]
 
     right
-    |> assertEqual [4; 25; 64; 121; 196]
+    |> Collection.assertEqual [4; 25; 64; 121; 196]
 
 [<Test>]
 let choose2 () : unit =
@@ -194,7 +194,7 @@ let choose2 () : unit =
         if (x + String.length colorName) % 2 = 0 then
             Some <| colorName.ToLower ()
         else None)
-    |> assertEqual
+    |> Collection.assertEqual
        ["cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow"]
 
 
@@ -205,7 +205,7 @@ let unfold () : unit =
         | 0 -> None
         | n ->
             Some (n.ToString(), n - 1))
-    |> assertEqual ["5"; "4"; "3"; "2"; "1"]
+    |> Collection.assertEqual ["5"; "4"; "3"; "2"; "1"]
 
 [<Test>]
 let unfoldBack () : unit =
@@ -214,7 +214,7 @@ let unfoldBack () : unit =
         | 0 -> None
         | n ->
             Some (n.ToString(), n - 1))
-    |> assertEqual ["1"; "2"; "3"; "4"; "5"]
+    |> Collection.assertEqual ["1"; "2"; "3"; "4"; "5"]
 
 [<Test>]
 let unzipWith () : unit =
@@ -225,10 +225,10 @@ let unzipWith () : unit =
             Enum.Parse (typeof<ConsoleColor>, colorName) :?> ConsoleColor)
 
     left
-    |> assertEqual [5; 4; 4; 8; 8]
+    |> Collection.assertEqual [5; 4; 4; 8; 8]
 
     right
-    |> assertEqual [
+    |> Collection.assertEqual [
         ConsoleColor.Black;
         ConsoleColor.Blue;
         ConsoleColor.Cyan;

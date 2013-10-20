@@ -47,7 +47,7 @@ let iter () : unit =
             |> elements.Add)
 
         ResizeArray.toArray elements
-        |> assertEqual [| "AAAA"; |]
+        |> Collection.assertEqual [| "AAAA"; |]
 
     do
         // Sample usage test case.
@@ -59,7 +59,7 @@ let iter () : unit =
             |> elements.Add)
 
         ResizeArray.toArray elements
-        |> assertEqual
+        |> Collection.assertEqual
             [| "AA"; "AAA"; "AAAA"; "AAAAA"; "AAAAAA"; "AAAAAAA"; |]
 
 [<Test>]

@@ -33,7 +33,7 @@ let appendSingleton () : unit =
     seq { 0 .. 4 }
     |> Seq.appendSingleton 10
     |> Seq.toList
-    |> assertEqual [0; 1; 2; 3; 4; 10]
+    |> Collection.assertEqual [0; 1; 2; 3; 4; 10]
 
 [<Test>]
 let projectValues () : unit =
@@ -41,7 +41,7 @@ let projectValues () : unit =
     |> Seq.projectValues (fun asciiChar ->
         asciiChar.ToString().ToUpper())
     |> Seq.toList
-    |> assertEqual
+    |> Collection.assertEqual
        ['a', "A";
         'b', "B";
         'c', "C";
@@ -57,7 +57,7 @@ let projectKeys () : unit =
         yield "Yellow" }
     |> Seq.projectKeys String.length
     |> Seq.toList
-    |> assertEqual
+    |> Collection.assertEqual
        [3, "Red";
         4, "Blue";
         5, "Green";
@@ -78,7 +78,7 @@ let replicate () : unit =
         yield "Yellow" }
     |> Seq.replicate 4
     |> Seq.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| "Red"; "Blue"; "Green"; "Yellow";
            "Red"; "Blue"; "Green"; "Yellow";
            "Red"; "Blue"; "Green"; "Yellow";
@@ -99,7 +99,7 @@ let replicate () : unit =
             yield "Yellow" }
         |> Seq.replicate 4
         |> Seq.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| "Red"; "Blue"; "Green"; "Yellow";
                "Red"; "Blue"; "Green"; "Yellow";
                "Red"; "Blue"; "Green"; "Yellow";
@@ -114,7 +114,7 @@ let repeat () : unit =
     Seq.repeat "Hello World!"
     |> Seq.take 5
     |> Seq.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; |]
 
 [<Test>]
@@ -124,7 +124,7 @@ let cycle () : unit =
         4 - i)
     |> Seq.take 23
     |> Seq.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| 4; 3; 2; 1; 0;
            4; 3; 2; 1; 0;
            4; 3; 2; 1; 0;
@@ -140,7 +140,7 @@ let cycle () : unit =
             4 - i)
         |> Seq.take 23
         |> Seq.toArray
-        |> assertEqual
+        |> Collection.assertEqual
             [| 4; 3; 2; 1; 0;
                4; 3; 2; 1; 0;
                4; 3; 2; 1; 0;

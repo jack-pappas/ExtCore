@@ -224,13 +224,13 @@ let private checkThrowsExn<'Exn when 'Exn :> exn> (f : unit -> unit) : unit =
 [<Obsolete>]
 let checkThrowsNullRefException = checkThrowsExn<NullReferenceException>
 [<Obsolete>]
-let checkThrowsIndexOutRangException = checkThrowsExn<IndexOutOfRangeException>
+let checkThrowsIndexOutRangeException = checkThrowsExn<IndexOutOfRangeException>
 
 // Legit exceptions
-let checkThrowsNotSupportedException = checkThrowsExn<NotSupportedException>
-let checkThrowsArgumentException = checkThrowsExn<ArgumentException>
-let checkThrowsArgumentNullException = checkThrowsExn<ArgumentNullException>
-let checkThrowsKeyNotFoundException = checkThrowsExn<KeyNotFoundException>
-let checkThrowsDivideByZeroException = checkThrowsExn<DivideByZeroException>
-let checkThrowsInvalidOperationExn = checkThrowsExn<InvalidOperationException>
+let checkThrowsNotSupportedException action = checkThrowsExn<NotSupportedException> action
+let checkThrowsArgumentException action = checkThrowsExn<ArgumentException> action
+let checkThrowsArgumentNullException action = checkThrowsExn<ArgumentNullException> action
+let checkThrowsKeyNotFoundException action = checkThrowsExn<KeyNotFoundException> action
+let checkThrowsDivideByZeroException action = checkThrowsExn<DivideByZeroException> action
+let checkThrowsInvalidOperationExn action = checkThrowsExn<InvalidOperationException> action
 

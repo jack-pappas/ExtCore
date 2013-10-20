@@ -148,17 +148,17 @@ let toList () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.toList
-    |> assertEqual
+    |> Collection.assertEqual
         [2; 17; 4; 12]
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.toList
-    |> assertEqual
+    |> Collection.assertEqual
         [11; 23; 47]
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.toList
-    |> assertEqual
+    |> Collection.assertEqual
         [7; 11; 18]
 
 [<Test>]
@@ -166,17 +166,17 @@ let toArray () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| 2; 17; 4; 12; |]
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| 11; 23; 47; |]
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [| 7; 11; 18; |]
 
 [<Test>]
@@ -184,17 +184,17 @@ let mapToArray () : unit =
     // Sample usage test cases.
     ArrayView.create [| 5; 3; 11; 2; 17; 4; 12; 14; |] 3 4
     |> ArrayView.mapToArray (fun x -> 3 * x)
-    |> assertEqual
+    |> Collection.assertEqual
         [| 6; 51; 12; 36; |]
 
     ArrayView.create [| 6; 11; 23; 47; 106; 235; |] 1 3
     |> ArrayView.mapToArray (fun x -> 3 * x)
-    |> assertEqual
+    |> Collection.assertEqual
         [| 33; 69; 141; |]
 
     ArrayView.create [| 2; 1; 3; 4; 7; 11; 18; 29; 47; |] 4 3
     |> ArrayView.mapToArray (fun x -> 3 * x)
-    |> assertEqual
+    |> Collection.assertEqual
         [| 21; 33; 54; |]
 
 [<Test>]
@@ -398,7 +398,7 @@ let iter () : unit =
             elements.Add (x * 3))
 
         ResizeArray.toArray elements
-        |> assertEqual
+        |> Collection.assertEqual
             [| 6; 51; 12; 36; |]
 
     do
@@ -410,7 +410,7 @@ let iter () : unit =
             elements.Add (x * 3))
 
         ResizeArray.toArray elements
-        |> assertEqual
+        |> Collection.assertEqual
             [| 33; 69; 141; |]
 
     do
@@ -422,7 +422,7 @@ let iter () : unit =
             elements.Add (x * 3))
 
         ResizeArray.toArray elements
-        |> assertEqual
+        |> Collection.assertEqual
             [| 21; 33; 54; |]
 
 [<Test>]

@@ -70,7 +70,10 @@ let tryExtractMin () : unit =
         |> assertEqual None
 
         remaining
-        |> assertEqual initialSet  // TODO : Make this even stricter by checking for reference (physical) equality.
+        |> assertEqual initialSet
+
+        remaining
+        |> assertSame initialSet
 
     do
         let initialSet = Set.ofArray [| "Red"; "Orange"; "Yellow"; "Green"; "Blue"; "Violet" |]
@@ -94,7 +97,10 @@ let tryExtractMax () : unit =
         |> assertEqual None
 
         remaining
-        |> assertEqual initialSet  // TODO : Make this even stricter by checking for reference (physical) equality.
+        |> assertEqual initialSet
+
+        remaining
+        |> assertSame initialSet
 
     do
         let maxElement, remaining =

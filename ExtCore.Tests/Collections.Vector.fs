@@ -723,7 +723,7 @@ let get () : unit =
         
     // empty vector
     let emptyArr:vector<int> = vector [| |]
-    checkThrowsIndexOutRangException (fun () -> Vector.get emptyArr -1 |> ignore)
+    checkThrowsIndexOutRangeException (fun () -> Vector.get emptyArr -1 |> ignore)
 
     // null vector
     let nullArr : vector<string> = Unchecked.defaultof<vector<_>> 
@@ -1143,7 +1143,7 @@ let split () : unit =
             Set.contains x primes)
 
     chunks
-    |> assertEqual
+    |> Collection.assertEqual
         <| vector [|
         vector [| 0; 1 |];
         vector [| 2 |];
@@ -1208,11 +1208,11 @@ let mapPartition () : unit =
                 Choice2Of2 <| x * x * x)
 
     left
-    |> assertEqual
+    |> Collection.assertEqual
         <| vector [| "0"; "2"; "4"; "6"; "8"; "10" |]
 
     right
-    |> assertEqual
+    |> Collection.assertEqual
         <| vector [| 1; 27; 125; 343; 729 |]
 
 [<Test>]
@@ -1229,15 +1229,15 @@ let mapPartition3 () : unit =
                 Choice3Of3 <| x * x)
 
     left
-    |> assertEqual
+    |> Collection.assertEqual
         <| vector [| 1; 8; 64; 512; 4096; 32768 |]
 
     middle
-    |> assertEqual
+    |> Collection.assertEqual
         <| vector [| "1"; "4"; "7"; "10"; "13" |]
 
     right
-    |> assertEqual
+    |> Collection.assertEqual
         <| vector [| 4; 25; 64; 121; 196 |]
 
 [<Test>]
@@ -1271,12 +1271,12 @@ let findIndices () : unit =
     vector [| 0 .. 40 |]
     |> Vector.findIndices (fun x ->
         Set.contains x primes)
-    |> assertEqual primeArray
+    |> Collection.assertEqual primeArray
 
     Vector.empty
     |> Vector.findIndices (fun x ->
         Set.contains x primes)
-    |> assertEqual (Array.empty : int[])
+    |> Collection.assertEqual (Array.empty : int[])
 
 [<Test>]
 let choosei () : unit =

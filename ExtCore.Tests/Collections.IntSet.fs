@@ -529,7 +529,7 @@ let iter () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [|4; 5; 6; 7; 13; 14; 16; 19|]
 
 [<Test>]
@@ -543,7 +543,7 @@ let iterBack () : unit =
 
     elements
     |> ResizeArray.toArray
-    |> assertEqual
+    |> Collection.assertEqual
         [|19; 16; 14; 13; 7; 6; 5; 4|]
 
 [<Test>]

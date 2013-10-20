@@ -97,11 +97,11 @@ module SubstringModule =
         // Test for empty substring.
         substring ("Hello World!", 3, 0)
         |> Substring.toArray
-        |> assertEqual Array.empty
+        |> Collection.assertEqual Array.empty
 
         substring ("Hello World!", 3, 6)
         |> Substring.toArray
-        |> assertEqual [| 'l'; 'o'; ' '; 'W'; 'o'; 'r'; |]
+        |> Collection.assertEqual [| 'l'; 'o'; ' '; 'W'; 'o'; 'r'; |]
 
     [<Test>]
     let sub () : unit =
@@ -182,7 +182,7 @@ module SubstringModule =
             |> Substring.iter (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
-            |> assertEqual
+            |> Collection.assertEqual
                 [| 'Q'; 'U'; 'I'; 'C'; 'K'; ' '; 'B'; 'R'; 'O'; 'W'; 'N'; ' '; 'F'; 'O'; 'X'; |]
 
     [<Test>]
@@ -210,7 +210,7 @@ module SubstringModule =
                     if idx % 2 = 0 then System.Char.ToUpper c else c))
 
             elements.ToArray ()
-            |> assertEqual
+            |> Collection.assertEqual
                 [| 'Q'; 'u'; 'I'; 'c'; 'K'; ' '; 'B'; 'r'; 'O'; 'w'; 'N'; ' '; 'F'; 'o'; 'X'; |]
 
     [<Test>]
@@ -234,7 +234,7 @@ module SubstringModule =
             |> Substring.iterBack (System.Char.ToUpper >> elements.Add)
 
             elements.ToArray ()
-            |> assertEqual
+            |> Collection.assertEqual
                 [| 'X'; 'O'; 'F'; ' '; 'N'; 'W'; 'O'; 'R'; 'B'; ' '; 'K'; 'C'; 'I'; 'U'; 'Q'; |]
 
     [<Test>]

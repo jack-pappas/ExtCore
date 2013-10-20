@@ -907,9 +907,9 @@ module SetType =
     
     [<Test>]
     let ObjectToString () : unit =
-        Assert.AreEqual("longSet [1; 2; 3L; ... ]", (new LongSet([1L;2L;3L;4L])).ToString())
+        Assert.AreEqual("longSet [1L; 2L; 3L; ... ]", (new LongSet([1L;2L;3L;4L])).ToString())
         Assert.AreEqual("longSet []", (LongSet.empty).ToString())
-        Assert.AreEqual("longSet [1; 3]", (new LongSet([1L;3L])).ToString())
+        Assert.AreEqual("longSet [1L; 3L]", (new LongSet([1L;3L])).ToString())
         
     
     [<Test>]

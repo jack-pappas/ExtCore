@@ -28,14 +28,14 @@ open NUnit.Framework
 let projectValues () : unit =
     Array.empty
     |> Array.projectValues ignore
-    |> assertEqual Array.empty
+    |> Collection.assertEqual Array.empty
 
     [|  ConsoleColor.Magenta;
         ConsoleColor.DarkGreen;
         ConsoleColor.Cyan;
         ConsoleColor.Black; |]
     |> Array.projectValues (sprintf "%O")
-    |> assertEqual [|
+    |> Collection.assertEqual [|
         ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -45,13 +45,13 @@ let projectValues () : unit =
 let projectKeys () : unit =
     Array.empty
     |> Array.projectKeys ignore
-    |> assertEqual Array.empty
+    |> Collection.assertEqual Array.empty
 
     [|"Magenta"; "DarkGreen"; "Cyan"; "Black"|]
     |> Array.projectKeys (fun colorName ->
         Enum.Parse (typeof<ConsoleColor>, colorName)
         :?> System.ConsoleColor)
-    |> assertEqual [|
+    |> Collection.assertEqual [|
         ConsoleColor.Magenta, "Magenta";
         ConsoleColor.DarkGreen, "DarkGreen";
         ConsoleColor.Cyan, "Cyan";
@@ -69,12 +69,12 @@ let clear () : unit =
     do
         let arr = [| 2 |]
         Array.clear arr
-        arr |> assertEqual (Array.zeroCreate arr.Length)
+        arr |> Collection.assertEqual (Array.zeroCreate arr.Length)
 
     do
         let arr = [| -2..7 |]
         Array.clear arr
-        arr |> assertEqual (Array.zeroCreate arr.Length)
+        arr |> Collection.assertEqual (Array.zeroCreate arr.Length)
 
 [<Test>]
 let ``contains (value type)`` () : unit =
@@ -122,22 +122,22 @@ let ``contains (reference type)`` () : unit =
 let expandRight () : unit =
     (Array.empty : int[])
     |> Array.expandRight 10
-    |> assertEqual <| Array.zeroCreate<int> 10
+    |> Collection.assertEqual <| Array.zeroCreate<int> 10
 
     [| 0; 1; 1; 2; 3; 5; 8; 13 |]
     |> Array.expandRight 4
-    |> assertEqual [|
+    |> Collection.assertEqual [|
         0; 1; 1; 2; 3; 5; 8; 13; 0; 0; 0; 0 |]
 
 [<Test>]
 let expandLeft () : unit =
     (Array.empty : int[])
     |> Array.expandLeft 10
-    |> assertEqual <| Array.zeroCreate<int> 10
+    |> Collection.assertEqual <| Array.zeroCreate<int> 10
 
     [| 0; 1; 1; 2; 3; 5; 8; 13 |]
     |> Array.expandLeft 4
-    |> assertEqual [|
+    |> Collection.assertEqual [|
         0; 0; 0; 0; 0; 1; 1; 2; 3; 5; 8; 13 |]
 
 [<Test>]
@@ -190,7 +190,7 @@ let split () : unit =
             Set.contains x primes)
 
     chunks
-    |> assertEqual [|
+    |> Collection.assertEqual [|
         [| 0; 1 |];
         [| 2 |];
         [| 3; 4 |];
@@ -219,7 +219,7 @@ let segment () : unit =
     segments
     |> Array.map (fun view ->
         view.Count)
-    |> assertEqual [|
+    |> Collection.assertEqual [|
         2; 1; 2; 2; 4; 2; 4; 2; 4; 6; 2; 6; 4; |]
 
 [<Test>]
@@ -241,7 +241,7 @@ let segment2 () : unit =
     intSegments
     |> Array.map (fun view ->
         view.Count)
-    |> assertEqual [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
+    |> Collection.assertEqual [| 2; 2; 4; 1; 5; 2; 4; 3; 3 |]
 
 [<Test>]
 let mapPartition () : unit =
@@ -254,10 +254,10 @@ let mapPartition () : unit =
                 Choice2Of2 <| x * x * x)
 
     left
-    |> assertEqual [| "0"; "2"; "4"; "6"; "8"; "10" |]
+    |> Collection.assertEqual [| "0"; "2"; "4"; "6"; "8"; "10" |]
 
     right
-    |> assertEqual [| 1; 27; 125; 343; 729 |]
+    |> Collection.assertEqual [| 1; 27; 125; 343; 729 |]
 
 [<Test>]
 let mapPartition3 () : unit =
@@ -273,13 +273,13 @@ let mapPartition3 () : unit =
                 Choice3Of3 <| x * x)
 
     left
-    |> assertEqual [| 1; 8; 64; 512; 4096; 32768 |]
+    |> Collection.assertEqual [| 1; 8; 64; 512; 4096; 32768 |]
 
     middle
-    |> assertEqual [| "1"; "4"; "7"; "10"; "13" |]
+    |> Collection.assertEqual [| "1"; "4"; "7"; "10"; "13" |]
 
     right
-    |> assertEqual [| 4; 25; 64; 121; 196 |]
+    |> Collection.assertEqual [| 4; 25; 64; 121; 196 |]
 
 [<Test>]
 let mapReduce () : unit =
@@ -299,7 +299,7 @@ let mapReduce () : unit =
                         Map.add c count charCounts
                     | Some existingCount ->
                         Map.add c (existingCount + count) charCounts) }
-    |> assertEqual expected
+    |> Collection.assertEqual expected
 
 [<Test>]
 let findIndices () : unit =
@@ -311,12 +311,12 @@ let findIndices () : unit =
     [| 0 .. 40 |]
     |> Array.findIndices (fun x ->
         Set.contains x primes)
-    |> assertEqual primeArray
+    |> Collection.assertEqual primeArray
 
     Array.empty
     |> Array.findIndices (fun x ->
         Set.contains x primes)
-    |> assertEqual (Array.empty : int[])
+    |> Collection.assertEqual (Array.empty : int[])
 
 [<Test>]
 let choosei () : unit =
@@ -329,7 +329,7 @@ let choosei () : unit =
         if String.length colorName <= idx then
             Some <| colorName.ToLower ()
         else None)
-    |> assertEqual [|
+    |> Collection.assertEqual [|
         "darkred"; "gray"; "green" |]
 
 [<Test>]
@@ -343,7 +343,7 @@ let choose2 () : unit =
         if (x + String.length colorName) % 2 = 0 then
             Some <| colorName.ToLower ()
         else None)
-    |> assertEqual
+    |> Collection.assertEqual
        [| "cyan"; "darkgray"; "darkgreen"; "darkred"; "darkyellow" |]
 
 [<Test>]
@@ -354,7 +354,7 @@ let mapInPlace () : unit =
         arr
         |> Array.mapInPlace (fun el ->
             el * 2)
-        arr |> assertEqual Array.empty
+        arr |> Collection.assertEqual Array.empty
 
     // Sample usage test cases.
     do
@@ -362,7 +362,7 @@ let mapInPlace () : unit =
         arr
         |> Array.mapInPlace (fun el ->
             el * 2)
-        arr |> assertEqual [| 0; 2; 4; 6; 8; |]
+        arr |> Collection.assertEqual [| 0; 2; 4; 6; 8; |]
 
     do
         let colors =
@@ -371,7 +371,7 @@ let mapInPlace () : unit =
         colors
         |> Array.mapInPlace (fun colorName ->
             colorName.ToLowerInvariant ())
-        colors |> assertEqual [|
+        colors |> Collection.assertEqual [|
             "black"; "blue"; "cyan"; "darkblue"; "darkgray";
             "darkgreen"; "darkmagenta"; "darkred"; "darkyellow"; "gray"; "green"; |]
 
@@ -383,7 +383,7 @@ let mapiInPlace () : unit =
         arr
         |> Array.mapiInPlace (fun idx el ->
             el * (2 + idx))
-        arr |> assertEqual Array.empty
+        arr |> Collection.assertEqual Array.empty
 
     // Sample usage test cases.
     do
@@ -391,7 +391,7 @@ let mapiInPlace () : unit =
         arr
         |> Array.mapiInPlace (fun idx el ->
             el * (2 + idx))
-        arr |> assertEqual [| 0; 3; 8; 15; 24; |]
+        arr |> Collection.assertEqual [| 0; 3; 8; 15; 24; |]
 
     do
         let colors =
@@ -403,7 +403,7 @@ let mapiInPlace () : unit =
                 colorName.ToLowerInvariant ()
             else
                 colorName.ToUpperInvariant ())
-        colors |> assertEqual [|
+        colors |> Collection.assertEqual [|
             "black"; "BLUE"; "cyan"; "DARKBLUE"; "darkgray";
             "DARKGREEN"; "darkmagenta"; "DARKRED"; "darkyellow"; "GRAY"; "green"; |]
 
@@ -416,7 +416,7 @@ let chooseInPlace () : unit =
         |> Array.chooseInPlace (fun el ->
             if el > 0 && el % 2 = 0 then Some (el * 2)
             else None)
-        arr |> assertEqual Array.empty
+        arr |> Collection.assertEqual Array.empty
 
     // Sample usage test cases.
     do
@@ -425,7 +425,7 @@ let chooseInPlace () : unit =
         |> Array.chooseInPlace (fun el ->
             if el > 0 && el % 2 = 0 then Some (el * 2)
             else None)
-        arr |> assertEqual [| 0; 1; 4; 3; 8; |]
+        arr |> Collection.assertEqual [| 0; 1; 4; 3; 8; |]
 
     do
         let colors =
@@ -436,7 +436,7 @@ let chooseInPlace () : unit =
             if String.length colorName <= 5 then
                 Some <| colorName.ToLowerInvariant ()
             else None)
-        colors |> assertEqual [|
+        colors |> Collection.assertEqual [|
             "black"; "blue"; "cyan"; "DarkBlue"; "DarkGray";
             "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "gray"; "green"; |]
 
@@ -458,7 +458,7 @@ let chooseiInPlace () : unit =
         |> Array.chooseiInPlace (fun idx el ->
             if idx % 2 = 0 then None
             else Some (el * (2 + idx)))
-        arr |> assertEqual [| 0; 3; 2; 15; 4; |]
+        arr |> Collection.assertEqual [| 0; 3; 2; 15; 4; |]
 
     do
         let colors =
@@ -469,7 +469,7 @@ let chooseiInPlace () : unit =
             if idx % 2 = 0 then
                 Some <| colorName.ToLowerInvariant ()
             else None)
-        colors |> assertEqual [|
+        colors |> Collection.assertEqual [|
             "black"; "Blue"; "cyan"; "DarkBlue"; "darkgray";
             "DarkGreen"; "darkmagenta"; "DarkRed"; "darkyellow"; "Gray"; "green"; |]
 
