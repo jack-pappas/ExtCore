@@ -28,7 +28,7 @@ open NUnit.Framework
 //open FsCheck
 
 
-// TODO : Remove this ASAP, replacing any uses with direct calls to Assert.IsTrue.
+// TODO : Remove this ASAP, replacing any uses with direct calls to Assert.IsTrue or 'assertTrue'.
 let private test msg condition =
     Assert.IsTrue (condition, sprintf "MiniTest '%s'" msg)
 
@@ -59,6 +59,86 @@ let ``Basic Test #2`` () : unit =
     |> Seq.iter (fun i -> res := !res + i)
 
     Assert.AreEqual (8, !res, "test2398994: foreach, LazyList.toSeq")
+
+[<Test>]
+let ``Active Patterns`` () : unit =
+    let matchTwo ll =
+        match ll with
+        | Cons (h1, Cons (h2, t)) ->
+            printf "%O,%O\n" h1 h2
+        | Cons (h1, t) ->
+            printf "%O\n" h1
+        | Nil () ->
+            printf "empty!\n"
+
+    let rec pairReduce xs =
+        match xs with
+        | Cons (x, Cons (y, ys)) ->
+            LazyList.consDelayed (x + y) (fun () -> pairReduce ys)
+        | Cons (x, Nil) ->
+            LazyList.cons x LazyList.empty
+        | Nil -> LazyList.empty
+
+    let rec inf =
+        LazyList.consDelayed 0 <| fun () ->
+            LazyList.map (fun x -> x + 1) inf
+
+    //let ll = LazyList.ofList [1;2;3;4]
+    Assert.AreEqual (
+        "[1; 5; 9; 13; 17; 21; 25; 29; 33; 37]",
+        sprintf "%A" (LazyList.toList (LazyList.take 10 (pairReduce inf))))
+
+    Assert.AreEqual (
+        [0;1;3],
+        LazyList.scan (+) 0 (LazyList.ofList [1;2]) |> LazyList.toList)
+
+    Assert.AreEqual (
+        [0],
+        LazyList.scan (+) 0 (LazyList.ofList []) |> LazyList.toList)
+
+[<Test>]
+let ``Basic Test #3`` () : unit =
+    let lazyList =
+        LazyList.empty
+        |> LazyList.cons 4
+        |> LazyList.cons 3
+        |> LazyList.cons 2
+        |> LazyList.cons 1
+
+    lazyList
+    |> LazyList.head
+    |> assertEqual 1
+
+    lazyList
+    |> LazyList.tail
+    |> LazyList.head
+    |> assertEqual 2
+
+    lazyList
+    |> LazyList.tail
+    |> LazyList.tail
+    |> LazyList.head
+    |> assertEqual 3
+
+[<Test>]
+let ``Basic Test #4`` () : unit =
+    let lmn =
+        LazyList.empty
+        |> LazyList.cons 'N'
+        |> LazyList.cons 'M'
+        |> LazyList.cons 'L'
+
+    let almnz =
+        LazyList.empty
+        |> LazyList.cons 'Z'
+        |> LazyList.append lmn
+        |> LazyList.cons 'A'
+
+    almnz
+    |> LazyList.tail
+    |> LazyList.tail
+    |> LazyList.head
+    |> assertEqual 'M'
 
 [<Test>]
 let se () : unit =
@@ -142,26 +222,53 @@ let map2 () : unit =
     test "map2"   (LazyList.toList (LazyList.take 4 (LazyList.map2 (fun x y -> x*y) nats (LazyList.tail nats))) = [0*1;1*2;2*3;3*4])
 
 [<Test>]
-let array () : unit =
+let toArray () : unit =
     test "array"  (Array.toList (LazyList.toArray (LazyList.take 6 nats)) = LazyList.toList (LazyList.take 6 nats))
+
+[<Test>]
+let ofArray () : unit =
     test "array"  (LazyList.toList (LazyList.ofArray [|1;2;3;4|]) = LazyList.toList (LazyList.ofList [1;2;3;4]))
+
+[<Test>]
+let singleton () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+
+(* Tests which check for tail-recursion. *)
+
+[<Test>]
+let ``length is tail-recursive`` () : unit =
+    assertEqual 100 <| (LazyList.ofSeq (Seq.init 100 id) |> LazyList.length)
+    assertEqual 1000000 <| (LazyList.ofSeq (Seq.init 1000000 id) |> LazyList.length)
+    assertEqual 0 <| (LazyList.ofSeq (Seq.init 0 id) |> LazyList.length)
+
+[<Test>]
+let ``map is tail-recursive`` () : unit =
+    assertEqual 1000000 <| (LazyList.map (fun x -> x + 1) (LazyList.ofSeq (Seq.init 1000000 id)) |> Seq.length)
+
+[<Test>]
+let ``filter is tail-recursive`` () : unit =
+    assertEqual 500000 <| (LazyList.filter (fun x -> x % 2 = 0) (LazyList.ofSeq (Seq.init 1000000 id)) |> Seq.length)
+
+[<Test>]
+let ``iter is tail-recursive`` () : unit =
+    assertEqual 0 <| (let count = ref 0 in LazyList.iter (fun x -> incr count) (LazyList.ofSeq (Seq.init 0 id)); !count)
+    assertEqual 1000000 <| (let count = ref 0 in LazyList.iter (fun x -> incr count) (LazyList.ofSeq (Seq.init 1000000 id)); !count)
+
+[<Test>]
+let ``toList is tail-recursive`` () : unit =
+    assertEqual 200000 <| (LazyList.toList (LazyList.ofSeq (Seq.init 200000 id)) |> Seq.length)
+
+[<Test>]
+let ``toArray is tail-recursive`` () : unit =
+    assertEqual 200000 <| (LazyList.toArray (LazyList.ofSeq (Seq.init 200000 id)) |> Seq.length)
+
+
+(* Tests which check for termination/laziness. *)
 
 // TODO : Remove this -- replace all calls with Assert.AreEqual.
 let inline private check msg (v1 : 'T) (v2 : 'T) =
     Assert.AreEqual (v1, v2, msg)
-
-[<Test>]
-let ``check for tail recursion`` () : unit =
-    // This checks that LazyList.map, LazyList.length etc. are tail recursive
-    check "LazyList.length" (LazyList.ofSeq (Seq.init 100 (fun c -> c)) |> LazyList.length) 100
-    check "LazyList.length" (LazyList.ofSeq (Seq.init 1000000 (fun c -> c)) |> LazyList.length) 1000000
-    check "LazyList.length" (LazyList.ofSeq (Seq.init 0 (fun c -> c)) |> LazyList.length) 0
-    check "LazyList.map" (LazyList.map (fun x -> x + 1) (LazyList.ofSeq (Seq.init 1000000 (fun c -> c))) |> Seq.length) 1000000
-    check "LazyList.filter" (LazyList.filter (fun x -> x % 2 = 0) (LazyList.ofSeq (Seq.init 1000000 (fun c -> c))) |> Seq.length) 500000
-    check "LazyList.iter" (let count = ref 0 in LazyList.iter (fun x -> incr count) (LazyList.ofSeq (Seq.init 0 (fun c -> c))); !count) 0
-    check "LazyList.iter" (let count = ref 0 in LazyList.iter (fun x -> incr count) (LazyList.ofSeq (Seq.init 1000000 (fun c -> c))); !count) 1000000
-    check "LazyList.toList" (LazyList.toList (LazyList.ofSeq (Seq.init 200000 (fun c -> c))) |> Seq.length) 200000
-    check "LazyList.toArray" (LazyList.toArray (LazyList.ofSeq (Seq.init 200000 (fun c -> c))) |> Seq.length) 200000
 
 [<Test>]
 let ``check for termination`` () : unit =
@@ -196,91 +303,3 @@ let ``check for termination`` () : unit =
     check "IEnumerableTest.append, infinite, infinite, then take" (Seq.take 2 (Seq.append (LazyList.repeat "a" |> LazyList.toSeq) (LazyList.repeat "b" |> LazyList.toSeq)) |> countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd |> Seq.toList) [ "a"; "a" ]
     check "<dispoal>" !numActiveEnumerators 0
     
-
-[<Test>]
-let ``Active Patterns`` () : unit =
-    let matchTwo ll =
-        match ll with
-        | Cons (h1, Cons (h2, t)) ->
-            printf "%O,%O\n" h1 h2
-        | Cons (h1, t) ->
-            printf "%O\n" h1
-        | Nil () ->
-            printf "empty!\n"
-
-    let rec pairReduce xs =
-        match xs with
-        | Cons (x, Cons (y, ys)) ->
-            LazyList.consDelayed (x + y) (fun () -> pairReduce ys)
-        | Cons (x, Nil) ->
-            LazyList.cons x LazyList.empty
-        | Nil -> LazyList.empty
-
-    let rec inf =
-        LazyList.consDelayed 0 <| fun () ->
-            LazyList.map (fun x -> x + 1) inf
-
-    //let ll = LazyList.ofList [1;2;3;4]
-    Assert.AreEqual (
-        "[1; 5; 9; 13; 17; 21; 25; 29; 33; 37]",
-        sprintf "%A" (LazyList.toList (LazyList.take 10 (pairReduce inf))),
-        "we09wek")
-
-    Assert.AreEqual (
-        [0;1;3],
-        LazyList.scan (+) 0 (LazyList.ofList [1;2]) |> LazyList.toList,
-        "we09wek")
-
-    Assert.AreEqual (
-        [0],
-        LazyList.scan (+) 0 (LazyList.ofList []) |> LazyList.toList,
-        "we09wek")
-
-[<Test>]
-let ``Basic Test #4`` () : unit =
-    let lazyList =
-        LazyList.empty
-        |> LazyList.cons 4
-        |> LazyList.cons 3
-        |> LazyList.cons 2
-        |> LazyList.cons 1
-
-    lazyList
-    |> LazyList.head
-    |> assertEqual 1
-
-    lazyList
-    |> LazyList.tail
-    |> LazyList.head
-    |> assertEqual 2
-
-    lazyList
-    |> LazyList.tail
-    |> LazyList.tail
-    |> LazyList.head
-    |> assertEqual 3
-
-[<Test>]
-let ``Basic Test #5`` () : unit =
-    let lmn =
-        LazyList.empty
-        |> LazyList.cons 'N'
-        |> LazyList.cons 'M'
-        |> LazyList.cons 'L'
-
-    let almnz =
-        LazyList.empty
-        |> LazyList.cons 'Z'
-        |> LazyList.append lmn
-        |> LazyList.cons 'A'
-
-    almnz
-    |> LazyList.tail
-    |> LazyList.tail
-    |> LazyList.head
-    |> assertEqual 'M'
-
-
-[<Test>]
-let singleton () : unit =
-    Assert.Ignore "Test not yet implemented."

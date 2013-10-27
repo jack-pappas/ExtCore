@@ -300,19 +300,36 @@ LazyList
 
 - Interfaces
 
-  - ICollection
-  - ICollection<'T>
-  - IList
-  - IList<'T>
-  - IReadOnlyList<'T> (.NET 4.5)
-  - IReadOnlyCollection<'T> (.NET 4.5)
+  - ``ICollection``
+  - ``ICollection<'T>``
+  - ``IList``
+  - ``IList<'T>``
+  - ``IReadOnlyList<'T>`` (.NET 4.5)
+  - ``IReadOnlyCollection<'T>`` (.NET 4.5)
 
-- Implement a DebuggerTypeProxy? If so, we need to figure out how to do this in a safe way.
+- Implement a ``DebuggerTypeProxy``? If so, we need to figure out how to do this in a safe way.
+
+- Investigate the optimization described in issue #3 (on Github).
+
+- Should the ``status`` field of ``LazyList<'T>`` be marked with ``[<VolatileField>]``? It seems like when a ``Delayed`` cell is forced (evaluated)
+  by multiple threads at the same time, the threads will enter the lock sequentially, and since the field is not marked as volatile, any threads
+  after the first thread will only see the stale ``status`` value (``Delayed``) so the generator function will be called multiple times.
+
+  A good way to investigate this would be to write some unit tests where we use a generator function which increments a ``ref`` cell each time it's
+  called; then, we'll try to traverse the list concurrently from multiple threads, using the .NET thread pool. If the generator functions are called
+  multiple times, the ref cell will not have the same count as the number of elements in the ``LazyList<'T>``.
+
+- Think about using a more intricate locking scheme in the implementation of the ``Value`` member. If multiple threads are concurrently traversing the
+  ``LazyList<'T>``, we could reduce thread contention by manually implementing the lock using ``Monitor.TryEnter(object, bool)``, ``Monitor.Wait(object)``,
+  and ``Monitor.PulseAll(object)``. This would allow one thread to "force" the next list element, while the other threads called ``Wait`` to yield their
+  time-slice to some other threads while the generator function is evaluating.  I (``jack-pappas``) have implemented this already, and it passes all of
+  the current unit tests for ``LazyList<'T>``, but it also doubled the execution time for the unit tests. This performance regression seems to be specific
+  to one or two of the unit tests; if we investigate and find these tests are pathological cases, I'll add the code to the ``LazyList<'T>`` implementation.
 
 
 List
 ----
-- exactlyOne
+- ``exactlyOne : list:'T list -> 'T``
 - ``insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
 
   Creates a new list by inserting the value at a given index in a list.
