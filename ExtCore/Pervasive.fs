@@ -45,6 +45,20 @@ type Protected<'T> = Choice<'T, exn>
 /// </remarks>
 type ArrayView<'T> = System.ArraySegment<'T>
 
+/// <summary>The type of strings, annotated with a unit of measure. The unit
+/// of measure is erased in compiled code and when values of this type
+/// are analyzed using reflection. The type is representationally equivalent to 
+/// <c>System.String</c>.</summary>
+[<MeasureAnnotatedAbbreviation>]
+type string<[<Measure>] 'Measure> = string
+
+/// <summary>The type of boolean values, annotated with a unit of measure. The unit
+/// of measure is erased in compiled code and when values of this type
+/// are analyzed using reflection. The type is representationally equivalent to 
+/// <c>System.Boolean</c>.</summary>
+[<MeasureAnnotatedAbbreviation>]
+type bool<[<Measure>] 'Measure> = bool
+
 
 /// Basic F# Operators. This module is automatically opened in all F# code.
 [<AutoOpen>]
