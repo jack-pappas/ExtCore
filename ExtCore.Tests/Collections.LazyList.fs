@@ -28,10 +28,6 @@ open NUnit.Framework
 //open FsCheck
 
 
-// TODO : Remove this ASAP, replacing any uses with direct calls to Assert.IsTrue or 'assertTrue'.
-let private test msg condition =
-    Assert.IsTrue (condition, sprintf "MiniTest '%s'" msg)
-
 let private nats =
     0 |> LazyList.unfold (fun z -> Some (z, z + 1))
 
@@ -140,6 +136,10 @@ let ``Basic Test #4`` () : unit =
     |> LazyList.head
     |> assertEqual 'M'
 
+// TODO : Remove this ASAP, replacing any uses with direct calls to Assert.IsTrue or 'assertTrue'.
+let private test msg condition =
+    Assert.IsTrue (condition, sprintf "MiniTest '%s'" msg)
+
 [<Test>]
 let se () : unit =
     test "se1" (LazyList.isEmpty LazyList.empty)
@@ -237,31 +237,60 @@ let singleton () : unit =
 (* Tests which check for tail-recursion. *)
 
 [<Test>]
-let ``length is tail-recursive`` () : unit =
-    assertEqual 100 <| (LazyList.ofSeq (Seq.init 100 id) |> LazyList.length)
-    assertEqual 1000000 <| (LazyList.ofSeq (Seq.init 1000000 id) |> LazyList.length)
-    assertEqual 0 <| (LazyList.ofSeq (Seq.init 0 id) |> LazyList.length)
+[<TestCase(100)>]
+[<TestCase(1000000)>]
+[<TestCase(0)>]
+let ``length is tail-recursive`` (count : int) : unit =
+    Seq.init count id
+    |> LazyList.ofSeq
+    |> LazyList.length
+    |> assertEqual count
 
 [<Test>]
-let ``map is tail-recursive`` () : unit =
-    assertEqual 1000000 <| (LazyList.map (fun x -> x + 1) (LazyList.ofSeq (Seq.init 1000000 id)) |> Seq.length)
+[<TestCase(1000000)>]
+let ``map is tail-recursive`` (count : int) : unit =
+    Seq.init count id
+    |> LazyList.ofSeq
+    |> LazyList.map (fun x -> x + 1)
+    |> LazyList.length
+    |> assertEqual count
 
 [<Test>]
-let ``filter is tail-recursive`` () : unit =
-    assertEqual 500000 <| (LazyList.filter (fun x -> x % 2 = 0) (LazyList.ofSeq (Seq.init 1000000 id)) |> Seq.length)
+[<TestCase(1000000)>]
+let ``filter is tail-recursive`` (count : int) : unit =
+    Seq.init count id
+    |> LazyList.ofSeq
+    |> LazyList.filter (fun x -> x % 2 = 0)
+    |> LazyList.length
+    |> assertEqual (count / 2)
 
 [<Test>]
-let ``iter is tail-recursive`` () : unit =
-    assertEqual 0 <| (let count = ref 0 in LazyList.iter (fun x -> incr count) (LazyList.ofSeq (Seq.init 0 id)); !count)
-    assertEqual 1000000 <| (let count = ref 0 in LazyList.iter (fun x -> incr count) (LazyList.ofSeq (Seq.init 1000000 id)); !count)
+[<TestCase(0)>]
+[<TestCase(1000000)>]
+let ``iter is tail-recursive`` (count : int) : unit =
+    let counter = ref 0
+    Seq.init count id
+    |> LazyList.ofSeq
+    |> LazyList.iter (fun _ -> incr counter)
+    assertEqual count !counter
 
 [<Test>]
-let ``toList is tail-recursive`` () : unit =
-    assertEqual 200000 <| (LazyList.toList (LazyList.ofSeq (Seq.init 200000 id)) |> Seq.length)
+[<TestCase(200000)>]
+let ``toList is tail-recursive`` (count : int) : unit =
+    Seq.init count id
+    |> LazyList.ofSeq
+    |> LazyList.toList
+    |> List.length
+    |> assertEqual count
 
 [<Test>]
-let ``toArray is tail-recursive`` () : unit =
-    assertEqual 200000 <| (LazyList.toArray (LazyList.ofSeq (Seq.init 200000 id)) |> Seq.length)
+[<TestCase(200000)>]
+let ``toArray is tail-recursive`` (count : int) : unit =
+    Seq.init count id
+    |> LazyList.ofSeq
+    |> LazyList.toArray
+    |> Array.length
+    |> assertEqual count
 
 
 (* Tests which check for termination/laziness. *)
