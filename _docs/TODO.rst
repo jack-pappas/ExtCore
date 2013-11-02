@@ -84,6 +84,8 @@ Nullable
 - Implement a ``Nullable`` module similar to the ``Option`` module in the F# Core Library.
   This'll make it easier to write functional-style code for nullable values.
 
+- Maybe add a type alias for ``IQueryable<'T>``? E.g., ``query<'T>``.
+
 
 TextWriter
 ----------
