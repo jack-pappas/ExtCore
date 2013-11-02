@@ -101,6 +101,10 @@ module internal BitOps32 =
     let inline zeroBit (key : Key32, mask : Mask32) : bool =
         key &&& mask = 0u
 
+    /// Inverts the sign bit of an 32-bit signed integer value.
+    let inline invertSign (value : int) =
+        ((0x80000000 ^^^ value) &&& 0x80000000) ||| (value &&& 0x7fffffff)
+
 
 open PatriciaTrieConstants
 open BitOps32
