@@ -431,3 +431,22 @@ let countWith (predicate : 'Key -> 'T -> bool) (map : Map<'Key, 'T>) : int =
                 matchCount + 1
             else matchCount)
 
+/// Applies the specified predicate function to each binding in a Map,
+/// returning a new Set containing the keys for which the predicate matched.
+[<CompiledName("FindKeys")>]
+let findKeys (predicate : 'Key -> 'T -> bool) (map : Map<'Key, 'T>) : Set<'Key> =
+    // Preconditions
+    checkNonNull "map" map
+
+    // OPTIMIZATION : If the map is empty, return immmediately.
+    if Map.isEmpty map then Set.empty
+    else
+        let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+        // Fold over the map, applying the predicate to each binding;
+        // whenever the binding returns 'true', add the key to the result set.
+        (Set.empty, map)
+        ||> Map.fold (fun resultKeys key value ->
+            if predicate.Invoke (key, value) then
+                Set.add key resultKeys
+            else resultKeys)
