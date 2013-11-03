@@ -525,8 +525,8 @@ module Lazy =
     /// If the evaluation is completed within the specified timeout period, returns <c>Some x</c>
     /// where <c>x</c> is the initialized value; otherwise, returns None.
     /// </summary>
-    /// <param name="lazyValue"></param>
     /// <param name="timeout"></param>
+    /// <param name="lazyValue"></param>
     /// <returns></returns>
     /// <remarks>
     /// If the function returns <c>None</c> because evaluation did not complete in the specified
@@ -534,7 +534,7 @@ module Lazy =
     /// .NET ThreadPool until it does complete.
     /// </remarks>
     [<CompiledName("TryForce")>]
-    let tryForce (lazyValue : Lazy<'T>) (timeout : System.TimeSpan) : 'T option =
+    let tryForce (timeout : System.TimeSpan) (lazyValue : Lazy<'T>) : 'T option =
         // Preconditions
         if timeout < TimeSpan.Zero then
             argOutOfRange "timeout" "The timeout duration cannot be negative."
