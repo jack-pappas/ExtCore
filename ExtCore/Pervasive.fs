@@ -464,11 +464,8 @@ module Lazy =
     [<CompiledName("ForceBackground")>]
     let forceBackground (lazyValue : Lazy<'T>) : unit =
         // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
-        let enqueuedInThreadPool =
-            ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue)
-
         // If the callback couldn't be enqueued, raise an exception.
-        if not enqueuedInThreadPool then
+        if not <| ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue) then
             failwith "The lazily-evaluated value could not be forced in the background, \
                       because the evaluation callback could not be enqueued in the .NET TheadPool."
 
@@ -489,10 +486,7 @@ module Lazy =
         let lazyValue = Lazy.Create creator
 
         // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
-        let enqueuedInThreadPool =
-            ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue)
-
-        if enqueuedInThreadPool then
+        if ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue) then
             // Return the lazy value. The value will be evaluated in the threadpool,
             // so it'll either be ready immediately when the code consuming this lazy value
             // calls .Force(), or the calling thread will block until the value is available.
@@ -567,10 +561,11 @@ module Lazy =
             let initCompleted = new ManualResetEvent (false)
 
             // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
-            let enqueuedInThreadPool =
-                ThreadPool.QueueUserWorkItem (tryForceCallback<'T>, (lazyValue, initCompleted))
+            if not <| ThreadPool.QueueUserWorkItem (tryForceCallback<'T>, (lazyValue, initCompleted)) then
+                // Dispose the ManualResetEvent we created here, because it won't
+                // be disposed by the callback like it normally is.
+                initCompleted.Dispose ()
 
-            if not enqueuedInThreadPool then
                 // If the callback couldn't be enqueued in the ThreadPool, return None instead of raising an exn.
                 // TODO : Determine if this is the best strategy, or if it would be better to raise an exn instead.
                 //failwith "The callback to evaluate the lazily-initialized value could not be enqueued in the .NET ThreadPool."
