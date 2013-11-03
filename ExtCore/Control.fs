@@ -1858,6 +1858,18 @@ module Async =
         return mapping x
         }
 
+    //
+    [<CompiledName("Bind2")>]
+    let bind2 (binding : 'T1 -> 'T2 -> Async<'U>) (value1 : Async<'T1>) (value2 : Async<'T2>) : Async<'U> =
+        async {
+        // Get the input values, asynchronously.
+        let! v1 = value1
+        let! v2 = value2
+
+        // Apply the binding function and return the result, asynchronously.
+        return! binding v1 v2
+        }
+
 
 /// Functions for working with AsyncChoice workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
