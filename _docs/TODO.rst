@@ -79,6 +79,20 @@ Tests
 General
 =======
 
+Lazy
+----
+- ``tryForce : lazyValue:Lazy<'T> -> timeout:System.TimeSpan -> 'T option``
+  Forces a lazy value, returning ``None`` if the value isn't returned within the specified timeout duration.
+  The forcing will need to happen on a background thread, and we'll block the calling thread for the specified
+  duration, or until the value is ready (whichever comes first).
+
+- ``toAsync : lazyValue:Lazy<'T> -> Async<'T>``
+  Adapts a lazily-initialized value to the ``async`` workflow.
+
+- ``ofAsync : value:Async<'T> -> Lazy<'T>``
+  Converts an asynchronously-evaluated value (created with the ``async`` workflow) into a lazily-initialized value.
+
+
 Nullable
 --------
 - Implement a ``Nullable`` module similar to the ``Option`` module in the F# Core Library.

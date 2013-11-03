@@ -369,6 +369,8 @@ module Enum =
 /// Functional operators on lazily-initialized values.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Lazy =
+    open System.Threading
+
     /// Forces initialization of a lazily-initialized value (if it has not already
     /// been initialized) then returns the value.
     [<CompiledName("Force")>]
@@ -436,6 +438,84 @@ module Lazy =
             |> System.Lazy.CreateFromValue
         else
             lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()) (lazyValue3.Force ()))
+
+    /// Forces evaluation of a lazily-initalized value in the background, using the .NET ThreadPool.
+    [<CompiledName("ForceBackground")>]
+    let forceBackground (lazyValue : Lazy<'T>) : unit =
+        // Try to enqueue a callback on the ThreadPool which forces evaluation of a lazy value.
+        let enqueuedInThreadPool =
+            System.Threading.WaitCallback (fun _ ->
+                lazyValue.Force ()
+                |> ignore)
+            |> ThreadPool.QueueUserWorkItem
+
+        // If the callback couldn't be enqueued, raise an exception.
+        if not enqueuedInThreadPool then
+            failwith "The lazily-evaluated value could not be forced in the background, \
+                      because the evaluation callback could not be enqueued in the .NET TheadPool."
+
+    /// Invokes the specified generator function to create a value in the background using
+    /// the .NET ThreadPool, and immediately returns a lazily-initialized value.
+    /// When consuming code forces evaluation of this value, it will already be available if
+    /// the generator function has finished executing in the background; otherwise, the calling
+    /// thread is blocked until the generator finishes executing and the value is available.
+    [<CompiledName("Future")>]
+    let future (creator : unit -> 'T) : Lazy<'T> =
+        // Create a lazy value which uses the specified generator function.
+        let lazyValue = Lazy.Create creator
+
+        // Try to evaluate ("force") the thunk on a threadpool thread.
+        let enqueuedInThreadPool =
+            System.Threading.WaitCallback (fun _ ->
+                lazyValue.Force ()
+                |> ignore)
+            |> ThreadPool.QueueUserWorkItem
+
+        if enqueuedInThreadPool then
+            // Return the lazy value. The value will be evaluated in the threadpool,
+            // so it'll either be ready immediately when the code consuming this lazy value
+            // calls .Force(), or the calling thread will block until the value is available.
+            lazyValue
+        else
+            // If QueueUserWorkItem returned false, we return a lazy value which raises an exception
+            // when forced so it's obvious the callback couldn't be enqueued in the ThreadPool.
+            // Raising an exception is preferable to simply evaluating the creator function on this thread
+            // because that could lead to unexpected (and possibly dangerous) behavior like DoS vulnerabilities.
+            lazy
+                failwith "The callback to create the lazily-evaluated value could not be enqueued in the .NET ThreadPool."
+
+    /// <summary>
+    /// Forces evaluation of a lazily-initialized value, if necessary.
+    /// If the evaluation is completed within the specified timeout period, returns <c>Some x</c>
+    /// where <c>x</c> is the initialized value; otherwise, returns None.
+    /// </summary>
+    /// <remarks>
+    /// If the function returns <c>None</c> because evaluation did not complete in the specified
+    /// timeout period, the evaluation function will continue to run in the background on the
+    /// .NET ThreadPool until it does complete.
+    /// </remarks>
+    [<CompiledName("TryForce")>]
+    let tryForce (lazyValue : Lazy<'T>) (timeout : System.TimeSpan) : 'T option =
+        // Preconditions
+        if timeout < TimeSpan.Zero then
+            argOutOfRange "timeout" "The timeout duration cannot be negative."
+
+        // If the value is already initialized, it can be returned immediately.
+        if lazyValue.IsValueCreated then
+            Some lazyValue.Value
+
+        // Zero timeouts need to be handled specially.
+        elif timeout = TimeSpan.Zero then
+            // Return the value if it's available; otherwise, return None.
+            tryGetValue lazyValue
+
+        else
+            // Force evaluation of the lazy value on a .NET ThreadPool thread.
+            // The current (calling) thread is blocked until evaluation is complete or
+            // the timeout duration elapses, whichever comes first.
+
+            // ThreadPool.RegisterWaitForSingleObject
+            notImpl "Lazy.tryForce"
             
 
 /// Additional functional operators on options.
