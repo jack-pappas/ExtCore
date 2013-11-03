@@ -60,16 +60,13 @@ Tests
 
 - Clean up the unit tests imported from the F# distribution and the F# PowerPack. This includes:
 
-  - The Map and Set type and module tests which were imported and adapted for our custom
+  - The ``Map`` and ``Set`` type and module tests which were imported and adapted for our custom
     map and set types (e.g., ``IntSet``).
-  - The Array module tests which were imported and adapted for the ``vector`` type.
+  - The ``Array`` module tests which were imported and adapted for the ``vector`` type.
   - The tests for ``ResizeArray`` and ``LazyList`` which were imported from the F# PowerPack.
 
-- Modify the rest of the unit tests so they use our strongly-typed fluent assertion functions
-  from ``TestHelpers.fs``.
-
-  - Change all equality/equivalence assertions on collections to use the helper functions in the
-    ``Collections`` module (they provide better error messages on failure).
+- Where possible, change the equality/equivalance assertions on collections to use the helper functions
+  in the ``Collections`` module (they provide better error messages on failure).
 
 - Strengthen some of the IntSet, IntMap, etc. unit tests so they use ``assertSame`` to check that
   the collection is returned without being modified unless necessary. E.g., inserting a value into
@@ -113,29 +110,29 @@ Strings
 
 String
 ------
-- exactlyOne
-- foldi
-- foldiBack
-- foldi2
-- foldiBack2
+- ``exactlyOne``
+- ``foldi``
+- ``foldiBack``
+- ``foldi2``
+- ``foldiBack2``
 
 
 String.Split
 ------------
-- foldBack
-- exists
-- forall
-- scan
-- scanBack
-- mapReduce
-- mapScan
-- get
+- ``foldBack``
+- ``exists``
+- ``forall``
+- ``scan``
+- ``scanBack``
+- ``mapReduce``
+- ``mapScan``
+- ``get``
 
   Given an index, gets the substring at that index in the array of substrings created by the split operation.
 
   **NOTE:** These should not be implemented directly; implement the ``Substring.Split`` functions first, then these functions can simply wrap those.
 
-- toList
+- ``toList``
   
   This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly
   so it doesn't need to be reversed.
@@ -143,14 +140,14 @@ String.Split
 
 Substring
 ---------
-- split
-- splits
-- exactlyOne
-- foldi
-- foldiBack
-- foldi2
-- foldiBack2
-- toList
+- ``split``
+- ``splits``
+- ``exactlyOne``
+- ``foldi``
+- ``foldiBack``
+- ``foldi2``
+- ``foldiBack2``
+- ``toList``
 
 - Implement a ``SubstringComparer`` class similar to ``StringComparer``.
 
@@ -159,18 +156,18 @@ Substring
 
 Substring.Split
 ---------------
-- foldBack
-- exists
-- forall
-- scan
-- scanBack
-- mapReduce
-- mapScan
-- get
+- ``foldBack``
+- ``exists``
+- ``forall``
+- ``scan``
+- ``scanBack``
+- ``mapReduce``
+- ``mapScan``
+- ``get``
 
   Given an index, gets the substring at that index in the array of substrings created by the split operation.
 
-- toList
+- ``toList``
   
   This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly
   so it doesn't need to be reversed.
@@ -181,88 +178,101 @@ Collections and Data Structures
 
 Array
 -----
-- exactlyOne
-- scan2
-- scanBack2
-- unfold
+- ``exactlyOne``
+- ``scan2``
+- ``scanBack2``
 
 
 ArrayView
 ---------
-- tryFindBack
-- findBack
-- tryFindIndexBack
-- findIndexBack
-- tryFindIndexOfBack
-- findIndexOfBack
-- tryPickBack
-- pickBack
+- ``tryFindBack``
+- ``findBack``
+- ``tryFindIndexBack``
+- ``findIndexBack``
+- ``tryFindIndexOfBack``
+- ``findIndexOfBack``
+- ``tryPickBack``
+- ``pickBack``
 
-- Re-implement ArrayView as a new struct type instead of an abbreviation for System.ArraySegment<T>. Then, we can implement structural equality and comparison on it.
+- Re-implement ``ArrayView`` as a new struct type instead of an abbreviation for ``System.ArraySegment<T>``. Then, we can implement structural equality and comparison on it.
 
 
 Bimap
 -----
-- ofMap
-- toMap
-- tryOfMap
-- projectKeys
-- projectValues
+- ``ofMap``
+- ``toMap``
+- ``tryOfMap``
+- ``projectKeys``
+- ``projectValues``
 
 
 IntMap/IntSet/HashMap/HashSet
 -----------------------------
-- Implement serialization/deserialization code for parity with Map and Set.
+- Implement serialization/deserialization code for parity with ``Map`` and ``Set``.
 - Fix the private ``ElementString`` method implementations so they take the specific element type for that collection, or use generics, instead of boxing values and casting.
+- Patricia Tries (the basis of these data structures) don't preserve the expected sorting for signed integers. This should be fixed so these collection types
+  can be used as drop-in replacements for the built-in F# ``Set`` and ``Map`` types. There are two possible solutions:
+
+  - Use the new bit-twiddling functions to flip the sign bit of any values when passing them in to one of the ``PatriciaSet32`` or ``PatriciaSet64`` functions,
+    or when an ``int``/``int64`` key is returned from one of these functions.
+
+    This adds a small amount of overhead to each function call, but it would allow us to use the same Patricia Trie implementations to handle both signed
+    and unsigned key types (e.g., if we want to implement ``UIntSet`` and ``UIntMap``).
+
+  - Implement additional functions in the ``PatriciaSet32`` and ``PatriciaSet64`` modules which perform the first step of any functions which traverse the
+    trie, so the sign bit could be handled correctly when the key type is ``int`` or ``int64``. The upside of this is that there's no bit-twiddling overhead,
+    so performance should be the same regardless of whether the key type is signed or not. The downside of this is that the code becomes a little more bloated
+    and could be slightly error-prone since we'll have to make sure to call the special 'wrapper' function whenever we're working with signed integer keys.
+    *This solution may also not work correctly for little-endian Patricia tries, which is what we're currently using in the release version.*
 
 
 IntBimap / LongBimap
 --------------------
-- map
-- ofIntMap
-- tryOfIntMap
-- projectKeys
-- projectValues
+- ``map``
+- ``ofIntMap``
+- ``tryOfIntMap``
+- ``projectKeys``
+- ``projectValues``
 
 
 IntMap / LongMap
 ----------------
-- exactlyOne
-- ofKeys
-- ofValues
-- ofIntKeys
+- ``exactlyOne``
+- ``ofKeys``
+- ``ofValues``
+- ``ofIntKeys``
 
-  This should work like 'ofKeys' but with IntSet instead of Set.
+  This should work like ``ofKeys`` but with ``IntSet`` instead of ``Set``.
 
-- keys
-- values
+- ``keys``
+- ``values``
 
   Should this return a set or a multiset?
 
-- extractMin
-- extractMax
-- tryExtractMin
-- tryExtractMax
+- ``extractMin``
+- ``extractMax``
+- ``tryExtractMin``
+- ``tryExtractMax``
 
 - Interfaces
 
-  - IReadOnlyDictionary<TKey, TValue> (.NET 4.5)
-  - IReadOnlyCollection<KeyValuePair<TKey, TValue>> (.NET 4.5)
+  - ``IReadOnlyDictionary<TKey, TValue>`` (.NET 4.5)
+  - ``IReadOnlyCollection<KeyValuePair<TKey, TValue>>`` (.NET 4.5)
 
 - Implement IntMap-based versions of our custom Map functions.
 
 
 IntSet / LongSet
 ----------------
-- exactlyOne
-- extractMin
-- extractMax
-- reduce
-- reduceBack
-- tryExtractMin
-- tryExtractMax
-- scan
-- scanBack
+- ``exactlyOne``
+- ``extractMin``
+- ``extractMax``
+- ``reduce``
+- ``reduceBack``
+- ``tryExtractMin``
+- ``tryExtractMax``
+- ``scan``
+- ``scanBack``
 - ``allSubsets : IntSet -> seq<IntSet>``
 
   Returns a sequence of all subsets of the given set.
@@ -271,15 +281,15 @@ IntSet / LongSet
 
   Returns a sequence which produces all subsets of the given set, which have the given size.
 
-- lessThan
-- greaterThan
+- ``lessThan``
+- ``greaterThan``
 
   Given an IntSet and a value, returns the subset containing the values less than (or greater than) the value.
 
 - Interfaces
 
-  - ISet<'T> (.NET 4.0)
-  - IReadOnlyCollection<'T> (.NET 4.5)
+  - ``ISet<'T>`` (.NET 4.0)
+  - ``IReadOnlyCollection<'T>`` (.NET 4.5)
 
 - Implement IntSet- and TagSet-based versions of our custom Set functions.
 
@@ -341,6 +351,9 @@ LazyList
 List
 ----
 - ``exactlyOne : list:'T list -> 'T``
+
+  Extracts the only item in a single-item list. An ``ArgumentException`` is raised if the list is empty or contains more than one item.
+
 - ``insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
 
   Creates a new list by inserting the value at a given index in a list.
@@ -360,15 +373,20 @@ List
 
 Map
 ---
-- exactlyOne
-- mapi
-- mapiBack
-- foldi
-- foldiBack
+- ``exactlyOne : map:Map<'Key, 'T> -> 'Key * 'T``
+
+  Extracts the only binding from a ``Map`` containing a single binding. An ``ArgumentException`` is raised if the ``Map`` is empty or contains more than one binding.
+
+- ``mapi``
+- ``mapiBack``
+
+- ``foldi``
+- ``foldiBack``
+
 - ``scan (folder : 'State -> 'T -> 'State) (state : 'State) (map : Map<'Key, 'T>) : Map<'Key, 'State>``
 - ``scanBack``
 
-  Like Map.fold/Map.foldBack, but returns a new map which holds the intermediate result after processing each key/value pair.
+  Like ``Map.fold``/``Map.foldBack``, but returns a new map which holds the intermediate result after processing each key/value pair.
 
 - ``findOrAdd (generator : 'Key -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>``
 
@@ -382,7 +400,7 @@ Map
 - ``findAndUpdate (generator : 'Key -> 'T -> 'T) (key : 'Key) (map : Map<'Key, 'T>) : 'T * Map<'Key, 'T>``
 
   Retrieves the value associated with the specified key in the map; if the key does not exist in the map,
-  KeyNotFoundException is raised. The key and original value are applied to the generator function to
+  ``KeyNotFoundException`` is raised. The key and original value are applied to the generator function to
   produce a new value which is stored in the map. (OPTIMIZATION: Only update the map if the generated value
   is different than the original value.)
   The retrieved value is returned along with the (possibly) updated map.
@@ -403,52 +421,52 @@ Map
 - tryPickBack
 - tryFindKeyBack
 
-  Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the map,
+  Just like the built-in functions (e.g., ``findKey``, ``pick``) except they traverse "backwards" over the map,
   i.e., from greatest to least key value. This is useful when the map could contain multiple matching
   key/value pairs and we want to choose the one with the greatest key value.
 
 
 Queue
 -----
-- exactlyOne
-- ofList
-- ofArray
-- ofSeq
-- toSeq
-- peek
+- ``exactlyOne``
+- ``ofList``
+- ``ofArray``
+- ``ofSeq``
+- ``toSeq``
+- ``peek``
 
 - Interfaces
 
-  - IEnumerable
-  - IEnumerable<'T>
-  - ICollection
-  - ICollection<'T>
-  - IList
-  - IList<'T>
-  - IReadOnlyList<'T> (.NET 4.5)
+  - ``IEnumerable``
+  - ``IEnumerable<'T>``
+  - ``ICollection``
+  - ``ICollection<'T>``
+  - ``IList``
+  - ``IList<'T>``
+  - ``IReadOnlyList<'T>`` (.NET 4.5)
 
-- Implement a DebuggerTypeProxy
+- Implement a ``DebuggerTypeProxy``, if feasible.
 
 
 ResizeArray
 -----------
-- exactlyOne
-- ofVector
-- toVector
+- ``exactlyOne``
+- ``ofVector``
+- ``toVector``
 
 
 Seq
 ---
-- fold2
-- Seq.choosei
-- Seq.segment
+- ``fold2``
+- ``choosei``
+- ``segment``
 
   Groups elements of a sequence together "longitudinally" -- i.e., it works
-  in a streaming fashion, rather than Seq.groupBy which needs to see the
+  in a streaming fashion, rather than ``Seq.groupBy`` which needs to see the
   entire stream before returning. Alternatively, this can be thought of
-  as a generalized form of Seq.windowed.
+  as a generalized form of ``Seq.windowed``.
 
-- Seq.sample
+- ``sample``
 
   Takes a positive integer and a sequence.
   Returns a sequence containing every n-th element of the input sequence.
@@ -457,8 +475,10 @@ Seq
 Set
 ---
 - ``exactlyOne``
+
 - ``scan : folder:('State -> 'T -> 'State) -> state:'State -> set:Set<'T> -> Set<'State>``
 - ``scanBack``
+
 - ``allSubsets : Set<'T> -> seq<Set<'T>>``
 
   Returns a sequence of all subsets of the given set.
@@ -470,14 +490,14 @@ Set
 - ``lessThan``
 - ``greaterThan``
 
-  Given a Set and a value, returns the subset containing the values less than (or greater than) the value.
+  Given a ``Set`` and a value, returns the subset containing the values less than (or greater than) the value.
 
 - ``findBack``
 - ``pickBack``
 - ``tryFindBack``
 - ``tryPickBack``
 
-  Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the set,
+  Just like the built-in functions (e.g., ``findKey``, ``pick``) except they traverse "backwards" over the set,
   i.e., from greatest to least value. This is useful when the set could contain multiple matching
   values and we want to choose the greatest one.
 
@@ -487,38 +507,38 @@ Set
 
 TagBimap
 --------
-- map
-- ofTagMap
-- tryOfTagMap
-- projectKeys
-- projectValues
+- ``map``
+- ``ofTagMap``
+- ``tryOfTagMap``
+- ``projectKeys``
+- ``projectValues``
 
 
 Vector
 ------
-- exactlyOne
-- findBack
-- pickBack
-- tryFindBack
-- tryPickBack
+- ``exactlyOne``
+- ``findBack``
+- ``pickBack``
+- ``tryFindBack``
+- ``tryPickBack``
 
-  Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the vector,
+  Just like the built-in functions (e.g., ``findKey``, ``pick``) except they traverse "backwards" over the vector,
   i.e., from highest to lowest index. This is useful when the vector could contain multiple matching
   values and we want to choose the one with the greatest index.
 
 - Interfaces
 
-  - IEquatable
-  - IEquatable<'T>
-  - IComparable
-  - IComparable<'T>
-  - ICollection
-  - ICollection<'T>
-  - IList
-  - IList<'T>
-  - ICloneable
-  - IStructuralComparable
-  - IStructuralEquatable
+  - ``IEquatable``
+  - ``IEquatable<'T>``
+  - ``IComparable``
+  - ``IComparable<'T>``
+  - ``ICollection``
+  - ``ICollection<'T>``
+  - ``IList``
+  - ``IList<'T>``
+  - ``ICloneable``
+  - ``IStructuralComparable``
+  - ``IStructuralEquatable``
 
 
 Caching
@@ -526,21 +546,21 @@ Caching
 
 LruCache
 --------
-- findKey
-- tryFindKey
+- ``findKey``
+- ``tryFindKey``
 
-  These should work like the functions in the Map module.
+  These should work like the functions in the ``Map`` module.
 
-- findKeyBack
-- pickBack
-- tryPickBack
-- tryFindKeyBack
+- ``findKeyBack``
+- ``pickBack``
+- ``tryPickBack``
+- ``tryFindKeyBack``
 
-  Just like the built-in functions (e.g., findKey, pick) except they traverse "backwards" over the cache,
+  Just like the built-in functions (e.g., ``findKey``, ``pick``) except they traverse "backwards" over the cache,
   i.e., from newest (most-recently-used) to oldest (least-recently-used) key value. This is useful when the
   cache could contain multiple matching key/value pairs and we want to choose the one with the newest key value.
 
-- Import the MapType and MapModule tests from the F# distribution and adapt them for LruCache.
+- Import the MapType and MapModule tests from the F# distribution and adapt them for ``LruCache``.
 - Implement a comparison method similar to how LruCache.Equals is implemented.
 
 
@@ -549,14 +569,14 @@ Workflow Collections
 
 State.Array
 -----------
-- mapReduce
+- ``mapReduce``
 
 
 State.List
 ----------
-- foldi
-- foldBack
-- foldiBack
+- ``foldi``
+- ``foldBack``
+- ``foldiBack``
 
 
 Parallel
