@@ -439,6 +439,13 @@ module Lazy =
         else
             lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()) (lazyValue3.Force ()))
 
+    //
+    [<CompiledName("Bind")>]
+    let bind (binding : 'T -> Lazy<'U>) (lazyValue : Lazy<'T>) : Lazy<'U> =
+        System.Lazy.Create <| fun () ->
+            let result = binding <| lazyValue.Force ()
+            result.Force ()
+
     /// Callback delegate which forces evaluation of a Lazy<'T>.
     /// Meant to be used with ThreadPool.QueueUserWorkItem.
     let private forceCallback<'T> =

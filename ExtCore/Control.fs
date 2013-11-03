@@ -146,7 +146,7 @@ type LazyBuilder () =
     // M<'T> * ('T -> M<'U>) -> M<'U>
     member inline __.Bind (m : Lazy<'T>, k : 'T -> Lazy<'U>)
         : Lazy<'U> =
-        k <| Lazy.force m
+        Lazy.bind k m
 
     // (unit -> M<'T>) -> M<'T>
     member inline this.Delay (f : unit -> Lazy<_>)
