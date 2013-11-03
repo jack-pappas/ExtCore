@@ -442,11 +442,16 @@ module Lazy =
     /// Forces evaluation of a lazily-initalized value in the background, using the .NET ThreadPool.
     [<CompiledName("ForceBackground")>]
     let forceBackground (lazyValue : Lazy<'T>) : unit =
-        // Try to enqueue a callback on the ThreadPool which forces evaluation of a lazy value.
+        // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
         let enqueuedInThreadPool =
             System.Threading.WaitCallback (fun _ ->
-                lazyValue.Force ()
-                |> ignore)
+                // Swallow any exception raised when initializing the value; it'll be cached
+                // within the Lazy<_> and re-raised when the value is accessed later.
+                try
+                    // Force the value, ignoring the result
+                    lazyValue.Force () |> ignore
+                with _ -> ()
+                )
             |> ThreadPool.QueueUserWorkItem
 
         // If the callback couldn't be enqueued, raise an exception.
@@ -464,11 +469,16 @@ module Lazy =
         // Create a lazy value which uses the specified generator function.
         let lazyValue = Lazy.Create creator
 
-        // Try to evaluate ("force") the thunk on a threadpool thread.
+        // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
         let enqueuedInThreadPool =
             System.Threading.WaitCallback (fun _ ->
-                lazyValue.Force ()
-                |> ignore)
+                // Swallow any exception raised when initializing the value; it'll be cached
+                // within the Lazy<_> and re-raised when the value is accessed later.
+                try
+                    // Force the value, ignoring the result
+                    lazyValue.Force () |> ignore
+                with _ -> ()
+                )
             |> ThreadPool.QueueUserWorkItem
 
         if enqueuedInThreadPool then
@@ -513,9 +523,36 @@ module Lazy =
             // Force evaluation of the lazy value on a .NET ThreadPool thread.
             // The current (calling) thread is blocked until evaluation is complete or
             // the timeout duration elapses, whichever comes first.
+            
+            /// The EventWaitHandle which signals that initialization of the value is complete.
+            use initCompleted = new ManualResetEvent (false)
 
-            // ThreadPool.RegisterWaitForSingleObject
-            notImpl "Lazy.tryForce"
+            // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
+            let enqueuedInThreadPool =
+                System.Threading.WaitCallback (fun _ ->
+                    // Swallow any exception raised when initializing the value; it'll be cached
+                    // within the Lazy<_> and re-raised when the value is accessed later.
+                    try
+                        // Force the value, ignoring the result
+                        lazyValue.Force () |> ignore
+                    with _ -> ()
+                    
+                    // Set the EventWaitHandle to signal that initialization of the value is complete.
+                    // The return value is ignored here because there's not much we can do if the .Set()
+                    // operation fails; raising an exception on a ThreadPool thread is generally not a great idea.
+                    initCompleted.Set () |> ignore
+                    )
+                |> ThreadPool.QueueUserWorkItem
+
+            // If the callback couldn't be enqueued in the ThreadPool, return None instead of raising an exn.
+            // TODO : Determine if this is the best strategy, or if it would be better to raise an exn instead.
+            if not enqueuedInThreadPool then None
+            else
+                // Wait for the initialization to complete or the timeout period to elapse.
+                if initCompleted.WaitOne timeout then
+                    // Get the initialized value and return it.
+                    Some lazyValue.Value
+                else None
             
 
 /// Additional functional operators on options.
