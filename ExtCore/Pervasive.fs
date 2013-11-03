@@ -504,6 +504,8 @@ module Lazy =
     let private tryForceCallback<'T> =
         System.Threading.WaitCallback (fun arg ->
             let lazyValue, initCompleted = arg :?> (Lazy<'T> * ManualResetEvent)
+            // Re-bind 'initCompleted' with a 'use' binding so it's disposed of when we're finished here.
+            use initCompleted = initCompleted
 
             // Swallow any exception raised when initializing the value; it'll be cached
             // within the Lazy<_> and re-raised when the value is accessed later.
@@ -552,7 +554,10 @@ module Lazy =
             // the timeout duration elapses, whichever comes first.
             
             /// The EventWaitHandle which signals that initialization of the value is complete.
-            use initCompleted = new ManualResetEvent (false)
+            // NOTE :   'let' is used here instead of 'use' because the WaitHandle is disposed by
+            //          the ThreadPool callback; otherwise, if this function times out, an exn
+            //          will be raised when the callback tries to call the .Set() method.
+            let initCompleted = new ManualResetEvent (false)
 
             // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
             let enqueuedInThreadPool =
