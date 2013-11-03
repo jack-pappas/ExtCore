@@ -439,7 +439,8 @@ module Lazy =
         else
             lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()) (lazyValue3.Force ()))
 
-    /// Forces evaluation of a lazily-initalized value in the background, using the .NET ThreadPool.
+    /// <summary>Forces evaluation of a lazily-initalized value in the background, using the .NET ThreadPool.</summary>
+    /// <param name="lazyValue"></param>
     [<CompiledName("ForceBackground")>]
     let forceBackground (lazyValue : Lazy<'T>) : unit =
         // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
@@ -459,11 +460,17 @@ module Lazy =
             failwith "The lazily-evaluated value could not be forced in the background, \
                       because the evaluation callback could not be enqueued in the .NET TheadPool."
 
+    /// <summary>
     /// Invokes the specified generator function to create a value in the background using
     /// the .NET ThreadPool, and immediately returns a lazily-initialized value.
+    /// </summary>
+    /// <param name="creator"></param>
+    /// <returns></returns>
+    /// <remarks>
     /// When consuming code forces evaluation of this value, it will already be available if
     /// the generator function has finished executing in the background; otherwise, the calling
     /// thread is blocked until the generator finishes executing and the value is available.
+    /// </remarks>
     [<CompiledName("Future")>]
     let future (creator : unit -> 'T) : Lazy<'T> =
         // Create a lazy value which uses the specified generator function.
@@ -499,6 +506,9 @@ module Lazy =
     /// If the evaluation is completed within the specified timeout period, returns <c>Some x</c>
     /// where <c>x</c> is the initialized value; otherwise, returns None.
     /// </summary>
+    /// <param name="lazyValue"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
     /// <remarks>
     /// If the function returns <c>None</c> because evaluation did not complete in the specified
     /// timeout period, the evaluation function will continue to run in the background on the
@@ -544,9 +554,11 @@ module Lazy =
                     )
                 |> ThreadPool.QueueUserWorkItem
 
-            // If the callback couldn't be enqueued in the ThreadPool, return None instead of raising an exn.
-            // TODO : Determine if this is the best strategy, or if it would be better to raise an exn instead.
-            if not enqueuedInThreadPool then None
+            if not enqueuedInThreadPool then
+                // If the callback couldn't be enqueued in the ThreadPool, return None instead of raising an exn.
+                // TODO : Determine if this is the best strategy, or if it would be better to raise an exn instead.
+                //failwith "The callback to evaluate the lazily-initialized value could not be enqueued in the .NET ThreadPool."
+                None
             else
                 // Wait for the initialization to complete or the timeout period to elapse.
                 if initCompleted.WaitOne timeout then
