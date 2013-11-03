@@ -439,21 +439,26 @@ module Lazy =
         else
             lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()) (lazyValue3.Force ()))
 
+    /// Callback delegate which forces evaluation of a Lazy<'T>.
+    /// Meant to be used with ThreadPool.QueueUserWorkItem.
+    let private forceCallback<'T> =
+        System.Threading.WaitCallback (fun arg ->
+            let lazyValue = arg :?> Lazy<'T>
+
+            // Swallow any exception raised when initializing the value; it'll be cached
+            // within the Lazy<_> and re-raised when the value is accessed later.
+            try
+                // Force the value, ignoring the result
+                lazyValue.Force () |> ignore
+            with _ -> ())
+
     /// <summary>Forces evaluation of a lazily-initalized value in the background, using the .NET ThreadPool.</summary>
     /// <param name="lazyValue"></param>
     [<CompiledName("ForceBackground")>]
     let forceBackground (lazyValue : Lazy<'T>) : unit =
         // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
         let enqueuedInThreadPool =
-            System.Threading.WaitCallback (fun _ ->
-                // Swallow any exception raised when initializing the value; it'll be cached
-                // within the Lazy<_> and re-raised when the value is accessed later.
-                try
-                    // Force the value, ignoring the result
-                    lazyValue.Force () |> ignore
-                with _ -> ()
-                )
-            |> ThreadPool.QueueUserWorkItem
+            ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue)
 
         // If the callback couldn't be enqueued, raise an exception.
         if not enqueuedInThreadPool then
@@ -478,15 +483,7 @@ module Lazy =
 
         // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
         let enqueuedInThreadPool =
-            System.Threading.WaitCallback (fun _ ->
-                // Swallow any exception raised when initializing the value; it'll be cached
-                // within the Lazy<_> and re-raised when the value is accessed later.
-                try
-                    // Force the value, ignoring the result
-                    lazyValue.Force () |> ignore
-                with _ -> ()
-                )
-            |> ThreadPool.QueueUserWorkItem
+            ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue)
 
         if enqueuedInThreadPool then
             // Return the lazy value. The value will be evaluated in the threadpool,
@@ -500,6 +497,26 @@ module Lazy =
             // because that could lead to unexpected (and possibly dangerous) behavior like DoS vulnerabilities.
             lazy
                 failwith "The callback to create the lazily-evaluated value could not be enqueued in the .NET ThreadPool."
+
+    /// Callback delegate which forces evaluation of a Lazy<'T>, then sets a ManualResetEvent
+    /// to signal the initialization has completed.
+    /// Meant to be used with ThreadPool.QueueUserWorkItem.
+    let private tryForceCallback<'T> =
+        System.Threading.WaitCallback (fun arg ->
+            let lazyValue, initCompleted = arg :?> (Lazy<'T> * ManualResetEvent)
+
+            // Swallow any exception raised when initializing the value; it'll be cached
+            // within the Lazy<_> and re-raised when the value is accessed later.
+            try
+                // Force the value, ignoring the result
+                lazyValue.Force () |> ignore
+            with _ -> ()
+                    
+            // Set the ManualResetEvent to signal that initialization of the value is complete.
+            // The return value is ignored here because there's not much we can do if the .Set()
+            // operation fails; raising an exception on a ThreadPool thread is generally not a great idea.
+            // TODO : We could pass a 'ref' cell into this callback, and use that to pass the .Set() result back.
+            initCompleted.Set () |> ignore)
 
     /// <summary>
     /// Forces evaluation of a lazily-initialized value, if necessary.
@@ -539,20 +556,7 @@ module Lazy =
 
             // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
             let enqueuedInThreadPool =
-                System.Threading.WaitCallback (fun _ ->
-                    // Swallow any exception raised when initializing the value; it'll be cached
-                    // within the Lazy<_> and re-raised when the value is accessed later.
-                    try
-                        // Force the value, ignoring the result
-                        lazyValue.Force () |> ignore
-                    with _ -> ()
-                    
-                    // Set the EventWaitHandle to signal that initialization of the value is complete.
-                    // The return value is ignored here because there's not much we can do if the .Set()
-                    // operation fails; raising an exception on a ThreadPool thread is generally not a great idea.
-                    initCompleted.Set () |> ignore
-                    )
-                |> ThreadPool.QueueUserWorkItem
+                ThreadPool.QueueUserWorkItem (tryForceCallback<'T>, (lazyValue, initCompleted))
 
             if not enqueuedInThreadPool then
                 // If the callback couldn't be enqueued in the ThreadPool, return None instead of raising an exn.
