@@ -71,7 +71,9 @@
     <Compile Include="Pervasive.fs" />
     <Compile Include="Substring.fs" />
     <Compile Include="String.fs" />
+    <Compile Include="Control.Agents.fs" />
     <Compile Include="Control.fs" />
+    <Compile Include="Control.Observable.fs" />
     <Compile Include="Control.Indexed.fs" />
     <Compile Include="Control.Cps.fs" />
     <Compile Include="Collections.fs" />
@@ -99,6 +101,7 @@
     <Compile Include="Collections.Queue.fs" />
     <Compile Include="Collections.PriorityQueue.fs" />
     <Compile Include="Collections.ListZipper.fs" />
+    <Compile Include="Collections.AsyncSeq.fs" />
     <Compile Include="ControlCollections.State.fs" />
     <Compile Include="ControlCollections.Reader.fs" />
     <Compile Include="ControlCollections.ReaderState.fs" />
@@ -119,6 +122,7 @@
     <Compile Include="Caching.LruCache.fs" />
     <Compile Include="NativeInterop.fs" />
     <Compile Include="IO.fs" />
+    <Compile Include="Net.fs" />
     <Compile Include="Args.fs" />
     <Compile Include="ExtraPervasives.fs" />
     <Compile Include="AssemblyInfo.fs" />
