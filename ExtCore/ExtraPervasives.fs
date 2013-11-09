@@ -47,41 +47,41 @@ module ExtraTopLevelOperators =
         int64 tag
 
     /// Builds a map from a sequence of key-value pairs.
-    [<CompiledName("Map")>]
+    [<CompiledName("CreateMap")>]
     let inline map (elements : seq<_>) : Map<'Key, 'T> =
         Map (elements)
 
     /// Creates an immutable vector from an array.
-    [<CompiledName("Vector")>]
+    [<CompiledName("CreateVector")>]
     let inline vector (array : 'T[]) : vector<'T> =
         vector.Create array
 
     /// Builds a map from a sequence of key-value pairs.
-    [<CompiledName("IntMap")>]
+    [<CompiledName("CreateIntMap")>]
     let inline intMap (elements : seq<_>) : IntMap<'T> =
         IntMap (elements)
 
     /// Builds a set from a sequence of elements.
-    [<CompiledName("IntSet")>]
+    [<CompiledName("CreateIntSet")>]
     let inline intSet (elements : seq<_>) : IntSet =
         IntSet (elements)
 
     /// Builds a map from a sequence of key-value pairs.
-    [<CompiledName("LongMap")>]
+    [<CompiledName("CreateLongMap")>]
     let inline longMap (elements : seq<_>) : LongMap<'T> =
         LongMap (elements)
 
     /// Builds a set from a sequence of elements.
-    [<CompiledName("LongSet")>]
+    [<CompiledName("CreateLongSet")>]
     let inline longSet (elements : seq<_>) : LongSet =
         LongSet (elements)
 
     /// Builds a map from a sequence of key-value pairs.
-    [<CompiledName("HashMap")>]
+    [<CompiledName("CreateHashMap")>]
     let inline hashMap (elements : seq<_>) : HashMap<'Key, 'T> =
         HashMap (elements)
 
     /// Builds a set from a sequence of elements.
-    [<CompiledName("HashSet")>]
+    [<CompiledName("CreateHashSet")>]
     let inline hashSet (elements : seq<_>) : HashSet<'T> =
         HashSet (elements)
