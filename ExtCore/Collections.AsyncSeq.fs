@@ -193,8 +193,12 @@ module AsyncSeq =
     /// Yields all elements of the first asynchronous sequence and then 
     /// all elements of the second asynchronous sequence.
     [<CompiledName("Append")>]
-    let rec append (seq1: AsyncSeq<'T>) (seq2: AsyncSeq<'T>) : AsyncSeq<'T> =
-        asyncSeq.Combine (seq1, seq2)
+    let rec append (aseq1 : AsyncSeq<'T>) (aseq2 : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "aseq1" aseq1
+        checkNonNull "aseq2" aseq2
+
+        asyncSeq.Combine (aseq1, aseq2)
 
     /// Creates an asynchronous sequence that iterates over the given input sequence.
     /// For every input element, it calls the the specified function and iterates
@@ -202,7 +206,10 @@ module AsyncSeq =
     /// This is the 'bind' operation of the computation expression (exposed using
     /// the 'for' keyword in asyncSeq computation).
     [<CompiledName("Collect")>]
-    let rec collect mapping (aseq : AsyncSeq<'T>) : AsyncSeq<'TResult> =
+    let rec collect mapping (aseq : AsyncSeq<'T>) : AsyncSeq<'U> =
+        // Preconditions
+        checkNonNull "aseq" aseq
+
         asyncSeq.For (aseq, mapping)
 
     // --------------------------------------------------------------------------
@@ -214,7 +221,10 @@ module AsyncSeq =
     /// The specified function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("MapAsync")>]
-    let mapAsync mapping (input : AsyncSeq<'T>) : AsyncSeq<'TResult> =
+    let mapAsync mapping (input : AsyncSeq<'T>) : AsyncSeq<'U> =
+        // Preconditions
+        checkNonNull "input" input
+
         asyncSeq {
         for itm in input do
             let! v = mapping itm
@@ -229,6 +239,9 @@ module AsyncSeq =
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("ChooseAsync")>]
     let chooseAsync chooser (input : AsyncSeq<'T>) : AsyncSeq<'U> =
+        // Preconditions
+        checkNonNull "input" input
+
         asyncSeq {
         for itm in input do
             let! v = chooser itm
@@ -244,7 +257,10 @@ module AsyncSeq =
     /// The specified function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("FilterAsync")>]
-    let filterAsync predicate (input : AsyncSeq<'T>) =
+    let filterAsync predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         asyncSeq {
         for v in input do
             let! b = predicate v
@@ -255,6 +271,9 @@ module AsyncSeq =
     /// given asynchronous sequence (or the specified default value).
     [<CompiledName("LastOrDefault")>]
     let rec lastOrDefault defaultValue (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         async {
         let! v = input
         match v with
@@ -267,6 +286,9 @@ module AsyncSeq =
     /// given asynchronous sequence (or the specified default value).
     [<CompiledName("FirstOrDefault")>]
     let firstOrDefault defaultValue (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         async {
         let! v = input
         match v with
@@ -276,13 +298,16 @@ module AsyncSeq =
             return h }
 
     /// Aggregates the elements of the input asynchronous sequence using the
-    /// specified 'aggregation' function. The result is an asynchronous 
+    /// specified 'aggregation' function. The result is an asynchronous
     /// sequence of intermediate aggregation result.
     ///
     /// The aggregation function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("ScanAsync")>]
-    let rec scanAsync folder (state:'TState) (input : AsyncSeq<'T>) =
+    let rec scanAsync folder (state : 'State) (input : AsyncSeq<'T>) : AsyncSeq<'State> =
+        // Preconditions
+        checkNonNull "input" input
+
         asyncSeq {
         let! v = input
         match v with
@@ -299,6 +324,9 @@ module AsyncSeq =
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("IterAsync")>]
     let rec iterAsync action (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         async {
         for itm in input do
             do! action itm }
@@ -307,7 +335,10 @@ module AsyncSeq =
     /// from the input sequence and its predecessor. Empty sequence is returned for
     /// singleton input sequence.
     [<CompiledName("Pairwise")>]
-    let rec pairwise (input : AsyncSeq<'T>) =
+    let rec pairwise (input : AsyncSeq<'T>) : AsyncSeq<'T * 'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         asyncSeq {
         let! v = input
         match v with
@@ -315,8 +346,8 @@ module AsyncSeq =
         | Cons(h, t) ->
             let prev = ref h
             for v in t do
-              yield (!prev, v)
-              prev := v }
+                yield (!prev, v)
+                prev := v }
 
     /// Aggregates the elements of the input asynchronous sequence using the
     /// specified 'aggregation' function. The result is an asynchronous 
@@ -325,43 +356,64 @@ module AsyncSeq =
     /// The aggregation function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("FoldAsync")>]
-    let rec foldAsync folder (state:'TState) (input : AsyncSeq<'T>) =
+    let rec foldAsync folder (state : 'State) (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         input |> scanAsync folder state |> lastOrDefault state
 
     /// Same as AsyncSeq.foldAsync, but the specified function is synchronous
     /// and returns the result of aggregation immediately.
     [<CompiledName("Fold")>]
-    let rec fold folder (state:'TState) (input : AsyncSeq<'T>) =
+    let rec fold folder (state : 'State) (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         foldAsync (fun st v -> folder st v |> async.Return) state input
 
     /// Same as AsyncSeq.scanAsync, but the specified function is synchronous
     /// and returns the result of aggregation immediately.
     [<CompiledName("Scan")>]
-    let rec scan folder (state:'TState) (input : AsyncSeq<'T>) =
+    let rec scan folder (state : 'State) (input : AsyncSeq<'T>) : AsyncSeq<'State> =
+        // Preconditions
+        checkNonNull "input" input
+
         scanAsync (fun st v -> folder st v |> async.Return) state input
 
     /// Same as AsyncSeq.mapAsync, but the specified function is synchronous
     /// and returns the result of projection immediately.
     [<CompiledName("Map")>]
     let map mapping (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         mapAsync (mapping >> async.Return) input
 
     /// Same as AsyncSeq.iterAsync, but the specified function is synchronous
     /// and performs the side-effect immediately.
     [<CompiledName("Iter")>]
     let iter action (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         iterAsync (action >> async.Return) input
 
     /// Same as AsyncSeq.chooseAsync, but the specified function is synchronous
     /// and processes the input element immediately.
     [<CompiledName("Choose")>]
-    let choose chooser (input : AsyncSeq<'T>) =
+    let choose chooser (input : AsyncSeq<'T>) : AsyncSeq<'U> =
+        // Preconditions
+        checkNonNull "input" input
+
         chooseAsync (chooser >> async.Return) input
 
     /// Same as AsyncSeq.filterAsync, but the specified predicate is synchronous
     /// and processes the input element immediately.
     [<CompiledName("Filter")>]
-    let filter predicate (input : AsyncSeq<'T>) =
+    let filter predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         filterAsync (predicate >> async.Return) input
 
     // --------------------------------------------------------------------------
@@ -370,7 +422,10 @@ module AsyncSeq =
     /// Creates an asynchronous sequence that lazily takes element from an
     /// input synchronous sequence and returns them one-by-one.
     [<CompiledName("OfSeq")>]
-    let ofSeq (input : seq<'T>) =
+    let ofSeq (input : seq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         asyncSeq {
         for el in input do
             yield el }
@@ -385,7 +440,10 @@ module AsyncSeq =
     /// a body specified as the argument. The returnd async sequence repeatedly 
     /// sends 'Get' message to the agent to get the next element. The observable
     /// sends 'Put' message to the agent (as new inputs are generated).
-    let internal ofObservableUsingAgent (input : System.IObservable<'T>) f =
+    let internal ofObservableUsingAgent (input : System.IObservable<'T>) f : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         asyncSeq {
         use agent = AutoCancelAgent.Start (f)
         use d =
@@ -410,7 +468,10 @@ module AsyncSeq =
     /// by the observable while the asynchronous sequence is blocked are stored to 
     /// an unbounded buffer and are returned as next elements of the async sequence.
     [<CompiledName("FromObservableBuffered")>]
-    let ofObservableBuffered (input : System.IObservable<'T>) =
+    let ofObservableBuffered (input : System.IObservable<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         ofObservableUsingAgent input <| fun mbox ->
             async {
             let buffer = System.Collections.Generic.Queue<_> ()
@@ -428,7 +489,8 @@ module AsyncSeq =
                 
                 // Process matching calls from buffers
                 while buffer.Count > 0 && replies.Count > 0 do
-                    replies.Dequeue().Reply(buffer.Dequeue ())
+                    buffer.Dequeue ()
+                    |> replies.Dequeue().Reply
             }
 
     /// Converts observable to an asynchronous sequence. Values that are produced
@@ -436,25 +498,30 @@ module AsyncSeq =
     /// (this function doesn't guarantee that asynchronou ssequence will return 
     /// all values produced by the observable)
     [<CompiledName("FromObservable")>]
-    let ofObservable (input : System.IObservable<'T>) =
+    let ofObservable (input : System.IObservable<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         ofObservableUsingAgent input <| fun mbox ->
-          async {
-          while true do
-            // Allow timeout (when the observable ends, caller will
-            // cancel the agent, so we need timeout to allow cancellation)
-            let! msg = mbox.TryReceive(200)
-            match msg with
-            | None
-            | Some(Put _) ->
-                () // Ignore put or no message 
-            | Some(Get repl) ->
-                // Reader is blocked, so next will be Put
-                // (caller will not stop the agent at this point,
-                // so timeout is not necessary)
-                let! v = mbox.Receive()
-                match v with
-                | Put v -> repl.Reply(v)
-                | _ -> failwith "Unexpected Get" }
+            async {
+            while true do
+                // Allow timeout (when the observable ends, caller will
+                // cancel the agent, so we need timeout to allow cancellation)
+                let! msg = mbox.TryReceive(200)
+                match msg with
+                | None
+                | Some (Put _) ->
+                    ()  // Ignore put or no message.
+                | Some (Get repl) ->
+                    // Reader is blocked, so next will be Put
+                    // (caller will not stop the agent at this point,
+                    // so timeout is not necessary)
+                    let! v = mbox.Receive ()
+                    match v with
+                    | Put v ->
+                        repl.Reply v
+                    | _ ->
+                        failwith "Unexpected Get" }
 
     /// Converts asynchronous sequence to an IObservable<_>. When the client subscribes
     /// to the observable, a new copy of asynchronous sequence is started and is 
@@ -462,6 +529,9 @@ module AsyncSeq =
     /// observer cancels the iteration over asynchronous sequence.
     [<CompiledName("ToObservable")>]
     let toObservable (aseq : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "aseq" aseq
+
         let start (obs : IObserver<_>) =
             async {
                 try
@@ -479,28 +549,34 @@ module AsyncSeq =
     /// The elements of the asynchronous sequence are consumed lazily.
     [<CompiledName("ToBlockingSeq")>]
     let toBlockingSeq (input : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "input" input
+
         // Write all elements to a blocking buffer and then add None to denote end
         let buf = BlockingQueueAgent<_> (1)
         async {
             do! iterAsync (Some >> buf.AsyncAdd) input
-            do! buf.AsyncAdd(None)
-        } |> Async.Start
+            do! buf.AsyncAdd None }
+        |> Async.Start
 
         // Read elements from the blocking buffer & return a sequences
         let rec loop () =
             seq {
-            match buf.Get() with
+            match buf.Get () with
             | None -> ()
-            | Some v -> 
-                yield v
-                yield! loop() }
+            | Some value ->
+                yield value
+                yield! loop () }
         loop ()
 
     /// Create a new asynchronous sequence that caches all elements of the 
     /// sequence specified as the input. When accessing the resulting sequence
     /// multiple times, the input will still be evaluated only once
     [<CompiledName("Cache")>]
-    let rec cache (input : AsyncSeq<'T>) =
+    let rec cache (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         let agent = Agent<AsyncReplyChannel<_>>.Start <| fun agent ->
             async {
             let! repl = agent.Receive ()
@@ -522,6 +598,10 @@ module AsyncSeq =
     /// The values from sequences are retrieved in parallel.
     [<CompiledName("Zip")>]
     let rec zip (input1 : AsyncSeq<'T1>) (input2 : AsyncSeq<'T2>) : AsyncSeq<_> =
+        // Preconditions
+        checkNonNull "input1" input1
+        checkNonNull "input2" input2
+
         async {
         let! ft = Async.StartChild input1
         let! s = input2
@@ -534,6 +614,9 @@ module AsyncSeq =
     /// Returns the first N elements of an asynchronous sequence
     [<CompiledName("Take")>]
     let rec take count (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         async {
         if count > 0 then
             let! v = input
@@ -548,6 +631,9 @@ module AsyncSeq =
     /// predicate holds. The predicate is evaluated asynchronously.
     [<CompiledName("TakeWhileAsync")>]
     let rec takeWhileAsync predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         async {
         let! v = input
         match v with
@@ -562,13 +648,19 @@ module AsyncSeq =
     /// Returns elements from an asynchronous sequence while the specified 
     /// predicate holds. The predicate is evaluated synchronously.
     [<CompiledName("TakeWhile")>]
-    let rec takeWhile predicate (input : AsyncSeq<'T>) = 
+    let rec takeWhile predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         takeWhileAsync (predicate >> async.Return) input
 
     /// Skips the first N elements of an asynchronous sequence and
     /// then returns the rest of the sequence unmodified.
     [<CompiledName("Skip")>]
     let rec skip count (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         async {
         if count > 0 then
             let! v = input
@@ -584,6 +676,9 @@ module AsyncSeq =
     /// predicate is evaluated asynchronously.
     [<CompiledName("SkipWhileAsync")>]
     let rec skipWhileAsync predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         async {
         let! v = input
         match v with
@@ -598,7 +693,10 @@ module AsyncSeq =
     /// predicate holds and then returns the rest of the sequence. The 
     /// predicate is evaluated asynchronously.
     [<CompiledName("SkipWhile")>]
-    let rec skipWhile predicate (input : AsyncSeq<'T>) = 
+    let rec skipWhile predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "input" input
+
         skipWhileAsync (predicate >> async.Return) input
 
 (*
