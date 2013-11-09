@@ -117,25 +117,31 @@ type ConcurrentSetAgent<'T> () =
 /// size or after the timeout elapses.
 [<Sealed>]
 type BatchProcessingAgent<'T> (bulkSize, timeout) =
-
+    //
     let bulkEvent = Event<'T[]>()
-    let agent : Agent<'T> = Agent.Start <| fun agent -> 
+
+    //
+    let agent : Agent<'T> = Agent.Start <| fun agent ->
         let rec loop remainingTime messages =
             async {
             let start = DateTime.Now
             let! msg = agent.TryReceive(timeout = max 0 remainingTime)
             let elapsed = int (DateTime.Now - start).TotalMilliseconds
-            match msg with 
-            | Some(msg) when List.length messages = bulkSize - 1 ->
+
+            match msg with
+            | Some msg when List.length messages = bulkSize - 1 ->
+                // OPTIMIZE : Use Array.ofList and System.Array.Reverse.
                 bulkEvent.Trigger (msg :: messages |> List.rev |> Array.ofList)
                 return! loop timeout []
-            | Some(msg) ->
+            | Some msg ->
                 return! loop (remainingTime - elapsed) (msg::messages)
-            | None when List.length messages <> 0 -> 
+            | None when List.length messages <> 0 ->
+                // OPTIMIZE : Use Array.ofList and System.Array.Reverse.
                 bulkEvent.Trigger (messages |> List.rev |> Array.ofList)
                 return! loop timeout []
-            | None -> 
-                return! loop timeout [] }
+            | None ->
+                return! loop timeout []
+            }
 
         loop timeout []
 
@@ -143,10 +149,12 @@ type BatchProcessingAgent<'T> (bulkSize, timeout) =
     /// group is not empty, but may not be of the specified maximal size
     /// (when the timeout elapses before enough messages is collected)
     [<CLIEvent>]
-    member __.BatchProduced = bulkEvent.Publish
+    member __.BatchProduced =
+        bulkEvent.Publish
 
     /// Sends new message to the agent
-    member __.Enqueue message = agent.Post message
+    member __.Enqueue message =
+        agent.Post message
 
 //
 type private BlockingAgentMessage<'T> =
@@ -266,6 +274,7 @@ type SlidingWindowAgent<'T> (windowSize, ?cancelToken) =
               
             // Send all full lists to the observer (as arrays)
             for (_, l) in full do
+                // OPTIMIZE : Use Array.ofSeq and System.Array.Reverse.
                 windowEvent.Trigger (l |> Array.ofSeq |> Array.rev)
 
             // Continue looping with incomplete lists
