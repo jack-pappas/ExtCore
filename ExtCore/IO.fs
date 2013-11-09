@@ -390,22 +390,28 @@ module File =
 /// Extensions that simplify working with Stream using async sequences.
 [<AutoOpen>]
 module IOExtensions = 
-  type System.IO.Stream with
-    /// Asynchronously reads the stream in chunks of a specified size
-    /// and returns the result as an asynchronous sequence.
-    member x.AsyncReadSeq(?bufferSize) = 
-      let bufferSize = defaultArg bufferSize 1024
-      let buffer = Array.zeroCreate bufferSize
-      let rec loop () = asyncSeq {
-        let! count = x.AsyncRead(buffer, 0, bufferSize)
-        if count > 0 then 
-          yield Array.sub buffer 0 count
-          yield! loop() }
-      loop ()
+    type System.IO.Stream with
+        /// Asynchronously reads the stream in chunks of a specified size
+        /// and returns the result as an asynchronous sequence.
+        member x.AsyncReadSeq (?bufferSize) =
+            let bufferSize = defaultArg bufferSize 1024
+            let buffer = Array.zeroCreate bufferSize
+            let rec loop () =
+                asyncSeq {
+                let! count = x.AsyncRead (buffer, 0, bufferSize)
+                if count > 0 then
+                    yield Array.sub buffer 0 count
+                    yield! loop ()
+                }
+            loop ()
 
-    /// Asynchronously writes all data specified by the 
-    /// given asynchronous sequence to the stream.
-    member x.AsyncWriteSeq(input : AsyncSeq<byte[]>) = async {
-      for data in input do
-        do! x.AsyncWrite(data) }
+        /// Asynchronously writes all data specified by the 
+        /// given asynchronous sequence to the stream.
+        member x.AsyncWriteSeq (input : AsyncSeq<byte[]>) =
+            // Preconditions
+            checkNonNull "input" input
+            
+            async {
+            for data in input do
+                do! x.AsyncWrite(data) }
 
