@@ -41,11 +41,11 @@ type AsyncSeqItem<'T> =
 /// special value representing the end of the sequence (Nil)
 and AsyncSeq<'T> = Async<AsyncSeqItem<'T>>
 
-/// Computation builder that allows creating of asynchronous 
+/// Computation builder that allows creating of asynchronous
 /// sequences using the 'asyncSeq { ... }' syntax.
 type AsyncSeqBuilder () =
     //
-    member __.Zero () =
+    member __.Zero () : AsyncSeq<'T> =
         async { return Nil }
 
     // This looks weird, but it is needed to allow:
@@ -54,39 +54,38 @@ type AsyncSeqBuilder () =
     //       do! something
     //
     // because F# translates body as Bind(something, fun () -> Return())
-    member this.Return (()) =
+    member this.Return () : AsyncSeq<'T> =
         this.Zero ()
 
     //
-    member (*inline*) __.Bind (inp : Async<'T>, body : 'T -> AsyncSeq<'U>) : AsyncSeq<'U> =
-        async.Bind (inp, body)
+    member (*inline*) __.Bind (source : Async<'T>, body : 'T -> AsyncSeq<'U>) : AsyncSeq<'U> =
+        async.Bind (source, body)
 
     //
-    member (*inline*) __.Delay (generator : unit -> AsyncSeq<'T>) =
+    member (*inline*) __.Delay (generator : unit -> AsyncSeq<'T>) : AsyncSeq<_> =
         async.Delay generator
         
     //
-    member this.Yield value =
+    member this.Yield (value : 'T) : AsyncSeq<_> =
         async { return Cons (value, this.Zero ()) }
         
-    // TODO : Rename this parameter to something meaningful.
-    member __.YieldFrom s = s
+    member __.YieldFrom source : AsyncSeq<'T> = source
 
     //
-    member this.Combine (seq1 : AsyncSeq<'T>, seq2 : AsyncSeq<'T>) =
+    member this.Combine (source1 : AsyncSeq<'T>, source2 : AsyncSeq<'T>) : AsyncSeq<_> =
         async {
-        let! v1 = seq1
+        let! v1 = source1
         match v1 with
         | Nil ->
-            return! seq2
-        | Cons (h, t) ->
-            return Cons (h, this.Combine (t, seq2))
+            return! source2
+        | Cons (hd, tl) ->
+            return Cons (hd, this.Combine (tl, source2))
         }
 
     //
-    member this.While (guard, aseq : AsyncSeq<'T>) =
+    member this.While (guard, source : AsyncSeq<'T>) : AsyncSeq<_> =
         if guard () then
-            this.Combine (aseq, this.Delay (fun () -> this.While (guard, aseq)))
+            this.Combine (source, this.Delay (fun () -> this.While (guard, source)))
         else this.Zero ()
 
 //
@@ -95,12 +94,12 @@ module AsyncSeqExtensions =
     // Add asynchronous for loop to the built-in 'async' computation builder.
     type Microsoft.FSharp.Control.AsyncBuilder with
         //
-        member this.For (aseq : AsyncSeq<'T>, action : 'T -> Async<unit>) =
-            async.Bind (aseq, function
+        member this.For (source : AsyncSeq<'T>, action : 'T -> Async<unit>) =
+            async.Bind (source, function
                 | Nil ->
                     async.Zero ()
-                | Cons (h, t) ->
-                    async.Combine (action h, this.For (t, action)))
+                | Cons (hd, tl) ->
+                    async.Combine (action hd, this.For (tl, action)))
     
     /// Builds an asynchronous sequence using the computation builder syntax.
     let asyncSeq = AsyncSeqBuilder ()
@@ -108,10 +107,10 @@ module AsyncSeqExtensions =
     /// Tries to get the next element of an asynchronous sequence
     /// and returns either the value or an exception.
     // TODO : Simplify this to use the built-in Async.Catch method.
-    let private tryNext (input : AsyncSeq<_>) =
+    let private tryNext (source : AsyncSeq<_>) =
         async {
         try
-            let! v = input
+            let! v = source
             return Choice1Of2 v
         with ex ->
             return Choice2Of2 ex
@@ -120,29 +119,29 @@ module AsyncSeqExtensions =
     // Add additional methods to the 'asyncSeq' computation builder
     type AsyncSeqBuilder with
         //
-        member this.TryFinally (input : AsyncSeq<'T>, compensation) =
+        member this.TryFinally (source : AsyncSeq<'T>, compensation) =
             asyncSeq {
-            let! v = tryNext input
+            let! v = tryNext source
             match v with
             | Choice1Of2 Nil ->
                 compensation ()
-            | Choice1Of2 (Cons (h, t)) ->
-                yield h
-                yield! this.TryFinally (t, compensation)
+            | Choice1Of2 (Cons (hd, tl)) ->
+                yield hd
+                yield! this.TryFinally (tl, compensation)
             | Choice2Of2 e ->
                 compensation ()
                 yield! raise e
             }
 
         //
-        member this.TryWith (input : AsyncSeq<_>, handler : exn -> AsyncSeq<_>) =
+        member this.TryWith (source : AsyncSeq<_>, handler : exn -> AsyncSeq<_>) =
             asyncSeq {
-            let! v = tryNext input
+            let! v = tryNext source
             match v with
             | Choice1Of2 Nil -> ()
-            | Choice1Of2 (Cons (h, t)) ->
-                yield h
-                yield! this.TryWith (t, handler)
+            | Choice1Of2 (Cons (hd, tl)) ->
+                yield hd
+                yield! this.TryWith (tl, handler)
             | Choice2Of2 rest ->
                 yield! handler rest
             }
@@ -154,10 +153,10 @@ module AsyncSeqExtensions =
 
         /// For loop that iterates over a synchronous sequence (and generates
         /// all elements generated by the asynchronous body)
-        member this.For (seq : seq<'T>, action : 'T -> AsyncSeq<'TResult>) =
-            let enum = seq.GetEnumerator ()
-            this.TryFinally(
-                this.While(
+        member this.For (source : seq<'T>, action : 'T -> AsyncSeq<'TResult>) =
+            let enum = source.GetEnumerator ()
+            this.TryFinally (
+                this.While (
                     (fun () -> enum.MoveNext ()),
                     this.Delay (fun () -> action enum.Current)),
                 (fun () -> if enum <> null then enum.Dispose ()))
@@ -165,14 +164,14 @@ module AsyncSeqExtensions =
         /// Asynchronous for loop - for all elements from the input sequence,
         /// generate all elements produced by the body (asynchronously). See
         /// also the AsyncSeq.collect function.
-        member this.For (aseq : AsyncSeq<'T>, mapping : 'T -> AsyncSeq<'TResult>) =
+        member this.For (source : AsyncSeq<'T>, mapping : 'T -> AsyncSeq<'TResult>) =
             asyncSeq {
-            let! v = aseq
+            let! v = source
             match v with
             | Nil -> ()
-            | Cons(h, t) ->
-                yield! mapping h
-                yield! this.For (t, mapping)
+            | Cons (hd, tl) ->
+                yield! mapping hd
+                yield! this.For (tl, mapping)
             }
 
 
@@ -190,27 +189,57 @@ module AsyncSeq =
     let singleton (value : 'T) : AsyncSeq<'T> =
         asyncSeq.Yield value
 
+    /// Asynchronously returns the first element that was generated by the
+    /// given asynchronous sequence (or the specified default value).
+    [<CompiledName("FirstOrDefault")>]
+    let firstOrDefault defaultValue (source : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "source" source
+
+        async {
+        let! v = source
+        match v with
+        | Nil ->
+            return defaultValue
+        | Cons (hd, _) ->
+            return hd }
+
+    /// Asynchronously returns the last element that was generated by the
+    /// given asynchronous sequence (or the specified default value).
+    [<CompiledName("LastOrDefault")>]
+    let rec lastOrDefault defaultValue (source : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "source" source
+
+        async {
+        let! v = source
+        match v with
+        | Nil ->
+            return defaultValue
+        | Cons (hd, tl) ->
+            return! lastOrDefault hd tl }
+
     /// Yields all elements of the first asynchronous sequence and then 
     /// all elements of the second asynchronous sequence.
     [<CompiledName("Append")>]
-    let rec append (aseq1 : AsyncSeq<'T>) (aseq2 : AsyncSeq<'T>) : AsyncSeq<'T> =
+    let rec append (source1 : AsyncSeq<'T>) (source2 : AsyncSeq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "aseq1" aseq1
-        checkNonNull "aseq2" aseq2
+        checkNonNull "source1" source1
+        checkNonNull "source2" source2
 
-        asyncSeq.Combine (aseq1, aseq2)
+        asyncSeq.Combine (source1, source2)
 
     /// Creates an asynchronous sequence that iterates over the given input sequence.
     /// For every input element, it calls the the specified function and iterates
     /// over all elements generated by that asynchronous sequence.
     /// This is the 'bind' operation of the computation expression (exposed using
     /// the 'for' keyword in asyncSeq computation).
-    [<CompiledName("Collect")>]
-    let rec collect mapping (aseq : AsyncSeq<'T>) : AsyncSeq<'U> =
+    [<CompiledName("CollectAsync")>]
+    let rec collectAsync mapping (source : AsyncSeq<'T>) : AsyncSeq<'U> =
         // Preconditions
-        checkNonNull "aseq" aseq
+        checkNonNull "source" source
 
-        asyncSeq.For (aseq, mapping)
+        asyncSeq.For (source, mapping)
 
     // --------------------------------------------------------------------------
     // Additional combinators (implemented as async/asyncSeq computations)
@@ -221,12 +250,12 @@ module AsyncSeq =
     /// The specified function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("MapAsync")>]
-    let mapAsync mapping (input : AsyncSeq<'T>) : AsyncSeq<'U> =
+    let mapAsync mapping (source : AsyncSeq<'T>) : AsyncSeq<'U> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
         asyncSeq {
-        for itm in input do
+        for itm in source do
             let! v = mapping itm
             yield v
         }
@@ -238,12 +267,12 @@ module AsyncSeq =
     /// The specified function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("ChooseAsync")>]
-    let chooseAsync chooser (input : AsyncSeq<'T>) : AsyncSeq<'U> =
+    let chooseAsync chooser (source : AsyncSeq<'T>) : AsyncSeq<'U> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
         asyncSeq {
-        for itm in input do
+        for itm in source do
             let! v = chooser itm
             match v with
             | None -> ()
@@ -257,45 +286,15 @@ module AsyncSeq =
     /// The specified function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("FilterAsync")>]
-    let filterAsync predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+    let filterAsync predicate (source : AsyncSeq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
         asyncSeq {
-        for v in input do
+        for v in source do
             let! b = predicate v
             if b then
                 yield v }
-
-    /// Asynchronously returns the last element that was generated by the
-    /// given asynchronous sequence (or the specified default value).
-    [<CompiledName("LastOrDefault")>]
-    let rec lastOrDefault defaultValue (input : AsyncSeq<'T>) =
-        // Preconditions
-        checkNonNull "input" input
-
-        async {
-        let! v = input
-        match v with
-        | Nil ->
-            return defaultValue
-        | Cons (h, t) ->
-            return! lastOrDefault h t }
-
-    /// Asynchronously returns the first element that was generated by the
-    /// given asynchronous sequence (or the specified default value).
-    [<CompiledName("FirstOrDefault")>]
-    let firstOrDefault defaultValue (input : AsyncSeq<'T>) =
-        // Preconditions
-        checkNonNull "input" input
-
-        async {
-        let! v = input
-        match v with
-        | Nil ->
-            return defaultValue
-        | Cons(h, _) ->
-            return h }
 
     /// Aggregates the elements of the input asynchronous sequence using the
     /// specified 'aggregation' function. The result is an asynchronous
@@ -304,18 +303,18 @@ module AsyncSeq =
     /// The aggregation function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("ScanAsync")>]
-    let rec scanAsync folder (state : 'State) (input : AsyncSeq<'T>) : AsyncSeq<'State> =
+    let rec scanAsync folder (state : 'State) (source : AsyncSeq<'T>) : AsyncSeq<'State> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
         asyncSeq {
-        let! v = input
+        let! v = source
         match v with
         | Nil -> ()
-        | Cons (h, t) ->
-            let! v = folder state h
+        | Cons (hd, tl) ->
+            let! v = folder state hd
             yield v
-            yield! scanAsync folder v t }
+            yield! scanAsync folder v tl }
 
     /// Iterates over the input sequence and calls the specified function for
     /// every value (to perform some side-effect asynchronously).
@@ -323,31 +322,13 @@ module AsyncSeq =
     /// The specified function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("IterAsync")>]
-    let rec iterAsync action (input : AsyncSeq<'T>) =
+    let rec iterAsync action (source : AsyncSeq<'T>) =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
         async {
-        for itm in input do
+        for itm in source do
             do! action itm }
-
-    /// Returns an asynchronous sequence that returns pairs containing an element
-    /// from the input sequence and its predecessor. Empty sequence is returned for
-    /// singleton input sequence.
-    [<CompiledName("Pairwise")>]
-    let rec pairwise (input : AsyncSeq<'T>) : AsyncSeq<'T * 'T> =
-        // Preconditions
-        checkNonNull "input" input
-
-        asyncSeq {
-        let! v = input
-        match v with
-        | Nil -> ()
-        | Cons(h, t) ->
-            let prev = ref h
-            for v in t do
-                yield (!prev, v)
-                prev := v }
 
     /// Aggregates the elements of the input asynchronous sequence using the
     /// specified 'aggregation' function. The result is an asynchronous 
@@ -356,65 +337,160 @@ module AsyncSeq =
     /// The aggregation function is asynchronous (and the input sequence will
     /// be asked for the next element after the processing of an element completes).
     [<CompiledName("FoldAsync")>]
-    let rec foldAsync folder (state : 'State) (input : AsyncSeq<'T>) =
+    let rec foldAsync folder (state : 'State) (source : AsyncSeq<'T>) =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        input |> scanAsync folder state |> lastOrDefault state
+        source |> scanAsync folder state |> lastOrDefault state
 
-    /// Same as AsyncSeq.foldAsync, but the specified function is synchronous
-    /// and returns the result of aggregation immediately.
-    [<CompiledName("Fold")>]
-    let rec fold folder (state : 'State) (input : AsyncSeq<'T>) =
+    /// Returns an asynchronous sequence that returns pairs containing an element
+    /// from the input sequence and its predecessor. Empty sequence is returned for
+    /// singleton input sequence.
+    [<CompiledName("Pairwise")>]
+    let rec pairwise (source : AsyncSeq<'T>) : AsyncSeq<'T * 'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        foldAsync (fun st v -> folder st v |> async.Return) state input
+        asyncSeq {
+        let! v = source
+        match v with
+        | Nil -> ()
+        | Cons (hd, tl) ->
+            let prev = ref hd
+            for v in tl do
+                yield (!prev, v)
+                prev := v }
 
-    /// Same as AsyncSeq.scanAsync, but the specified function is synchronous
-    /// and returns the result of aggregation immediately.
-    [<CompiledName("Scan")>]
-    let rec scan folder (state : 'State) (input : AsyncSeq<'T>) : AsyncSeq<'State> =
+    /// Combines two (2) asynchronous sequences into a sequence of pairs. 
+    /// The values from sequences are retrieved in parallel.
+    [<CompiledName("Zip")>]
+    let rec zip (source1 : AsyncSeq<'T1>) (source2 : AsyncSeq<'T2>) : AsyncSeq<_> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source1" source1
+        checkNonNull "source2" source2
 
-        scanAsync (fun st v -> folder st v |> async.Return) state input
+        async {
+        let! ft = Async.StartChild source1
+        let! s = source2
+        let! f = ft
+        match f, s with
+        | Cons (h1, t1), Cons (h2, t2) ->
+            return Cons ((h1, h2), zip t1 t2)
+        | _ -> return Nil }
 
-    /// Same as AsyncSeq.mapAsync, but the specified function is synchronous
-    /// and returns the result of projection immediately.
-    [<CompiledName("Map")>]
-    let map mapping (input : AsyncSeq<'T>) =
+    /// Combines three (3) asynchronous sequences into a sequence of triples. 
+    /// The values from sequences are retrieved in parallel.
+    [<CompiledName("Zip3")>]
+    let rec zip3 (source1 : AsyncSeq<'T1>) (source2 : AsyncSeq<'T2>) (source3 : AsyncSeq<'T3>) : AsyncSeq<_> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source1" source1
+        checkNonNull "source2" source2
+        checkNonNull "source3" source3
 
-        mapAsync (mapping >> async.Return) input
+        async {
+        let! ft = Async.StartChild source1
+        let! s = source2
+        let! t = source3
+        let! f = ft
+        match f, s, t with
+        | Cons (h1, t1), Cons (h2, t2), Cons (h3, t3) ->
+            return Cons ((h1, h2, h3), zip3 t1 t2 t3)
+        | _ -> return Nil }
 
-    /// Same as AsyncSeq.iterAsync, but the specified function is synchronous
-    /// and performs the side-effect immediately.
-    [<CompiledName("Iter")>]
-    let iter action (input : AsyncSeq<'T>) =
+    /// Returns the first N elements of an asynchronous sequence
+    [<CompiledName("Take")>]
+    let rec take count (source : AsyncSeq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        iterAsync (action >> async.Return) input
+        async {
+        if count > 0 then
+            let! v = source
+            match v with
+            | Nil ->
+                return Nil
+            | Cons (hd, tl) ->
+                return Cons (hd, take (count - 1) tl)
+        else return Nil }
 
-    /// Same as AsyncSeq.chooseAsync, but the specified function is synchronous
-    /// and processes the input element immediately.
-    [<CompiledName("Choose")>]
-    let choose chooser (input : AsyncSeq<'T>) : AsyncSeq<'U> =
+    /// Returns elements from an asynchronous sequence while the specified 
+    /// predicate holds. The predicate is evaluated asynchronously.
+    [<CompiledName("TakeWhileAsync")>]
+    let rec takeWhileAsync predicate (source : AsyncSeq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        chooseAsync (chooser >> async.Return) input
+        async {
+        let! v = source
+        match v with
+        | Nil ->
+            return Nil
+        | Cons (hd, tl) ->
+            let! res = predicate hd
+            if res then
+                return Cons (hd, takeWhileAsync predicate tl)
+            else return Nil }
 
-    /// Same as AsyncSeq.filterAsync, but the specified predicate is synchronous
-    /// and processes the input element immediately.
-    [<CompiledName("Filter")>]
-    let filter predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+    /// Skips the first N elements of an asynchronous sequence and
+    /// then returns the rest of the sequence unmodified.
+    [<CompiledName("Skip")>]
+    let rec skip count (source : AsyncSeq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        filterAsync (predicate >> async.Return) input
+        async {
+        if count > 0 then
+            let! v = source
+            match v with
+            | Nil ->
+                return Nil
+            | Cons (_, tl) ->
+                return! skip (count - 1) tl
+        else return! source }
+
+    /// Skips elements from an asynchronous sequence while the specified 
+    /// predicate holds and then returns the rest of the sequence. The 
+    /// predicate is evaluated asynchronously.
+    [<CompiledName("SkipWhileAsync")>]
+    let rec skipWhileAsync predicate (source : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        async {
+        let! v = source
+        match v with
+        | Nil ->
+            return Nil
+        | Cons (hd, tl) ->
+            let! res = predicate hd
+            if res then
+                return! skipWhileAsync predicate tl
+            else return! tl }
+
+    /// Create a new asynchronous sequence that caches all elements of the 
+    /// sequence specified as the input. When accessing the resulting sequence
+    /// multiple times, the input will still be evaluated only once
+    [<CompiledName("Cache")>]
+    let rec cache (source : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        let agent = Agent<AsyncReplyChannel<_>>.Start <| fun agent ->
+            async {
+            let! repl = agent.Receive ()
+            let! next = source
+            let res =
+                match next with 
+                | Nil -> Nil
+                | Cons (hd, tl) ->
+                    Cons (hd, cache tl)
+            repl.Reply res
+            while true do
+                let! repl = agent.Receive ()
+                repl.Reply res }
+
+        //
+        async { return! agent.PostAndAsyncReply id }
 
     // --------------------------------------------------------------------------
     // Converting from/to synchronous sequences or IObservables
@@ -422,17 +498,41 @@ module AsyncSeq =
     /// Creates an asynchronous sequence that lazily takes element from an
     /// input synchronous sequence and returns them one-by-one.
     [<CompiledName("OfSeq")>]
-    let ofSeq (input : seq<'T>) : AsyncSeq<'T> =
+    let ofSeq (source : seq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
         asyncSeq {
-        for el in input do
+        for el in source do
             yield el }
+
+    /// Converts asynchronous sequence to a synchronous blocking sequence.
+    /// The elements of the asynchronous sequence are consumed lazily.
+    [<CompiledName("ToSeq")>]
+    let toSeq (source : AsyncSeq<'T>) =
+        // Preconditions
+        checkNonNull "source" source
+
+        // Write all elements to a blocking buffer and then add None to denote end
+        let buf = BlockingQueueAgent<_> (1)
+        async {
+            do! iterAsync (Some >> buf.AsyncAdd) source
+            do! buf.AsyncAdd None }
+        |> Async.Start
+
+        // Read elements from the blocking buffer & return a sequences
+        let rec loop () =
+            seq {
+            match buf.Get () with
+            | None -> ()
+            | Some value ->
+                yield value
+                yield! loop () }
+        loop ()
 
     /// A helper type for implementation of buffering when converting 
     /// observable to an asynchronous sequence
-    type internal BufferMessage<'T> =
+    type private BufferMessage<'T> =
         | Get of AsyncReplyChannel<'T>
         | Put of 'T
 
@@ -440,12 +540,12 @@ module AsyncSeq =
     /// a body specified as the argument. The returnd async sequence repeatedly 
     /// sends 'Get' message to the agent to get the next element. The observable
     /// sends 'Put' message to the agent (as new inputs are generated).
-    let internal ofObservableUsingAgent (input : System.IObservable<'T>) f : AsyncSeq<'T> =
+    let private ofObservableUsingAgent (input : System.IObservable<'T>) body : AsyncSeq<'T> =
         // Preconditions
         checkNonNull "input" input
 
         asyncSeq {
-        use agent = AutoCancelAgent.Start (f)
+        use agent = AutoCancelAgent.Start body
         use d =
             input
             |> Observable.asUpdates
@@ -453,7 +553,7 @@ module AsyncSeq =
       
         let rec loop () =
             asyncSeq {
-            let! msg = agent.PostAndAsyncReply(Get)
+            let! msg = agent.PostAndAsyncReply Get
             match msg with
             | ObservableUpdate.Completed -> ()
             | ObservableUpdate.Error e ->
@@ -479,7 +579,7 @@ module AsyncSeq =
             while true do
                 // Receive next message (when observable ends, caller will
                 // cancel the agent, so we need timeout to allow cancleation)
-                let! msg = mbox.TryReceive(200)
+                let! msg = mbox.TryReceive 200
                 match msg with
                 | None -> ()
                 | Some (Put value) ->
@@ -507,7 +607,7 @@ module AsyncSeq =
             while true do
                 // Allow timeout (when the observable ends, caller will
                 // cancel the agent, so we need timeout to allow cancellation)
-                let! msg = mbox.TryReceive(200)
+                let! msg = mbox.TryReceive 200
                 match msg with
                 | None
                 | Some (Put _) ->
@@ -528,176 +628,101 @@ module AsyncSeq =
     /// sequentially iterated over (at the maximal possible speed). Disposing of the 
     /// observer cancels the iteration over asynchronous sequence.
     [<CompiledName("ToObservable")>]
-    let toObservable (aseq : AsyncSeq<'T>) =
+    let toObservable (source : AsyncSeq<'T>) =
         // Preconditions
-        checkNonNull "aseq" aseq
+        checkNonNull "source" source
 
         let start (obs : IObserver<_>) =
             async {
-                try
-                    for v in aseq do
-                        obs.OnNext v
-                    obs.OnCompleted()
-                with e ->
-                    obs.OnError e }
+            try
+                for v in source do
+                    obs.OnNext v
+                obs.OnCompleted ()
+            with ex ->
+                obs.OnError ex }
             |> Async.StartDisposable
 
         { new IObservable<_> with
-            member x.Subscribe(obs) = start obs }
+            member x.Subscribe observer =
+                // Preconditions
+                checkNonNull "observer" observer
 
-    /// Converts asynchronous sequence to a synchronous blocking sequence.
-    /// The elements of the asynchronous sequence are consumed lazily.
-    [<CompiledName("ToBlockingSeq")>]
-    let toBlockingSeq (input : AsyncSeq<'T>) =
+                start observer }
+
+    (* Synchronous functions. These may be removed in the near future. *)
+
+    /// Same as AsyncSeq.foldAsync, but the specified function is synchronous
+    /// and returns the result of aggregation immediately.
+    [<CompiledName("Fold")>]
+    let rec fold folder (state : 'State) (source : AsyncSeq<'T>) =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        // Write all elements to a blocking buffer and then add None to denote end
-        let buf = BlockingQueueAgent<_> (1)
-        async {
-            do! iterAsync (Some >> buf.AsyncAdd) input
-            do! buf.AsyncAdd None }
-        |> Async.Start
+        foldAsync (fun st v -> folder st v |> async.Return) state source
 
-        // Read elements from the blocking buffer & return a sequences
-        let rec loop () =
-            seq {
-            match buf.Get () with
-            | None -> ()
-            | Some value ->
-                yield value
-                yield! loop () }
-        loop ()
-
-    /// Create a new asynchronous sequence that caches all elements of the 
-    /// sequence specified as the input. When accessing the resulting sequence
-    /// multiple times, the input will still be evaluated only once
-    [<CompiledName("Cache")>]
-    let rec cache (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+    /// Same as AsyncSeq.scanAsync, but the specified function is synchronous
+    /// and returns the result of aggregation immediately.
+    [<CompiledName("Scan")>]
+    let rec scan folder (state : 'State) (source : AsyncSeq<'T>) : AsyncSeq<'State> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        let agent = Agent<AsyncReplyChannel<_>>.Start <| fun agent ->
-            async {
-            let! repl = agent.Receive ()
-            let! next = input
-            let res =
-                match next with 
-                | Nil -> Nil
-                | Cons(h, t) ->
-                    Cons(h, cache t)
-            repl.Reply res
-            while true do
-                let! repl = agent.Receive ()
-                repl.Reply res }
+        scanAsync (fun st v -> folder st v |> async.Return) state source
 
-        //
-        async { return! agent.PostAndAsyncReply(id) }
-
-    /// Combines two asynchronous sequences into a sequence of pairs. 
-    /// The values from sequences are retrieved in parallel.
-    [<CompiledName("Zip")>]
-    let rec zip (input1 : AsyncSeq<'T1>) (input2 : AsyncSeq<'T2>) : AsyncSeq<_> =
+    /// Same as AsyncSeq.mapAsync, but the specified function is synchronous
+    /// and returns the result of projection immediately.
+    [<CompiledName("Map")>]
+    let map mapping (source : AsyncSeq<'T>) =
         // Preconditions
-        checkNonNull "input1" input1
-        checkNonNull "input2" input2
+        checkNonNull "source" source
 
-        async {
-        let! ft = Async.StartChild input1
-        let! s = input2
-        let! f = ft
-        match f, s with
-        | Cons(hf, tf), Cons(hs, ts) ->
-            return Cons( (hf, hs), zip tf ts)
-        | _ -> return Nil }
+        mapAsync (mapping >> async.Return) source
 
-    /// Returns the first N elements of an asynchronous sequence
-    [<CompiledName("Take")>]
-    let rec take count (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+    /// Same as AsyncSeq.iterAsync, but the specified function is synchronous
+    /// and performs the side-effect immediately.
+    [<CompiledName("Iter")>]
+    let iter action (source : AsyncSeq<'T>) =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        async {
-        if count > 0 then
-            let! v = input
-            match v with
-            | Nil ->
-                return Nil
-            | Cons(h, t) ->
-                return Cons(h, take (count - 1) t)
-        else return Nil }
+        iterAsync (action >> async.Return) source
 
-    /// Returns elements from an asynchronous sequence while the specified 
-    /// predicate holds. The predicate is evaluated asynchronously.
-    [<CompiledName("TakeWhileAsync")>]
-    let rec takeWhileAsync predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+    /// Same as AsyncSeq.chooseAsync, but the specified function is synchronous
+    /// and processes the input element immediately.
+    [<CompiledName("Choose")>]
+    let choose chooser (source : AsyncSeq<'T>) : AsyncSeq<'U> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        async {
-        let! v = input
-        match v with
-        | Nil ->
-            return Nil
-        | Cons(h, t) ->
-            let! res = predicate h
-            if res then
-                return Cons(h, takeWhileAsync predicate t)
-            else return Nil }
+        chooseAsync (chooser >> async.Return) source
 
-    /// Returns elements from an asynchronous sequence while the specified 
+    /// Same as AsyncSeq.filterAsync, but the specified predicate is synchronous
+    /// and processes the input element immediately.
+    [<CompiledName("Filter")>]
+    let filter predicate (source : AsyncSeq<'T>) : AsyncSeq<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        filterAsync (predicate >> async.Return) source
+
+    /// Returns elements from an asynchronous sequence while the specified
     /// predicate holds. The predicate is evaluated synchronously.
     [<CompiledName("TakeWhile")>]
-    let rec takeWhile predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+    let rec takeWhile predicate (source : AsyncSeq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        takeWhileAsync (predicate >> async.Return) input
-
-    /// Skips the first N elements of an asynchronous sequence and
-    /// then returns the rest of the sequence unmodified.
-    [<CompiledName("Skip")>]
-    let rec skip count (input : AsyncSeq<'T>) : AsyncSeq<'T> =
-        // Preconditions
-        checkNonNull "input" input
-
-        async {
-        if count > 0 then
-            let! v = input
-            match v with
-            | Nil ->
-                return Nil
-            | Cons(_, t) ->
-                return! skip (count - 1) t
-        else return! input }
-
-    /// Skips elements from an asynchronous sequence while the specified 
-    /// predicate holds and then returns the rest of the sequence. The 
-    /// predicate is evaluated asynchronously.
-    [<CompiledName("SkipWhileAsync")>]
-    let rec skipWhileAsync predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
-        // Preconditions
-        checkNonNull "input" input
-
-        async {
-        let! v = input
-        match v with
-        | Nil ->
-            return Nil
-        | Cons (h, t) ->
-            let! res = predicate h
-            if res then return! skipWhileAsync predicate t
-            else return! t }
+        takeWhileAsync (predicate >> async.Return) source
 
     /// Skips elements from an asynchronous sequence while the specified 
     /// predicate holds and then returns the rest of the sequence. The 
     /// predicate is evaluated asynchronously.
     [<CompiledName("SkipWhile")>]
-    let rec skipWhile predicate (input : AsyncSeq<'T>) : AsyncSeq<'T> =
+    let rec skipWhile predicate (source : AsyncSeq<'T>) : AsyncSeq<'T> =
         // Preconditions
-        checkNonNull "input" input
+        checkNonNull "source" source
 
-        skipWhileAsync (predicate >> async.Return) input
+        skipWhileAsync (predicate >> async.Return) source
 
 (*
 //
