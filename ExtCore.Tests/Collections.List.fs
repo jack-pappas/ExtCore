@@ -241,23 +241,23 @@ let countWith () : unit =
     List.empty
     |> List.countWith (fun x ->
         x % 7 = 0)
-    |> assertEqual 0
+    |> assertEqual 0L
 
     // Sample usage test cases.
     [0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16]
     |> List.countWith (fun x ->
         x < 0)
-    |> assertEqual 0
+    |> assertEqual 0L
 
     [0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16]
     |> List.countWith (fun x ->
         x % 7 = 0)
-    |> assertEqual 1
+    |> assertEqual 1L
 
     [0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16]
     |> List.countWith (fun x ->
         x % 3 = 0)
-    |> assertEqual 4
+    |> assertEqual 4L
 
 
 open FsCheck

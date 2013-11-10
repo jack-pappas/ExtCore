@@ -136,9 +136,6 @@ type Queue<'T> private
         if this.IsEmpty then
             Array.empty
         else
-            // OPTIMIZE : Tune this for best average-case performance.
-            // Perhaps we can use the LazyList.LazyLength property to
-            // estimate a better initial capacity for the ResizeArray.
             let result = ResizeArray<_> ()
 
             let mutable queue = this
