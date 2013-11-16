@@ -23,6 +23,33 @@ open System
 open NUnit.Framework
 
 
+[<Test>]
+let cons () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let optcons () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let tryHead () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let singleton () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofOption () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofString () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let toString () : unit =
+    Assert.Ignore "Test not yet implemented."
 
 [<Test>]
 let contains () : unit =
@@ -258,6 +285,14 @@ let countWith () : unit =
     |> List.countWith (fun x ->
         x % 3 = 0)
     |> assertEqual 4L
+
+[<Test>]
+let intersperse () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let weave () : unit =
+    Assert.Ignore "Test not yet implemented."
 
 
 open FsCheck

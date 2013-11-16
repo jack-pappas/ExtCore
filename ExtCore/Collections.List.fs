@@ -46,6 +46,11 @@ let inline tryHead (list : 'T list) =
     | hd :: _ ->
         Some hd
 
+/// Create a list containing the given value.
+[<CompiledName("Singleton")>]
+let inline singleton (value : 'T) =
+    [value]
+
 /// Builds a list from the given option value.
 [<CompiledName("OfOption")>]
 let inline ofOption (value : 'T option) =
@@ -53,10 +58,41 @@ let inline ofOption (value : 'T option) =
     | None -> []
     | Some x -> [x]
 
-/// Create a list containing the given value.
-[<CompiledName("Singleton")>]
-let inline singleton (value : 'T) =
-    [value]
+/// Builds a list from the given string.
+[<CompiledName("OfString")>]
+let ofString (str : string) : char list =
+    // Preconditions
+    checkNonNull "str" str
+
+    // OPTIMIZATION : This function is implemented using mutation for maximum performance.
+    // Traverse the string "backwards" so the resulting list is in the correct order without needing to be reversed.
+    let mutable result = []
+    for i = str.Length downto 0 do
+        result <- str.[i] :: result
+
+    result
+
+/// Builds a string from the given list.
+[<CompiledName("ToString")>]
+let toString (list : char list) : string =
+    // Preconditions
+    checkNonNull "list" list
+
+    let sb = System.Text.StringBuilder ()
+
+    // Loop over the list, copying each character into the StringBuilder.
+    // We use a private, recursive function here instead of List.iter so it can be optimized
+    // into a simple, fast loop by the F# compiler.
+    let rec buildString (list : char list) =
+        match list with
+        | [] -> ()
+        | hd :: tl ->
+            sb.Append hd |> ignore
+            buildString tl
+
+    // Emit the characters from the list into the StringBuilder, then return the resulting string.
+    buildString list
+    sb.ToString ()
 
 /// Builds a list that contains the elements of the set in order.
 [<CompiledName("OfSet")>]
@@ -513,3 +549,57 @@ let countWith (predicate : 'T -> bool) (list : 'T list) : int64 =
 
     // Call the recursive implementation to compute the number of matching elements.
     count 0L list
+
+/// Creates a new list by inserting a value between each pair of elements in a given list.
+/// If the specified list contains fewer than two (2) elements, the list is returned without
+/// being modified.
+[<CompiledName("Intersperse")>]
+let intersperse (value : 'T) (list : 'T list) : 'T list =
+    // Preconditions
+    checkNonNull "list" list
+
+    match list with
+    | []
+    | [_] ->
+        list
+    | hd :: tl ->
+        let rec intersperseImpl acc list =
+            match list with
+            | [] ->
+                List.rev acc
+            | hd :: tl ->
+                intersperseImpl (hd :: value :: acc) tl
+
+        intersperseImpl [hd] tl
+
+/// Creates a new list by combining two lists together in an alternating fashion.
+/// If either list is empty, the other list is returned without modification.
+[<CompiledName("Weave")>]
+let weave (list1 : 'T list) (list2 : 'T list) : 'T list =
+    // Preconditions
+    checkNonNull "list1" list1
+    checkNonNull "list2" list2
+
+    // OPTIMIZATION :   If either list is empty, return the other list immediately
+    //                  so we don't waste time rebuilding a list for no reason.
+    match list1, list2 with
+    | [], _ ->
+        list2
+    | _, [] ->
+        list1
+    | _, _ ->
+        let rec weaveImpl acc list1 list2 =
+            match list1, list2 with
+            | [], [] ->
+                List.rev acc
+            | [], _ ->
+                // Swap the order of the lists and continue processing recursively.
+                weaveImpl acc list2 []
+            | hd :: tl, [] ->
+                // This step appends any remaining items to the accumulated list.
+                weaveImpl (hd :: acc) tl []
+            | hd1 :: tl1, hd2 :: tl2 ->
+                // Take one element from each lis, cons them onto the accumulated list, then recurse.
+                weaveImpl (hd2 :: hd1 :: acc) tl1 tl2
+
+        weaveImpl [] list1 list2
