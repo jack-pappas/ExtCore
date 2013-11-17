@@ -23,7 +23,6 @@ open System
 open System.Collections
 open System.Collections.Generic
 
-(* Type abbreviations *)
 
 /// Represents an object whose underlying type is a value type
 /// that can also be assigned null like a reference type.
@@ -45,6 +44,19 @@ type Protected<'T> = Choice<'T, exn>
 /// </remarks>
 type ArrayView<'T> = System.ArraySegment<'T>
 
+/// <summary>The type of strings, annotated with a unit of measure. The unit
+/// of measure is erased in compiled code and when values of this type
+/// are analyzed using reflection. The type is representationally equivalent to 
+/// <c>System.String</c>.</summary>
+[<MeasureAnnotatedAbbreviation>]
+type string<[<Measure>] 'Measure> = string
+
+/// <summary>The type of boolean values, annotated with a unit of measure. The unit
+/// of measure is erased in compiled code and when values of this type
+/// are analyzed using reflection. The type is representationally equivalent to 
+/// <c>System.Boolean</c>.</summary>
+[<MeasureAnnotatedAbbreviation>]
+type bool<[<Measure>] 'Measure> = bool
 
 /// Basic F# Operators. This module is automatically opened in all F# code.
 [<AutoOpen>]
@@ -388,6 +400,9 @@ module Lazy =
     /// been initialized; otherwise, returns <c>None</c>.
     [<CompiledName("TryGetValue")>]
     let tryGetValue (lazyValue : Lazy<'T>) =
+        // Preconditions
+        checkNonNull "lazyValue" lazyValue
+
         if lazyValue.IsValueCreated then
             Some lazyValue.Value
         else None
@@ -395,6 +410,9 @@ module Lazy =
     /// Transforms a lazily-initialized value by applying it to the given mapping function.
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (lazyValue : Lazy<'T>) : Lazy<'U> =
+        // Preconditions
+        checkNonNull "lazyValue" lazyValue
+
         // If the value has already been created, perform the mapping
         // 'eagerly' for better performance.
         if lazyValue.IsValueCreated then
@@ -406,6 +424,10 @@ module Lazy =
     /// Transforms two (2) lazily-initialized values by applying them to the given mapping function.
     [<CompiledName("Map2")>]
     let map2 (mapping : 'T1 -> 'T2 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) : Lazy<'U> =
+        // Preconditions
+        checkNonNull "lazyValue1" lazyValue1
+        checkNonNull "lazyValue2" lazyValue2
+
         // If both values have already been created, perform the mapping
         // 'eagerly' for better performance (e.g., by avoiding the thunk).
         if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated then
@@ -417,6 +439,11 @@ module Lazy =
     /// Transforms three (3) lazily-initialized values by applying them to the given mapping function.
     [<CompiledName("Map3")>]
     let map3 (mapping : 'T1 -> 'T2 -> 'T3 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) (lazyValue3 : Lazy<'T3>) : Lazy<'U> =
+        // Preconditions
+        checkNonNull "lazyValue1" lazyValue1
+        checkNonNull "lazyValue2" lazyValue2
+        checkNonNull "lazyValue3" lazyValue3
+
         // If all values have already been created, perform the mapping
         // 'eagerly' for better performance (e.g., by avoiding the thunk).
         if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated && lazyValue3.IsValueCreated then
@@ -428,6 +455,15 @@ module Lazy =
     //
     [<CompiledName("Bind")>]
     let bind (binding : 'T -> Lazy<'U>) (lazyValue : Lazy<'T>) : Lazy<'U> =
+        // Preconditions
+        checkNonNull "lazyValue" lazyValue
+
+        (* NOTE :   At first glance, it seems like we could check to see if the input lazy value has already been evaluated,
+                    and if so, optimize by immediately applying the it's value to the binding function. However, this is *NOT*
+                    a valid optimization, because it doesn't preserve the expected semantics of this function -- if the binding
+                    function has any side effects, they'd occur immediately instead of when the 'lazy' returned by this function
+                    was forced. Worse yet, this optimization would make the semantics of this function inconsistent since side
+                    effects could potentially occur immediately OR lazily. *)
         System.Lazy.Create <| fun () ->
             let result = binding <| lazyValue.Force ()
             result.Force ()
@@ -668,7 +704,10 @@ module Option =
         | Some _ -> value
         | None -> generator ()
 
-    //
+    /// Invokes the specified generator function to create a value.
+    /// If the function returns a value <c>res</c>, this function will return <c>Some res</c>.
+    /// If an exception is raised by the generator function, the exception is caught and ignored,
+    /// and this function returns <c>None</c>.
     [<CompiledName("Attempt")>]
     let attempt generator : 'T option =
         try Some <| generator ()
@@ -676,7 +715,7 @@ module Option =
 
     //
     [<CompiledName("ToOutAndBool")>]
-    let inline toOutAndBool (value, [<Out>] outValue : byref<'T>) : bool =
+    let toOutAndBool (value, [<Out>] outValue : byref<'T>) : bool =
         match value with
         | Some x ->
             outValue <- x
