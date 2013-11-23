@@ -85,3 +85,7 @@ module ExtraTopLevelOperators =
     [<CompiledName("CreateHashSet")>]
     let inline hashSet (elements : seq<_>) : HashSet<'T> =
         HashSet (elements)
+
+    /// Computation expression ("workflow") builder for creating lazy lists.
+    [<CompiledName("LazyListBuilder")>]
+    let lazyList = LazyListBuilder ()

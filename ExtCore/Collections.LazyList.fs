@@ -442,10 +442,22 @@ module LazyList =
                 consCell (mapping hd1 hd2) (map2 mapping tl1 tl2)
             | _ -> Empty
 
+    /// Applies the given function to each element of the lazy list and concatenates all of the results.
+    [<CompiledName("Collect")>]
+    let rec collect (mapping : 'T -> LazyList<'U>) (list : LazyList<'T>) : LazyList<'U> =
+        // Preconditions
+        checkNonNull "list" list
+
+        LazyList.Delayed <| fun () ->
+            match list.TryHeadTail () with
+            | None ->
+                LazyList<_>.Empty
+            | Some (x, xs) ->
+                append (mapping x) (collect mapping xs)
+
     /// Return the list which contains on demand the pair of elements of the first and second list.
-    // OPTIMIZE : Why not just re-implement this based on the 'map2' function?
     [<CompiledName("Zip")>]
-    let rec zip (list1 : LazyList<'T>) (list2 : LazyList<'T>) =
+    let rec zip (list1 : LazyList<'T1>) (list2 : LazyList<'T2>) =
         // Preconditions
         checkNonNull "list1" list1
         checkNonNull "list2" list2
@@ -455,6 +467,15 @@ module LazyList =
             | Cons (hd1, tl1), Cons (hd2, tl2) ->
                 consCell (hd1, hd2) (zip tl1 tl2)
             | _ -> Empty
+
+    /// Splits a lazy list of pairs into a pair of lazy lists.
+    [<CompiledName("Unzip")>]
+    let unzip (list : LazyList<'T1 * 'T2>) : LazyList<'T1> * LazyList<'T2> =
+        // Preconditions
+        checkNonNull "list" list
+
+        map fst list,
+        map snd list
 
     /// Return a new collection which on consumption will consist of only the
     /// elements of the collection for which the given predicate returns "true".
@@ -661,6 +682,32 @@ type LazyList<'T> with
 
         LazyList.append list1 list2
 
+/// Computation expression ("workflow") builder for creating lazy lists.
+[<Sealed>]
+type LazyListBuilder () =
+    member __.Zero () : LazyList<'T> =
+        LazyList<_>.Empty
+    member __.Delay creator : LazyList<'T> =
+        LazyList.Delayed creator
+    member __.Combine (list1 : LazyList<'T>, list2 : LazyList<'T>) =
+        LazyList.append list1 list2
+    member __.Yield (value : 'T) =
+        LazyList.singleton value
+    member __.YieldFrom (list : LazyList<'T>) =
+        list
+    member __.For (lazyList : LazyList<'T>, binding) =
+        LazyList.collect binding lazyList
+    member __.For (sequence, f) =
+        // TODO :   Right now, we're evaluating the entire sequence, then wrapping the results in a LazyList.
+        //          It would be more efficient to evaluate the sequence on-demand, though we need to decide if it's safe enough.
+        //          Or, we could use type tests on 'sequence' so if it's an array, list, etc., we can use a more-efficient conversion to LazyList.
+        // LazyList.bind f (LazyList.ofSeq sequence)
+        LazyList.collect f (LazyList.ofList (List.ofSeq sequence))
+    member __.Bind (lazyValue : Lazy<'T>, binding : 'T -> LazyList<'U>) =
+        LazyList.Delayed (fun () ->
+            lazyValue.Force ()
+            |> LazyList.singleton)
+        |> LazyList.collect binding
 
 /// Active patterns for deconstructing lazy lists.
 [<AutoOpen>]

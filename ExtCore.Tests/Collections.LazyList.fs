@@ -122,8 +122,16 @@ let map2 () : unit =
     test "map2"   (LazyList.toList (LazyList.take 4 (LazyList.map2 (fun x y -> x*y) nats (LazyList.tail nats))) = [0*1;1*2;2*3;3*4])
 
 [<Test>]
+let collect () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
 let zip () : unit =
     test "zip"  (LazyList.toList (LazyList.take 3 (LazyList.zip nats (LazyList.skip 6 nats))) = [0,6;1,7; 2,8])
+
+[<Test>]
+let unzip () : unit =
+    Assert.Ignore "Test not yet implemented."
 
 [<Test>]
 let filter () : unit =
