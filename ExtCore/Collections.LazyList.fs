@@ -684,6 +684,30 @@ module LazyList =
         ResizeArray.toArray elements
         |> vector.UnsafeCreate
 
+    /// <summary>
+    /// Returns a LazyList that when enumerated returns at most N elements.
+    /// </summary>
+    /// <param name="count">The maximum number of items to enumerate.</param>
+    /// <returns>
+    /// The resulting LazyList&lt;'T&gt;.
+    /// </returns>
+    [<CompiledName("Truncate")>]
+    let truncate count (list : LazyList<'T>) =
+        // Preconditions
+        checkNonNull "list" list
+        if count < 0 then
+            argOutOfRange "count" "Cannot take a negative number of elements."
+
+        LazyList<_>.CreateLazy <| fun () ->
+            if count = 0 then
+                Empty
+            else
+                match list.Value with
+                | Empty ->
+                    Empty
+                | Cons (hd, tl) ->
+                    consCell hd (take (count - 1) tl)
+
 
 type LazyList<'T> with
     /// Appends the second LazyList to the end of the first.
