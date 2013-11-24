@@ -326,8 +326,9 @@ module LazyList =
 
         list.LongLength
 
-    /// Returns the evaluated ("forced") length of the list -- i.e.,
-    /// the number of elements which have already been evaluated.
+    /// Returns the evaluated ("forced") length of the list -- i.e., the number
+    /// of elements which have already been evaluated. Unlike LazyList.length,
+    /// this does not force evaluation of any cells and always terminates.
     [<CompiledName("ForcedLength")>]
     let forcedLength (list : LazyList<'T>) =
         // Preconditions
