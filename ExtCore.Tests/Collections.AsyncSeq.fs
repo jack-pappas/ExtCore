@@ -22,8 +22,102 @@ module Tests.ExtCore.Collections.AsyncSeq
 open NUnit.Framework
 
 
-(* TODO *)
 [<Test>]
-let dummy () =
+let empty () =
     Assert.Ignore "Test not yet implemented."
 
+[<Test>]
+let singleton () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let firstOrDefault () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let lastOrDefault () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let append () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let collect () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let map () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let choose () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let filter () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let scan () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let iter () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let fold () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let pairwise () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let zip () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let zip3 () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let take () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let takeWhile () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let skip () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let skipWhile () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let cache () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofSeq () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let toSeq () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofObservableBuffered () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let ofObservable () =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let toObservable () =
+    Assert.Ignore "Test not yet implemented."
