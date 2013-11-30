@@ -197,6 +197,11 @@ ArrayView
 - Re-implement ``ArrayView`` as a new struct type instead of an abbreviation for ``System.ArraySegment<T>``. Then, we can implement structural equality and comparison on it.
 
 
+AsyncSeq
+--------
+- ``unfold``
+
+
 Bimap
 -----
 - ``ofMap``
@@ -296,7 +301,10 @@ IntSet / LongSet
 
 LazyList
 --------
-- exactlyOne
+- ``exactlyOne : list:LazyList<'T> -> 'T``
+
+  Extracts the only item in a single-item list. An ``ArgumentException`` is raised if the list is empty or contains more than one item.
+
 - ``force : LazyList<'T> -> unit``
 
   Traverses the LazyList and forces evaluation of all cells. May not terminate.
@@ -305,12 +313,6 @@ LazyList
 
   Traverses the given number of cells in the LazyList (or to the end), forcing evaluation
   of the traversed cells. May not terminate.
-
-- ``lazyLength : LazyList<'T> -> int``
-
-  Computes the "lazy" length of the LazyList<'T> -- that is, the number of cells which have
-  already been evaluated. Unlike LazyList.length, this does not force evaluation of any cells
-  and always terminates.
 
 - ``ofSeqEager : seq<'T> -> LazyList<'T>``
 
@@ -416,10 +418,10 @@ Map
 
   The minimum/maximum key value in the map, compared using the given function.
 
-- findKeyBack
-- pickBack
-- tryPickBack
-- tryFindKeyBack
+- ``findKeyBack``
+- ``pickBack``
+- ``tryPickBack``
+- ``tryFindKeyBack``
 
   Just like the built-in functions (e.g., ``findKey``, ``pick``) except they traverse "backwards" over the map,
   i.e., from greatest to least key value. This is useful when the map could contain multiple matching
