@@ -30,33 +30,33 @@ open System.Globalization
 type substring =
     /// The underlying string for this substring.
     val String : string
-    //
+    /// The position of the first character in the substring, relative to the start of the underlying string.
     val Offset : int
-    //
+    /// The number of characters spanned by the substring.
     val Length : int
 
-    /// <summary>Create a new substring value.</summary>
-    /// <param name="string"></param>
-    new (str : string) =
+    /// <summary>Create a new substring value spanning the entirety of a specified string.</summary>
+    /// <param name="string">The string to use as the substring's underlying string.</param>
+    new (string : string) =
         // Preconditions
-        checkNonNull "str" str
+        checkNonNull "string" string
 
-        { String = str;
+        { String = string;
           Offset = 0;
-          Length = str.Length; }
+          Length = string.Length; }
     
-    /// <summary>Create a new substring value.</summary>
+    /// <summary>Create a new substring value from a specified string.</summary>
     /// <param name="string"></param>
     /// <param name="offset"></param>
     /// <param name="length"></param>
-    new (str : string, offset : int, length : int) =
+    new (string : string, offset : int, length : int) =
         // Preconditions
-        checkNonNull "str" str
+        checkNonNull "string" string
         if offset < 0 then
             argOutOfRange "offset" "The offset must be greater than or equal to zero."
         
         /// The length of the underlying string.
-        let strLen = String.length str
+        let strLen = String.length string
 
         // More preconditions
         if offset > strLen then
@@ -67,7 +67,7 @@ type substring =
             argOutOfRange "length" "The specified length is greater than the number of characters \
                                     in the string from the given offset."
 
-        { String = str;
+        { String = string;
           Offset = offset;
           Length = length; }
 
@@ -76,7 +76,7 @@ type substring =
         with get () =
             this.Length = 0
 
-    //
+    /// Gets the character at the specified index in the substring.
     member this.Item
         with get index =
             // Preconditions
@@ -87,7 +87,9 @@ type substring =
             // Return the specified character from the underlying string.
             this.String.[this.Offset + index]
 
-    //
+    /// <summary>Determines whether the beginning of this substring value matches the specified string.</summary>
+    /// <param name="value">The string to compare.</param>
+    /// <returns></returns>
     member this.StartsWith (value : string) : bool =
         // Preconditions
         checkNonNull "value" value
@@ -113,7 +115,9 @@ type substring =
                 comparisonLength) = 0
 #endif
 
-    //
+    /// <summary>Determines whether the end of this substring value matches the specified string.</summary>
+    /// <param name="value">The string to compare.</param>
+    /// <returns></returns>
     member this.EndsWith (value : string) : bool =
         // Preconditions
         checkNonNull "value" value
@@ -260,59 +264,85 @@ module Substring =
     let empty : substring =
         substring (System.String.Empty, 0, 0)
 
-    /// Returns the string underlying the given substring.
+    /// <summary>Returns the string underlying the given substring.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("String")>]
     let inline string (substr : substring) : string =
         substr.String
 
-    /// The starting offset of the substring within it's underlying string.
+    /// <summary>The starting offset of the substring within it's underlying string.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Offset")>]
     let inline offset (substr : substring) : int =
         substr.Offset
 
-    /// Returns the length of the substring.
+    /// <summary>Returns the length of the substring.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Length")>]
     let inline length (substr : substring) : int =
         substr.Length
 
-    /// Gets a character from the substring.
+    /// <summary>Gets a character from the substring.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Get")>]
     let inline get (substr : substring) index : char =
         substr.[index]
 
-    /// Is the substring empty?
+    /// <summary>Is the substring empty?</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (substr : substring) : bool =
         substr.IsEmpty
 
-    /// Returns a substring which covers the entire length of the given string.
+    /// <summary>Returns a substring which covers the entire length of the given string.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("OfString")>]
     let inline ofString (str : string) : substring =
         substring (str, 0, str.Length)
 
-    /// Instantiates the substring as a string.
+    /// <summary>Instantiates the substring as a string.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("ToString")>]
     let inline toString (substr : substring) : string =
         substr.ToString ()
 
-    /// Returns the characters in the given substring as a Unicode character array. 
+    /// <summary>Returns the characters in the given substring as a Unicode character array.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("ToArray")>]
     let inline toArray (substr : substring) : char[] =
         substr.ToCharArray ()
 
-    /// Determines whether the beginning of a substring matches the specified string.
+    /// <summary>Determines whether the beginning of a substring matches the specified string.</summary>
+    /// <param name="value"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("StartsWith")>]
     let inline startsWith (value : string) (substr : substring) : bool =
         substr.StartsWith value
 
-    /// Determines whether the end of a substring matches the specified string.
+    /// <summary>Determines whether the end of a substring matches the specified string.</summary>
+    /// <param name="value"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("EndsWith")>]
     let inline endsWith (value : string) (substr : substring) : bool =
         substr.EndsWith value
 
+    /// <summary>
     /// Extracts the first (left-most) character from a substring, returning a Some value
     /// containing the character and the remaining substring. Returns None if the given
     /// substring is empty.
+    /// </summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Read")>]
     let read (substr : substring) : (char * substring) option =
         if substr.Length = 0 then None
@@ -325,7 +355,11 @@ module Substring =
         // Create a new substring based on the input substring.
         substring (substr.String, substr.Offset + offset, count)
 
-    /// Gets a substring of a substring.
+    /// <summary>Gets a substring of a substring.</summary>
+    /// <param name="substr"></param>
+    /// <param name="offset"></param>
+    /// <param name="count"></param>
+    /// <returns></returns>
     [<CompiledName("Sub")>]
     let sub (substr : substring) offset count : substring =
         // Preconditions
@@ -342,21 +376,27 @@ module Substring =
         // Create a new substring based on the input substring.
         subUnsafe substr offset count
 
-    /// Builds a new string by concatenating the given sequence of substrings.
+    /// <summary>Builds a new string by concatenating the given sequence of substrings.</summary>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Concat")>]
-    let concat (substrs : seq<substring>) : string =
+    let concat (source : seq<substring>) : string =
         // Preconditions
-        checkNonNull "substrs" substrs
+        checkNonNull "source" source
 
         // If the sequence is empty, return immediately.
-        if Seq.isEmpty substrs then
+        if Seq.isEmpty source then
             System.String.Empty
         else
             let sb = System.Text.StringBuilder ()
-            substrs |> Seq.iter (sb.Append >> ignore)
+            for substr in source do
+                sb.Append substr |> ignore
             sb.ToString ()
 
-    /// Returns the index of the first occurrence of a specified character within a substring.
+    /// <summary>Returns the index of the first occurrence of a specified character within a substring.</summary>
+    /// <param name="c"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TryFindIndexOf")>]
     let tryFindIndexOf (c : char) (substr : substring) =
         // Preconditions
@@ -370,7 +410,10 @@ module Substring =
             | -1 -> None
             | idx -> Some idx
 
-    /// Returns the index of the first occurrence of a specified character within a substring.
+    /// <summary>Returns the index of the first occurrence of a specified character within a substring.</summary>
+    /// <param name="c"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("FindIndexOf")>]
     let findIndexOf (c : char) (substr : substring) =
         // Preconditions
@@ -390,7 +433,10 @@ module Substring =
                 raise <| System.Collections.Generic.KeyNotFoundException ()
             | idx -> idx
 
-    /// Returns the index of the last occurrence of a specified character within a substring.
+    /// <summary>Returns the index of the last occurrence of a specified character within a substring.</summary>
+    /// <param name="c"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TryFindIndexOfBack")>]
     let tryFindIndexOfBack (c : char) (substr : substring) =
         // Preconditions
@@ -404,7 +450,10 @@ module Substring =
             | -1 -> None
             | idx -> Some idx
 
-    /// Returns the index of the last occurrence of a specified character within a substring.
+    /// <summary>Returns the index of the last occurrence of a specified character within a substring.</summary>
+    /// <param name="c"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("FindIndexOfBack")>]
     let findIndexOfBack (c : char) (substr : substring) =
         // Preconditions
@@ -424,7 +473,10 @@ module Substring =
                 raise <| System.Collections.Generic.KeyNotFoundException ()
             | idx -> idx
 
-    /// Returns the index of the first character in the substring which satisfies the given predicate.
+    /// <summary>Returns the index of the first character in the substring which satisfies the given predicate.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TryFindIndex")>]
     let tryFindIndex (predicate : char -> bool) (substr : substring) : int option =
         // Preconditions
@@ -446,7 +498,7 @@ module Substring =
             Some (index - 1)
         else None
 
-    /// Returns the index of the first character in the substring which satisfies the given predicate.
+    /// <summary>Returns the index of the first character in the substring which satisfies the given predicate.</summary>
     [<CompiledName("FindIndex")>]
     let findIndex (predicate : char -> bool) (substr : substring) : int =
         // Preconditions
@@ -461,7 +513,10 @@ module Substring =
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    /// Returns the index of the last character in the substring which satisfies the given predicate.
+    /// <summary>Returns the index of the last character in the substring which satisfies the given predicate.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TryFindIndexBack")>]
     let tryFindIndexBack (predicate : char -> bool) (substr : substring) : int option =
         // Preconditions
@@ -483,7 +538,10 @@ module Substring =
             Some (index + 1)
         else None
 
-    /// Returns the index of the last character in the substring which satisfies the given predicate.
+    /// <summary>Returns the index of the last character in the substring which satisfies the given predicate.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("FindIndexBack")>]
     let findIndexBack (predicate : char -> bool) (substr : substring) : int =
         // Preconditions
@@ -498,7 +556,10 @@ module Substring =
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    /// Returns the first character in the substring which satisfies the given predicate.
+    /// <summary>Returns the first character in the substring which satisfies the given predicate.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TryFind")>]
     let tryFind (predicate : char -> bool) (substr : substring) : char option =
         // Preconditions
@@ -520,7 +581,10 @@ module Substring =
             Some substr.[index - 1]
         else None
 
-    /// Returns the first character in the substring which satisfies the given predicate.
+    /// <summary>Returns the first character in the substring which satisfies the given predicate.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Find")>]
     let find (predicate : char -> bool) (substr : substring) : char =
         // Preconditions
@@ -535,7 +599,13 @@ module Substring =
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    //
+    /// <summary>
+    /// Applies the given function to successive characters, returning the first result where the function
+    /// returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>, <c>None</c> is returned.
+    /// </summary>
+    /// <param name="picker"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TryPick")>]
     let tryPick (picker : char -> 'T option) (substr : substring) : 'T option =
         // Preconditions
@@ -553,7 +623,13 @@ module Substring =
         // Return the picked value, if any.
         picked
 
-    //
+    /// <summary>
+    /// Applies the given function to successive characters, returning the first result where the function
+    /// returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>, <c>KeyNotFoundException</c> is raised.
+    /// </summary>
+    /// <param name="picker"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Pick")>]
     let pick (picker : char -> 'T option) (substr : substring) : 'T =
         // Preconditions
@@ -568,17 +644,24 @@ module Substring =
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
 
-    /// Applies the given function to each character in the substring,
-    /// in order from lowest to highest indices.
+    /// <summary>Applies the given function to each character in the substring, in order from lowest to highest indices.</summary>
+    /// <param name="action"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Iterate")>]
     let iter action (substr : substring) : unit =
         let len = substr.Length
         for i = 0 to len - 1 do
             action substr.[i]
 
+    /// <summary>
     /// Applies the given function to each character in the substring,
     /// in order from lowest to highest indices.
     /// The integer index applied to the function is the character's index within the substring.
+    /// </summary>
+    /// <param name="action"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("IterateIndexed")>]
     let iteri action (substr : substring) : unit =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -589,17 +672,23 @@ module Substring =
             for i = 0 to len - 1 do
                 action.Invoke (i, substr.[i])
 
-    /// Applies the given function to each character in the substring,
-    /// in order from highest to lowest indices.
+    /// <summary>Applies the given function to each character in the substring, in order from highest to lowest indices.</summary>
+    /// <param name="action"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("IterateBack")>]
     let iterBack action (substr : substring) : unit =
         let len = substr.Length
         for i = len - 1 downto 0 do
             action substr.[i]
 
-    /// Applies the given function to each character in the substring,
-    /// in order from highest to lowest indices.
+    /// <summary>
+    /// Applies the given function to each character in the substring, in order from highest to lowest indices.
     /// The integer index applied to the function is the character's index within the substring.
+    /// </summary>
+    /// <param name="action"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("IterateIndexedBack")>]
     let iteriBack action (substr : substring) : unit =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -610,9 +699,14 @@ module Substring =
             for i = len - 1 downto 0 do
                 action.Invoke (i, substr.[i])
 
-    /// Applies a function to each character of the substring, threading an accumulator
-    /// argument through the computation.
+    /// <summary>
+    /// Applies a function to each character of the substring, threading an accumulator argument through the computation.
     /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
+    /// </summary>
+    /// <param name="folder"></param>
+    /// <param name="state"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> char -> 'State) state (substr : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -626,10 +720,15 @@ module Substring =
                 state <- folder.Invoke (state, substr.[i])
             state
 
-    /// Applies a function to each character of the substring, threading an accumulator
-    /// argument through the computation.
+    /// <summary>
+    /// Applies a function to each character of the substring, threading an accumulator argument through the computation.
     /// The integer index applied to the function is the character's index within the substring.
     /// If the input function is f and the characters are c0...cN then computes f (...(f s c0)...) cN.
+    /// </summary>
+    /// <param name="folder"></param>
+    /// <param name="state"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("FoldIndexed")>]
     let foldi (folder : 'State -> int -> char -> 'State) state (substr : substring) : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -643,9 +742,14 @@ module Substring =
                 state <- folder.Invoke (state, i, substr.[i])
             state
 
-    /// Applies a function to each character of the string, threading an accumulator
-    /// argument through the computation.
+    /// <summary>
+    /// Applies a function to each character of the string, threading an accumulator argument through the computation.
     /// If the input function is f and the characters are c0...cN then computes f c0 (...(f cN s)).
+    /// </summary>
+    /// <param name="folder"></param>
+    /// <param name="substr"></param>
+    /// <param name="state"></param>
+    /// <returns></returns>
     [<CompiledName("FoldBack")>]
     let foldBack (folder : char -> 'State -> 'State) (substr : substring) state : 'State =
         // OPTIMIZATION : Immediately return if the substring is empty.
@@ -659,7 +763,10 @@ module Substring =
                 state <- folder.Invoke (substr.[i], state)
             state
 
-    /// Removes all leading occurrences of characters not satisfying the given predicate from a substring.
+    /// <summary>Removes all leading occurrences of characters not satisfying the given predicate from a substring.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TrimStartWith")>]
     let trimStartWith (predicate : char -> bool) (substr : substring) =
         // Preconditions
@@ -675,7 +782,10 @@ module Substring =
             | Some index ->
                 substr.[index..]
 
-    /// Removes all trailing occurrences of characters not satisfying the given predicate from a substring.
+    /// <summary>Removes all trailing occurrences of characters not satisfying the given predicate from a substring.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TrimEndWith")>]
     let trimEndWith (predicate : char -> bool) (substr : substring) =
         // Preconditions
@@ -691,7 +801,10 @@ module Substring =
             | Some index ->
                 substr.[..index]
 
-    /// Removes all leading and trailing occurrences of characters not satisfying the given predicate from a substring.
+    /// <summary>Removes all leading and trailing occurrences of characters not satisfying the given predicate from a substring.</summary>
+    /// <param name="predicate"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TrimWith")>]
     let trimWith (predicate : char -> bool) (substr : substring) =
         // Preconditions
@@ -699,7 +812,10 @@ module Substring =
 
         trimStartWith predicate (trimEndWith predicate substr)
 
-    /// Removes all leading occurrences of the specified set of characters from a substring.
+    /// <summary>Removes all leading occurrences of the specified set of characters from a substring.</summary>
+    /// <param name="chars"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TrimStart")>]
     let trimStart (chars : char[]) (substr : substring) =
         // Preconditions
@@ -710,7 +826,10 @@ module Substring =
         else
             trimStartWith (fun c -> Array.exists ((=) c) chars) substr
 
-    /// Removes all trailing occurrences of the specified set of characters from a substring.
+    /// <summary>Removes all trailing occurrences of the specified set of characters from a substring.</summary>
+    /// <param name="chars"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("TrimEnd")>]
     let trimEnd (chars : char[]) (substr : substring) =
         // Preconditions
@@ -721,7 +840,10 @@ module Substring =
         else
             trimEndWith (fun c -> Array.exists ((=) c) chars) substr
 
-    /// Removes all leading and trailing occurrences of the specified characters from a substring.
+    /// <summary>Removes all leading and trailing occurrences of the specified characters from a substring.</summary>
+    /// <param name="chars"></param>
+    /// <param name="substr"></param>
+    /// <returns></returns>
     [<CompiledName("Trim")>]
     let trim (chars : char[]) (substr : substring) =
         // Preconditions
@@ -733,7 +855,7 @@ module Substring =
             trimWith (fun c -> Array.exists ((=) c) chars) substr
 
     /// Substring-splitting functions.
-    /// These functions are analagous calling the String.Split method with StringSplitOptions.None,
+    /// These functions are analagous to calling the String.Split method with StringSplitOptions.None,
     /// but are faster because they avoid creating the intermediate array of substrings.
     [<RequireQualifiedAccess>]
     module Split =
@@ -806,8 +928,14 @@ module Substring =
             if length > 0 then
                 action <| subUnsafe substr offset length
 
+        /// <summary>
         /// Applies the given function to each of the substrings in the input string that are
         /// delimited by elements of a specified Unicode character array.
+        /// </summary>
+        /// <param name="separator"></param>
+        /// <param name="action"></param>
+        /// <param name="substr"></param>
+        /// <returns></returns>
         [<CompiledName("Iterate")>]
         let iter (separator : char[]) (action : substring -> unit) (substr : substring) : unit =
             // Preconditions
@@ -899,11 +1027,16 @@ module Substring =
             if length > 0 then
                 action.Invoke (substringIndex, subUnsafe substr offset length)
 
-        /// Applies the given function to each of the substrings in the input string that are
-        /// delimited by elements of a specified Unicode character array. The integer index
-        /// applied to the function is the index of the substring within the virtual array of
-        /// substrings in the input string. For example, if the newline character (\n) is used
-        /// as the separator, the index of each substring would be the line number.
+        /// <summary>
+        /// Applies the given function to each of the substrings in the input string that are delimited by elements of a specified
+        /// Unicode character array. The integer index applied to the function is the index of the substring within the virtual array
+        /// of substrings in the input string. For example, if the newline character (\n) is used as the separator, the index of each
+        /// substring would be the line number.
+        /// </summary>
+        /// <param name="separator"></param>
+        /// <param name="action"></param>
+        /// <param name="substr"></param>
+        /// <returns></returns>
         [<CompiledName("IterateIndexed")>]
         let iteri (separator : char[]) (action : int -> substring -> unit) (substr : substring) : unit =
             // Preconditions
@@ -994,9 +1127,15 @@ module Substring =
                 state <- folder.Invoke (state, subUnsafe substr offset length)
             state
 
-        /// Applies the given function to each of the substrings in the input string that are
-        /// delimited by elements of a specified Unicode character array, threading an accumulator
-        /// argument through the computation.
+        /// <summary>
+        /// Applies the given function to each of the substrings in the input string that are delimited by elements of a specified
+        /// Unicode character array, threading an accumulator argument through the computation.
+        /// </summary>
+        /// <param name="separator"></param>
+        /// <param name="folder"></param>
+        /// <param name="state"></param>
+        /// <param name="substr"></param>
+        /// <returns></returns>
         [<CompiledName("Fold")>]
         let fold (separator : char[]) (folder : 'State -> substring -> 'State) (state : 'State) (substr : substring) : 'State =
             // Preconditions
@@ -1098,12 +1237,17 @@ module Substring =
                 state <- folder.Invoke (state, substringIndex, subUnsafe substr offset length)
             state
 
-        /// Applies the given function to each of the substrings in the input string that are
-        /// delimited by elements of a specified Unicode character array, threading an accumulator
-        /// argument through the computation. The integer index
-        /// applied to the function is the index of the substring within the virtual array of
-        /// substrings in the input string. For example, if the newline character (\n) is used
-        /// as the separator, the index of each substring would be the line number.
+        /// <summary>
+        /// Applies the given function to each of the substrings in the input string that are delimited by elements of a specified
+        /// Unicode character array, threading an accumulator argument through the computation. The integer index applied to the function
+        /// is the index of the substring within the virtual array of substrings in the input string. For example, if the newline character
+        /// (\n) is used as the separator, the index of each substring would be the line number.
+        /// </summary>
+        /// <param name="separator"></param>
+        /// <param name="folder"></param>
+        /// <param name="state"></param>
+        /// <param name="substr"></param>
+        /// <returns></returns>
         [<CompiledName("FoldIndexed")>]
         let foldi (separator : char[]) (folder : 'State -> int -> substring -> 'State) (state : 'State) (substr : substring) : 'State =
             // Preconditions
@@ -1148,31 +1292,41 @@ module Substring =
         *)
 
 
-/// Extension methods for System.String and System.Text.StringBuilder
+/// <summary>
+/// Extension methods for <see cref="System.String"/> and <see cref="System.Text.StringBuilder"/>
 /// which provide integration with the substring type.
+/// </summary>
 module SubstringExtensions =
     type System.String with
-        /// Returns a new substring created from this string and the given
-        /// starting and ending indices.
+        /// <summary>Returns a new substring created from this string and the given starting and ending indices.</summary>
+        /// <param name="startIndex"></param>
+        /// <param name="finishIndex"></param>
+        /// <returns></returns>
         member this.GetSlice (startIndex, finishIndex) : substring =
             let startIndex = defaultArg startIndex 0 
             let finishIndex = defaultArg finishIndex this.Length
             substring (this, startIndex, finishIndex - startIndex + 1)
 
     type System.Text.StringBuilder with
-        /// Appends a copy of the specified substring to this instance.
+        /// <summary>Appends a copy of the specified substring to this instance.</summary>
+        /// <param name="substr"></param>
+        /// <returns></returns>
         member this.Append (value : substring) : System.Text.StringBuilder =
             // OPTIMIZATION : If the substring is empty, return immediately.
             if value.IsEmpty then this
             else
                 this.Append (value.String, value.Offset, value.Length)
             
-        /// Appends a copy of the specified substring to this instance, appending a newline.
+        /// <summary>Appends a copy of the specified substring to this instance, appending a newline.</summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         member this.AppendLine (value : substring) : System.Text.StringBuilder =
             let this = this.Append value
             this.AppendLine ()
 
     type System.Text.RegularExpressions.Regex with
-        /// Searches the input substring for the first occurrence of a regular expression. 
+        /// <summary>Searches the input substring for the first occurrence of a regular expression.</summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         member this.Match (value : substring) =
             this.Match (value.String, value.Offset, value.Length)
