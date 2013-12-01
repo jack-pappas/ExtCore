@@ -294,6 +294,14 @@ let intersperse () : unit =
 let weave () : unit =
     Assert.Ignore "Test not yet implemented."
 
+[<Test>]
+let exactlyOne () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
+let distinct () : unit =
+    Assert.Ignore "Test not yet implemented."
+
 
 open FsCheck
 
