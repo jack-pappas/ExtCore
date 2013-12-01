@@ -25,65 +25,99 @@ open System.Threading
 open ExtCore
 
 
-/// Type alias for F# mailbox processor type
+/// <summary>Type alias for the F# <see cref="MailboxProcessor"/> type.</summary>
+/// <typeparam name="T"></typeparam>
 type Agent<'T> = MailboxProcessor<'T>
 
-/// Wrapper for the standard F# agent (MailboxProcessor) that
-/// supports stopping of the agent's body using the IDisposable
-/// interface (the type automatically creates a cancellation token)
+/// <summary>
+/// Wrapper for the standard F# agent (<see cref="MailboxProcessor"/>) that supports stopping of the agent's body using the
+/// <see cref="IDisposable"/> interface (the type automatically creates a cancellation token).
+/// </summary>
+/// <typeparam name="T"></typeparam>
 [<Sealed>]
-type AutoCancelAgent<'T> private (mbox : Agent<'T>, cts : CancellationTokenSource) = 
-    /// Start a new disposable agent using the specified body function
-    /// (the method creates a new cancellation token for the agent)
+type AutoCancelAgent<'T> private (mbox : Agent<'T>, cts : CancellationTokenSource) =
+    /// <summary>
+    /// Start a new disposable agent using the specified body function (the method creates a new cancellation token for the agent).
+    /// </summary>
+    /// <param name="body"></param>
+    /// <returns></returns>
     static member Start body =
         let cts = new CancellationTokenSource ()
-        new AutoCancelAgent<'T>(Agent<'T>.Start(body, cancellationToken = cts.Token), cts)
+        let underlyingAgent = Agent<'T>.Start(body, cancellationToken = cts.Token)
+        new AutoCancelAgent<'T>(underlyingAgent, cts)
   
-    /// Returns the number of unprocessed messages in the message queue of the agent.
+    /// <summary>Returns the number of unprocessed messages in the message queue of the agent.</summary>
     member __.CurrentQueueLength =
         mbox.CurrentQueueLength
 
-    /// Occurs when the execution of the agent results in an exception.
+    /// <summary>Occurs when the execution of the agent results in an exception.</summary>
     [<CLIEvent>]
     member __.Error =
         mbox.Error
 
-    /// Waits for a message. This will consume the first message in arrival order.
+    /// <summary>Waits for a message. This will consume the first message in arrival order.</summary>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
     member __.Receive (?timeout) =
         mbox.Receive (?timeout = timeout)
 
-    /// Scans for a message by looking through messages in arrival order until <c>scanner</c> 
-    /// returns a Some value. Other messages remain in the queue.
-    member __.Scan (scanner, ?timeout) =
+    /// <summary>
+    /// Scans for a message by looking through messages in arrival order until <paramref name="scanner"/>
+    /// returns a <c>Some</c> value. Other messages remain in the queue.
+    /// </summary>
+    /// <param name="scanner"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.Scan (scanner, ?timeout) : Async<'U> =
         mbox.Scan (scanner, ?timeout = timeout)
 
-    /// Like PostAndReply, but returns None if no reply within the timeout period.
-    member __.TryPostAndReply (buildMessage, ?timeout) =
+    /// <summary>Like <see cref="PostAndReply"/>, but returns <c>None</c> if no reply within the timeout period.</summary>
+    /// <param name="buildMessage"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.TryPostAndReply (buildMessage, ?timeout) : 'U option =
         mbox.TryPostAndReply (buildMessage, ?timeout = timeout)
 
-    /// Waits for a message. This will consume the first message in arrival order.
+    /// <summary>Waits for a message. This will consume the first message in arrival order.</summary>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
     member __.TryReceive (?timeout) =
         mbox.TryReceive (?timeout = timeout)
 
-    /// Scans for a message by looking through messages in arrival order until <c>scanner</c> 
-    /// returns a Some value. Other messages remain in the queue.
-    member __.TryScan (scanner, ?timeout) =
+    /// <summary>
+    /// Scans for a message by looking through messages in arrival order until <paramref name="scanner"/>
+    /// returns a <c>Some</c> value. Other messages remain in the queue.
+    /// </summary>
+    /// <param name="scanner"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.TryScan (scanner, ?timeout) : Async<'U option> =
         mbox.TryScan (scanner, ?timeout = timeout)
 
-    /// Posts a message to the message queue of the MailboxProcessor, asynchronously.
+    /// <summary>Posts a message to the message queue of the agent, asynchronously.</summary>
+    /// <param name="message"></param>
     member __.Post (message) =
         mbox.Post message
 
-    /// Posts a message to an agent and await a reply on the channel, synchronously.
-    member __.PostAndReply (buildMessage, ?timeout) =
+    /// <summary>Posts a message to an agent and await a reply on the channel, synchronously.</summary>
+    /// <param name="buildMessage"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.PostAndReply (buildMessage, ?timeout) : 'U =
         mbox.PostAndReply (buildMessage, ?timeout = timeout)
 
-    /// Like PostAndAsyncReply, but returns None if no reply within the timeout period.
-    member __.PostAndTryAsyncReply (buildMessage, ?timeout) =
+    /// <summary>Like <see cref="PostAndAsyncReply"/>, but returns <c>None</c> if no reply within the timeout period.</summary>
+    /// <param name="buildMessage"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.PostAndTryAsyncReply (buildMessage, ?timeout) : Async<'U option> =
         mbox.PostAndTryAsyncReply (buildMessage, ?timeout = timeout)
 
-    /// Posts a message to an agent and await a reply on the channel, asynchronously.
-    member __.PostAndAsyncReply (buildMessage, ?timeout) =
+    /// <summary>Posts a message to an agent and await a reply on the channel, asynchronously.</summary>
+    /// <param name="buildMessage"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.PostAndAsyncReply (buildMessage, ?timeout) : Async<'U> =
         mbox.PostAndAsyncReply (buildMessage, ?timeout=timeout)
 
     interface IDisposable with
@@ -92,9 +126,11 @@ type AutoCancelAgent<'T> private (mbox : Agent<'T>, cts : CancellationTokenSourc
           cts.Cancel()
 
 
-/// Agent that implements a simple concurrent set. The agent exposes a 
-/// member that adds value to the set and returns whether the value
-/// was already present.
+/// <summary>
+/// Agent that implements a simple concurrent set.
+/// The agent exposes a member that adds value to the set and returns whether the value was already present.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 [<Sealed>]
 type ConcurrentSetAgent<'T> () =
     let agent = Agent.Start <| fun agent ->
@@ -105,16 +141,19 @@ type ConcurrentSetAgent<'T> () =
             repl.Reply (hashSet.Add value)
         }
 
-    /// Adds the specified element to the set and returns 
-    /// 'false' when it was already present in the set
+    /// <summary>Adds the specified element to the set and returns <c>false</c> when it was already present in the set.</summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     member __.AsyncAdd value =
         agent.PostAndAsyncReply(fun repl -> value, repl)
 
 
-/// Agent that can be used to implement batch processing. It creates groups
-/// of messages (added using the Enqueue method) and emits them using the 
-/// BatchProduced event. A group is produced when it reaches the maximal 
-/// size or after the timeout elapses.
+/// <summary>
+/// Agent that can be used to implement batch processing. It creates groups of messages (added using the <see cref="Enqueue"/> method)
+/// and emits them through the <see cref="BatchProduced"/> event.
+/// A group is produced when it reaches the maximal size or after the timeout elapses.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 [<Sealed>]
 type BatchProcessingAgent<'T> (bulkSize, timeout) =
     //
@@ -145,28 +184,31 @@ type BatchProcessingAgent<'T> (bulkSize, timeout) =
 
         loop timeout []
 
-    /// The event is triggered when a group of messages is collected. The
-    /// group is not empty, but may not be of the specified maximal size
-    /// (when the timeout elapses before enough messages is collected)
+    /// The event is triggered when a group of messages is collected. The group is not empty, but may not
+    /// be of the specified maximal size (when the timeout elapses before enough messages is collected).
     [<CLIEvent>]
     member __.BatchProduced =
         bulkEvent.Publish
 
-    /// Sends new message to the agent
+    /// <summary>Sends new message to the agent.</summary>
+    /// <param name="message"></param>
+    /// <returns></returns>
     member __.Enqueue message =
         agent.Post message
 
-//
+/// <summary></summary>
+/// <typeparam name="T"></typeparam>
 type private BlockingAgentMessage<'T> =
     //
     | Add of 'T * AsyncReplyChannel<unit>
     //
     | Get of AsyncReplyChannel<'T>
 
-/// Agent that implements an asynchronous queue with blocking put
-/// and blocking get operation (this implements the producer-consumer 
-/// concurrent programming pattern). The constructor takes the maximal
-/// size of the buffer.
+/// <summary>
+/// Agent that implements an asynchronous queue with blocking put and blocking get operation (this implements the
+/// producer-consumer concurrent programming pattern). The constructor takes the maximal size of the buffer.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 [<Sealed>]
 type BlockingQueueAgent<'T> (maxLength) =
     [<VolatileField>]
@@ -226,37 +268,54 @@ type BlockingQueueAgent<'T> (maxLength) =
         // Start with an empty queue
         emptyQueue ()
 
-    /// Asynchronously adds item to the queue. The operation ends when
-    /// there is a place for the item. If the queue is full, the operation
-    /// will block until some items are removed.
-    member x.AsyncAdd (value : 'T, ?timeout) =
-        agent.PostAndAsyncReply((fun ch -> Add (value, ch)), ?timeout = timeout)
-
-    /// Asynchronously gets item from the queue. If there are no items
-    /// in the queue, the operation will block unitl items are added.
-    member x.AsyncGet (?timeout) =
-        agent.PostAndAsyncReply (Get, ?timeout = timeout)
-
-    /// Synchronously gets item from the queue. If there are no items
-    /// in the queue, the operation will block unitl items are added.
-    /// This method blocks until value is available!
-    member x.Get (?timeout) =
-        agent.PostAndReply (Get, ?timeout = timeout)
+    /// The maximum number of elements which may be present in the queue.
+    member __.Capacity =
+        maxLength
 
     /// Gets the number of elements currently waiting in the queue.
-    member x.Count = count
+    member __.Count = count
 
-/// Agent that implements the "sliding window" functionality. It collects
-/// messages added using the Enqueue method and emits them in overlapping 
-/// groups of the specified size. For example, given [1,2,3,4,5...] and a 
-/// size 3, the produced groups will be [1,2,3], [2,3,4], [3,4,5], ...
+    /// <summary>
+    /// Asynchronously adds an item to the queue. The operation ends when there is a place for the item.
+    /// If the queue is full, the operation will block until one or more items are removed.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.AsyncAdd (value : 'T, ?timeout) =
+        agent.PostAndAsyncReply ((fun ch -> Add (value, ch)), ?timeout = timeout)
+
+    /// <summary>
+    /// Asynchronously gets an item from the queue. If the queue is empty, the operation will block until one or more items are added.
+    /// </summary>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.AsyncGet (?timeout) =
+        agent.PostAndAsyncReply (Get, ?timeout = timeout)
+
+    /// <summary>
+    /// Synchronously gets an item from the queue. If the queue is empty, the operation will block until one or more items are added.
+    /// </summary>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    member __.Get (?timeout) =
+        agent.PostAndReply (Get, ?timeout = timeout)
+
+/// <summary>
+/// Agent that implements "sliding window" functionality.
+/// It collects messages added using the <see cref="Enqueue"/> method and emits them in overlapping groups of the specified size.
+/// </summary>
+/// <remarks>
+/// For example, given <c>[1,2,3,4,5...]</c> and a window size of 3, the produced groups will be <c>[1,2,3], [2,3,4], [3,4,5], ...</c>.
+/// </remarks>
+/// <typeparam name="T"></typeparam>
 [<Sealed>]
 type SlidingWindowAgent<'T> (windowSize, ?cancelToken) =
     // Event used to report groups.
     let windowEvent = Event<_> ()
 
-    // Start an agent that remembers partial windows of length 
-    // smaller than the count (new agent for every observer)
+    // Start an agent that remembers partial windows of length
+    // smaller than the count (new agent for every observer).
     let agent = Agent<'T>.Start((fun agent ->
         // The parameter 'lists' contains partial lists and their lengths
         let rec loop lists =
@@ -284,14 +343,21 @@ type SlidingWindowAgent<'T> (windowSize, ?cancelToken) =
         // Start with an empty list of partial lists
         loop []), ?cancellationToken = cancelToken)
 
-    /// The event is triggered when a group of messages is collected. 
-    /// The size of the group is exactly 'windowSize' and the values are
-    /// returned in a fresh array.
+    /// <summary>
+    /// The event is triggered when a group of messages is collected.
+    /// The size of the group is exactly <see cref="WindowSize"/> and the values are returned in a fresh array.
+    /// </summary>
     [<CLIEvent>]
-    member x.WindowProduced =
+    member __.WindowProduced =
         windowEvent.Publish
 
-    /// Sends new message to the agent.
-    member x.Enqueue message =
+    /// The maximum number of messages included in the sliding window.
+    member __.WindowSize =
+        windowSize
+
+    /// <summary>Sends new message to the agent.</summary>
+    /// <param name="message"></param>
+    /// <returns></returns>
+    member __.Enqueue message =
         agent.Post message
 
