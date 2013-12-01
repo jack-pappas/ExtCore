@@ -352,10 +352,6 @@ LazyList
 
 List
 ----
-- ``exactlyOne : list:'T list -> 'T``
-
-  Extracts the only item in a single-item list. An ``ArgumentException`` is raised if the list is empty or contains more than one item.
-
 - ``insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
 
   Creates a new list by inserting the value at a given index in a list.
@@ -367,10 +363,6 @@ List
 - ``splice : (index : int) -> (list1 : 'T list) -> (list2 : 'T list) : 'T list``
 
   Creates a new list by "splicing" the second list into the first at the given index.
-
-- ``distinct : (list : 'T list) : 'T list (where 'T : equality)``
-
-  Returns a new list created by keeping only the first (earliest) instance of each element.
 
 
 Map

@@ -603,3 +603,59 @@ let weave (list1 : 'T list) (list2 : 'T list) : 'T list =
                 weaveImpl (hd2 :: hd1 :: acc) tl1 tl2
 
         weaveImpl [] list1 list2
+
+/// <summary>
+/// Extracts the only item in a single-item list.
+/// An <see cref="ArgumentException"/> is raised if the list is empty or contains more than one item.
+/// </summary>
+/// <param name="list"></param>
+/// <returns></returns>
+[<CompiledName("ExactlyOne")>]
+let exactlyOne (list : 'T list) : 'T =
+    // Preconditions
+    checkNonNull "list" list
+
+    // If the list contains exactly one element, return it; otherwise, raise an ArgumentException.
+    match list with
+    | [] ->
+        invalidArg "list" "The list is empty."
+    | [x] -> x
+    | _ ->
+        invalidArg "list" "The list contains more than one element."
+
+/// <summary>Returns a new list created by keeping only the first (earliest) instance of each element.</summary>
+/// <param name="list"></param>
+/// <returns></returns>
+[<CompiledName("Distinct")>]
+let distinct (list : 'T list) : 'T list =
+    // Preconditions
+    checkNonNull "list" list
+
+    // OPTIMIZATION :   This function is implemented using a mutable HashSet and ResizeArray for maximum speed.
+    //                  The use of mutation is safe here because it's entirely local.
+    
+    /// Contains the distinct elements which have been seen in the list so far.
+    let itemSet = System.Collections.Generic.HashSet<_> ()
+
+    /// The distinct elements from the list, in the order they were encountered.
+    let distinctList = ResizeArray ()
+
+    /// Traverses the list and adds items to the HashSet and ResizeArray as necessary.
+    let rec traverse = function
+        | [] -> ()
+        | hd :: tl ->
+            // Try adding this element to the HashSet. If it succeeds, add the item to the ResizeArray.
+            if itemSet.Add hd then
+                distinctList.Add hd
+
+            // Continue processing the rest of the list.
+            traverse tl
+
+    // Traverse backwards over the ResizeArray to build up the result list in the correct order (so it doesn't need to be reversed).
+    let mutable result = []
+    for i = distinctList.Count - 1 downto 0 do
+        result <- distinctList.[i] :: result
+
+    // Return the result list.
+    result
+
