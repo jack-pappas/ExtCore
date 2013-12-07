@@ -26,13 +26,21 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Appends an element to a sequence of elements.
+/// <summary>Appends an element to a sequence of elements.</summary>
+/// <param name="value"></param>
+/// <param name="source"></param>
+/// <returns></returns>
 [<CompiledName("AppendSingleton")>]
-let inline appendSingleton (value : 'T) sequence =
-    Seq.append sequence (Seq.singleton value)
+let inline appendSingleton (value : 'T) (source : seq<'T>) =
+    Seq.append source (Seq.singleton value)
 
+/// <summary>
 /// Applies a function to each element of the sequence, returning a new sequence whose elements are
 /// tuples of the original element and the function result for that element.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="source"></param>
+/// <returns></returns>
 [<CompiledName("ProjectValues")>]
 let projectValues (mapping : 'Key -> 'T) (source : seq<'Key>) =
     // Preconditions
@@ -42,8 +50,13 @@ let projectValues (mapping : 'Key -> 'T) (source : seq<'Key>) =
     |> Seq.map (fun x ->
         x, mapping x)
 
+/// <summary>
 /// Applies a function to each element of the sequence, returning a new sequence whose elements are
 /// tuples of the original element and the function result for that element.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="source"></param>
+/// <returns></returns>
 [<CompiledName("ProjectKeys")>]
 let projectKeys (mapping : 'T -> 'Key) (source : seq<'T>) =
     // Preconditions
@@ -53,37 +66,45 @@ let projectKeys (mapping : 'T -> 'Key) (source : seq<'T>) =
     |> Seq.map (fun x ->
         mapping x, x)
 
-/// Generates a new sequence which repeats the given sequence a specified number of times.
+/// <summary>Generates a new sequence which repeats the given sequence a specified number of times.</summary>
+/// <param name="count"></param>
+/// <param name="source"></param>
+/// <returns></returns>
 [<CompiledName("Replicate")>]
-let replicate count sequence : seq<'T> =
+let replicate count source : seq<'T> =
     // Preconditions
     if count < 0 then
         invalidArg "count" "The count cannot be negative."
     // HACK : The F# compiler gives a warning about the type parameter being
     // constrained if 'checkNonNull' is used here, even though it shouldn't.
     // Instead, we'll use Object.ReferenceEquals directly.
-    elif System.Object.ReferenceEquals (null, sequence) then
-        nullArg "sequence"
+    elif System.Object.ReferenceEquals (null, source) then
+        nullArg "source"
 
     // Cache the input sequence so it's only evaluated once.
-    let cachedSeq = Seq.cache sequence
+    let cachedSeq = Seq.cache source
 
     seq {
     for i = 0 to count - 1 do
         yield! cachedSeq
     }
 
-/// Generates a new sequence which returns the given value
-/// an infinite number of times.
+/// <summary>Generates a new sequence which returns the given value an infinite number of times.</summary>
+/// <param name="value"></param>
+/// <returns></returns>
 [<CompiledName("Repeat")>]
 let rec repeat value : seq<'T> =
     seq {
     while true do
         yield value }
 
-/// Creates a cyclical sequence with the specified number of elements using the given
-/// generator function. The integer index passed to the function indicates the index
-/// of the element being generated.
+/// <summary>
+/// Creates a cyclical sequence with the specified number of elements using the given generator function.
+/// The integer index passed to the function indicates the index of the element being generated.
+/// </summary>
+/// <param name="count"></param>
+/// <param name="generator"></param>
+/// <returns></returns>
 [<CompiledName("Cycle")>]
 let cycle count (generator : int -> 'T) : seq<'T> =
     // Preconditions
@@ -95,28 +116,30 @@ let cycle count (generator : int -> 'T) : seq<'T> =
         Seq.empty
     else
         // Create the sequence to be cycled.
-        // The sequence is cached so the generator function is
-        // only called once per element.
+        // The sequence is cached so the generator function is only called once per element.
         let cycledSeq =
             Seq.init count generator
             |> Seq.cache
 
-        // Return a sequence which loops forever and repeats the
-        // sequence to be cycled.
+        // Return a sequence which loops forever and repeats the sequence to be cycled.
         seq {
         while true do
             yield! cycledSeq }
 
-/// Returns the number of elements in the sequence matching a given predicate.
-// Seq.countWith predicate sequence = (Seq.filter predicate sequence |> Seq.length)
+/// <summary>Returns the number of elements in the sequence matching a given predicate.</summary>
+/// <param name="predicate"></param>
+/// <param name="source"></param>
+/// <returns></returns>
+/// <remarks>
+/// <c>Seq.countWith predicate source = (Seq.filter predicate source |> Seq.length)</c>
+/// </remarks>
 [<CompiledName("CountWith")>]
-let countWith (predicate : 'T -> bool) (sequence : seq<'T>) : int64 =
+let countWith (predicate : 'T -> bool) (source : seq<'T>) : int64 =
     // Preconditions
-    checkNonNull "sequence" sequence
+    checkNonNull "source" source
 
-    // Fold over the sequence, counting the number of elements which
-    // match the given predicate.
-    (0L, sequence)
+    // Fold over the sequence, counting the number of elements which match the given predicate.
+    (0L, source)
     ||> Seq.fold (fun matchCount el ->
         if predicate el then
             matchCount + 1L

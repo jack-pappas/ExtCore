@@ -73,10 +73,11 @@ and [<NoEquality; NoComparison; Sealed>]
     //
     let mutable status : LazyCellStatus<'T> = initialStatus
 
-    /// The empty LazyList.
+    /// <summary>The empty LazyList.</summary>
     static member internal Empty
         with get () = emptyList
     
+    //
     member internal this.Value =
         match status with
         | Value value ->
@@ -98,49 +99,53 @@ and [<NoEquality; NoComparison; Sealed>]
                 | Exception ex ->
                     raise ex
 
-    /// Test if a list is empty.
-    /// Forces the evaluation of the first element of the stream if it is not already evaluated.
+    /// <summary>Gets a value that indicates whether the <see cref="LazyList`1"/> is empty.</summary>
+    /// <remarks>Forces the evaluation of the first element of the stream if it is not already evaluated.</remarks>
     member this.IsEmpty
         with get () =
             match this.Value with
             | Empty -> true
             | Cons _ -> false
 
-    /// Determines the length of the list.
+    /// <summary>Determines the length of the list.</summary>
+    /// <remarks>
     /// Forces the evaluation of the entire list if it is not already evaluated, so calls to this property may not terminate.
+    /// </remarks>
     member this.Length
         with get () =
             this.LengthImpl 0u
 
-    /// Determines the length of the list.
+    /// <summary>Determines the length of the list.</summary>
+    /// <remarks>
     /// Forces the evaluation of the entire list if it is not already evaluated, so calls to this property may not terminate.
+    /// </remarks>
     member this.LongLength
         with get () =
             this.LongLengthImpl 0UL
 
-    /// Determines the evaluated length of the list.
-    /// This does not force any evaluation of the list.
+    /// <summary>Determines the evaluated length of the list.</summary>
+    /// <remarks>This does not force any evaluation of the list.</remarks>
     member this.ForcedLength
         with get () =
             this.ForcedLengthImpl 0u
 
-    /// Return the first element of the list.
-    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
+    /// <summary>Return the first element of the list.</summary>
+    /// <remarks>Forces the evaluation of the first cell of the list if it is not already evaluated.</remarks>
     member this.Head () =
         match this.Value with
         | Cons (hd, _) -> hd
         | Empty ->
             invalidOp "The list is empty."
 
-    /// Return the list corresponding to the remaining items in the sequence.
-    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
+    /// <summary>Return the list corresponding to the remaining items in the sequence.</summary>
+    /// <remarks>Forces the evaluation of the first cell of the list if it is not already evaluated.</remarks>
     member this.Tail () =
         match this.Value with
         | Cons (_, tl) -> tl
         | Empty ->
             invalidOp "The list is empty."
 
-    /// Get the first cell of the list.
+    /// <summary>Get the first cell of the list.</summary>
     member this.TryHeadTail () =
         match this.Value with
         | Empty ->
@@ -148,7 +153,7 @@ and [<NoEquality; NoComparison; Sealed>]
         | Cons (hd, tl) ->
             Some (hd, tl)
 
-    /// Creates a sequence which enumerates the values in the LazyList.
+    /// <summary>Creates a sequence which enumerates the values in the <see cref="LazyList`1"/>.</summary>
     member this.ToSeq () =
         this
         |> Seq.unfold (fun list ->
@@ -158,11 +163,16 @@ and [<NoEquality; NoComparison; Sealed>]
             | Cons (hd, tl) ->
                 Some (hd, tl))
 
-    //
+    /// <summary></summary>
+    /// <param name="cellCreator"></param>
+    /// <returns></returns>
     static member internal CreateLazy cellCreator : LazyList<'T> =
         LazyList (Delayed cellCreator)
 
-    /// Return a new list which contains the given item followed by the given list.
+    /// <summary>Return a new list which contains the given item followed by the given list.</summary>
+    /// <param name="value"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     static member internal Cons (value, list) : LazyList<'T> =
         // Preconditions
         checkNonNull "list" list
@@ -170,15 +180,23 @@ and [<NoEquality; NoComparison; Sealed>]
         LazyList<_>.CreateLazy <| fun () ->
             Cons (value, list)
 
-    /// Return a new list which on consumption contains the given item 
-    /// followed by the list returned by the given computation.
+    /// <summary>
+    /// Return a new list which on consumption contains the given item followed by the list returned by the given computation.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="creator"></param>
+    /// <returns></returns>
     static member internal ConsDelayed (value, creator : unit -> LazyList<'T>) : LazyList<'T> =
         LazyList<_>.CreateLazy <| fun () ->
             Cons (value, LazyList<_>.CreateLazy <| fun () ->
                 (creator ()).Value)
 
+    /// <summary>
     /// Return a list that is -- in effect -- the list returned by the given computation.
     /// The given computation is not executed until the first element on the list is consumed.
+    /// </summary>
+    /// <param name="creator"></param>
+    /// <returns></returns>
     static member internal Delayed (creator : unit -> LazyList<'T>) : LazyList<'T> =
         LazyList (Delayed <| fun () ->
             (creator ()).Value)
@@ -237,12 +255,14 @@ and [<NoEquality; NoComparison; Sealed>]
 module LazyList =
     //open OptimizedClosures
 
-    /// The empty LazyList.
+    /// <summary>The empty LazyList.</summary>
     [<CompiledName("Empty")>]
     let empty<'T> : LazyList<'T> =
         LazyList<'T>.Empty
     
-    /// Get the first cell of the list.
+    /// <summary>Get the first cell of the list.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("TryGet")>]
     let inline tryGet (list : LazyList<'T>) =
         // Preconditions
@@ -250,8 +270,10 @@ module LazyList =
 
         list.TryHeadTail ()
 
-    /// Return the first element of the list.
-    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
+    /// <summary>Return the first element of the list.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>Forces the evaluation of the first cell of the list if it is not already evaluated.</remarks>
     [<CompiledName("Head")>]
     let inline head (list : LazyList<'T>) : 'T =
         // Preconditions
@@ -259,8 +281,10 @@ module LazyList =
         
         list.Head ()
 
-    /// Return the list corresponding to the remaining items in the sequence.
-    /// Forces the evaluation of the first cell of the list if it is not already evaluated.
+    /// <summary>Return the list corresponding to the remaining items in the sequence.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>Forces the evaluation of the first cell of the list if it is not already evaluated.</remarks>
     [<CompiledName("Tail")>]
     let inline tail (list : LazyList<'T>) : LazyList<'T> =
         // Preconditions
@@ -268,8 +292,10 @@ module LazyList =
         
         list.Tail ()
 
-    /// Test if a list is empty.
-    /// Forces the evaluation of the first element of the stream if it is not already evaluated.
+    /// <summary>Test if a list is empty.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>Forces the evaluation of the first element of the stream if it is not already evaluated.</remarks>
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (list : LazyList<'T>) : bool =
         // Preconditions
@@ -277,25 +303,38 @@ module LazyList =
 
         list.IsEmpty
 
-    /// Return a new list which contains the given item followed by the given list.
+    /// <summary>Return a new list which contains the given item followed by the given list.</summary>
+    /// <param name="value"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Cons")>]
     let cons value (list : LazyList<'T>) =
         // Preconditions checked by the implementation.
         LazyList<_>.Cons (value, list)
     
-    /// Return a new list which on consumption contains the given item
-    /// followed by the list returned by the given computation.
+    /// <summary>
+    /// Return a new list which on consumption contains the given item followed by the list returned by the given computation.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="creator"></param>
+    /// <returns></returns>
     [<CompiledName("ConsDelayed")>]
     let consDelayed (value : 'T) creator =
         LazyList<_>.ConsDelayed (value, creator)
 
+    /// <summary>
     /// Return a list that is -- in effect -- the list returned by the given computation.
     /// The given computation is not executed until the first element on the list is consumed.
+    /// </summary>
+    /// <param name="creator"></param>
+    /// <returns></returns>
     [<CompiledName("Delayed")>]
     let delayed creator : LazyList<'T> =
         LazyList<_>.Delayed creator
 
-    /// Creates a LazyList containing the given value.
+    /// <summary>Creates a LazyList containing the given value.</summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     [<CompiledName("Singleton")>]
     let singleton value : LazyList<'T> =
         LazyList<_>.Cons (value, LazyList.Empty)
@@ -306,8 +345,10 @@ module LazyList =
         assert (not <| isNull list)
         Cons (value, list)
 
-    /// Return the length of the list.
-    /// This forces evaluation of the entire list and may not terminate.
+    /// <summary>Return the length of the list.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>This forces evaluation of the entire list and may not terminate.</remarks>
     [<CompiledName("Length")>]
     let length (list : LazyList<'T>) =
         // Preconditions
@@ -315,8 +356,10 @@ module LazyList =
 
         list.Length
 
-    /// Return the length of the list.
-    /// This forces evaluation of the entire list and may not terminate.
+    /// <summary>Return the length of the list.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>This forces evaluation of the entire list and may not terminate.</remarks>
     [<CompiledName("Length")>]
     let longLength (list : LazyList<'T>) =
         // Preconditions
@@ -326,9 +369,11 @@ module LazyList =
 
     /// <summary>
     /// Returns the evaluated ("forced") length of the list -- i.e., the number
-    /// of elements which have already been evaluated. Unlike <c>LazyList.length</c>,
+    /// of elements which have already been evaluated. Unlike <see cref="LazyList.length"/>,
     /// this does not force evaluation of any cells and always terminates.
     /// </summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("ForcedLength")>]
     let forcedLength (list : LazyList<'T>) =
         // Preconditions
@@ -336,15 +381,20 @@ module LazyList =
 
         list.ForcedLength
 
-    /// Return the list which on consumption will consist of an
-    /// infinite sequence of the given item.
+    /// <summary>Return the list which on consumption will consist of an infinite sequence of the given item.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Repeat")>]
     let repeat value : LazyList<'T> =
         let rec s = cons value (delayed (fun () -> s))
         s
 
-    /// Return the list which contains on demand the elements of the
-    /// first list followed by the elements of the second list.
+    /// <summary>
+    /// Return the list which contains on demand the elements of the first list followed by the elements of the second list.
+    /// </summary>
+    /// <param name="list1"></param>
+    /// <param name="list2"></param>
+    /// <returns></returns>
     [<CompiledName("Append")>]
     let rec append (list1 : LazyList<'T>) (list2 : LazyList<'T>) =
         // Preconditions
@@ -361,7 +411,9 @@ module LazyList =
         | Cons (hd, tl) ->
             consCell hd (append tl list2)
 
-    /// Return the list which contains on demand the list of elements of the list of lazy lists.
+    /// <summary>Return the list which contains on demand the list of elements of the list of lazy lists.</summary>
+    /// <param name="lists"></param>
+    /// <returns></returns>
     [<CompiledName("Concat")>]
     let rec concat (lists : LazyList<LazyList<'T>>) =
         // Preconditions
@@ -375,10 +427,12 @@ module LazyList =
                 appendCell hd (concat tl)
 
     /// <summary>
-    /// Apply the given function to successive elements of the list, returning the first
-    /// result where function returns <c>Some(x)</c> for some x.
-    /// If the function never returns true, 'None' is returned.
+    /// Apply the given function to successive elements of the list, returning the first result where function returns
+    /// <c>Some(x)</c> for some x. If the function never returns <c>true</c>, <c>None</c> is returned.
     /// </summary>
+    /// <param name="predicate"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("TryFind")>]
     let rec tryFind predicate (list : LazyList<'T>) =
         // Preconditions
@@ -393,8 +447,11 @@ module LazyList =
 
     /// <summary>
     /// Return the first element for which the given function returns <c>true</c>.
-    /// Raise <c>KeyNotFoundException</c> if no such element exists.
+    /// Raise <see cref="KeyNotFoundException"/> if no such element exists.
     /// </summary>
+    /// <param name="predicate"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Find")>]
     let find predicate (list : LazyList<'T>) =
         // Preconditions
@@ -406,10 +463,14 @@ module LazyList =
         | None ->
             raise <| KeyNotFoundException "An element satisfying the predicate was not found in the collection."
 
-    /// Return a list that contains the elements returned by the given computation.
-    /// The given computation is not executed until the first element on the list is
-    /// consumed. The given argument is passed to the computation. Subsequent elements
-    /// in the list are generated by again applying the residual state to the computation.
+    /// <summary>Return a list that contains the elements returned by the given computation.</summary>
+    /// <param name="generator"></param>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// The given computation is not executed until the first element on the list is consumed. The given argument is passed to the
+    /// computation. Subsequent elements in the list are generated by again applying the residual state to the computation.
+    /// </remarks>
     [<CompiledName("Unfold")>]
     let rec unfold (generator : 'State -> ('T * 'State) option) state =
         LazyList<_>.CreateLazy <| fun () ->
@@ -419,8 +480,13 @@ module LazyList =
             | Some (value, state) ->
                 Cons (value, unfold generator state)
 
+    /// <summary>
     /// Build a new collection whose elements are the results of applying
     /// the given function to each of the elements of the collection.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Map")>]
     let rec map (mapping : 'T -> 'U) (list : LazyList<'T>) =
         // Preconditions
@@ -433,8 +499,14 @@ module LazyList =
             | Cons (hd, tl) ->
                 consCell (mapping hd) (map mapping tl)
 
+    /// <summary>
     /// Build a new collection whose elements are the results of applying the given function
     /// to the corresponding elements of the two collections pairwise.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <param name="list1"></param>
+    /// <param name="list2"></param>
+    /// <returns></returns>
     [<CompiledName("Map2")>]
     let rec map2 (mapping : 'T1 -> 'T2 -> 'U) (list1 : LazyList<'T1>) (list2 : LazyList<'T2>) =
         // Preconditions
@@ -447,7 +519,10 @@ module LazyList =
                 consCell (mapping hd1 hd2) (map2 mapping tl1 tl2)
             | _ -> Empty
 
-    /// Applies the given function to each element of the lazy list and concatenates all of the results.
+    /// <summary>Applies the given function to each element of the lazy list and concatenates all of the results.</summary>
+    /// <param name="mapping"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Collect")>]
     let rec collect (mapping : 'T -> LazyList<'U>) (list : LazyList<'T>) : LazyList<'U> =
         // Preconditions
@@ -460,7 +535,10 @@ module LazyList =
             | Some (x, xs) ->
                 append (mapping x) (collect mapping xs)
 
-    /// Return the list which contains on demand the pair of elements of the first and second list.
+    /// <summary>Return the list which contains on demand the pair of elements of the first and second list.</summary>
+    /// <param name="list1"></param>
+    /// <param name="list2"></param>
+    /// <returns></returns>
     [<CompiledName("Zip")>]
     let rec zip (list1 : LazyList<'T1>) (list2 : LazyList<'T2>) =
         // Preconditions
@@ -473,7 +551,9 @@ module LazyList =
                 consCell (hd1, hd2) (zip tl1 tl2)
             | _ -> Empty
 
-    /// Splits a lazy list of pairs into a pair of lazy lists.
+    /// <summary>Splits a lazy list of pairs into a pair of lazy lists.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Unzip")>]
     let unzip (list : LazyList<'T1 * 'T2>) : LazyList<'T1> * LazyList<'T2> =
         // Preconditions
@@ -486,6 +566,9 @@ module LazyList =
     /// Return a new collection which on consumption will consist of only the
     /// elements of the collection for which the given predicate returns <c>true</c>.
     /// </summary>
+    /// <param name="predicate"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Filter")>]
     let rec filter predicate (list : LazyList<'T>) =
         // Preconditions
@@ -504,8 +587,14 @@ module LazyList =
             else
                 filterCell predicate tl
 
+    /// <summary>
     /// Return a new list consisting of the results of applying the
     /// given accumulating function to successive elements of the list.
+    /// </summary>
+    /// <param name="folder"></param>
+    /// <param name="state"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Scan")>]
     let rec scan (folder : 'State -> 'T -> 'State) (state : 'State) (list : LazyList<'T>) =
         // Preconditions
@@ -520,9 +609,11 @@ module LazyList =
                 consCell state (scan folder state' tl)
 
     /// <summary>
-    /// Return the list which on consumption will consist of
-    /// at most '<paramref name="count"/>' elements of the input list.
+    /// Return the list which on consumption will consist of at most '<paramref name="count"/>' elements of the input list.
     /// </summary>
+    /// <param name="count"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Take")>]
     let rec take count (list : LazyList<'T>) =
         // Preconditions
@@ -553,9 +644,11 @@ module LazyList =
                 invalidArg "count" msg
 
     /// <summary>
-    /// Return the list which on consumption will skip the first
-    /// '<paramref name="count"/>' elements of the input list.
+    /// Return the list which on consumption will skip the first '<paramref name="count"/>' elements of the input list.
     /// </summary>
+    /// <param name="count"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Skip")>]
     let skip count (list : LazyList<'T>) =
         // Preconditions
@@ -566,7 +659,10 @@ module LazyList =
         LazyList<_>.CreateLazy <| fun () ->
             skipCell count list
 
-    /// Apply the given function to each element of the collection.
+    /// <summary>Apply the given function to each element of the collection.</summary>
+    /// <param name="action"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("Iterate")>]
     let rec iter (action : 'T -> unit) (list : LazyList<'T>) =
         // Preconditions
@@ -589,7 +685,9 @@ module LazyList =
                e.Dispose ()
                Empty
 
-    /// Build a LazyList from the given sequence of elements.
+    /// <summary>Build a <see cref="LazyList`1"/> from the given sequence of elements.</summary>
+    /// <param name="sequence"></param>
+    /// <returns></returns>
     [<CompiledName("OfSeq")>]
     let ofSeq (sequence : seq<'T>) =
         // Preconditions
@@ -598,7 +696,9 @@ module LazyList =
         sequence.GetEnumerator ()
         |> ofFreshIEnumerator
 
-    /// Create a LazyList containing the elements of the given list.
+    /// <summary>Create a <see cref="LazyList`1"/> containing the elements of the given list.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("OfList")>]
     let rec ofList (list : 'T list) =
         // Preconditions
@@ -620,7 +720,9 @@ module LazyList =
                 copyFrom (index + 1) array
                 |> consCell array.[index]
 
-    /// Create a LazyList containing the elements of the given array.
+    /// <summary>Create a <see cref="LazyList`1"/> containing the elements of the given array.</summary>
+    /// <param name="array"></param>
+    /// <returns></returns>
     [<CompiledName("OfArray")>]
     let ofArray (array : 'T[]) =
         // Preconditions
@@ -628,7 +730,9 @@ module LazyList =
 
         copyFrom 0 array
 
-    /// Create a LazyList containing the elements of the given vector.
+    /// <summary>Create a <see cref="LazyList`1"/> containing the elements of the given vector.</summary>
+    /// <param name="vector"></param>
+    /// <returns></returns>
     [<CompiledName("OfVector")>]
     let ofVector (vector : vector<'T>) =
         // Preconditions
@@ -636,7 +740,9 @@ module LazyList =
 
         copyFrom 0 vector.Elements
 
-    /// Return a view of the collection as an enumerable object.
+    /// <summary>Return a view of the collection as an enumerable object.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("ToSeq")>]
     let inline toSeq (list : LazyList<'T>) =
         // Preconditions
@@ -644,8 +750,10 @@ module LazyList =
 
         list.ToSeq ()
 
-    /// Build a non-lazy list from the given collection. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
+    /// <summary>Build a non-lazy list from the given collection.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>This function will eagerly evaluate the entire list (and thus may not terminate).</remarks>
     [<CompiledName("ToList")>]
     let toList (list : LazyList<'T>) =
         // Preconditions
@@ -659,8 +767,10 @@ module LazyList =
                 loop (hd :: acc) tl
         loop [] list
 
-    /// Build an array from the given LazyList. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
+    /// <summary>Build an array from the given <see cref="LazyList`1"/>.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>This function will eagerly evaluate the entire list (and thus may not terminate).</remarks>
     [<CompiledName("ToArray")>]
     let toArray (list : LazyList<'T>) =
         // Preconditions
@@ -671,8 +781,10 @@ module LazyList =
         iter elements.Add list
         ResizeArray.toArray elements
 
-    /// Build a vector from the given LazyList. This function will eagerly
-    /// evaluate the entire list (and thus may not terminate).
+    /// <summary>Build a vector from the given <see cref="LazyList`1"/>.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    /// <remarks>This function will eagerly evaluate the entire list (and thus may not terminate).</remarks>
     [<CompiledName("ToVector")>]
     let toVector (list : LazyList<'T>) =
         // Preconditions
@@ -684,13 +796,9 @@ module LazyList =
         ResizeArray.toArray elements
         |> vector.UnsafeCreate
 
-    /// <summary>
-    /// Returns a LazyList that when enumerated returns at most N elements.
-    /// </summary>
+    /// <summary>Returns a LazyList that when enumerated returns at most N elements.</summary>
     /// <param name="count">The maximum number of items to enumerate.</param>
-    /// <returns>
-    /// The resulting LazyList&lt;'T&gt;.
-    /// </returns>
+    /// <returns>The resulting <see cref="LazyList`1"/>.</returns>
     [<CompiledName("Truncate")>]
     let truncate count (list : LazyList<'T>) =
         // Preconditions
@@ -710,7 +818,10 @@ module LazyList =
 
 
 type LazyList<'T> with
-    /// Appends the second LazyList to the end of the first.
+    /// <summary>Appends the second <see cref="LazyList`1"/> to the end of the first.</summary>
+    /// <param name="list1"></param>
+    /// <param name="list2"></param>
+    /// <returns></returns>
     static member op_PlusPlus (list1 : LazyList<'T>, list2 : LazyList<'T>) : LazyList<'T> =
         // Preconditions
         checkNonNull "list1" list1
