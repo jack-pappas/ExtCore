@@ -22,8 +22,155 @@ open NUnit.Framework
 //open FsCheck
 
 
-(* TODO :   Implement unit tests for the methods/properties of the substring type; these should
-            include equality/comparison tests and tests for interfaces implemented by substring. *)
+/// Tests for the properties/methods of the substring type.
+module SubstringType =
+    let [<Literal>] alphabet = "abcdefghijklmnopqrstuvwxyz"
+    let [<Literal>] abcd = "abcababcdabcaba"
+
+    [<Test>]
+    let IsEmpty () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let Item () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    (* Contains empty string. *)
+    [<TestCase("", "", ExpectedResult = true)>]
+    [<TestCase(alphabet, "", ExpectedResult = true)>]
+
+    (* Test single-character strings near edges of substring. *)
+    [<TestCase(alphabet, "a", ExpectedResult = true)>]
+    [<TestCase(alphabet, "b", ExpectedResult = true)>]
+    [<TestCase(alphabet, "z", ExpectedResult = true)>]
+    [<TestCase(alphabet, "Z", ExpectedResult = false)>]
+
+    (* Test strings which occur zero or one time in a string. *)
+    [<TestCase(alphabet, "abcd", ExpectedResult = true)>]
+    [<TestCase(alphabet, "abce", ExpectedResult = false)>]
+    [<TestCase(alphabet, "bcde", ExpectedResult = true)>]
+    [<TestCase(alphabet, "bcdf", ExpectedResult = false)>]
+    [<TestCase(alphabet, "wxyz", ExpectedResult = true)>]
+    [<TestCase(alphabet, "txyz", ExpectedResult = false)>]
+    [<TestCase(alphabet, "vwxy", ExpectedResult = true)>]
+    [<TestCase(alphabet, "twxy", ExpectedResult = false)>]
+
+    (* Test strings which occur zero or multiple times in a string. *)
+    [<TestCase(abcd, "abc", ExpectedResult = true)>]
+    [<TestCase(abcd, "abe", ExpectedResult = false)>]
+    [<TestCase(abcd, "aba", ExpectedResult = true)>]
+    [<TestCase(abcd, "bcd", ExpectedResult = true)>]
+    [<TestCase(abcd, "bbb", ExpectedResult = false)>]
+
+    (* Test substrings longer than the input string. *)
+    [<TestCase("abcdef", "mnopqrs", ExpectedResult = false)>]
+    [<TestCase("abcdef", "abcdefg", ExpectedResult = false)>]
+    [<TestCase("abcdef", "bcdefgh", ExpectedResult = false)>]
+
+    (* Test substrings with the same length as the input string. *)
+    [<TestCase("abcdef", "abcdef", ExpectedResult = true)>]
+    [<TestCase("abcdef", "abcabc", ExpectedResult = false)>]
+    [<TestCase("abcdef", "mnopqr", ExpectedResult = false)>]
+    let Contains_String (baseString : string, value : string) : bool =
+        substring(baseString).Contains value
+
+    [<Test>]
+    (* Contains empty string. *)
+//    [<TestCase("", "", ExpectedResult = true)>]
+//    [<TestCase(alphabet, "", ExpectedResult = true)>]
+
+    (* Test single-character strings near edges of substring. *)
+//    [<TestCase(alphabet, "a", ExpectedResult = true)>]
+//    [<TestCase(alphabet, "b", ExpectedResult = true)>]
+//    [<TestCase(alphabet, "z", ExpectedResult = true)>]
+//    [<TestCase(alphabet, "Z", ExpectedResult = false)>]
+
+    (* Test strings which occur zero or one time in a string. *)
+    [<TestCase(alphabet, 0, 26, alphabet, 0, 4, ExpectedResult = true)>]
+    [<TestCase(alphabet, 0, 26, "abce", 0, 4, ExpectedResult = false)>]
+    [<TestCase(alphabet, 0, 26, alphabet, 1, 20, ExpectedResult = true)>]
+    [<TestCase(alphabet, 0, 26, "bcdf", 0, 4, ExpectedResult = false)>]
+    [<TestCase(alphabet, 0, 26, alphabet, 22, 4, ExpectedResult = true)>]
+    [<TestCase(alphabet, 0, 26, "txyz", 0, 4, ExpectedResult = false)>]
+    [<TestCase(alphabet, 0, 26, alphabet, 20, 5, ExpectedResult = true)>]
+    [<TestCase(alphabet, 0, 26, "twxy", 0, 4, ExpectedResult = false)>]
+    [<TestCase(alphabet, 0, 26, "twxy", 1, 3, ExpectedResult = true)>]
+
+    (* Test strings which occur zero or multiple times in a string. *)
+//    [<TestCase(abcd, "abc", ExpectedResult = true)>]
+//    [<TestCase(abcd, "abe", ExpectedResult = false)>]
+//    [<TestCase(abcd, "aba", ExpectedResult = true)>]
+//    [<TestCase(abcd, "bcd", ExpectedResult = true)>]
+//    [<TestCase(abcd, "bbb", ExpectedResult = false)>]
+
+    (* Test substrings longer than the input string. *)
+//    [<TestCase("abcdef", "mnopqrs", ExpectedResult = false)>]
+//    [<TestCase("abcdef", "abcdefg", ExpectedResult = false)>]
+//    [<TestCase("abcdef", "bcdefgh", ExpectedResult = false)>]
+
+    (* Test substrings with the same length as the input string. *)
+//    [<TestCase("abcdef", "abcdef", ExpectedResult = true)>]
+//    [<TestCase("abcdef", "abcabc", ExpectedResult = false)>]
+//    [<TestCase("abcdef", "mnopqr", ExpectedResult = false)>]
+    let Contains_Substring (baseString, baseOffset, baseLength, valueString, valueOffset, valueLength) : bool =
+        substring(baseString, baseOffset, baseLength).Contains(substring(valueString, valueOffset, valueLength))
+
+    [<Test>]
+    let EndsWith_Substring () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let EndsWith_String () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let GetSlice () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let IndexOf () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let LastIndexOf () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let StartsWith_Substring () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let StartsWith_String () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ToCharArray () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ToString () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``IEquatable<substring>.Equals`` () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``IComparable.CompareTo`` () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``IComparable<substring>.CompareTo`` () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``IEnumerable.GetEnumerator`` () =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``IEnumerable<char>.GetEnumerator`` () =
+        Assert.Ignore "Test not yet implemented."
 
 
 /// Tests for the ExtCore.Substring module.

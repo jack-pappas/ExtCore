@@ -87,31 +87,79 @@ type substring =
             // Return the specified character from the underlying string.
             this.String.[this.Offset + index]
 
-    /// <summary>Determines whether the beginning of this substring value matches the specified string.</summary>
-    /// <param name="value">The string to compare.</param>
+    /// <summary></summary>
+    /// <param name="value"></param>
     /// <returns></returns>
-    member this.StartsWith (value : string) : bool =
+    member this.Contains (value : substring) : bool =
+        // Preconditions
+        // TODO
+
+        // If 'value' is empty, return true because any substring
+        // (even an empty one) always contains an empty substring.
+        if value.Length = 0 then true
+        else
+            // Compare the length of 'value' with the length of this substring.
+            match compare this.Length value.Length with
+            | Less ->
+                // Return false, because this substring cannot contain a substring longer than itself.
+                false
+
+            | Equal ->
+                // If the substrings have equal lengths, compare the contents of the two substrings for structural equality.
+                substring.CompareOrdinal (this, value) = 0
+
+            | Greater ->
+                // Does the beginning of this substring match 'value'?
+                if this.StartsWith value then true
+                else
+                    // Try to find the next instance of the first character of 'value' within the remainder of this substring.
+                    // If found, continue the search for a matching substring instance at that point.
+                    match this.String.IndexOf (value.[0], this.Offset + 1) with
+                    | -1 ->
+                        // No more matches are possible, so this string does not contain 'value'.
+                        false
+                    | nextIndexAbsolute ->
+                        /// A substring of this substring, beginning at the next instance of the first character in 'value'.
+                        let next = substring (this.String, nextIndexAbsolute, this.Length - (nextIndexAbsolute - this.Offset))
+
+                        // Continue searching (recursively) for an instance of 'value'.
+                        next.Contains value
+
+    /// <summary></summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    member this.Contains (value : string) : bool =
         // Preconditions
         checkNonNull "value" value
 
-        let valueLen = String.length value
+        // Create a substring from the string and call the substring-based implementation.
+        this.Contains (substring (value))
+
+    /// <summary>Determines whether the end of this substring value matches the specified substring.</summary>
+    /// <param name="value">The substring to compare.</param>
+    /// <returns></returns>
+    member this.EndsWith (value : substring) : bool =
+        // Preconditions
+        // TODO
         
         // If the value string is larger than this substring, the substring cannot start with the value.
-        if valueLen > this.Length then false
+        if value.Length > this.Length then false
         else
-            let comparisonLength = min valueLen this.Length
+            let comparisonLength = min value.Length this.Length
+            let thisStartOffset = this.Length - comparisonLength
+            let valueStartOffset = value.Length - comparisonLength
 
 #if INVARIANT_CULTURE_STRING_COMPARISON
             System.String.Compare (
-                this.String, this.Offset,
-                value, 0,
+                this.String, thisStartOffset,
+                value, valueStartOffset,
                 comparisonLength,
                 false,
                 CultureInfo.InvariantCulture) = 0
 #else
             System.String.CompareOrdinal (
-                this.String, this.Offset,
-                value, 0,
+                this.String, thisStartOffset,
+                value.String, valueStartOffset,
                 comparisonLength) = 0
 #endif
 
@@ -146,26 +194,25 @@ type substring =
 #endif
 
     /// <inherit />
-    override this.ToString () =
-        // OPTIMIZATION : Immediately return if this is an empty substring;
-        // or, if the substring covers the entire string, just return the string.
-        if this.Length = 0 then
-            System.String.Empty
-        elif this.Offset = 0 && this.Length = this.String.Length then
-            this.String
+    override this.Equals other =
+        match other with
+        | :? substring as other ->
+            substring.CompareOrdinal (this, other) = 0
+        | _ ->
+            invalidArg "other" "The value is not a substring."
+
+    /// <inherit />
+    override this.GetHashCode () =
+        if isNull this.String then 0
         else
-            this.String.Substring (this.Offset, this.Length)
+            // OPTIMIZE : This needs to be re-implemented ASAP so it directly computes the
+            // hash value of the substring (i.e., without creating the substring).
+            this.ToString().GetHashCode ()
 
-    /// Copies the characters in this substring into a Unicode character array.
-    member this.ToCharArray () : char[] =
-        this.String.ToCharArray (this.Offset, this.Length)
-
-    /// Copies the characters in this substring into a Unicode character array.
-    [<Obsolete("This method is deprecated. Please use the new ToCharArray() method instead.")>]
-    member this.ToArray () : char[] =
-        this.ToCharArray ()
-
-    /// Implements F# slicing syntax for substrings.
+    /// <summary>Implements F# slicing syntax for substrings.</summary>
+    /// <param name="startIndex"></param>
+    /// <param name="endIndex"></param>
+    /// <returns></returns>
     member this.GetSlice (startIndex, endIndex) : substring =
         let len = this.Length
         let startIndex = defaultArg startIndex 0
@@ -191,12 +238,157 @@ type substring =
             let sliceLength = this.Offset + ((endIndex - startIndex) + 1)
             substring (this.String, startOffset, sliceLength)
 
-    /// Structural comparison on substrings.
-    static member private Compare (x : substring, y : substring) =
+    /// <summary>
+    /// Reports the zero-based index of the first occurrence of the specified Unicode character in this substring.
+    /// </summary>
+    /// <param name="value">A Unicode character to seek.</param>
+    /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+    member this.IndexOf (value : char) : int =
+        this.IndexOf (value, 0)
+
+    /// <summary>
+    /// Reports the zero-based index of the first occurrence of the specified Unicode character in this substring.
+    /// The search starts at a specified character position.
+    /// </summary>
+    /// <param name="value">A Unicode character to seek.</param>
+    /// <param name="startIndex">The search starting position.</param>
+    /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+    member this.IndexOf (value : char, startIndex : int) : int =
+        // Preconditions
+        if startIndex < 0 then
+            argOutOfRange "startIndex" "The start index is negative."
+        elif startIndex >= this.Length then
+            argOutOfRange "startIndex" "The start index is past the end of the substring."
+
+        // OPTIMIZATION : If this is an empty substring, we can return immediately.
+        if this.Length = 0 then -1
+        else
+            match this.String.IndexOf (value, this.Offset + startIndex, this.Length - startIndex) with
+            | -1 -> -1
+            | baseIndex ->
+                baseIndex - this.Offset
+
+    /// <summary>
+    /// Reports the zero-based index position of the last occurrence of a specified Unicode character within this instance.
+    /// </summary>
+    /// <param name="value">The Unicode character to seek.</param>
+    /// <returns>
+    /// The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not found
+    /// or if the current instance is an empty substring.
+    /// </returns>
+    member this.LastIndexOf (value : char) : int =
+        this.LastIndexOf (value, 0)
+
+    /// <summary>
+    /// Reports the zero-based index position of the last occurrence of a specified Unicode character within this instance.
+    /// The search starts at a specified character position and proceeds backward toward the beginning of the substring.
+    /// </summary>
+    /// <param name="value">The Unicode character to seek.</param>
+    /// <param name="startIndex">
+    /// The starting position of the search. The search proceeds from <paramref name="startIndex"/> toward the beginning of this instance.
+    /// </param>
+    /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+    member this.LastIndexOf (value : char, startIndex : int) : int =
+        // Preconditions
+        if startIndex < 0 then
+            argOutOfRange "startIndex" "The start index is negative."
+        elif startIndex >= this.Length then
+            argOutOfRange "startIndex" "The start index is past the end of the substring."
+
+        // OPTIMIZATION : If this is an empty substring, we can return immediately.
+        if this.Length = 0 then -1
+        else
+            match this.String.LastIndexOf (value, this.Offset + startIndex, this.Length - startIndex) with
+            | -1 -> -1
+            | baseIndex ->
+                baseIndex - this.Offset
+
+    /// <summary>Determines whether the beginning of this substring value matches the specified substring.</summary>
+    /// <param name="value">The substring to compare.</param>
+    /// <returns></returns>
+    member this.StartsWith (value : substring) : bool =
+        // Preconditions
+        // TODO
+        
+        // If the value string is larger than this substring, the substring cannot start with the value.
+        if value.Length > this.Length then false
+        else
+            let comparisonLength = min value.Length this.Length
+
+#if INVARIANT_CULTURE_STRING_COMPARISON
+            System.String.Compare (
+                this.String, this.Offset,
+                value, 0,
+                comparisonLength,
+                false,
+                CultureInfo.InvariantCulture) = 0
+#else
+            System.String.CompareOrdinal (
+                this.String, this.Offset,
+                value.String, value.Offset,
+                comparisonLength) = 0
+#endif
+
+    /// <summary>Determines whether the beginning of this substring value matches the specified string.</summary>
+    /// <param name="value">The string to compare.</param>
+    /// <returns></returns>
+    member this.StartsWith (value : string) : bool =
+        // Preconditions
+        checkNonNull "value" value
+
+        let valueLen = String.length value
+        
+        // If the value string is larger than this substring, the substring cannot start with the value.
+        if valueLen > this.Length then false
+        else
+            let comparisonLength = min valueLen this.Length
+
+#if INVARIANT_CULTURE_STRING_COMPARISON
+            System.String.Compare (
+                this.String, this.Offset,
+                value, 0,
+                comparisonLength,
+                false,
+                CultureInfo.InvariantCulture) = 0
+#else
+            System.String.CompareOrdinal (
+                this.String, this.Offset,
+                value, 0,
+                comparisonLength) = 0
+#endif
+
+    /// <summary>Copies the characters in this substring into a Unicode character array.</summary>
+    /// <returns></returns>
+    member this.ToCharArray () : char[] =
+        this.String.ToCharArray (this.Offset, this.Length)
+
+    /// <inherit />
+    override this.ToString () =
+        // OPTIMIZATION : Immediately return if this is an empty substring;
+        // or, if the substring covers the entire string, just return the string.
+        if this.Length = 0 then
+            System.String.Empty
+        elif this.Offset = 0 && this.Length = this.String.Length then
+            this.String
+        else
+            this.String.Substring (this.Offset, this.Length)
+
+    /// <summary>
+    /// Compares two specified <see cref="substring"/> objects by evaluating the numeric values of the corresponding
+    /// <see cref="Char"/> objects in each substring.
+    /// </summary>
+    /// <param name="strA">The first string to compare.</param>
+    /// <param name="strB">The second string to compare.</param>
+    /// <returns>An integer that indicates the lexical relationship between the two comparands.</returns>
+    static member CompareOrdinal (strA : substring, strB : substring) =
+        // If both substrings are empty they are considered equal, regardless of their offset or underlying string.
+        if strA.Length = 0 && strB.Length = 0 then 0
+
         // OPTIMIZATION : If the substrings have the same (identical) underlying string
         // and offset, the comparison value will depend only on the length of the substrings.
-        if x.String == y.String && x.Offset = y.Offset then
-            compare x.Length y.Length
+        elif strA.String == strB.String && strA.Offset = strB.Offset then
+            compare strA.Length strB.Length
+
         else
             (* Structural comparison on substrings -- this uses the same comparison
                technique as the structural comparison on strings in FSharp.Core. *)
@@ -204,54 +396,58 @@ type substring =
             // NOTE: we don't have to null check here because System.String.Compare
             // gives reliable results on null values.
             System.String.Compare (
-                x.String, x.Offset,
-                y.String, y.Offset,
-                min x.Length y.Length,
+                strA.String, strA.Offset,
+                strB.String, strB.Offset,
+                min strA.Length strB.Length,
                 false,
                 CultureInfo.InvariantCulture)
 #else
             // NOTE: we don't have to null check here because System.String.CompareOrdinal
             // gives reliable results on null values.
             System.String.CompareOrdinal (
-                x.String, x.Offset,
-                y.String, y.Offset,
-                min x.Length y.Length)
+                strA.String, strA.Offset,
+                strB.String, strB.Offset,
+                min strA.Length strB.Length)
 #endif
-
-    /// <inherit />
-    override this.GetHashCode () =
-        if isNull this.String then 0
-        else
-            // OPTIMIZE : This needs to be re-implemented ASAP so it directly computes the
-            // hash value of the substring (i.e., without creating the substring).
-            this.ToString().GetHashCode ()
-
-    /// <inherit />
-    override this.Equals other =
-        match other with
-        | :? substring as other ->
-            substring.Compare (this, other) = 0
-        | _ ->
-            invalidArg "other" "The value is not a substring."
 
     interface IEquatable<substring> with
         /// <inherit />
         member this.Equals other =
-            substring.Compare (this, other) = 0
+            substring.CompareOrdinal (this, other) = 0
 
     interface IComparable with
         /// <inherit />
         member this.CompareTo other =
             match other with
             | :? substring as other ->
-                substring.Compare (this, other)
+                substring.CompareOrdinal (this, other)
             | _ ->
                 invalidArg "other" "The value is not a substring."
 
     interface IComparable<substring> with
         /// <inherit />
         member this.CompareTo other =
-            substring.Compare (this, other)
+            substring.CompareOrdinal (this, other)
+
+    interface System.Collections.IEnumerable with
+        /// <inherit />
+        member this.GetEnumerator () =
+            let substringSeq =
+                let thisLocal = this
+                seq {
+                for i in 0 .. thisLocal.Length - 1 do
+                    yield thisLocal.String.[thisLocal.Offset + i] }
+            substringSeq.GetEnumerator () :> System.Collections.IEnumerator
+
+    interface System.Collections.Generic.IEnumerable<char> with
+        /// <inherit />
+        member this.GetEnumerator () =
+            let substringSeq =
+                let thisLocal = this
+                seq {
+                for i in 0 .. thisLocal.Length - 1 do
+                    yield thisLocal.String.[thisLocal.Offset + i] }
+            substringSeq.GetEnumerator ()
 
 
 /// Functional operators related to substrings.
@@ -337,9 +533,9 @@ module Substring =
         substr.EndsWith value
 
     /// <summary>
-    /// Extracts the first (left-most) character from a substring, returning a Some value
-    /// containing the character and the remaining substring. Returns None if the given
-    /// substring is empty.
+    /// Extracts the first (left-most) character from a substring, returning a <c>Some</c> value
+    /// containing the character and the remaining substring.
+    /// Returns <c>None</c> if the given substring is empty.
     /// </summary>
     /// <param name="substr"></param>
     /// <returns></returns>
@@ -394,84 +590,64 @@ module Substring =
             sb.ToString ()
 
     /// <summary>Returns the index of the first occurrence of a specified character within a substring.</summary>
-    /// <param name="c"></param>
+    /// <param name="value"></param>
     /// <param name="substr"></param>
     /// <returns></returns>
     [<CompiledName("TryFindIndexOf")>]
-    let tryFindIndexOf (c : char) (substr : substring) =
+    let tryFindIndexOf (value : char) (substr : substring) =
         // Preconditions
         // (None)
 
-        // OPTIMIZATION : Return immediately if the substring is empty.
-        match substr.Length with
-        | 0 -> None
-        | len ->
-            match substr.String.IndexOf (c, substr.Offset, len) with
-            | -1 -> None
-            | idx -> Some idx
+        match substr.IndexOf value with
+        | -1 -> None
+        | idx -> Some idx
 
     /// <summary>Returns the index of the first occurrence of a specified character within a substring.</summary>
-    /// <param name="c"></param>
+    /// <param name="value"></param>
     /// <param name="substr"></param>
     /// <returns></returns>
     [<CompiledName("FindIndexOf")>]
-    let findIndexOf (c : char) (substr : substring) =
+    let findIndexOf (value : char) (substr : substring) =
         // Preconditions
         // (None)
 
-        // OPTIMIZATION : Return immediately if the substring is empty.
-        match substr.Length with
-        | 0 ->
+        match substr.IndexOf value with
+        | -1 ->
             // TODO : Return a better error message.
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
-        | len ->
-            match substr.String.IndexOf (c, substr.Offset, len) with
-            | -1 ->
-                // TODO : Return a better error message.
-                //keyNotFound ""
-                raise <| System.Collections.Generic.KeyNotFoundException ()
-            | idx -> idx
+
+        | idx -> idx
 
     /// <summary>Returns the index of the last occurrence of a specified character within a substring.</summary>
-    /// <param name="c"></param>
+    /// <param name="value"></param>
     /// <param name="substr"></param>
     /// <returns></returns>
     [<CompiledName("TryFindIndexOfBack")>]
-    let tryFindIndexOfBack (c : char) (substr : substring) =
+    let tryFindIndexOfBack (value : char) (substr : substring) =
         // Preconditions
         // (None)
 
-        // OPTIMIZATION : Return immediately if the substring is empty.
-        match substr.Length with
-        | 0 -> None
-        | len ->
-            match substr.String.LastIndexOf (c, substr.Offset, len) with
-            | -1 -> None
-            | idx -> Some idx
+        match substr.LastIndexOf value with
+        | -1 -> None
+        | idx -> Some idx
 
     /// <summary>Returns the index of the last occurrence of a specified character within a substring.</summary>
-    /// <param name="c"></param>
+    /// <param name="value"></param>
     /// <param name="substr"></param>
     /// <returns></returns>
     [<CompiledName("FindIndexOfBack")>]
-    let findIndexOfBack (c : char) (substr : substring) =
+    let findIndexOfBack (value : char) (substr : substring) =
         // Preconditions
         // (None)
 
-        // OPTIMIZATION : Return immediately if the substring is empty.
-        match substr.Length with
-        | 0 ->
+        match substr.LastIndexOf value with
+        | -1 ->
             // TODO : Return a better error message.
             //keyNotFound ""
             raise <| System.Collections.Generic.KeyNotFoundException ()
-        | len ->
-            match substr.String.LastIndexOf (c, substr.Offset, len) with
-            | -1 ->
-                // TODO : Return a better error message.
-                //keyNotFound ""
-                raise <| System.Collections.Generic.KeyNotFoundException ()
-            | idx -> idx
+
+        | idx -> idx
 
     /// <summary>Returns the index of the first character in the substring which satisfies the given predicate.</summary>
     /// <param name="predicate"></param>
@@ -488,14 +664,14 @@ module Substring =
         let mutable foundMatch = false
 
         while index < len && not foundMatch do
-            foundMatch <- predicate substr.[index]
-            index <- index + 1
+            if predicate substr.[index] then
+                foundMatch <- true
+            else
+                index <- index + 1
 
         // Return the index of the matching character, if any.
         if foundMatch then
-            // Subtract one from the index since it was incremented after finding
-            // the match but before the loop terminated.
-            Some (index - 1)
+            Some index
         else None
 
     /// <summary>Returns the index of the first character in the substring which satisfies the given predicate.</summary>
@@ -528,14 +704,14 @@ module Substring =
         let mutable foundMatch = false
 
         while index >= 0 && not foundMatch do
-            foundMatch <- predicate substr.[index]
-            index <- index - 1
+            if predicate substr.[index] then
+                foundMatch <- true
+            else
+                index <- index - 1
 
         // Return the index of the matching character, if any.
         if foundMatch then
-            // Increment the index since it was decremented after finding
-            // the match but before the loop terminated.
-            Some (index + 1)
+            Some index
         else None
 
     /// <summary>Returns the index of the last character in the substring which satisfies the given predicate.</summary>
@@ -571,14 +747,14 @@ module Substring =
         let mutable foundMatch = false
 
         while index < len && not foundMatch do
-            foundMatch <- predicate substr.[index]
-            index <- index + 1
+            if predicate substr.[index] then
+                foundMatch <- true
+            else
+                index <- index + 1
 
         // Return the matching character, if any.
         if foundMatch then
-            // Subtract one from the index since it was incremented after finding
-            // the match but before the loop terminated.
-            Some substr.[index - 1]
+            Some substr.[index]
         else None
 
     /// <summary>Returns the first character in the substring which satisfies the given predicate.</summary>
@@ -617,8 +793,11 @@ module Substring =
         let mutable index = 0
 
         while index < len && Option.isNone picked do
-            picked <- picker substr.[index]
-            index <- index + 1
+            match picker substr.[index] with
+            | None ->
+                index <- index + 1
+            | Some _ as x ->
+                picked <- x
 
         // Return the picked value, if any.
         picked

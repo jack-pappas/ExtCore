@@ -153,6 +153,8 @@ Substring
 
 - Implement a ``substring``-compatible version of ``Regex.Matches`` as an extension method on ``Regex``.
 
+- Implement the IList<char> interface for substring.
+
 
 Substring.Split
 ---------------
