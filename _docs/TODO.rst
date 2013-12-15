@@ -178,7 +178,6 @@ Collections and Data Structures
 
 Array
 -----
-- ``exactlyOne``
 - ``scan2``
 - ``scanBack2``
 

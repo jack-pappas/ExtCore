@@ -40,6 +40,23 @@ let inline rawLength (arr : 'T[]) : unativeint =
 let inline singleton (value : 'T) =
     [| value |]
 
+/// <summary>Returns the only element of the array.</summary>
+/// <param name="array">The input array.</param>
+/// <returns>The only element of the array.</returns>
+/// <exception cref="System.ArgumentNullException">Thrown when the input array is null.</exception>
+/// <exception cref="System.ArgumentException">Thrown when the input array does not have precisely one element.</exception>
+[<CompiledName("ExactlyOne")>]
+let exactlyOne (array : 'T[]) : 'T =
+    // Preconditions
+    checkNonNull "array" array
+
+    match array with
+    | [| |] ->
+        invalidArg "array" "The array is empty."
+    | [| x |] -> x
+    | _ ->
+        invalidArg "array" "The array contains more than one (1) element."
+    
 /// Builds an array that contains the elements of the set in order.
 [<CompiledName("OfSet")>]
 let inline ofSet (set : Set<'T>) : 'T[] =
@@ -51,7 +68,7 @@ let inline toSet (array : 'T[]) : Set<'T> =
     Set.ofArray array
 
 /// Builds a vector from the given array.
-[<CompiledName("Readonly")>]
+[<CompiledName("ToVector")>]
 let inline toVector (arr : 'T[]) : vector<'T> =
     ExtCore.vector.Create arr
 
@@ -687,3 +704,53 @@ let unfoldBack (generator : 'State -> ('T * 'State) option) (state : 'State) : '
     System.Array.Reverse resultArray
     resultArray
     
+//
+module Parallel =
+    open System
+    open System.Threading
+    open System.Threading.Tasks
+
+    //
+    [<CompiledName("MapInPlace")>]
+    let mapInPlace (mapping : 'T -> 'T) (array : 'T[]) : unit =
+        // Preconditions
+        checkNonNull "array" array
+
+        Parallel.For (0, array.Length, fun i ->
+            array.[i] <- mapping array.[i])
+        |> ignore
+
+    //
+    [<CompiledName("MapIndexedInPlace")>]
+    let mapiInPlace (mapping : int -> 'T -> 'T) (array : 'T[]) : unit =
+        // Preconditions
+        checkNonNull "array" array
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        Parallel.For (0, array.Length, fun i ->
+            array.[i] <- mapping.Invoke (i, array.[i]))
+        |> ignore
+
+    //
+    [<CompiledName("CountWith")>]
+    let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
+        // Preconditions
+        checkNonNull "array" array
+
+        let matchCount = ref 0
+
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> 0),
+            System.Func<_,_,_,_> (fun i loopState localMatchCount ->
+                if predicate array.[i] then
+                    localMatchCount + 1
+                else localMatchCount),
+            System.Action<_> (fun localMatchCount ->
+                Interlocked.Add (matchCount, localMatchCount)
+                |> ignore)
+            ) |> ignore
+
+        // Return the number of matching elements.
+        !matchCount
+

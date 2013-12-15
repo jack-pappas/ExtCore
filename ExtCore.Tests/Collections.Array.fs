@@ -25,6 +25,10 @@ open NUnit.Framework
 
 
 [<Test>]
+let exactlyOne () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
 let projectValues () : unit =
     Array.empty
     |> Array.projectValues ignore
@@ -535,4 +539,21 @@ let unfoldBack () : unit =
         | n ->
             Some (n.ToString(), n - 1))
     |> Collection.assertEqual (Array.ofList ["1"; "2"; "3"; "4"; "5"])
+
+
+module Parallel =
+    //
+    [<Test>]
+    let mapInPlace () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    //
+    [<Test>]
+    let mapiInPlace () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    //
+    [<Test>]
+    let countWith () : unit =
+        Assert.Ignore "Test not yet implemented."
 
