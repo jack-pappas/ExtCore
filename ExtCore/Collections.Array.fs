@@ -90,7 +90,7 @@ let inline toVector (array : 'T[]) : vector<'T> =
 /// <param name="array"></param>
 /// <returns></returns>
 [<CompiledName("ProjectValues")>]
-let projectValues (projection : 'Key -> 'U) (array : 'Key[]) =
+let projectValues (projection : 'Key -> 'T) (array : 'Key[]) =
     // Preconditions
     checkNonNull "array" array
 
@@ -173,7 +173,7 @@ let expandRight count (array : 'T[]) : 'T[] =
     else
         // Create the new "expanded" array. Copy the elements from the original array
         // into the "left" side of the new array, then return the expanded array.
-        let expandedArr = Array.zeroCreate (array.Length + count)        
+        let expandedArr = Array.zeroCreate (array.Length + count)
         Array.blit array 0 expandedArr 0 array.Length
         expandedArr
 
