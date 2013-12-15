@@ -29,9 +29,9 @@ open System.Security.Permissions
 
 
 // Version information
-[<assembly: AssemblyVersion("0.8.38")>]
-[<assembly: AssemblyFileVersion("0.8.38")>]
-[<assembly: AssemblyInformationalVersion("0.8.38")>]
+[<assembly: AssemblyVersion("0.8.39")>]
+[<assembly: AssemblyFileVersion("0.8.39")>]
+[<assembly: AssemblyInformationalVersion("0.8.39")>]
 
 // Assembly information
 [<assembly: AssemblyTitle("ExtCore")>]
