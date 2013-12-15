@@ -17,7 +17,6 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.Collections
 
 //open System.Collections
@@ -26,40 +25,34 @@ namespace ExtCore.Collections
 open ExtCore
 
 
-(* INVARIANTS                                        *)
-(*   1. length front >= length rear                  *)
-(*   2. length pending = length front - length rear  *)
-(*   3. (in the absence of insertf's)                *)
-(*      pending = nthtail (front, length rear)       *)
-/// An immutable queue representing a first-in, first-out (FIFO) collection of objects.
+/// <summary>An immutable queue representing a first-in, first-out (FIFO) collection of objects.</summary>
+/// <typeparam name="T">The type of elements in the queue.</typeparam>
 [<Sealed>]
 //[<StructuredFormatDisplay("")>]
-type Queue<'T> private
-    (front : LazyList<'T>, rear : 'T list, pending : LazyList<'T>) =
+type Queue<'T> private (front : LazyList<'T>, rear : 'T list, pending : LazyList<'T>) =
     /// The empty queue instance.
     /// This avoids creating unnecessary instances, since all empty queues are equivalent.
     static let empty : Queue<'T> =
-        Queue (
-            LazyList.empty,
-            [],
-            LazyList.empty)
+        Queue (LazyList.empty, [], LazyList.empty)
 
     /// The empty queue.
     static member Empty
         with get () = empty
 
-    /// Returns true if the given Queue is empty; otherwise, false.
+    /// <summary>Returns <c>true</c> if the given Queue is empty; otherwise, <c>false</c>.</summary>
     member __.IsEmpty
         with get () =
             (* by Invariant 1, front = empty implies rear = [] *)
             LazyList.isEmpty front
 
-    /// The number of elements in the Queue.
+    /// <summary>The number of elements in the Queue.</summary>
+    /// <returns></returns>
     member __.GetLength () =
         (* = LazyList.length front + length rear -- by Invariant 2 *)
         LazyList.length pending + 2 * List.length rear
 
-    /// Removes and returns the object at the beginning of the Queue.
+    /// <summary>Removes and returns the object at the beginning of the Queue.</summary>
+    /// <returns></returns>
     member __.Dequeue () =
         // Preconditions
         if LazyList.isEmpty front then
@@ -71,21 +64,27 @@ type Queue<'T> private
             rear,
             pending)
 
-    /// Returns a new Queue with the object added to the end of the Queue.
+    /// <summary>Returns a new Queue with the object added to the end of the Queue.</summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     member __.Enqueue value =
         Queue<_>.CreateQueue (
             front,
             value :: rear,
             pending)
 
-    /// Returns a new Queue with the object added to the front of the Queue.
+    /// <summary>Returns a new Queue with the object added to the front of the Queue.</summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     member __.EnqueueFront value =
         Queue (
             LazyList.cons value front,
             rear,
             LazyList.cons value pending)
 
-    /// Creates a Queue from the elements of a list.
+    /// <summary>Creates a Queue from the elements of a list.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     static member OfList list : Queue<'T> =
         // Preconditions
         checkNonNull "list" list
@@ -94,7 +93,9 @@ type Queue<'T> private
         ||> List.fold (fun queue el ->
             queue.Enqueue el)
 
-    /// Creates a Queue from the elements of an array.
+    /// <summary>Creates a Queue from the elements of an array.</summary>
+    /// <param name="array"></param>
+    /// <returns></returns>
     static member OfArray array : Queue<'T> =
         // Preconditions
         checkNonNull "array" array
@@ -103,7 +104,8 @@ type Queue<'T> private
         ||> Array.fold (fun queue el ->
             queue.Enqueue el)
 
-    /// Create a sequence containing the elements of the Queue in order.
+    /// <summary>Create a sequence containing the elements of the Queue in order.</summary>
+    /// <returns></returns>
     member this.ToSeq () : seq<'T> =
         // OPTIMIZATION : If the queue is empty return immediately.
         if this.IsEmpty then
@@ -115,22 +117,32 @@ type Queue<'T> private
                 else
                     Some (queue.Dequeue ()))
 
-    /// Create a list containing the elements of the Queue in order.
+    /// <summary>Create a list containing the elements of the Queue in order.</summary>
+    /// <returns></returns>
     member this.ToList () : 'T list =
         // OPTIMIZATION : If the queue is empty return immediately.
         if this.IsEmpty then
             List.empty
         else
-            let mutable resultList = []
+            // This is implemented using local mutability for maximum performance.
+            // We dequeue the items into a ResizeArray, then traverse the ResizeArray backwards
+            // to build up the resulting list.
+            let result = ResizeArray<_> ()
+
             let mutable queue = this
             while not <| queue.IsEmpty do
                 let item, queue' = queue.Dequeue ()
-                resultList <- item :: resultList
+                result.Add item
                 queue <- queue'
 
-            List.rev resultList
+            let mutable resultList = []
+            for i = result.Count - 1 downto 0 do
+                resultList <- result.[i] :: resultList
 
-    /// Create an array containing the elements of the Queue in order.
+            resultList
+
+    /// <summary>Create an array containing the elements of the Queue in order.</summary>
+    /// <returns></returns>
     member this.ToArray () : 'T[] =
         // OPTIMIZATION : If the queue is empty return immediately.
         if this.IsEmpty then
@@ -150,18 +162,15 @@ type Queue<'T> private
 //    [<ContractInvariantMethod>]
 //    member private this.ObjectInvariant () : unit =
 //        (*   1. length front >= length rear                  *)
-//        Contract.Invariant (
-//            LazyList.length front >= rear.Length)
+//        Contract.Invariant (LazyList.length front >= rear.Length)
 //        (*   2. length pending = length front - length rear  *)
-//        Contract.Invariant (
-//            LazyList.length pending = (LazyList.length front - rear.Length))
+//        Contract.Invariant (LazyList.length pending = (LazyList.length front - rear.Length))
 //        (*   3. (in the absence of insertf's)                *)
 //        (*      pending = nthtail (front, length rear)       *)
 //        // TODO : Determine the best way to implement this last invariant condition.
 //        //
 
-    /// Performs the 'rotate' operation on a Queue, given the private fields
-    /// holding the queue elements.
+    /// Performs the 'rotate' operation on a Queue, given the private fields holding the queue elements.
     static member private Rotate (xs : LazyList<'T>, ys : 'T list, rys : LazyList<'T>) =
         match ys with
         | [] ->
@@ -182,22 +191,33 @@ type Queue<'T> private
             let front = Queue<'T>.Rotate (front, rear, LazyList.empty)
             Queue (front, [], front)
         else
-            Queue (
-                front,
-                rear,
-                LazyList.tail pending)
+            Queue (front, rear, LazyList.tail pending)
+
+    interface System.Collections.IEnumerable with
+        /// <inherit />
+        member this.GetEnumerator () =
+            this.ToSeq().GetEnumerator() :> System.Collections.IEnumerator
+
+    interface System.Collections.Generic.IEnumerable<'T> with
+        /// <inherit />
+        member this.GetEnumerator () =
+            this.ToSeq().GetEnumerator()
+
 
 /// Functional operators related to the Queue type.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Queue =
     //open OptimizedClosures
 
-    /// Returns an empty queue of the given type.
+    /// <summary>Returns an empty queue of the given type.</summary>
     [<CompiledName("Empty")>]
+    [<GeneralizableValue>]
     let empty<'T> : Queue<'T> =
         Queue<'T>.Empty
 
-    /// Returns true if the given queue is empty; otherwise, false.
+    /// <summary>Returns true if the given queue is empty; otherwise, false.</summary>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("IsEmpty")>]
     let inline isEmpty (queue : Queue<'T>) =
         // Preconditions
@@ -205,7 +225,9 @@ module Queue =
 
         queue.IsEmpty
 
-    /// The number of elements in the queue.
+    /// <summary>The number of elements in the queue.</summary>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("Length")>]
     let inline length (queue : Queue<'T>) =
         // Preconditions
@@ -213,7 +235,10 @@ module Queue =
 
         queue.GetLength ()
 
-    /// Returns a new Queue with the object added to the end of the given Queue.
+    /// <summary>Returns a new Queue with the object added to the end of the given Queue.</summary>
+    /// <param name="value"></param>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("Enqueue")>]
     let inline enqueue value (queue : Queue<'T>) =
         // Preconditions
@@ -221,7 +246,10 @@ module Queue =
         
         queue.Enqueue value
 
-    /// Returns a new Queue with the object added to the front of the given Queue.
+    /// <summary>Returns a new Queue with the object added to the front of the given Queue.</summary>
+    /// <param name="value"></param>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("EnqueueFront")>]
     let inline enqueueFront value (queue : Queue<'T>) =
         // Preconditions
@@ -229,7 +257,9 @@ module Queue =
 
         queue.EnqueueFront value
 
-    /// Removes and returns the object at the beginning of the Queue.
+    /// <summary>Removes and returns the object at the beginning of the Queue.</summary>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("Dequeue")>]
     let inline dequeue (queue : Queue<'T>) =
         // Preconditions
@@ -237,19 +267,25 @@ module Queue =
 
         queue.Dequeue ()
 
-    /// Creates a Queue from the elements of a list.
+    /// <summary>Creates a Queue from the elements of a list.</summary>
+    /// <param name="list"></param>
+    /// <returns></returns>
     [<CompiledName("OfList")>]
     let inline ofList list : Queue<'T> =
         // Preconditions are checked within the method being called.
         Queue.OfList list
 
-    /// Creates a Queue from the elements of an array.
+    /// <summary>Creates a Queue from the elements of an array.</summary>
+    /// <param name="array"></param>
+    /// <returns></returns>
     [<CompiledName("OfArray")>]
     let inline ofArray array : Queue<'T> =
         // Preconditions are checked within the method being called.
         Queue.OfArray array
 
-    /// Create a sequence containing the elements of the Queue in order.
+    /// <summary>Create a sequence containing the elements of the Queue in order.</summary>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("ToSeq")>]
     let inline toSeq (queue : Queue<'T>) : seq<'T> =
         // Preconditions
@@ -257,7 +293,9 @@ module Queue =
         
         queue.ToSeq ()
 
-    /// Create a list containing the elements of the Queue in order.
+    /// <summary>Create a list containing the elements of the Queue in order.</summary>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("ToList")>]
     let inline toList (queue : Queue<'T>) : 'T list =
         // Preconditions
@@ -265,7 +303,9 @@ module Queue =
         
         queue.ToList ()
 
-    /// Create an array containing the elements of the Queue in order.
+    /// <summary>Create an array containing the elements of the Queue in order.</summary>
+    /// <param name="queue"></param>
+    /// <returns></returns>
     [<CompiledName("ToArray")>]
     let inline toArray (queue : Queue<'T>) : 'T[] =
         // Preconditions
