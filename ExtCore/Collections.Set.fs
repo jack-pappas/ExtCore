@@ -26,14 +26,18 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Creates a set with the same elements as the ArrayView.
+/// <summary>Creates a set with the same elements as the ArrayView.</summary>
+/// <param name="view"></param>
+/// <returns></returns>
 [<CompiledName("OfArrayView")>]
 let ofArrayView (view : ArrayView<'T>) : Set<'T> =
     (Set.empty, view)
     ||> ArrayView.fold (fun set el ->
         Set.add el set)
 
-/// Creates a set with the same elements as the vector.
+/// <summary>Creates a set with the same elements as the vector.</summary>
+/// <param name="vector"></param>
+/// <returns></returns>
 [<CompiledName("OfVector")>]
 let ofVector (vector : vector<'T>) : Set<'T> =
     // Preconditions
@@ -43,7 +47,9 @@ let ofVector (vector : vector<'T>) : Set<'T> =
     ||> Vector.fold (fun set el ->
         Set.add el set)
 
-/// Builds a vector that contains the elements of the set in order.
+/// <summary>Builds a vector that contains the elements of the set in order.</summary>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("ToVector")>]
 let toVector (set : Set<'T>) : vector<'T> =
     // Preconditions
@@ -51,7 +57,10 @@ let toVector (set : Set<'T>) : vector<'T> =
 
     vector.UnsafeCreate <| Set.toArray set
 
-/// Applies a function to each element of the set, in decreasing element order.
+/// <summary>Applies a function to each element of the set, in decreasing element order.</summary>
+/// <param name="action"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("IterBack")>]
 let iterBack (action : 'T -> unit) (set : Set<'T>) : unit =
     // Preconditions
@@ -63,9 +72,14 @@ let iterBack (action : 'T -> unit) (set : Set<'T>) : unit =
     ||> Set.foldBack (fun el () ->
         action el)
 
-/// Applies a function to each element of the set, threading an accumulator argument
-/// through the computation. The integer index passed to the function indicates the
-/// index of the element within the set.
+/// <summary>
+/// Applies a function to each element of the set, threading an accumulator argument through the computation.
+/// The integer index passed to the function indicates the index of the element within the set.
+/// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("FoldIndexed")>]
 let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (set : Set<'T>) : 'State =
     // Preconditions
@@ -79,7 +93,10 @@ let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (set : Set<'
         idx <- idx + 1
     state
 
-/// Applies a function to each element of the set, returning the results in an array.
+/// <summary>Applies a function to each element of the set, returning the results in an array.</summary>
+/// <param name="mapping"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("MapToArray")>]
 let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) : 'U[] =
     // Preconditions
@@ -92,7 +109,10 @@ let mapToArray (mapping : 'T -> 'U) (set : Set<'T>) : 'U[] =
         idx <- idx + 1
     results
 
-/// Creates a set given a number of items in the set and a generator function.
+/// <summary>Creates a set given a number of items in the set and a generator function.</summary>
+/// <param name="count"></param>
+/// <param name="initializer"></param>
+/// <returns></returns>
 [<CompiledName("Init")>]
 let init count (initializer : int -> 'T) : Set<'T> =
     // Preconditions
@@ -108,8 +128,9 @@ let init count (initializer : int -> 'T) : Set<'T> =
             result <- Set.add (initializer i) result
         result
 
-/// Extracts the minimum element from a set, returning the element
-/// along with the updated set.
+/// <summary>Extracts the minimum element from a set, returning the element along with the updated set.</summary>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("TryExtractMin")>]
 let tryExtractMin (set : Set<'T>) : 'T option * Set<'T> =
     // Preconditions
@@ -122,8 +143,9 @@ let tryExtractMin (set : Set<'T>) : 'T option * Set<'T> =
         let set = Set.remove minElement set
         Some minElement, set
 
-/// Extracts the maximum element from a set, returning the element
-/// along with the updated set.
+/// <summary>Extracts the maximum element from a set, returning the element along with the updated set.</summary>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("TryExtractMax")>]
 let tryExtractMax (set : Set<'T>) : 'T option * Set<'T> =
     // Preconditions
@@ -136,8 +158,9 @@ let tryExtractMax (set : Set<'T>) : 'T option * Set<'T> =
         let set = Set.remove maxElement set
         Some maxElement, set
 
-/// Extracts the minimum element from a set, returning the element
-/// along with the updated set.
+/// <summary>Extracts the minimum element from a set, returning the element along with the updated set.</summary>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("ExtractMinimum")>]
 let extractMin (set : Set<'T>) : 'T * Set<'T> =
     // Preconditions
@@ -149,8 +172,9 @@ let extractMin (set : Set<'T>) : 'T * Set<'T> =
     let set = Set.remove minElement set
     minElement, set
 
-/// Extracts the maximum element from a set, returning the element
-/// along with the updated set.
+/// <summary>Extracts the maximum element from a set, returning the element along with the updated set.</summary>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("ExtractMaximum")>]
 let extractMax (set : Set<'T>) : 'T * Set<'T> =
     // Preconditions
@@ -162,8 +186,10 @@ let extractMax (set : Set<'T>) : 'T * Set<'T> =
     let set = Set.remove maxElement set
     maxElement, set
 
-/// Reduces elements in a set in order from the least (minimum) element
-/// to the greatest (maximum) element.
+/// <summary>Reduces elements in a set in order from the least (minimum) element to the greatest (maximum) element.</summary>
+/// <param name="reduction"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("Reduce")>]
 let reduce (reduction : 'T -> 'T -> 'T) (set : Set<'T>) : 'T =
     // Preconditions
@@ -174,8 +200,10 @@ let reduce (reduction : 'T -> 'T -> 'T) (set : Set<'T>) : 'T =
     let minElement, set = extractMin set
     Set.fold reduction minElement set
 
-/// Reduces elements in a set in order from the greatest (maximum) element
-/// to the least (minimum) element.
+/// <summary>Reduces elements in a set in order from the greatest (maximum) element to the least (minimum) element.</summary>
+/// <param name="reduction"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("ReduceBack")>]
 let reduceBack (reduction : 'T -> 'T -> 'T) (set : Set<'T>) : 'T =
     // Preconditions
@@ -188,9 +216,11 @@ let reduceBack (reduction : 'T -> 'T -> 'T) (set : Set<'T>) : 'T =
 
 /// <summary>
 /// Applies the given function to each element of the set.
-/// Returns the set comprised of the results <c>x</c> for each element where the
-/// function returns <c>Some(x)</c>.
+/// Returns the set comprised of the results <c>x</c> for each element where the function returns <c>Some(x)</c>.
 /// </summary>
+/// <param name="chooser"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("Choose")>]
 let choose (chooser : 'T -> 'U option) (set : Set<'T>) : Set<'U> =
     // Preconditions
@@ -209,10 +239,12 @@ let choose (chooser : 'T -> 'U option) (set : Set<'T>) : Set<'U> =
                 Set.add result chosen)
 
 /// <summary>
-/// Applies the given function to each element of the set, returning the first result
-/// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
-/// then None is returned.
+/// Applies the given function to each element of the set, returning the first result where the function returns <c>Some(x)</c>.
+/// If the function never returns <c>Some(x)</c> then <c>None</c> is returned.
 /// </summary>
+/// <param name="picker"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("TryPick")>]
 let tryPick (picker : 'T -> 'U option) (set : Set<'T>) : 'U option =
     // Preconditions
@@ -227,10 +259,12 @@ let tryPick (picker : 'T -> 'U option) (set : Set<'T>) : 'U option =
         |> Seq.tryPick picker
 
 /// <summary>
-/// Applies the given function to each element of the set, returning the first result
-/// where the function returns <c>Some(x)</c>. If the function never returns <c>Some(x)</c>
-/// then a KeyNotFoundException is raised.
+/// Applies the given function to each element of the set, returning the first result where the function returns <c>Some(x)</c>.
+/// If the function never returns <c>Some(x)</c> then a <see cref="KeyNotFoundException"/> is raised.
 /// </summary>
+/// <param name="picker"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("Pick")>]
 let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
     // Preconditions
@@ -247,9 +281,12 @@ let pick (picker : 'T -> 'U option) (set : Set<'T>) : 'U =
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
 /// <summary>
-/// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
-/// Returns None if no such element exists.
+/// Returns the first (least) element for which the given predicate returns <c>true</c>.
+/// Returns <c>None</c> if no such element exists.
 /// </summary>
+/// <param name="predicate"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("TryFind")>]
 let tryFind (predicate : 'T -> bool) (set : Set<'T>) : 'T option =
     // Preconditions
@@ -264,9 +301,12 @@ let tryFind (predicate : 'T -> bool) (set : Set<'T>) : 'T option =
         |> Seq.tryFind predicate
 
 /// <summary>
-/// Returns the first (least) element for which the given predicate returns &quot;true&quot;.
-/// Raise KeyNotFoundException if no such element exists.
+/// Returns the first (least) element for which the given predicate returns <c>true</c>.
+/// Raises <see cref="KeyNotFoundException"/> if no such element exists.
 /// </summary>
+/// <param name="predicate"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("Find")>]
 let find (predicate : 'T -> bool) (set : Set<'T>) : 'T =
     // Preconditions
@@ -282,9 +322,16 @@ let find (predicate : 'T -> bool) (set : Set<'T>) : 'T =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
-/// Splits the collection into two (2) collections, containing the elements for which the given
-/// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
-/// Set.partition, but it allows the returned collections to have different types.
+/// <summary>
+/// Splits the collection into two (2) collections, containing the elements for which the given function returns
+/// <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively.
+/// </summary>
+/// <param name="partitioner"></param>
+/// <param name="set"></param>
+/// <returns></returns>
+/// <remarks>
+/// This function is similar to Set.partition, but it allows the returned collections to have different types.
+/// </remarks>
 [<CompiledName("MapPartition")>]
 let mapPartition (partitioner : 'T -> Choice<'U, 'V>) set : Set<'U> * Set<'V> =
     // Preconditions
@@ -306,8 +353,13 @@ let mapPartition (partitioner : 'T -> Choice<'U, 'V>) set : Set<'U> * Set<'V> =
 
         resultSet1, resultSet2
 
-/// <summary>Computes the symmetric difference of two sets; that is, the set of elements
-/// which are in either of the sets and not in their intersection.</summary>
+/// <summary>
+/// Computes the symmetric difference of two sets; that is, the set of elements which are in either
+/// of the sets and not in their intersection.
+/// </summary>
+/// <param name="set1"></param>
+/// <param name="set2"></param>
+/// <returns></returns>
 /// <remarks>
 /// The symmetric difference is similar to the XOR ("exclusive-or") operation, except that
 /// XOR returns 'true' when an element is not in both sets. This requires the "universe"
@@ -333,7 +385,10 @@ let symmetricDifference (set1 : Set<'T>) (set2 : Set<'T>) : Set<'T> =
         Set.intersect set1 set2
         |> Set.difference (Set.union set1 set2)
 
-/// The Cartesian product of two sets.
+/// <summary>The Cartesian product of two sets.</summary>
+/// <param name="set1"></param>
+/// <param name="set2"></param>
+/// <returns></returns>
 [<CompiledName("Cartesian")>]
 let cartesian (set1 : Set<'T>) (set2 : Set<'U>) : Set<'T * 'U> =
     // Preconditions
@@ -350,8 +405,13 @@ let cartesian (set1 : Set<'T>) (set2 : Set<'U>) : Set<'T * 'U> =
             ||> Set.fold (fun product y ->
                 Set.add (x, y) product))
 
+/// <summary>
 /// For each element of the set, applies the given function to produce a set of results.
 /// Computes the union of all result sets and returns the combined set.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("Collect")>]
 let collect (mapping : 'T -> Set<'U>) set : Set<'U> =
     // Preconditions
@@ -366,8 +426,13 @@ let collect (mapping : 'T -> Set<'U>) set : Set<'U> =
             mapping el
             |> Set.union union)
 
+/// <summary>
 /// For each element of the set, applies the given function to produce a set of results.
 /// Computes the intersection of all result sets and returns the combined set.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("Condense")>]
 let condense (mapping : 'T -> Set<'U>) set : Set<'U> =
     // Preconditions
@@ -389,7 +454,10 @@ let condense (mapping : 'T -> Set<'U>) set : Set<'U> =
             mapping el
             |> Set.intersect intersection)
 
-/// Determines if two sets are disjoint, i.e., whether they have no elements in common.
+/// <summary>Determines if two sets are disjoint, i.e., whether they have no elements in common.</summary>
+/// <param name="set1"></param>
+/// <param name="set2"></param>
+/// <returns></returns>
 [<CompiledName("Disjoint")>]
 let disjoint (set1 : Set<'T>) set2 : bool =
     // Preconditions
@@ -403,8 +471,11 @@ let disjoint (set1 : Set<'T>) set2 : bool =
          set2 |> Set.exists (fun el -> Set.contains el set1))
         |> not
 
-/// Returns the number of set elements matching a given predicate.
-// Set.countWith predicate set = (Set.filter predicate set |> Set.count)
+/// <summary>Returns the number of set elements matching a given predicate.</summary>
+/// <param name="predicate"></param>
+/// <param name="set"></param>
+/// <returns></returns>
+/// <remarks><c>Set.countWith predicate set = (Set.filter predicate set |> Set.count)</c></remarks>
 [<CompiledName("CountWith")>]
 let countWith (predicate : 'T -> bool) (set : Set<'T>) : int =
     // Preconditions
@@ -418,12 +489,21 @@ let countWith (predicate : 'T -> bool) (set : Set<'T>) : int =
         else matchCount)
 
 
+/// <summary>
 /// Functions operating over the Cartesian product of two sets.
 /// These functions can offer a large memory savings since they avoid creating the product set.
+/// </summary>
 [<RequireQualifiedAccess>]
 module Cartesian =
+    /// <summary>
     /// Applies a function to each element in the Cartesian product of two sets,
     /// threading an accumulator argument through the computation.
+    /// </summary>
+    /// <param name="folder"></param>
+    /// <param name="state"></param>
+    /// <param name="set1"></param>
+    /// <param name="set2"></param>
+    /// <returns></returns>
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> 'T -> 'U -> 'State) state set1 set2 : 'State =
         // Preconditions
@@ -438,8 +518,15 @@ module Cartesian =
             ||> Set.fold (fun state y ->
                 folder.Invoke (state, x, y)))
 
+    /// <summary>
     /// Applies a function to each element in the Cartesian product of two sets,
     /// threading an accumulator argument through the computation.
+    /// </summary>
+    /// <param name="folder"></param>
+    /// <param name="set1"></param>
+    /// <param name="set2"></param>
+    /// <param name="state"></param>
+    /// <returns></returns>
     [<CompiledName("FoldBack")>]
     let foldBack (folder : 'T -> 'U -> 'State -> 'State) set1 set2 state : 'State =
         // Preconditions
@@ -454,7 +541,11 @@ module Cartesian =
             ||> Set.foldBack (fun y state ->
                 folder.Invoke (x, y, state)))
 
-    /// Applies the given function to each element in the Cartesian product of two sets.
+    /// <summary>Applies the given function to each element in the Cartesian product of two sets.</summary>
+    /// <param name="action"></param>
+    /// <param name="set1"></param>
+    /// <param name="set2"></param>
+    /// <returns></returns>
     [<CompiledName("Iterate")>]
     let iter (action : 'T -> 'U -> unit) set1 set2 : unit =
         // Preconditions
@@ -469,8 +560,14 @@ module Cartesian =
             |> Set.iter (fun y ->
                 action.Invoke (x, y)))
 
+    /// <summary>
     /// Builds a new collection whose elements are the results of applying the given function
     /// to the elements in the Cartesian product of two sets.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <param name="set1"></param>
+    /// <param name="set2"></param>
+    /// <returns></returns>
     [<CompiledName("Map")>]
     let map (mapping : 'T1 -> 'T2 -> 'U) set1 set2 : Set<'U> =
         // Preconditions
@@ -488,9 +585,12 @@ module Cartesian =
 
     /// <summary>
     /// Applies the given function to each element in the Cartesian product of two sets. 
-    /// Returns the set comprised of the results <c>x</c> for each element where the
-    /// function returns <c>Some(x)</c>.
+    /// Returns the set comprised of the results <c>x</c> for each element where the function returns <c>Some(x)</c>.
     /// </summary>
+    /// <param name="chooser"></param>
+    /// <param name="set1"></param>
+    /// <param name="set2"></param>
+    /// <returns></returns>
     [<CompiledName("Choose")>]
     let choose (chooser : 'T1 -> 'T2 -> 'U option) set1 set2 : Set<'U> =
         // Preconditions
