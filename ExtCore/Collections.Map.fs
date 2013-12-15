@@ -27,24 +27,38 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Determines the number of items in the map.
+/// <summary>Determines the number of items in the map.</summary>
+/// <param name="count"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("Count")>]
 let inline count (map : Map<'Key, 'Value>) =
     map.Count
 
+/// <summary>
 /// Lookup a key in the map, and if found, return it's corresponding value.
 /// Otherwise, returns the given default value.
+/// </summary>
+/// <param name="defaultValue"></param>
+/// <param name="key"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("FindOrDefault")>]
 let inline findOrDefault defaultValue key (map : Map<'Key, 'T>) =
     defaultArg (Map.tryFind key map) defaultValue
 
-/// The Map containing the given binding.
+/// <summary>The Map containing the given binding.</summary>
+/// <param name="key"></param>
+/// <param name="value"></param>
+/// <returns></returns>
 [<CompiledName("Singleton")>]
 let inline singleton key value : Map<'Key, 'T> =
     Map.empty
     |> Map.add key value
 
-/// Creates a map with the same elements as the vector.
+/// <summary>Creates a map with the same elements as the vector.</summary>
+/// <param name="vector"></param>
+/// <returns></returns>
 [<CompiledName("OfVector")>]
 let ofVector (vector : vector<'Key * 'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -54,7 +68,9 @@ let ofVector (vector : vector<'Key * 'T>) : Map<'Key, 'T> =
     ||> Vector.fold (fun map (k, v) ->
         Map.add k v map)
 
-/// Builds a vector that contains the elements of the map in order.
+/// <summary>Builds a vector that contains the elements of the map in order.</summary>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("ToVector")>]
 let toVector (map : Map<'Key, 'T>) : vector<'Key * 'T> =
     // Preconditions
@@ -62,7 +78,9 @@ let toVector (map : Map<'Key, 'T>) : vector<'Key * 'T> =
 
     vector.UnsafeCreate <| Map.toArray map
 
-/// Returns the key set of the Map.
+/// <summary>Returns the key set of the Map.</summary>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("Keys")>]
 let keys (map : Map<'Key, 'T>) =
     // Preconditions
@@ -72,7 +90,9 @@ let keys (map : Map<'Key, 'T>) =
     ||> Map.fold (fun keys key _ ->
         Set.add key keys)
 
-/// Returns the value set of the Map.
+/// <summary>Returns the value set of the Map.</summary>
+/// <param name="map"></param>
+/// <returns></returns>
 // TODO : Should this be changed to return a Multiset?
 [<CompiledName("Values")>]
 let values (map : Map<'Key, 'T>) =
@@ -83,7 +103,10 @@ let values (map : Map<'Key, 'T>) =
     ||> Map.fold (fun values _ value ->
         Set.add value values)
 
-/// Adds the given KeyValuePair to the map.
+/// <summary>Adds the given KeyValuePair to the map.</summary>
+/// <param name="kvp"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("AddKvp")>]
 let inline addKvp (kvp : KeyValuePair<'Key, 'T>) map =
     // Preconditions
@@ -91,7 +114,9 @@ let inline addKvp (kvp : KeyValuePair<'Key, 'T>) map =
 
     Map.add kvp.Key kvp.Value map
 
-/// Returns a new map created from a sequence of key-value pairs.
+/// <summary>Returns a new map created from a sequence of key-value pairs.</summary>
+/// <param name="sequence"></param>
+/// <returns></returns>
 [<CompiledName("FromKvpSequence")>]
 let ofKvpSeq (sequence : seq<KeyValuePair<'Key, 'T>>) =
     // Preconditions
@@ -101,8 +126,12 @@ let ofKvpSeq (sequence : seq<KeyValuePair<'Key, 'T>>) =
     ||> Seq.fold (fun map kvp ->
         addKvp kvp map)
 
-/// Creates a new map from a set of keys by applying a mapping function to each
-/// key to generate it's corresponding value.
+/// <summary>
+/// Creates a new map from a set of keys by applying a mapping function to each key to generate it's corresponding value.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("FromKeys")>]
 let ofKeys (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'Key, 'T> =
     // Preconditions
@@ -116,10 +145,14 @@ let ofKeys (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'Key, 'T> =
         ||> Set.fold (fun map key ->
             Map.add key (mapping key) map)
 
-/// Creates a new map from a set of values by applying a mapping function to each
-/// value to extract a key from it. If the key-mapping function returns the same
-/// key for two or more values, the returned map will only contain a binding for
-/// the greatest of those values.
+/// <summary>
+/// Creates a new map from a set of values by applying a mapping function to each value to extract a key from it.
+/// If the key-mapping function returns the same key for two or more values, the returned map will only contain a
+/// binding for the greatest of those values.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("FromValues")>]
 let ofValues (mapping : 'T -> 'Key) (set : Set<'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -133,8 +166,10 @@ let ofValues (mapping : 'T -> 'Key) (set : Set<'T>) : Map<'Key, 'T> =
         ||> Set.fold (fun map value ->
             Map.add (mapping value) value map)
 
-/// Builds a new map containing only the bindings whose keys do not
-/// belong to a given set of keys.
+/// <summary>Builds a new map containing only the bindings whose keys do not belong to a given set of keys.</summary>
+/// <param name="keys"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("RemoveKeys")>]
 let removeKeys keys (map : Map<'Key, 'T>) =
     // Preconditions
@@ -151,8 +186,10 @@ let removeKeys keys (map : Map<'Key, 'T>) =
         ||> Set.fold (fun map key ->
             Map.remove key map)
 
-/// Builds a new map containing only the bindings whose keys
-/// belong to a given set of keys.
+/// <summary>Builds a new map containing only the bindings whose keys belong to a given set of keys.</summary>
+/// <param name="keys"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("FilterKeys")>]
 let filterKeys keys (map : Map<'Key, 'T>) =
     // Preconditions
@@ -167,7 +204,9 @@ let filterKeys keys (map : Map<'Key, 'T>) =
         |> Map.filter (fun key _ ->
             Set.contains key keys)
 
-/// Applies a function to each binding in the map, in decreasing key order.
+/// <summary>Applies a function to each binding in the map, in decreasing key order.</summary>
+/// <param name="action"></param>
+/// <param name="map"></param>
 [<CompiledName("IterBack")>]
 let iterBack (action : 'Key -> 'T -> unit) (map : Map<'Key, 'T>) : unit =
     // Preconditions
@@ -181,9 +220,11 @@ let iterBack (action : 'Key -> 'T -> unit) (map : Map<'Key, 'T>) : unit =
 
 /// <summary>
 /// Applies the given function to each binding in the map.
-/// Returns the map comprised of the results "x" for each binding
-/// where the function returns <c>Some(x)</c>.
+/// Returns the map comprised of the results "x" for each binding where the function returns <c>Some(x)</c>.
 /// </summary>
+/// <param name="chooser"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("Choose")>]
 let choose (chooser : 'Key -> 'T -> 'U option) map =
     // Preconditions
@@ -204,11 +245,13 @@ let choose (chooser : 'Key -> 'T -> 'U option) map =
                 Map.add key newValue chosenMap)
 
 /// <summary>
-/// Like <c>Map.partition</c>, a function is applied to each binding in a map to
-/// partition it into two parts. <c>mapPartition</c> differs in that it allows
-/// the values in the returned maps to be different than the values in the input
-/// map, and it also allows the values in the returned maps to have different types.
+/// Like <c>Map.partition</c>, a function is applied to each binding in a map to partition it into two parts.
+/// <c>mapPartition</c> differs in that it allows the values in the returned maps to be different than the values in the input map,
+/// and it also allows the values in the returned maps to have different types.
 /// </summary>
+/// <param name="partitioner"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("MapPartition")>]
 let mapPartition (partitioner : 'Key -> 'T -> Choice<'U, 'V>) map =
     // Preconditions
@@ -232,8 +275,12 @@ let mapPartition (partitioner : 'Key -> 'T -> Choice<'U, 'V>) map =
 
         resultMap1, resultMap2
 
-/// Combines two maps into a single map.
-/// Whenever a key exists in both maps, the first map's entry will be added to the result map.
+/// <summary>
+/// Combines two maps into a single map. Whenever a key exists in both maps, the first map's entry will be added to the result map.
+/// </summary>
+/// <param name="map1"></param>
+/// <param name="map2"></param>
+/// <returns></returns>
 [<CompiledName("Union")>]
 let union (map1 : Map<'Key, 'T>) (map2 : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -256,9 +303,14 @@ let union (map1 : Map<'Key, 'T>) (map2 : Map<'Key, 'T>) : Map<'Key, 'T> =
         ||> Map.fold (fun combinedMap key value ->
             Map.add key value combinedMap)
 
-/// Combines two maps into a single map.
-/// Whenever a key exists in both maps, the specified function is used to determine the
+/// <summary>
+/// Combines two maps into a single map. Whenever a key exists in both maps, the specified function is used to determine the
 /// value to be used for that key in the combined map.
+/// </summary>
+/// <param name="joiner"></param>
+/// <param name="map1"></param>
+/// <param name="map2"></param>
+/// <returns></returns>
 [<CompiledName("Join")>]
 let join (joiner : 'Key -> 'T -> 'T -> 'T) (map1 : Map<'Key, 'T>) (map2 : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -302,9 +354,12 @@ let join (joiner : 'Key -> 'T -> 'T -> 'T) (map1 : Map<'Key, 'T>) (map2 : Map<'K
             // Add the joined value to the map.
             Map.add key joinedValue joined)
 
-/// Creates a new Map by inverting the given Map. The keys are the values of the original
-/// Map; the value associated with each key (original value) is the greatest-valued original
-/// key associated with the original value.
+/// <summary>
+/// Creates a new Map by inverting the given Map. The keys are the values of the original Map; the value associated with each key
+/// (original value) is the greatest-valued original key associated with the original value.
+/// </summary>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("Inverse")>]
 let inverse (map : Map<'Key, 'T>) : Map<'T, 'Key> =
     // Preconditions
@@ -318,9 +373,12 @@ let inverse (map : Map<'Key, 'T>) : Map<'T, 'Key> =
         ||> Map.fold (fun inverseMap key value ->
             Map.add value key inverseMap)
 
-/// Creates a new Map by inverting the given Map. The keys are the values of the
-/// original Map; the corresponding value is a non-empty set containing the original keys
-/// which pointed to the value.
+/// <summary>
+/// Creates a new Map by inverting the given Map. The keys are the values of the original Map; the corresponding value is a
+/// non-empty set containing the original keys which pointed to the value.
+/// </summary>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("Pivot")>]
 let pivot (map : Map<'Key, 'T>) : Map<'T, Set<'Key>> =
     // Preconditions
@@ -343,7 +401,10 @@ let pivot (map : Map<'Key, 'T>) : Map<'T, Set<'Key>> =
             // Add/update the pivot map entry for this value.
             Map.add value keySet pivotMap)
 
-/// Combines Map.ofKeys and Map.pivot to avoid creating intermediate data structures.
+/// <summary>Combines Map.ofKeys and Map.pivot to avoid creating intermediate data structures.</summary>
+/// <param name="mapping"></param>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("PivotWith")>]
 let pivotWith (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'T, Set<'Key>> =
     // Preconditions
@@ -369,7 +430,11 @@ let pivotWith (mapping : 'Key -> 'T) (set : Set<'Key>) : Map<'T, Set<'Key>> =
             // Add/update the key-set for this value in the pivot map.
             Map.add value keySet pivotMap)
 
-/// Like Map.add, but doesn't overwrite an existing entry.
+/// <summary>Like Map.add, but doesn't overwrite an existing entry.</summary>
+/// <param name="key"></param>
+/// <param name="value"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("TryAdd")>]
 let tryAdd key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -382,8 +447,13 @@ let tryAdd key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
         // Add the new entry.
         Map.add key value map
 
-/// Like Map.add, but only overwrites the value of an existing entry
-/// (i.e., it won't create a new entry in the map).
+/// <summary>
+/// Like Map.add, but only overwrites the value of an existing entry (i.e., it won't create a new entry in the map).
+/// </summary>
+/// <param name="key"></param>
+/// <param name="value"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("TryUpdate")>]
 let tryUpdate key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -396,8 +466,14 @@ let tryUpdate key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
         // Return the original map.
         map
 
+/// <summary>
 /// Like Map.add, but only overwrites the value of an existing entry.
-/// If the map does not contain the given key, KeyNotFoundException is raised.
+/// If the map does not contain the given key, <see cref="KeyNotFoundException"/> is raised.
+/// </summary>
+/// <param name="key"></param>
+/// <param name="value"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("Update")>]
 let update key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     // Preconditions
@@ -412,8 +488,11 @@ let update key value (map : Map<'Key, 'T>) : Map<'Key, 'T> =
     else
         keyNotFound "The map does not contain the specified key."
 
-/// Returns the number of map elements matching a given predicate.
-// Map.countWith predicate map = (Map.filter predicate map |> Map.count)
+/// <summary>Returns the number of map elements matching a given predicate.</summary>
+/// <param name="predicate"></param>
+/// <param name="map"></param>
+/// <returns></returns>
+/// <remarks><c>Map.countWith predicate map = (Map.filter predicate map |> Map.count)</c></remarks>
 [<CompiledName("CountWith")>]
 let countWith (predicate : 'Key -> 'T -> bool) (map : Map<'Key, 'T>) : int =
     // Preconditions
@@ -431,8 +510,13 @@ let countWith (predicate : 'Key -> 'T -> bool) (map : Map<'Key, 'T>) : int =
                 matchCount + 1
             else matchCount)
 
+/// <summary>
 /// Applies the specified predicate function to each binding in a Map,
 /// returning a new Set containing the keys for which the predicate matched.
+/// </summary>
+/// <param name="predicate"></param>
+/// <param name="map"></param>
+/// <returns></returns>
 [<CompiledName("FindKeys")>]
 let findKeys (predicate : 'Key -> 'T -> bool) (map : Map<'Key, 'T>) : Set<'Key> =
     // Preconditions
