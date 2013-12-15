@@ -82,9 +82,22 @@ type Queue<'T> private (front : LazyList<'T>, rear : 'T list, pending : LazyList
             rear,
             LazyList.cons value pending)
 
+    /// <summary>Creates a Queue from the elements of an <see cref="IEnumerable`1"/>.</summary>
+    /// <param name="source"></param>
+    /// <returns></returns>
+    // TODO : Rename this to FromEnumerable, as that more closely matches C# conventions.
+    static member OfSeq (source : seq<'T>) : Queue<'T> =
+        // Preconditions
+        checkNonNull "source" source
+
+        (empty, source)
+        ||> Seq.fold (fun queue el ->
+            queue.Enqueue el)
+
     /// <summary>Creates a Queue from the elements of a list.</summary>
     /// <param name="list"></param>
     /// <returns></returns>
+    // TODO : Rename this to FromList, as that more closely matches C# conventions.
     static member OfList list : Queue<'T> =
         // Preconditions
         checkNonNull "list" list
@@ -96,6 +109,7 @@ type Queue<'T> private (front : LazyList<'T>, rear : 'T list, pending : LazyList
     /// <summary>Creates a Queue from the elements of an array.</summary>
     /// <param name="array"></param>
     /// <returns></returns>
+    // TODO : Rename this to FromArray, as that more closely matches C# conventions.
     static member OfArray array : Queue<'T> =
         // Preconditions
         checkNonNull "array" array
@@ -104,8 +118,21 @@ type Queue<'T> private (front : LazyList<'T>, rear : 'T list, pending : LazyList
         ||> Array.fold (fun queue el ->
             queue.Enqueue el)
 
+    /// <summary>Creates a Queue from the elements of a vector.</summary>
+    /// <param name="vector"></param>
+    /// <returns></returns>
+    // TODO : Rename this to FromVector, as that more closely matches C# conventions.
+    static member OfVector vector : Queue<'T> =
+        // Preconditions
+        // TODO
+
+        (empty, vector)
+        ||> Vector.fold (fun queue el ->
+            queue.Enqueue el)
+
     /// <summary>Create a sequence containing the elements of the Queue in order.</summary>
     /// <returns></returns>
+    // TODO : Rename this to AsEnumerable, as that more closely matches C# conventions.
     member this.ToSeq () : seq<'T> =
         // OPTIMIZATION : If the queue is empty return immediately.
         if this.IsEmpty then
@@ -157,6 +184,12 @@ type Queue<'T> private (front : LazyList<'T>, rear : 'T list, pending : LazyList
                 queue <- queue'
 
             ResizeArray.toArray result
+
+    /// <summary>Create a vector containing the elements of the Queue in order.</summary>
+    /// <returns></returns>
+    member this.ToVector () : vector<'T> =
+        this.ToArray ()
+        |> vector.UnsafeCreate
 
 //    /// Used by Code Contracts to check that invariant contracts are met.
 //    [<ContractInvariantMethod>]

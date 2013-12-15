@@ -17,261 +17,324 @@ limitations under the License.
 *)
 
 /// Unit tests for the ExtCore.Collections.Queue type and module.
-module Tests.ExtCore.Collections.Queue
+namespace Tests.ExtCore.Collections
 
 open NUnit.Framework
 //open FsCheck
 
 
-[<Test>]
-let isEmpty () : unit =
-    Queue.empty
-    |> Queue.isEmpty
-    |> assertTrue
+module QueueType =
+    [<Test>]
+    let IsEmpty () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-    Queue.empty
-    |> Queue.enqueue "Hello"
-    |> Queue.enqueue "World!"
-    |> Queue.isEmpty
-    |> assertFalse
+    [<Test>]
+    let GetLength () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-[<Test>]
-let length () : unit =
-    Queue.empty
-    |> Queue.length
-    |> assertEqual 0
+    [<Test>]
+    let Dequeue () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-    Queue.empty
-    |> Queue.enqueue "foo"
-    |> Queue.enqueue "bar"
-    |> Queue.enqueue "baz"
-    |> Queue.length
-    |> assertEqual 3
+    [<Test>]
+    let Enqueue () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-[<Test>]
-let enqueue () : unit =
-    Queue.empty
-    |> Queue.enqueue "Hello"
-    |> Queue.toArray
-    |> assertEqual
-        [| "Hello" |]
+    [<Test>]
+    let EnqueueFront () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-    [| "foo"; "bar"; "baz"; |]
-    |> Queue.ofArray
-    |> Queue.enqueue "cdr"
-    |> Queue.enqueue "car"
-    |> Queue.enqueue "bar"
-    |> Queue.enqueue "bar"
-    |> Queue.toArray
-    |> assertEqual
-        [| "foo"; "bar"; "baz"; "cdr"; "car"; "bar"; "bar"; |]
+    [<Test>]
+    let OfSeq () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-    // Test case for checking that the Queue is persistent as expected.
-    do
-        let queue = Queue.ofArray [| "foo"; "bar"; "baz"; |]
+    [<Test>]
+    let OfList () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-        queue
+    [<Test>]
+    let OfArray () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let OfVector () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ToSeq () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ToList () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ToArray () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ToVector () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``IEnumerable.GetEnumerator()`` () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``IEnumerable<'T>.GetEnumerator()`` () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+
+module QueueModule =
+    [<Test>]
+    let isEmpty () : unit =
+        Queue.empty
+        |> Queue.isEmpty
+        |> assertTrue
+
+        Queue.empty
         |> Queue.enqueue "Hello"
-        |> Queue.enqueue "World"
+        |> Queue.enqueue "World!"
+        |> Queue.isEmpty
+        |> assertFalse
+
+    [<Test>]
+    let length () : unit =
+        Queue.empty
+        |> Queue.length
+        |> assertEqual 0
+
+        Queue.empty
+        |> Queue.enqueue "foo"
+        |> Queue.enqueue "bar"
+        |> Queue.enqueue "baz"
+        |> Queue.length
+        |> assertEqual 3
+
+    [<Test>]
+    let enqueue () : unit =
+        Queue.empty
+        |> Queue.enqueue "Hello"
         |> Queue.toArray
         |> assertEqual
-            [| "foo"; "bar"; "baz"; "Hello"; "World"; |]
+            [| "Hello" |]
 
-        queue
+        [| "foo"; "bar"; "baz"; |]
+        |> Queue.ofArray
+        |> Queue.enqueue "cdr"
+        |> Queue.enqueue "car"
+        |> Queue.enqueue "bar"
+        |> Queue.enqueue "bar"
+        |> Queue.toArray
+        |> assertEqual
+            [| "foo"; "bar"; "baz"; "cdr"; "car"; "bar"; "bar"; |]
+
+        // Test case for checking that the Queue is persistent as expected.
+        do
+            let queue = Queue.ofArray [| "foo"; "bar"; "baz"; |]
+
+            queue
+            |> Queue.enqueue "Hello"
+            |> Queue.enqueue "World"
+            |> Queue.toArray
+            |> assertEqual
+                [| "foo"; "bar"; "baz"; "Hello"; "World"; |]
+
+            queue
+            |> Queue.enqueue "cdr"
+            |> Queue.enqueue "car"
+            |> Queue.toArray
+            |> assertEqual
+                [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
+
+    [<Test>]
+    let enqueueFront () : unit =
+        Queue.empty
+        |> Queue.enqueueFront "Hello"
+        |> Queue.toArray
+        |> assertEqual
+            [| "Hello" |]
+    
+        Queue.empty
+        |> Queue.enqueue "foo"
+        |> Queue.enqueue "bar"
+        |> Queue.enqueueFront "baz"
+        |> Queue.enqueue "cdr"
+        |> Queue.enqueueFront "car"
+        |> Queue.toArray
+        |> assertEqual
+            [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
+
+        // Test case for checking that the Queue is persistent as expected.
+        do
+            let queue = Queue.ofArray [| "foo"; "bar"; "baz"; |]
+
+            queue
+            |> Queue.enqueueFront "Hello"
+            |> Queue.enqueueFront "World"
+            |> Queue.toArray
+            |> assertEqual
+                [| "World"; "Hello"; "foo"; "bar"; "baz"; |]
+
+            queue
+            |> Queue.enqueueFront "cdr"
+            |> Queue.enqueueFront "car"
+            |> Queue.toArray
+            |> assertEqual
+                [| "car"; "cdr"; "foo"; "bar"; "baz"; |]
+
+    [<Test>]
+    let dequeue () : unit =
+        do
+            let queue = Queue.ofArray [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "car"
+            Queue.length queue |> assertEqual 4
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "baz"
+            Queue.length queue |> assertEqual 3
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "foo"
+            Queue.length queue |> assertEqual 2
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "bar"
+            Queue.length queue |> assertEqual 1
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "cdr"
+            Queue.length queue |> assertEqual 0
+
+        // Test case for checking that the Queue is persistent as expected.
+        do
+            let queue = Queue.ofArray [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
+
+            // Run a simple dequeue test.
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "car"
+            Queue.length queue |> assertEqual 4
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "baz"
+            Queue.length queue |> assertEqual 3
+
+            // Change to queue' here, so we can use the "partial" queue later.
+            let result, queue' = Queue.dequeue queue
+            result |> assertEqual "foo"
+            Queue.length queue' |> assertEqual 2
+
+            let result, queue' = Queue.dequeue queue'
+            result |> assertEqual "bar"
+            Queue.length queue' |> assertEqual 1
+
+            let result, queue' = Queue.dequeue queue'
+            result |> assertEqual "cdr"
+            Queue.length queue' |> assertEqual 0
+
+            // Now re-run the test for the last few elements using the partial queue.
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "foo"
+            Queue.length queue |> assertEqual 2
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "bar"
+            Queue.length queue |> assertEqual 1
+
+            let result, queue = Queue.dequeue queue
+            result |> assertEqual "cdr"
+            Queue.length queue |> assertEqual 0
+
+    [<Test; ExpectedException(typeof<System.InvalidOperationException>)>]
+    let ``dequeue raises exn when queue is empty`` () : unit =
+        Queue.empty
+        |> Queue.dequeue
+        |> ignore
+
+    [<Test>]
+    let ofList () : unit =
+        List.empty
+        |> Queue.ofList
+        |> Queue.isEmpty
+        |> assertTrue
+
+        ["foo"; "bar"; "baz"; "cdr"; "car"]
+        |> Queue.ofList
+        |> Queue.toSeq
+        |> Seq.toArray
+        |> assertEqual
+            [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
+
+    [<Test>]
+    let ofArray () : unit =
+        List.empty
+        |> Queue.ofList
+        |> Queue.isEmpty
+        |> assertTrue
+
+        [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
+        |> Queue.ofArray
+        |> Queue.toSeq
+        |> Seq.toArray
+        |> assertEqual
+            [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
+
+    [<Test>]
+    let toSeq () : unit =
+        Queue.empty
+        |> Queue.toSeq
+        |> Seq.isEmpty
+        |> assertTrue
+
+        Queue.empty
+        |> Queue.enqueue "foo"
+        |> Queue.enqueue "bar"
+        |> Queue.enqueue "baz"
+        |> Queue.dequeue
+        |> snd
+        |> Queue.enqueue "cdr"
+        |> Queue.enqueue "car"
+        |> Queue.toSeq
+        |> Seq.toArray
+        |> assertEqual
+            [| "bar"; "baz"; "cdr"; "car"; |]
+
+    [<Test>]
+    let toList () : unit =
+        Queue.empty
+        |> Queue.toList
+        |> List.isEmpty
+        |> assertTrue
+
+        Queue.empty
+        |> Queue.enqueue "foo"
+        |> Queue.enqueue "bar"
+        |> Queue.enqueue "baz"
+        |> Queue.dequeue
+        |> snd
+        |> Queue.enqueue "cdr"
+        |> Queue.enqueue "car"
+        |> Queue.toList
+        |> assertEqual
+            ["bar"; "baz"; "cdr"; "car"]
+
+    [<Test>]
+    let toArray () : unit =
+        Queue.empty
+        |> Queue.toArray
+        |> Array.isEmpty
+        |> assertTrue
+
+        Queue.empty
+        |> Queue.enqueue "foo"
+        |> Queue.enqueue "bar"
+        |> Queue.enqueue "baz"
+        |> Queue.dequeue
+        |> snd
         |> Queue.enqueue "cdr"
         |> Queue.enqueue "car"
         |> Queue.toArray
         |> assertEqual
-            [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
-
-[<Test>]
-let enqueueFront () : unit =
-    Queue.empty
-    |> Queue.enqueueFront "Hello"
-    |> Queue.toArray
-    |> assertEqual
-        [| "Hello" |]
-    
-    Queue.empty
-    |> Queue.enqueue "foo"
-    |> Queue.enqueue "bar"
-    |> Queue.enqueueFront "baz"
-    |> Queue.enqueue "cdr"
-    |> Queue.enqueueFront "car"
-    |> Queue.toArray
-    |> assertEqual
-        [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
-
-    // Test case for checking that the Queue is persistent as expected.
-    do
-        let queue = Queue.ofArray [| "foo"; "bar"; "baz"; |]
-
-        queue
-        |> Queue.enqueueFront "Hello"
-        |> Queue.enqueueFront "World"
-        |> Queue.toArray
-        |> assertEqual
-            [| "World"; "Hello"; "foo"; "bar"; "baz"; |]
-
-        queue
-        |> Queue.enqueueFront "cdr"
-        |> Queue.enqueueFront "car"
-        |> Queue.toArray
-        |> assertEqual
-            [| "car"; "cdr"; "foo"; "bar"; "baz"; |]
-
-[<Test>]
-let dequeue () : unit =
-    do
-        let queue = Queue.ofArray [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "car"
-        Queue.length queue |> assertEqual 4
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "baz"
-        Queue.length queue |> assertEqual 3
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "foo"
-        Queue.length queue |> assertEqual 2
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "bar"
-        Queue.length queue |> assertEqual 1
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "cdr"
-        Queue.length queue |> assertEqual 0
-
-    // Test case for checking that the Queue is persistent as expected.
-    do
-        let queue = Queue.ofArray [| "car"; "baz"; "foo"; "bar"; "cdr"; |]
-
-        // Run a simple dequeue test.
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "car"
-        Queue.length queue |> assertEqual 4
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "baz"
-        Queue.length queue |> assertEqual 3
-
-        // Change to queue' here, so we can use the "partial" queue later.
-        let result, queue' = Queue.dequeue queue
-        result |> assertEqual "foo"
-        Queue.length queue' |> assertEqual 2
-
-        let result, queue' = Queue.dequeue queue'
-        result |> assertEqual "bar"
-        Queue.length queue' |> assertEqual 1
-
-        let result, queue' = Queue.dequeue queue'
-        result |> assertEqual "cdr"
-        Queue.length queue' |> assertEqual 0
-
-        // Now re-run the test for the last few elements using the partial queue.
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "foo"
-        Queue.length queue |> assertEqual 2
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "bar"
-        Queue.length queue |> assertEqual 1
-
-        let result, queue = Queue.dequeue queue
-        result |> assertEqual "cdr"
-        Queue.length queue |> assertEqual 0
-
-[<Test; ExpectedException(typeof<System.InvalidOperationException>)>]
-let ``dequeue raises exn when queue is empty`` () : unit =
-    Queue.empty
-    |> Queue.dequeue
-    |> ignore
-
-[<Test>]
-let ofList () : unit =
-    List.empty
-    |> Queue.ofList
-    |> Queue.isEmpty
-    |> assertTrue
-
-    ["foo"; "bar"; "baz"; "cdr"; "car"]
-    |> Queue.ofList
-    |> Queue.toSeq
-    |> Seq.toArray
-    |> assertEqual
-        [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
-
-[<Test>]
-let ofArray () : unit =
-    List.empty
-    |> Queue.ofList
-    |> Queue.isEmpty
-    |> assertTrue
-
-    [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
-    |> Queue.ofArray
-    |> Queue.toSeq
-    |> Seq.toArray
-    |> assertEqual
-        [| "foo"; "bar"; "baz"; "cdr"; "car"; |]
-
-[<Test>]
-let toSeq () : unit =
-    Queue.empty
-    |> Queue.toSeq
-    |> Seq.isEmpty
-    |> assertTrue
-
-    Queue.empty
-    |> Queue.enqueue "foo"
-    |> Queue.enqueue "bar"
-    |> Queue.enqueue "baz"
-    |> Queue.dequeue
-    |> snd
-    |> Queue.enqueue "cdr"
-    |> Queue.enqueue "car"
-    |> Queue.toSeq
-    |> Seq.toArray
-    |> assertEqual
-        [| "bar"; "baz"; "cdr"; "car"; |]
-
-[<Test>]
-let toList () : unit =
-    Queue.empty
-    |> Queue.toList
-    |> List.isEmpty
-    |> assertTrue
-
-    Queue.empty
-    |> Queue.enqueue "foo"
-    |> Queue.enqueue "bar"
-    |> Queue.enqueue "baz"
-    |> Queue.dequeue
-    |> snd
-    |> Queue.enqueue "cdr"
-    |> Queue.enqueue "car"
-    |> Queue.toList
-    |> assertEqual
-        ["bar"; "baz"; "cdr"; "car"]
-
-[<Test>]
-let toArray () : unit =
-    Queue.empty
-    |> Queue.toArray
-    |> Array.isEmpty
-    |> assertTrue
-
-    Queue.empty
-    |> Queue.enqueue "foo"
-    |> Queue.enqueue "bar"
-    |> Queue.enqueue "baz"
-    |> Queue.dequeue
-    |> snd
-    |> Queue.enqueue "cdr"
-    |> Queue.enqueue "car"
-    |> Queue.toArray
-    |> assertEqual
-        [| "bar"; "baz"; "cdr"; "car"; |]
+            [| "bar"; "baz"; "cdr"; "car"; |]
