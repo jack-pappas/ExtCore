@@ -29,13 +29,17 @@ open ExtCore
 #if PROTO_COMPILER
 // TODO : Re-implement this using inline IL; it should simply provide a way
 // to emit an 'ldlen' instruction given an array.
-/// Returns the length of the array as an unsigned integer.
+/// <summary>Returns the length of the array as an unsigned, native-length integer.</summary>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("RawLength")>]
-let inline rawLength (arr : 'T[]) : unativeint =
-    unativeint arr.Length
+let inline rawLength (array : 'T[]) : unativeint =
+    unativeint array.Length
 #endif
 
-/// Given an element, creates an array containing just that element.
+/// <summary>Given an element, creates an array containing just that element.</summary>
+/// <param name="value"></param>
+/// <returns></returns>
 [<CompiledName("Singleton")>]
 let inline singleton (value : 'T) =
     [| value |]
@@ -57,23 +61,34 @@ let exactlyOne (array : 'T[]) : 'T =
     | _ ->
         invalidArg "array" "The array contains more than one (1) element."
     
-/// Builds an array that contains the elements of the set in order.
+/// <summary>Builds an array that contains the elements of the set in order.</summary>
+/// <param name="set"></param>
+/// <returns></returns>
 [<CompiledName("OfSet")>]
 let inline ofSet (set : Set<'T>) : 'T[] =
     Set.toArray set
 
-/// Builds a set that contains the same elements as the given array.
+/// <summary>Builds a set that contains the same elements as the given array.</summary>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ToSet")>]
 let inline toSet (array : 'T[]) : Set<'T> =
     Set.ofArray array
 
-/// Builds a vector from the given array.
+/// <summary>Builds a vector from the given array.</summary>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ToVector")>]
-let inline toVector (arr : 'T[]) : vector<'T> =
-    ExtCore.vector.Create arr
+let inline toVector (array : 'T[]) : vector<'T> =
+    ExtCore.vector.Create array
 
+/// <summary>
 /// Applies a function to each element of the array, returning a new array whose elements are
 /// tuples of the original element and the function result for that element.
+/// </summary>
+/// <param name="projection"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ProjectValues")>]
 let projectValues (projection : 'Key -> 'U) (array : 'Key[]) =
     // Preconditions
@@ -81,8 +96,13 @@ let projectValues (projection : 'Key -> 'U) (array : 'Key[]) =
 
     array |> Array.map (fun x -> x, projection x)
 
+/// <summary>
 /// Applies a function to each element of the array, returning a new array whose elements are
 /// tuples of the original element and the function result for that element.
+/// </summary>
+/// <param name="projection"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ProjectKeys")>]
 let projectKeys (projection : 'T -> 'Key) (array : 'T[]) =
     // Preconditions
@@ -90,33 +110,44 @@ let projectKeys (projection : 'T -> 'Key) (array : 'T[]) =
 
     array |> Array.map (fun x -> projection x, x)
 
-/// Returns the first element in the array.
+/// <summary>Returns the first element in the array.</summary>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("First")>]
 let inline first (array : 'T[]) =
     if Array.isEmpty array then
         invalidOp "Cannot retrieve the first element of an empty array."
     else array.[0]
 
-/// Returns the index of the last element in the array.
+/// <summary>Returns the index of the last element in the array.</summary>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("LastIndex")>]
 let inline lastIndex (array : 'T[]) =
     if Array.isEmpty array then
         invalidOp "The array is empty."
     else array.Length - 1
 
-/// Returns the last element in the array.
+/// <summary>Returns the last element in the array.</summary>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("Last")>]
 let inline last (array : 'T[]) =
     if Array.isEmpty array then
         invalidOp "Cannot retrieve the last element of an empty array."
     else array.[array.Length - 1]
 
-/// Sets all elements in the array to Unchecked.defaultof.
+/// <summary>Sets all elements in the array to Unchecked.defaultof.</summary>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("Clear")>]
 let inline clear (array : 'T[]) : unit =
     System.Array.Clear (array, 0, array.Length)
 
-/// Determines if an array contains a specified value.
+/// <summary>Determines if an array contains a specified value.</summary>
+/// <param name="value"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("Contains")>]
 let contains value (array : 'T[]) : bool =
     // Preconditions
@@ -126,8 +157,10 @@ let contains value (array : 'T[]) : bool =
         array,
         System.Predicate ((=) value)) <> -1
 
-/// Expands an array by creating a copy of it which has
-/// the specified number of empty elements appended to it.
+/// <summary>Expands an array by creating a copy of it which has the specified number of empty elements appended to it.</summary>
+/// <param name="count"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ExpandRight")>]
 let expandRight count (array : 'T[]) : 'T[] =
     // Preconditions
@@ -135,14 +168,19 @@ let expandRight count (array : 'T[]) : 'T[] =
     if count < 0 then
         invalidArg "count" "The number of elements to expand the array by is negative."
 
-    // Create the new "expanded" array. Copy the elements from the original array
-    // into the "left" side of the new array, then return the expanded array.
-    let expandedArr = Array.zeroCreate (array.Length + count)        
-    Array.blit array 0 expandedArr 0 array.Length
-    expandedArr
+    // OPTIMIZATION : If the count is zero (0), return the original array.
+    if count = 0 then array
+    else
+        // Create the new "expanded" array. Copy the elements from the original array
+        // into the "left" side of the new array, then return the expanded array.
+        let expandedArr = Array.zeroCreate (array.Length + count)        
+        Array.blit array 0 expandedArr 0 array.Length
+        expandedArr
 
-/// Expands an array by creating a copy of it which has
-/// the specified number of empty elements prepended to it.
+/// <summary>Expands an array by creating a copy of it which has the specified number of empty elements prepended to it.</summary>
+/// <param name="count"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ExpandLeft")>]
 let expandLeft count (array : 'T[]) : 'T[] =
     // Preconditions
@@ -150,13 +188,19 @@ let expandLeft count (array : 'T[]) : 'T[] =
     if count < 0 then
         invalidArg "count" "The number of elements to expand the array by is negative."
 
-    // Create the new "expanded" array. Copy the elements from the original array
-    // into the "right" side of the new array, then return the expanded array.
-    let expandedArr = Array.zeroCreate (array.Length + count)
-    Array.blit array 0 expandedArr count array.Length
-    expandedArr
+    // OPTIMIZATION : If the count is zero (0), return the original array.
+    if count = 0 then array
+    else
+        // Create the new "expanded" array. Copy the elements from the original array
+        // into the "right" side of the new array, then return the expanded array.
+        let expandedArr = Array.zeroCreate (array.Length + count)
+        Array.blit array 0 expandedArr count array.Length
+        expandedArr
 
-//
+/// <summary></summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("TryFindBack")>]
 let tryFindBack (predicate : 'T -> bool) (array : 'T[]) : 'T option =
     // Preconditions
@@ -176,7 +220,10 @@ let tryFindBack (predicate : 'T -> bool) (array : 'T[]) : 'T option =
 
         result
 
-//
+/// <summary></summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("FindBack")>]
 let findBack (predicate : 'T -> bool) (array : 'T[]) : 'T =
     match tryFindBack predicate array with
@@ -186,7 +233,10 @@ let findBack (predicate : 'T -> bool) (array : 'T[]) : 'T =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
-//
+/// <summary></summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("TryFindIndexBack")>]
 let tryFindIndexBack (predicate : 'T -> bool) (array : 'T[]) : int option =
     // Preconditions
@@ -206,7 +256,10 @@ let tryFindIndexBack (predicate : 'T -> bool) (array : 'T[]) : int option =
 
         result
 
-//
+/// <summary></summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("FindIndexBack")>]
 let findIndexBack (predicate : 'T -> bool) (array : 'T[]) : int =
     match tryFindIndexBack predicate array with
@@ -216,7 +269,10 @@ let findIndexBack (predicate : 'T -> bool) (array : 'T[]) : int =
         //keyNotFound ""
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
-//
+/// <summary></summary>
+/// <param name="picker"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("TryPickBack")>]
 let tryPickBack (picker : 'T -> 'U option) (array : 'T[]) : 'U option =
     // Preconditions
@@ -238,7 +294,10 @@ let tryPickBack (picker : 'T -> 'U option) (array : 'T[]) : 'U option =
 
         result
 
-//
+/// <summary></summary>
+/// <param name="picker"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("PickBack")>]
 let pickBack (picker : 'T -> 'U option) (array : 'T[]) : 'U =
     match tryPickBack picker array with
@@ -249,9 +308,11 @@ let pickBack (picker : 'T -> 'U option) (array : 'T[]) : 'U =
         raise <| System.Collections.Generic.KeyNotFoundException ()
 
 /// <summary>
-/// Returns a new collection containing the indices of the elements for which
-/// the given predicate returns &quot;true&quot;.
+/// Returns a new collection containing the indices of the elements for which the given predicate returns <c>true</c>.
 /// </summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("FindIndices")>]
 let findIndices (predicate : 'T -> bool) array : int[] =
     // Preconditions
@@ -264,10 +325,12 @@ let findIndices (predicate : 'T -> bool) array : int[] =
 
 /// <summary>
 /// Applies the given function to each element of the array.
-/// Returns the array comprised of the results <c>x</c> for each element where the function
-/// returns <c>Some(x)</c>. The integer index passed to the function indicates the index
-/// of the element being transformed.
+/// Returns the array comprised of the results <c>x</c> for each element where the function returns <c>Some(x)</c>.
+/// The integer index passed to the function indicates the index of the element being transformed.
 /// </summary>
+/// <param name="chooser"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ChooseIndexed")>]
 let choosei (chooser : int -> 'T -> 'U option) array : 'U[] =
     // Preconditions
@@ -288,9 +351,12 @@ let choosei (chooser : int -> 'T -> 'U option) array : 'U[] =
 
 /// <summary>
 /// Applies the given function pairwise to the two arrays.
-/// Returns the array comprised of the results <c>x</c> for each element where the function
-/// returns <c>Some(x)</c>.
+/// Returns the array comprised of the results <c>x</c> for each element where the function returns <c>Some(x)</c>.
 /// </summary>
+/// <param name="chooser"></param>
+/// <param name="array1"></param>
+/// <param name="array2"></param>
+/// <returns></returns>
 [<CompiledName("Choose2")>]
 let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
     // Preconditions
@@ -312,8 +378,14 @@ let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
 
     chosen.ToArray ()
 
+/// <summary>
 /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
 /// The integer index passed to the function indicates the array index of the element being transformed.
+/// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("FoldIndexed")>]
 let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (array : 'T[]) =
     // Preconditions
@@ -326,8 +398,14 @@ let foldi (folder : 'State -> int -> 'T -> 'State) (state : 'State) (array : 'T[
         state <- folder.Invoke (state, i, array.[i])
     state
 
+/// <summary>
 /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
 /// The integer index passed to the function indicates the array index of the element being transformed.
+/// </summary>
+/// <param name="folder"></param>
+/// <param name="array"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("FoldBackIndexed")>]
 let foldiBack (folder : int -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
     // Preconditions
@@ -340,9 +418,13 @@ let foldiBack (folder : int -> 'T -> 'State -> 'State) (array : 'T[]) (state : '
         state <- folder.Invoke (i, array.[i], state)
     state
 
-/// Splits an array into one or more arrays; the specified predicate is applied
-/// to each element in the array, and whenever it returns true, that element will
-/// be the first element in one of the "subarrays".
+/// <summary>
+/// Splits an array into one or more arrays; the specified predicate is applied to each element in the array, and whenever it
+/// returns <c>true</c>, that element will be the first element in one of the "subarrays".
+/// </summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("Split")>]
 let split (predicate : 'T -> bool) (array : 'T[]) =
     // Preconditions
@@ -365,9 +447,13 @@ let split (predicate : 'T -> bool) (array : 'T[]) =
     segments.Add <| currentSegment.ToArray ()
     segments.ToArray ()
 
-/// Splits an array into one or more segments by applying the specified predicate
-/// to each element of the array and starting a new view at each element where
-/// the predicate returns true.
+/// <summary>
+/// Splits an array into one or more segments by applying the specified predicate to each element of the array and starting
+/// a new view at each element where the predicate returns <c>true</c>.
+/// </summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("Segment")>]
 let segment (predicate : 'T -> bool) (array : 'T[]) : ArrayView<'T>[] =
     // Preconditions
@@ -400,9 +486,14 @@ let segment (predicate : 'T -> bool) (array : 'T[]) : ArrayView<'T>[] =
 
     segments.ToArray()
 
-/// Splits two arrays into one or more segments by applying the specified predicate
-/// to the each pair of array elements and starting a new view whenever the
-/// predicate returns true.
+/// <summary>
+/// Splits two arrays into one or more segments by applying the specified predicate to the each pair of array elements and
+/// starting a new view whenever the predicate returns <c>true</c>.
+/// </summary>
+/// <param name="predicate"></param>
+/// <param name="array1"></param>
+/// <param name="array2"></param>
+/// <returns></returns>
 [<CompiledName("Segment2")>]
 let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[])
     : ArrayView<'T>[] * ArrayView<'U>[] =
@@ -446,9 +537,16 @@ let segment2 (predicate : 'T -> 'U -> bool) (array1 : 'T[]) (array2 : 'U[])
 
     segments1.ToArray(), segments2.ToArray()
 
-/// Splits the collection into two (2) collections, containing the elements for which the given
-/// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
-/// Array.partition, but it allows the returned collections to have different types.
+/// <summary>
+/// Splits the collection into two (2) collections, containing the elements for which the given function returns
+/// <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively.
+/// </summary>
+/// <param name="partitioner"></param>
+/// <param name="array"></param>
+/// <returns></returns>
+/// <remarks>
+/// This function is similar to Array.partition, but it allows the returned collections to have different types.
+/// </remarks>
 [<CompiledName("MapPartition")>]
 let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
     // Preconditions
@@ -476,9 +574,16 @@ let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
         resultList1.ToArray (),
         resultList2.ToArray ()
 
-/// Splits the collection into two (3) collections, containing the elements for which the given
-/// function returns Choice1Of3, Choice2Of3, or Choice3Of3, respectively. This function is similar
-/// to Array.partition, but it allows the returned collections to have different types.
+/// <summary>
+/// Splits the collection into three (3) collections, containing the elements for which the given
+/// function returns <c>Choice1Of3</c>, <c>Choice2Of3</c>, or <c>Choice3Of3</c>, respectively.
+/// </summary>
+/// <param name="partitioner"></param>
+/// <param name="array"></param>
+/// <returns></returns>
+/// <remarks>
+/// This function is similar to Array.partition, but it allows the returned collections to have different types.
+/// </remarks>
 [<CompiledName("MapPartition3")>]
 let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U2[] * 'U3[] =
     // Preconditions
@@ -510,8 +615,13 @@ let mapPartition3 (partitioner : 'T -> Choice<'U1, 'U2, 'U3>) array : 'U1[] * 'U
         resultList2.ToArray (),
         resultList3.ToArray ()
 
+/// <summary>
 /// Applies a mapping function to each element of the array, then repeatedly applies
 /// a reduction function to each pair of results until one (1) result value remains.
+/// </summary>
+/// <param name="mapReduction"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("MapReduce")>]
 let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
     // Preconditions
@@ -533,7 +643,10 @@ let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
     // Return the final state.
     state
 
-//
+/// <summary></summary>
+/// <param name="mapping"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("MapInPlace")>]
 let mapInPlace (mapping : 'T -> 'T) (array : 'T[]) : unit =
     // Preconditions
@@ -544,7 +657,10 @@ let mapInPlace (mapping : 'T -> 'T) (array : 'T[]) : unit =
     for i = 0 to len - 1 do
         array.[i] <- mapping array.[i]
 
-//
+/// <summary></summary>
+/// <param name="mapping"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("MapIndexedInPlace")>]
 let mapiInPlace (mapping : int -> 'T -> 'T) (array : 'T[]) : unit =
     // Preconditions
@@ -559,7 +675,10 @@ let mapiInPlace (mapping : int -> 'T -> 'T) (array : 'T[]) : unit =
         for i = 0 to len - 1 do
             array.[i] <- mapping.Invoke (i, array.[i])
 
-//
+/// <summary></summary>
+/// <param name="chooser"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ChooseInPlace")>]
 let chooseInPlace (chooser : 'T -> 'T option) (array : 'T[]) : unit =
     // Preconditions
@@ -573,7 +692,10 @@ let chooseInPlace (chooser : 'T -> 'T option) (array : 'T[]) : unit =
         | Some result ->
             array.[i] <- result
 
-//
+/// <summary></summary>
+/// <param name="chooser"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("ChooseIndexedInPlace")>]
 let chooseiInPlace (chooser : int -> 'T -> 'T option) (array : 'T[]) : unit =
     // Preconditions
@@ -591,8 +713,11 @@ let chooseiInPlace (chooser : int -> 'T -> 'T option) (array : 'T[]) : unit =
             | Some result ->
                 array.[i] <- result
 
-/// Returns the number of array elements matching a given predicate.
-// Array.countWith predicate array = (Array.filter predicate array |> Array.length)
+/// <summary>Returns the number of array elements matching a given predicate.</summary>
+/// <param name="predicate"></param>
+/// <param name="array"></param>
+/// <returns></returns>
+/// <remarks><c>Array.countWith predicate array = (Array.filter predicate array |> Array.length)</c></remarks>
 [<CompiledName("CountWith")>]
 let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
     // Preconditions
@@ -610,8 +735,14 @@ let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
     // Return the number of matching array elements.
     matches
 
+/// <summary>
 /// Applies a function to each character in the string and the character which
 /// follows it, threading an accumulator argument through the computation.
+/// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="array"></param>
+/// <returns></returns>
 [<CompiledName("FoldPairwise")>]
 let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) (state : 'State) (array : 'T[]) : 'State =
     // Preconditions
@@ -631,8 +762,14 @@ let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) (state : 'State) (array
         // Return the final state value.
         state
 
+/// <summary>
 /// Applies a function to each character in the string and the character which
 /// proceeds it, threading an accumulator argument through the computation.
+/// </summary>
+/// <param name="folder"></param>
+/// <param name="array"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("FoldBackPairwise")>]
 let foldBackPairwise (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (state : 'State) : 'State =
     // Preconditions
@@ -652,10 +789,14 @@ let foldBackPairwise (folder : 'T -> 'T -> 'State -> 'State) (array : 'T[]) (sta
         // Return the final state value.
         state
 
+/// <summary>
 /// Returns a list containing the elements generated by the given computation.
-/// The given initial state argument is passed to the element generator, which is applied
-/// repeatedly until a None value is returned. Each call to the element generator returns
-/// a new residual state.
+/// The given initial state argument is passed to the element generator, which is applied repeatedly until a <c>None</c> value
+/// is returned. Each call to the element generator returns a new residual state.
+/// </summary>
+/// <param name="generator"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("Unfold")>]
 let unfold (generator : 'State -> ('T * 'State) option) (state : 'State) : 'T[] =
     // Preconditions
@@ -677,10 +818,15 @@ let unfold (generator : 'State -> ('T * 'State) option) (state : 'State) : 'T[] 
     // Return the result array.
     results.ToArray ()
 
+/// <summary>
 /// Returns a list containing the elements generated by the given computation.
 /// The given initial state argument is passed to the element generator, which is applied
-/// repeatedly until a None value is returned. Each call to the element generator returns
+/// repeatedly until a <c>None</c> value is returned. Each call to the element generator returns
 /// a new residual state.
+/// </summary>
+/// <param name="generator"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("UnfoldBack")>]
 let unfoldBack (generator : 'State -> ('T * 'State) option) (state : 'State) : 'T[] =
     // Preconditions
@@ -704,13 +850,16 @@ let unfoldBack (generator : 'State -> ('T * 'State) option) (state : 'State) : '
     System.Array.Reverse resultArray
     resultArray
     
-//
+/// Provides additional parallel operations on arrays.
 module Parallel =
     open System
     open System.Threading
     open System.Threading.Tasks
 
-    //
+    /// <summary></summary>
+    /// <param name="mapping"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
     [<CompiledName("MapInPlace")>]
     let mapInPlace (mapping : 'T -> 'T) (array : 'T[]) : unit =
         // Preconditions
@@ -720,7 +869,10 @@ module Parallel =
             array.[i] <- mapping array.[i])
         |> ignore
 
-    //
+    /// <summary></summary>
+    /// <param name="mapping"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
     [<CompiledName("MapIndexedInPlace")>]
     let mapiInPlace (mapping : int -> 'T -> 'T) (array : 'T[]) : unit =
         // Preconditions
@@ -732,7 +884,10 @@ module Parallel =
             array.[i] <- mapping.Invoke (i, array.[i]))
         |> ignore
 
-    //
+    /// <summary></summary>
+    /// <param name="predicate"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
     [<CompiledName("CountWith")>]
     let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
         // Preconditions
