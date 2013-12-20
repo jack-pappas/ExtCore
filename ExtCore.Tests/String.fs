@@ -148,14 +148,12 @@ let ofLines () : unit =
     |> String.isEmpty
     |> assertTrue
 
+    let newline = System.Environment.NewLine
+
     // Sample usage test case.
     [| "Lorem"; "ipsum"; "dolor"; "sit"; "amet"; |]
     |> String.ofLines
-    |> assertEqual @"Lorem
-ipsum
-dolor
-sit
-amet"
+    |> assertEqual (@"Lorem"+newline+"ipsum"+newline+"dolor"+newline+"sit"+newline+"amet")
 
 [<Test>]
 let toLines () : unit =

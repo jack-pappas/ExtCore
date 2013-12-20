@@ -587,8 +587,8 @@ type private PatriciaSet64 =
             action (int64 k)
         | Br (_, _, left, right) ->
             // Iterate over the right and left subtrees.
-            PatriciaSet64.Iterate (action, right)
-            PatriciaSet64.Iterate (action, left)
+            PatriciaSet64.IterateBack (action, right)
+            PatriciaSet64.IterateBack (action, left)
 
     //
     static member Fold (folder : 'State -> int64 -> 'State, state : 'State, set) : 'State =
