@@ -567,8 +567,8 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
             action (int k) x
         | Br (_, _, left, right) ->
             // Iterate over the right and left subtrees.
-            PatriciaMap32.Iterate (action, right)
-            PatriciaMap32.Iterate (action, left)
+            PatriciaMap32.IterateBack (action, right)
+            PatriciaMap32.IterateBack (action, left)
 
     //
     static member Fold (folder : 'State -> int -> 'T -> 'State, state : 'State, map) : 'State =

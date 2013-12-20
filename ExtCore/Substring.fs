@@ -257,7 +257,7 @@ type substring =
         // Preconditions
         if startIndex < 0 then
             argOutOfRange "startIndex" "The start index is negative."
-        elif startIndex >= this.Length then
+        elif startIndex > this.Length then
             argOutOfRange "startIndex" "The start index is past the end of the substring."
 
         // OPTIMIZATION : If this is an empty substring, we can return immediately.

@@ -596,8 +596,8 @@ type private PatriciaSet32 =
             action (int k)
         | Br (_, _, left, right) ->
             // Iterate over the right and left subtrees.
-            PatriciaSet32.Iterate (action, right)
-            PatriciaSet32.Iterate (action, left)
+            PatriciaSet32.IterateBack (action, right)
+            PatriciaSet32.IterateBack (action, left)
 
     //
     static member Fold (folder : FSharpFunc<'State, int, 'State>, state : 'State, set) : 'State =

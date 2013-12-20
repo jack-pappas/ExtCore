@@ -71,6 +71,7 @@ _ReSharper*/
 *.nvuser
 *.resharper
 *resharper.user
+*.sln.DotSettings
 
 # Build Output
 #pkg
