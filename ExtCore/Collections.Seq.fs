@@ -145,3 +145,34 @@ let countWith (predicate : 'T -> bool) (source : seq<'T>) : int64 =
             matchCount + 1L
         else
             matchCount)
+
+/// <summary>Creates a new sequence by sampling a sequence at a given interval.</summary>
+/// <param name="interval"></param>
+/// <param name="source"></param>
+/// <returns></returns>
+[<CompiledName("Sample")>]
+let sample interval (source : seq<'T>) : seq<'T> =
+    // Preconditions
+    checkNonNull "source" source
+    if interval < 1 then
+        argOutOfRange "interval" "The sampling interval is less than one (1)."
+
+    // OPTIMIZATION : If the sampling interval is 1, there's no need to create a new sequence, just return the original.
+    if interval = 1 then source
+    else
+        let enumerator = source.GetEnumerator ()
+
+        //
+        let rec sampleRec currentWidth =
+            seq {
+            if enumerator.MoveNext () then
+                if currentWidth = 0 then
+                    yield enumerator.Current
+
+                // Recurse, incrementing the interval width, or resetting it if we've hit the end of this interval.
+                let currentWidth = currentWidth + 1
+                yield! sampleRec (if currentWidth = interval then 0 else currentWidth)
+                }
+
+        sampleRec 0
+
