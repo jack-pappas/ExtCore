@@ -19,13 +19,165 @@ limitations under the License.
 namespace Tests.ExtCore
 
 open NUnit.Framework
-//open FsCheck
 
 
-(* TODO : Implement tests for the various modules in ExtCore *)
+/// Tests for the ExtCore.Operators module.
+module Operators =
+    [<Test>]
+    let swap () : unit =
+        swap (3, 5)
+        |> assertEqual (5, 3)
 
-// Operators
-// Printf
+    [<Test>]
+    let flip () : unit =
+        do
+            let join (x : string) (y : string) = x + " " + y
+                
+            (flip join) "World!" "Hello"
+            |> assertEqual "Hello World!"
+
+        (flip Operators.(/)) 2 10
+        |> assertEqual 5
+
+    [<Test>]
+    let isNull () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<TestCase(false, false, ExpectedResult = true)>]
+    [<TestCase(false, true, ExpectedResult = true)>]
+    [<TestCase(true, false, ExpectedResult = true)>]
+    [<TestCase(true, true, ExpectedResult = false)>]
+    let nand (x : bool, y : bool) : bool =
+        nand x y
+
+    [<TestCase(false, false, ExpectedResult = true)>]
+    [<TestCase(false, true, ExpectedResult = false)>]
+    [<TestCase(true, false, ExpectedResult = false)>]
+    [<TestCase(true, true, ExpectedResult = false)>]
+    let nor (x : bool, y : bool) : bool =
+        nor x y
+
+    [<TestCase(false, false, ExpectedResult = false)>]
+    [<TestCase(false, true, ExpectedResult = true)>]
+    [<TestCase(true, false, ExpectedResult = true)>]
+    [<TestCase(true, true, ExpectedResult = false)>]
+    let xor (x : bool, y : bool) : bool =
+        xor x y
+
+    [<TestCase(false, false, ExpectedResult = true)>]
+    [<TestCase(false, true, ExpectedResult = false)>]
+    [<TestCase(true, false, ExpectedResult = false)>]
+    [<TestCase(true, true, ExpectedResult = true)>]
+    let xnor (x : bool, y : bool) : bool =
+        xnor x y
+
+    [<Test>]
+    let tap () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let notlazy () : unit =
+        let value = notlazy 10
+        assertTrue value.IsValueCreated
+        
+        let value = notlazy "Hello World!"
+        assertTrue value.IsValueCreated
+
+    [<Test>]
+    let orf () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let andf () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let xorf () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tapAssert () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tryLock () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    /// Helper function which sums the values of characters in a string.
+    let private sumCharacterValues (str : string) =
+        let mutable sum = 0L
+        for i = 0 to str.Length - 1 do
+            sum <- sum + int64 str.[i]
+        sum
+
+    [<Test>]
+    let minBy () : unit =
+        minBy sumCharacterValues "aaa" "aab"
+        |> assertEqual "aaa"
+
+        minBy (fun x -> x * 2) 10 30
+        |> assertEqual 10
+
+    [<Test>]
+    let maxBy () : unit =
+        maxBy sumCharacterValues "aaa" "aab"
+        |> assertEqual "aab"
+
+        maxBy (fun x -> x * 2) 10 30
+        |> assertEqual 30
+
+    [<Test>]
+    let minWith () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let maxWith () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+#if PROTO_COMPILER
+    [<Test>]
+    let typehandleof () : unit =
+        Assert.Ignore "Test not yet implemented."
+#endif
+
+    [<Test>]
+    let raiseNew () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let notImpl () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let notSupported () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let argOutOfRange () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let keyNotFound () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let checkNonNull () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+#if PROTO_COMPILER
+    [<Test>]
+    let checkFinite () : unit =
+        Assert.Ignore "Test not yet implemented."
+#endif
+
+    [<Test>]
+    let ``(|Success|Error|)`` () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let ``(|Less|Equal|Greater|)`` () : unit =
+        Assert.Ignore "Test not yet implemented."
+
 
 /// Tests for the ExtCore.Enum module.
 module Enum =
@@ -248,3 +400,25 @@ module Choice =
     let composeBack () : unit =
         Assert.Ignore "Test not yet implemented."
 
+
+/// Tests for the ExtCore.Printf module.
+module Printf =
+    [<Test>]
+    let bprintfn () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let dprintf () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let dprintfn () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tprintf () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let tprintfn () : unit =
+        Assert.Ignore "Test not yet implemented."

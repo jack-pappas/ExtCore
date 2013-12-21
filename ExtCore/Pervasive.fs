@@ -214,7 +214,9 @@ module Operators =
     /// </summary>
     [<CompiledName("NotLazy")>]
     let inline notlazy (value : 'T) =
-        Lazy.CreateFromValue value
+        let result = Lazy.CreateFromValue value
+        result.Force () |> ignore
+        result
 
     /// <summary>Combines two predicates using a short-circuiting OR operator.</summary>
     [<CompiledName("Orf")>]
