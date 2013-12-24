@@ -11,5 +11,5 @@ install:
 
 script: 
   - xbuild /property:Configuration=Release ExtCore.sln
-  - mono ./tools/NUnit.Runners.2.6.1/tools/nunit-console.exe ./ExtCore.Tests/bin/Release/ExtCore.Tests.dll
+  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.1/tools/nunit-console.exe ./ExtCore.Tests/bin/Release/ExtCore.Tests.dll
 
