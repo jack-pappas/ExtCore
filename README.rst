@@ -3,8 +3,8 @@ ExtCore
 
 ExtCore is an extended core library for F#.
 
-.. image:: https://travis-ci.org/enricosada/ExtCore.png  
-    :target: https://travis-ci.org/enricosada/ExtCore
+.. image:: https://travis-ci.org/jack-pappas/ExtCore.png  
+    :target: https://travis-ci.org/jack-pappas/ExtCore
 
 An `ExtCore package`_ is available from NuGet__.
 
