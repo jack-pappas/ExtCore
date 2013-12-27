@@ -1,0 +1,15 @@
+language: objective-c
+
+env:
+  matrix:
+    - MONO_VERSION="3.2.5"
+
+install:
+  - wget "http://download.xamarin.com/MonoFrameworkMDK/Macx86/MonoFramework-MDK-${MONO_VERSION}.macos10.xamarin.x86.pkg"
+  - sudo installer -pkg "MonoFramework-MDK-${MONO_VERSION}.macos10.xamarin.x86.pkg" -target /
+  - mono .nuget/NuGet.exe install NUnit.Runners -Version 2.6.1 -OutputDirectory tools
+
+script: 
+  - xbuild /property:Configuration=Release ExtCore.sln
+  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.1/tools/nunit-console.exe ./ExtCore.Tests/bin/Release/ExtCore.Tests.dll
+
