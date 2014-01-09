@@ -72,7 +72,12 @@ module internal BitOps64 =
 
     /// Clears the indicated bit and sets all lower bits.
     let inline mask (key : Key64, mask : Mask64) : Prefix64 =
-        key &&& (~~~(mask - 1UL) ^^^ mask)
+        // Original implementation.
+        // key &&& (mask ^^^ (~~~(mask - 1UL)))
+
+        // Optimized implementation.
+        // Source: Milan Straka, "The performance of Haskell CONTAINERS package".
+        key &&& (mask * ~~~1UL)
 
     //
     let inline shorter (m1 : Mask64, m2 : Mask64) : bool =

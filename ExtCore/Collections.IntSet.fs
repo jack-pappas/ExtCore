@@ -72,7 +72,12 @@ module internal BitOps32 =
 
     /// Clears the indicated bit and sets all lower bits.
     let inline mask (key : Key32, mask : Mask32) : Prefix32 =
-        key &&& (~~~(mask - 1u) ^^^ mask)
+        // Original implementation.
+        // key &&& (mask ^^^ (~~~(mask - 1u)))
+
+        // Optimized implementation.
+        // Source: Milan Straka, "The performance of Haskell CONTAINERS package".
+        key &&& (mask * ~~~1u)
 
     //
     let inline shorter (m1 : Mask32, m2 : Mask32) : bool =
