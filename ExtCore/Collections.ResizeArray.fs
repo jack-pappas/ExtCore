@@ -18,8 +18,9 @@ limitations under the License.
 
 *)
 
-/// Functional operators related to the System.Collections.Generic.List&lt;T&gt;
-/// type (called ResizeArray in F#).
+/// <summary>
+/// Functional operators related to the System.Collections.Generic.List&lt;T&gt; type (called ResizeArray in F#).
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ExtCore.Collections.ResizeArray
 
