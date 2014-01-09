@@ -25,15 +25,6 @@ open OptimizedClosures
 open ExtCore
 
 
-/// Constants used to tune certain operations on Patricia tries.
-module internal PatriciaTrieConstants =
-    /// The default capacity used to when creating mutable stacks
-    /// within the optimized traversal methods for Patricia tries.
-    // TODO : Run some experiments to determine if this is a good initial capacity,
-    // or if some other value would provide better average-case performance.
-    let [<Literal>] defaultTraversalStackSize = 16
-
-
 type internal Mask32 = uint32
 type internal Key32 = uint32
 type internal Prefix32 = uint32
@@ -106,7 +97,6 @@ module internal BitOps32 =
         ((0x80000000 ^^^ value) &&& 0x80000000) ||| (value &&& 0x7fffffff)
 
 
-open PatriciaTrieConstants
 open BitOps32
 
 

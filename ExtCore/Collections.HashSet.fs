@@ -23,7 +23,6 @@ open System.Diagnostics
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
-open PatriciaTrieConstants
 open BitOps32
 
 

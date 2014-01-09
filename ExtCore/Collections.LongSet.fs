@@ -97,7 +97,6 @@ module internal BitOps64 =
         ((0x8000000000000000L ^^^ value) &&& 0x8000000000000000L) ||| (value &&& 0x7fffffffffffffffL)
 
 
-open PatriciaTrieConstants
 open BitOps64
 
 

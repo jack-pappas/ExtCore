@@ -23,13 +23,8 @@ open System.Diagnostics
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
-open PatriciaTrieConstants
 open BitOps64
 
-
-(* OPTIMIZE :   Some of the functional-style operations on LongMap use direct non-tail-recursion;
-                performance may be improved if we modify these to use CPS instead.
-                Alternatively, we could implement and utilize a zipper which should also be quite fast. *)
 
 /// A Patricia trie implementation.
 /// Used as the underlying data structure for LongMap (and LongTagMap).
