@@ -26,63 +26,669 @@ open ExtCore
 open BitOps32
 
 
-/// A Patricia trie implementation, modified so each of it's 'values'
-/// is actually a set implemented with a list.
+/// AVL tree which serves as the internal representation of the Map type.
+[<NoEquality; NoComparison>]
+[<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
+type internal MapTree<'Key, 'Value when 'Key : comparison> =
+    /// Empty tree.
+    | Empty
+    /// Node.
+    // Left-Child, Right-Child, Key/Value, Height
+    | Node of MapTree<'Key, 'Value> * MapTree<'Key, 'Value> * KeyValuePair<'Key, 'Value> * uint32
+
+    //
+    static member private CompareStacks (comparer : IComparer<'Key>, l1 : MapTree<'Key, 'Value> list, l2 : MapTree<'Key, 'Value> list) : int =
+        match l1, l2 with
+        | [], [] -> 0
+        | [], _ -> -1
+        | _, [] -> 1
+        
+        // OPTIMIZATION : If two trees are identical, there's no need to compare them.
+        | t1 :: l1, t2 :: l2
+            when System.Object.ReferenceEquals (t1, t2) ->
+            // Continue comparing the lists.
+            MapTree.CompareStacks (comparer, l1, l2)
+        
+        | (Empty :: t1), (Empty :: t2) ->
+            MapTree.CompareStacks (comparer, t1, t2)
+        | (Node (Empty, Empty, n1kvp, _) :: t1), (Node (Empty, Empty, n2kvp, _) :: t2) ->
+            match comparer.Compare (n1kvp.Key, n2kvp.Key) with
+            | 0 ->
+                MapTree.CompareStacks (comparer, t1, t2)
+            | c -> c
+
+        | (Node (Empty, Empty, n1kvp, _) :: t1), (Node (Empty, n2r, n2kvp, _) :: t2) ->
+            match comparer.Compare (n1kvp.Key, n2kvp.Key) with
+            | 0 ->
+                MapTree.CompareStacks (comparer, Empty :: t1, n2r :: t2)
+            | c -> c
+
+        | (Node (Empty, n1r, n1kvp, _) :: t1), (Node (Empty, Empty, n2kvp, _) :: t2) ->
+            match comparer.Compare (n1kvp.Key, n2kvp.Key) with
+            | 0 ->
+                MapTree.CompareStacks (comparer, n1r :: t1, Empty :: t2)
+            | c -> c
+
+        | (Node (Empty, n1r, n1kvp, _) :: t1), (Node (Empty, n2r, n2kvp, _) :: t2) ->
+            match comparer.Compare (n1kvp.Key, n2kvp.Key) with
+            | 0 ->
+                MapTree.CompareStacks (comparer, n1r :: t1, n2r :: t2)
+            | c -> c
+
+        | ((Node (Empty, Empty, n1kvp, _) :: t1) as l1), _ ->
+            MapTree.CompareStacks (comparer, Empty :: l1, l2)
+        
+        | (Node (n1l, n1r, n1kvp, _) :: t1), _ ->
+            MapTree.CompareStacks (comparer, n1l :: Node (Empty, n1r, n1kvp, 0u) :: t1, l2)
+        
+        | _, ((Node (Empty, Empty, n2kvp, _) :: t2) as l2) ->
+            MapTree.CompareStacks (comparer, l1, Empty :: l2)
+        
+        | _, (Node (n2l, n2r, n2kvp, _) :: t2) ->
+            MapTree.CompareStacks (comparer, l1, n2l :: Node (Empty, n2r, n2kvp, 0u) :: t2)
+                
+    //
+    static member Compare (comparer : IComparer<'Key>, s1 : MapTree<'Key, 'Value>, s2 : MapTree<'Key, 'Value>) : int =
+        // OPTIMIZATION : If two trees are identical, there's no need to compare them.
+        if System.Object.ReferenceEquals (s1, s2) then 0
+        else
+            match s1, s2 with
+            | Empty, Empty -> 0
+            | Empty, _ -> -1
+            | _, Empty -> 1
+            | _ ->
+                MapTree<'Key, 'Value>.CompareStacks (comparer, [s1], [s2])
+
+    /// Computes the height of a MapTree (rather than returning the height value stored in it's root).
+    //[<Pure>]
+    static member private ComputeHeight (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty -> 0u
+        | Node (l, r, _, _) ->
+            1u + max (MapTree.ComputeHeight l) (MapTree.ComputeHeight r)
+        
+    /// Determines if a MapTree is correctly formed, i.e., it respects the AVL balancing rules.
+    //[<Pure; ContractInvariantMethod>]
+    static member private AvlInvariant (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty -> true
+        | Node (l, r, _, h) ->
+            let height_l = MapTree.ComputeHeight l
+            let height_r = MapTree.ComputeHeight r
+            height_l = height_r
+            || (height_l = (1u + height_r) || height_r = (1u + height_l))
+            && h = ((max height_l height_r) + 1u)
+            && MapTree.AvlInvariant l
+            && MapTree.AvlInvariant r
+
+    /// Returns the height of a MapTree.
+    //[<Pure>]
+    static member (*inline*) Height (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty -> 0u
+        | Node (_,_,_,h) -> h
+
+    /// Returns the absolute difference in heights between two MapTrees.
+    //[<Pure>]
+    static member private HeightDiff (t1, t2 : MapTree<'Key, 'Value>) =
+        (max (MapTree.Height t1) (MapTree.Height t2)) - (min (MapTree.Height t1) (MapTree.Height t2))
+
+    /// Determines if a MapTree is empty.
+    //[<Pure>]
+    static member (*inline*) IsEmptyTree (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty -> true
+        | Node (_,_,_,_) -> false
+
+    /// Gets the maximum (greatest) value stored in the MapTree.
+    static member MaxElement (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty ->
+            invalidArg "tree" "The tree is empty."
+        | Node (_, Empty, n, _) ->
+            n
+        | Node (_, right, _, _) ->
+            MapTree.MaxElement right
+
+    /// Gets the minimum (least) value stored in the MapTree.
+    static member MinElement (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty ->
+            invalidArg "tree" "The tree is empty."
+        | Node (Empty, _, n, _) ->
+            n
+        | Node (left, _, _, _) ->
+            MapTree.MinElement left
+
+    /// Determines if a MapTree contains a specified value.
+    //[<Pure>]
+    static member ContainsKey (comparer : IComparer<'Key>, tree : MapTree<'Key, 'Value>, key) : bool =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+
+        match tree with
+        | Empty ->
+            false
+        | Node (l, r, kvp, _) ->
+            let comparison = comparer.Compare (key, kvp.Key)
+            if comparison = 0 then      // key = k
+                true
+            elif comparison < 0 then    // key < k
+                MapTree.ContainsKey (comparer, l, key)
+            else                        // key > k
+                MapTree.ContainsKey (comparer, r, key)
+
+    /// Try to find a value associated with the specified key in a MapTree.
+    //[<Pure>]
+    static member TryFindByKey (comparer : IComparer<'Key>, tree : MapTree<'Key, 'Value>, key) : 'Value option =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+        
+        match tree with
+        | Empty ->
+            None
+        | Node (l, r, kvp, _) ->
+            let comparison = comparer.Compare (key, kvp.Key)
+            if comparison = 0 then      // key = k
+                Some kvp.Value
+            elif comparison < 0 then    // key < k
+                MapTree<_,_>.TryFindByKey (comparer, l, key)
+            else                        // key > k
+                MapTree<_,_>.TryFindByKey (comparer, r, key)
+
+    /// Creates a MapTree whose root node holds the specified value
+    /// and the specified left and right subtrees.
+    static member inline private Create (kvp, l, r : MapTree<'Key, 'Value>) =
+        Node (l, r, kvp, (max (MapTree.Height l) (MapTree.Height r)) + 1u)
+
+    /// Creates a MapTree containing the specified key-value pair.
+    static member Singleton kvp : MapTree<'Key, 'Value> =
+        MapTree.Create (kvp, Empty, Empty)
+
+    static member private mkt_bal_l (n, l, r : MapTree<'Key, 'Value>) =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+
+        if MapTree.Height l = MapTree.Height r + 2u then
+            match l with
+            | Empty ->
+                failwith "mkt_bal_l"
+            | Node (ll, lr, ln, _) ->
+                if MapTree.Height ll < MapTree.Height lr then
+                    match lr with
+                    | Empty ->
+                        failwith "mkt_bal_l"
+                    | Node (lrl, lrr, lrn, _) ->
+                        MapTree.Create (lrn, MapTree.Create (ln, ll, lrl), MapTree.Create (n, lrr, r))
+                else
+                    MapTree.Create (ln, ll, MapTree.Create (n, lr, r))
+        else
+            MapTree.Create (n, l, r)
+
+    static member private mkt_bal_r (n, l, r : MapTree<'Key, 'Value>) =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+        
+        if MapTree.Height r = MapTree.Height l + 2u then
+            match r with
+            | Empty ->
+                failwith "mkt_bal_r"
+            | Node (rl, rr, rn, _) ->
+                if MapTree.Height rr < MapTree.Height rl then
+                    match rl with
+                    | Empty ->
+                        failwith "mkt_bal_r"
+                    | Node (rll, rlr, rln, _) ->
+                        MapTree.Create (rln, MapTree.Create (n, l, rll), MapTree.Create (rn, rlr, rr))
+                else
+                    MapTree.Create (rn, MapTree.Create (n, l, rl), rr)
+        else
+            MapTree.Create (n, l, r)
+
+    /// Removes the minimum (least) value from an MapTree,
+    /// returning the value along with the updated tree.
+    static member private DeleteMin (tree : MapTree<'Key, 'Value>) =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+
+        match tree with
+        | Empty ->
+            invalidArg "tree" "Cannot delete the minimum value from an empty tree."
+        | Node (l, Empty, n, _) ->
+            n, l
+        | Node (left, r, n, _) ->
+            let na, l = MapTree.DeleteMin left
+            na, MapTree.mkt_bal_r (n, l, r)
+
+    /// Removes the maximum (greatest) value from an MapTree,
+    /// returning the value along with the updated tree.
+    static member private DeleteMax (tree : MapTree<'Key, 'Value>) =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+
+        match tree with
+        | Empty ->
+            invalidArg "tree" "Cannot delete the maximum value from an empty tree."
+        | Node (l, Empty, n, _) ->
+            n, l
+        | Node (l, right, n, _) ->
+            let na, r = MapTree.DeleteMax right
+            na, MapTree.mkt_bal_l (n, l, r)
+
+    /// Removes the root (median) value from an MapTree,
+    /// returning the value along with the updated tree.
+    static member private DeleteRoot (tree : MapTree<'Key, 'Value>) =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+
+        match tree with
+        | Empty ->
+            invalidArg "tree" "Cannot delete the root of an empty tree."
+        | Node (Empty, r, _, _) -> r
+        | Node (left, Empty, _, _) ->
+            left
+        | Node (left, r, _, _) ->
+            let root, l = MapTree.DeleteMax left
+            MapTree.mkt_bal_r (root, l, r)
+
+    /// Removes the minimum (least) value from a MapTree,
+    /// returning the value along with the updated tree.
+    /// No exception is thrown if the tree is empty.
+    static member private TryDeleteMin (tree : MapTree<'Key, 'Value>) =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+
+        match tree with
+        | Empty ->
+            None, tree
+        | Node (l, Empty, n, _) ->
+            Some n, l
+        | Node (left, r, n, _) ->
+            let na, l = MapTree.TryDeleteMin left
+            match na with
+            | None ->
+                na, l
+            | Some _ ->
+                na, MapTree.mkt_bal_r (n, l, r)
+
+    /// Removes the maximum (greatest) value from a MapTree,
+    /// returning the value along with the updated tree.
+    /// No exception is thrown if the tree is empty.
+    static member private TryDeleteMax (tree : MapTree<'Key, 'Value>) =
+        // Preconditions
+        // TODO : Add assertions for debugging/testing.
+
+        match tree with
+        | Empty ->
+            None, tree
+        | Node (l, Empty, n, _) ->
+            Some n, l
+        | Node (l, right, n, _) ->
+            let na, r = MapTree.TryDeleteMax right
+            match na with
+            | None ->
+                na, l
+            | Some _ ->
+                na, MapTree.mkt_bal_l (n, l, r)
+
+    /// Removes the specified value from the tree.
+    /// If the tree doesn't contain the value, no exception is thrown;
+    /// the tree will be returned without modification.
+    static member Delete (comparer : IComparer<'Key>, tree : MapTree<'Key, 'Value>, key) =
+        match tree with
+        | Empty ->
+            Empty
+        | Node (l, r, kvp, _) as tree ->
+            let comparison = comparer.Compare (key, kvp.Key)
+            if comparison = 0 then
+                // key = k
+                MapTree.DeleteRoot tree
+            elif comparison < 0 then
+                // key < k
+                let l' = MapTree.Delete (comparer, l, key)
+
+                // Only rebalance the tree if an element was actually deleted.
+                if System.Object.ReferenceEquals (l', l) then tree
+                else MapTree.mkt_bal_r (kvp, l', r)
+            else
+                // key > k
+                let r' = MapTree.Delete (comparer, r, key)
+                
+                // Only rebalance the tree if an element was actually deleted.
+                if System.Object.ReferenceEquals (r', r) then tree
+                else MapTree.mkt_bal_l (kvp, l, r')
+
+    /// Adds a value to a MapTree.
+    /// If the tree already contains a binding with an equivalent key *and* value, no exception is thrown;
+    /// the tree is returned without modification.
+    static member Insert (comparer : IComparer<'Key>, tree : MapTree<'Key, 'Value>, newKvp : KeyValuePair<_,_>) =
+        match tree with
+        | Empty ->
+            Node (Empty, Empty, newKvp, 1u)
+        | Node (l, r, kvp, h) as tree ->
+            let comparison = comparer.Compare (newKvp.Key, kvp.Key)
+            if comparison = 0 then
+                // key = k
+                // Try to determine if the new value is the same as the existing value;
+                // if so, we can just return the original tree instead of creating a new one.
+                if Unchecked.equals kvp.Value newKvp.Value then tree
+                else
+                    Node (l, r, newKvp, h)
+            elif comparison < 0 then
+                // key < k
+                let l' = MapTree.Insert (comparer, l, newKvp)
+
+                // Only rebalance the tree if an element was actually inserted.
+                if System.Object.ReferenceEquals (l', l) then tree
+                else MapTree.mkt_bal_l (kvp, l', r)
+            else
+                // key > k
+                let r' = MapTree.Insert (comparer, r, newKvp)
+
+                // Only rebalance the tree if an element was actually inserted.
+                if System.Object.ReferenceEquals (r', r) then tree
+                else MapTree.mkt_bal_r (kvp, l, r')
+
+    /// Adds a value to a MapTree.
+    /// If the tree already contains a binding with an equivalent key *and* value, no exception is thrown;
+    /// the tree is returned without modification.
+    static member TryInsert (comparer : IComparer<'Key>, tree : MapTree<'Key, 'Value>, newKvp : KeyValuePair<_,_>) =
+        match tree with
+        | Empty ->
+            Node (Empty, Empty, newKvp, 1u)
+        | Node (l, r, kvp, h) as tree ->
+            let comparison = comparer.Compare (newKvp.Key, kvp.Key)
+            if comparison = 0 then
+                // key = k
+                // The tree already contains a binding for the specified key, so don't even bother
+                // checking the values for equality -- just return the original tree.
+                tree
+            elif comparison < 0 then
+                // key < k
+                let l' = MapTree.TryInsert (comparer, l, newKvp)
+
+                // Only rebalance the tree if an element was actually inserted.
+                if System.Object.ReferenceEquals (l', l) then tree
+                else MapTree.mkt_bal_l (kvp, l', r)
+            else
+                // key > k
+                let r' = MapTree.TryInsert (comparer, r, newKvp)
+
+                // Only rebalance the tree if an element was actually inserted.
+                if System.Object.ReferenceEquals (r', r) then tree
+                else MapTree.mkt_bal_r (kvp, l, r')
+
+    /// Counts the number of elements in the tree.
+    static member Count (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty -> 0u
+        | Node (Empty, Empty, _, _) -> 1u
+        | Node (l, r, _, _) ->
+            // Count the number of elements in the left and right children.
+            let leftCount = MapTree<_,_>.Count l
+            let rightCount = MapTree<_,_>.Count r
+
+            // Return the sum of the counts of the children, plus one for this node.
+            leftCount + rightCount + 1u
+
+    //
+    static member Iterate (action : 'Key -> 'Value -> unit) (tree : MapTree<'Key, 'Value>) : unit =
+        match tree with
+        | Empty -> ()
+        | Node (Empty, Empty, kvp, _) ->
+            // Invoke the action with this single element.
+            action kvp.Key kvp.Value
+        | Node (l, r, kvp, _) ->
+            // Iterate over the elements in the left subtree.
+            MapTree<_,_>.Iterate action l
+
+            // Apply the action to the key-value pair stored in this node.
+            action kvp.Key kvp.Value
+
+            // Iterate over the elements in the right subtree.
+            MapTree<_,_>.Iterate action r
+
+    //
+    static member IterateKvp (action : KeyValuePair<'Key, 'Value> -> unit) (tree : MapTree<'Key, 'Value>) : unit =
+        match tree with
+        | Empty -> ()
+        | Node (Empty, Empty, kvp, _) ->
+            // Invoke the action with this single element.
+            action kvp
+        | Node (l, r, kvp, _) ->
+            // Iterate over the elements in the left subtree.
+            MapTree<_,_>.IterateKvp action l
+
+            // Apply the action to the key-value pair stored in this node.
+            action kvp
+
+            // Iterate over the elements in the right subtree.
+            MapTree<_,_>.IterateKvp action r
+
+    //
+    static member IterateBack (action : 'Key -> 'Value -> unit) (tree : MapTree<'Key, 'Value>) : unit =
+        match tree with
+        | Empty -> ()
+        | Node (Empty, Empty, kvp, _) ->
+            // Invoke the action with this single element.
+            action kvp.Key kvp.Value
+        | Node (l, r, kvp, _) ->
+            // Iterate over the elements in the right subtree.
+            MapTree<_,_>.Iterate action r
+
+            // Apply the action to the key-value pair stored in this node.
+            action kvp.Key kvp.Value
+
+            // Iterate over the elements in the left subtree.
+            MapTree<_,_>.Iterate action l
+
+    /// Applies the given accumulating function to all elements in a MapTree.
+    static member Fold (folder : 'State -> 'Key -> 'Value -> 'State) (state : 'State) (tree : MapTree<'Key, 'Value>) =
+        match tree with
+        | Empty -> state
+        | Node (Empty, Empty, kvp, _) ->
+            // Invoke the folder function on this single element and return the result.
+            folder state kvp.Key kvp.Value
+        | Node (l, r, kvp, _) ->
+            // Fold over the elements in the left subtree.
+            let state = MapTree<_,_>.Fold folder state l
+
+            // Apply the folder function to the key-value pair stored in this node.
+            let state = folder state kvp.Key kvp.Value
+
+            // Fold over the elements in the right subtree.
+            MapTree<_,_>.Fold folder state r
+
+    /// Applies the given accumulating function to all elements in a MapTree.
+    static member FoldBack (folder : 'Key -> 'Value -> 'State -> 'State) (tree : MapTree<'Key, 'Value>) (state : 'State) =
+        match tree with
+        | Empty -> state
+        | Node (Empty, Empty, kvp, _) ->
+            // Invoke the folder function on this single element and return the result.
+            folder kvp.Key kvp.Value state
+        | Node (l, r, kvp, _) ->
+            // Fold over the elements in the right subtree.
+            let state = MapTree<_,_>.FoldBack folder r state
+
+            // Apply the folder function to the key-value pair stored in this node.
+            let state = folder kvp.Key kvp.Value state
+
+            // Fold over the elements in the left subtree.
+            MapTree<_,_>.FoldBack folder l state
+
+    //
+    static member TryFindKey (predicate : 'Key -> 'Value -> bool) (tree : MapTree<'Key, 'Value>) : 'Key option =
+        match tree with
+        | Empty -> None
+        | Node (Empty, Empty, kvp, _) ->
+            // Apply the predicate function to this key-value pair; if it matches, return the key.
+            if predicate kvp.Key kvp.Value then Some kvp.Key else None
+        | Node (l, r, kvp, _) ->
+            // Try to find a matching key in the left subtree.
+            match MapTree<_,_>.TryFindKey predicate l with
+            | Some _ as result ->
+                result
+            | None ->
+                // Does the key-value pair stored in the current node match the predicate?
+                if predicate kvp.Key kvp.Value then Some kvp.Key
+                else
+                    // Try to find a matching key in the right subtree.
+                    MapTree<_,_>.TryFindKey predicate r
+
+    //
+    static member TryPick (picker : 'Key -> 'Value -> 'T option) (tree : MapTree<'Key, 'Value>) : 'T option =
+        match tree with
+        | Empty -> None
+        | Node (Empty, Empty, kvp, _) ->
+            // Apply the predicate function to this element and return the result.
+            picker kvp.Key kvp.Value
+        | Node (l, r, kvp, _) ->
+            // Try to pick a result from the elements of the left subtree.
+            match MapTree.TryPick picker l with
+            | Some _ as result ->
+                result
+            | None ->
+                // Try to pick a result from the key-value pair stored in the current node.
+                match picker kvp.Key kvp.Value with
+                | Some _ as result ->
+                    result
+                | None ->
+                    // Try to pick a result from the elements of the right subtree.
+                    MapTree<_,_>.TryPick picker r
+
+    /// Tests if any element of the collection satisfies the given predicate.
+    static member Exists (predicate : 'Key -> 'Value -> bool) (tree : MapTree<'Key, 'Value>) : bool =
+        match tree with
+        | Empty -> false
+        | Node (Empty, Empty, kvp, _) ->
+            // Apply the predicate function to this element and return the result.
+            predicate kvp.Key kvp.Value
+        | Node (l, r, kvp, _) ->
+            // Try to find a matching element in the left subtree.
+            MapTree<_,_>.Exists predicate l
+            // Does the key-value pair stored in this node match the predicate?
+            || predicate kvp.Key kvp.Value
+            // Try to find a matching element in the right subtree.
+            || MapTree<_,_>.Exists predicate r
+
+    /// Tests if all elements of the collection satisfy the given predicate.
+    static member Forall (predicate : 'Key -> 'Value -> bool) (tree : MapTree<'Key, 'Value>) : bool =
+        match tree with
+        | Empty -> true
+        | Node (Empty, Empty, kvp, _) ->
+            // Apply the predicate function to this element and return the result.
+            predicate kvp.Key kvp.Value
+        | Node (l, r, kvp, _) ->
+            // Try to find a non-matching element in the left subtree.
+            MapTree<_,_>.Forall predicate l
+            // Does the key-value pair stored in this node match the predicate?
+            && predicate kvp.Key kvp.Value
+            // Try to find a non-matching element in the right subtree.
+            && MapTree<_,_>.Forall predicate r
+
+    /// Builds a new MapTree from the elements of a sequence.
+    static member OfSeq (comparer : IComparer<'Key>, sequence : seq<'Key * 'Value>) : MapTree<'Key, 'Value> =
+        (Empty, sequence)
+        ||> Seq.fold (fun tree (key, value) ->
+            MapTree.Insert (comparer, tree, KeyValuePair (key, value)))
+
+    /// Builds a new MapTree from the elements of an list.
+    static member OfList (comparer : IComparer<'Key>, list : ('Key * 'Value) list) : MapTree<'Key, 'Value> =
+        (Empty, list)
+        ||> List.fold (fun tree (key, value) ->
+            MapTree.Insert (comparer, tree, KeyValuePair (key, value)))
+
+    /// Builds a new MapTree from the elements of an array.
+    static member OfArray (comparer : IComparer<'Key>, array : ('Key * 'Value)[]) : MapTree<'Key, 'Value> =
+        (Empty, array)
+        ||> Array.fold (fun tree (key, value) ->
+            MapTree.Insert (comparer, tree, KeyValuePair (key, value)))
+
+    /// Returns a sequence containing the elements stored
+    /// in a MapTree, ordered from least to greatest.
+    static member ToSeq (tree : MapTree<'Key, 'Value>) =
+        seq {
+        match tree with
+        | Empty -> ()
+        | Node (l, r, kvp, _) ->
+            yield! MapTree.ToSeq l
+            yield kvp.Key, kvp.Value
+            yield! MapTree.ToSeq r
+        }
+
+    /// Returns a list containing the elements stored in
+    /// a MapTree, ordered from least to greatest. 
+    static member ToList (tree : MapTree<'Key, 'Value>) =
+        (tree, [])
+        ||> MapTree.FoldBack (fun key value lst ->
+            (key, value) :: lst)
+
+    /// Returns an array containing the elements stored in
+    /// a MapTree, ordered from least to greatest.
+    static member ToArray (tree : MapTree<'Key, 'Value>) =
+        let elements = ResizeArray ()
+        tree |> MapTree.Iterate (fun key value ->
+            elements.Add (key, value))
+        elements.ToArray ()
+
+
+/// A Patricia trie implementation, modified so each of it's 'values' is actually a comparison-based set.
 /// Used as the underlying data structure for HashMap.
 [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
 type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'Key : comparison> =
     | Empty
     // Key-HashCode * Value
-    | Lf of Key32 * Map<'Key, 'T>
+    | Lf of Key32 * MapTree<'Key, 'T>
     // Prefix * Mask * Left-Child * Right-Child
     | Br of Prefix32 * Mask32 * PatriciaHashMap<'Key, 'T> * PatriciaHashMap<'Key, 'T>
 
     //
-    static member TryFind (keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
+    static member TryFindByKey (comparer, keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
         match map with
         | Empty ->
             None
         | Lf (j, valueMap) ->
             if j = keyHash then
-                Map.tryFind key valueMap
+                MapTree<_,_>.TryFindByKey (comparer, valueMap, key)
             else None
         | Br (_, m, t0, t1) ->
-            PatriciaHashMap.TryFind (
-                keyHash, key, (if zeroBit (keyHash, m) then t0 else t1))
+            PatriciaHashMap.TryFindByKey (
+                comparer, keyHash, key, (if zeroBit (keyHash, m) then t0 else t1))
 
     //
-    static member ContainsKey (keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
+    static member ContainsKey (comparer, keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
         match map with
         | Empty ->
             false
         | Lf (j, valueMap) ->
             j = keyHash
-            && Map.containsKey key valueMap
+            && MapTree<_,_>.ContainsKey (comparer, valueMap, key)
         | Br (_, m, t0, t1) ->
             PatriciaHashMap.ContainsKey (
-                keyHash, key, (if zeroBit (keyHash, m) then t0 else t1))
+                comparer, keyHash, key, (if zeroBit (keyHash, m) then t0 else t1))
 
     //
-    static member Count (map : PatriciaHashMap<'Key, 'T>) : int =
+    static member Count (map : PatriciaHashMap<'Key, 'T>) =
         match map with
-        | Empty -> 0
+        | Empty ->
+            GenericZero
         | Lf (_, valueMap) ->
-            Map.count valueMap
+            MapTree<_,_>.Count valueMap
         | Br (_, _, left, right) ->
             // Count the number of elements in the left and right subtrees.
             PatriciaHashMap.Count left + PatriciaHashMap.Count right
 
     /// Remove the binding with the specified key from the map.
     /// No exception is thrown if the map does not contain a binding for the key.
-    static member Remove (keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
+    static member Remove (comparer, keyHash, key : 'Key, map : PatriciaHashMap<'Key, 'T>) =
         match map with
         | Empty ->
             Empty
         | Lf (j, valueMap) ->
             if j = keyHash then
-                let result = Map.remove key valueMap
-                if Map.isEmpty result then Empty
-                else
+                match MapTree<_,_>.Delete (comparer, valueMap, key) with
+                | MapTree.Empty -> Empty
+                | result ->
                     // OPTIMIZATION : If the result is the same as the input, return the
                     // original map since it wasn't modified.
                     if result == valueMap then map
@@ -93,7 +699,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Br (p, m, t0, t1) ->
             if matchPrefix (keyHash, p, m) then
                 if zeroBit (keyHash, m) then
-                    match PatriciaHashMap.Remove (keyHash, key, t0) with
+                    match PatriciaHashMap.Remove (comparer, keyHash, key, t0) with
                     | Empty -> t1
                     | left ->
                         // Only create a new tree when the value was actually removed
@@ -101,7 +707,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                         if left == t0 then map
                         else Br (p, m, left, t1)
                 else
-                    match PatriciaHashMap.Remove (keyHash, key, t1) with
+                    match PatriciaHashMap.Remove (comparer, keyHash, key, t1) with
                     | Empty -> t0
                     | right ->
                         // Only create a new tree when the value was actually removed
@@ -112,7 +718,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
     //
     static member inline private Singleton (keyHash, key : 'Key, value : 'T) =
-        Lf (keyHash, Map.singleton key value)
+        Lf (keyHash, MapTree<_,_>.Singleton (KeyValuePair (key, value)))
 
     //
     static member inline private Join (p0, t0 : PatriciaHashMap<'Key, 'T>, p1, t1) =
@@ -124,13 +730,13 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
             Br (p, m, t1, t0)
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
-    static member Add (keyHash, key : 'Key, value : 'T, map) =
+    static member Add (comparer, keyHash, key : 'Key, value : 'T, map) =
         match map with
         | Empty ->
             PatriciaHashMap.Singleton (keyHash, key, value)
         | Lf (j, valueMap) ->
             if j = keyHash then
-                let result = Map.add key value valueMap
+                let result = MapTree<_,_>.Insert (comparer, valueMap, KeyValuePair (key, value))
 
                 // OPTIMIZATION : If the result is the same as the input, return the original
                 // map instead since it wasn't modified.
@@ -142,14 +748,14 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Br (p, m, t0, t1) ->
             if matchPrefix (keyHash, p, m) then
                 if zeroBit (keyHash, m) then
-                    let left = PatriciaHashMap.Add (keyHash, key, value, t0)
+                    let left = PatriciaHashMap.Add (comparer, keyHash, key, value, t0)
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
                     if left == t0 then map
                     else Br (p, m, left, t1)
                 else
-                    let right = PatriciaHashMap.Add (keyHash, key, value, t1)
+                    let right = PatriciaHashMap.Add (comparer, keyHash, key, value, t1)
 
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
@@ -160,13 +766,13 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
     /// If a binding already exists for the same key, the map is not altered.
-    static member TryAdd (keyHash, key : 'Key, value : 'T, map) =
+    static member TryAdd (comparer, keyHash, key : 'Key, value : 'T, map) =
         match map with
         | Empty ->
             PatriciaHashMap.Singleton (keyHash, key, value)
         | Lf (j, valueMap) ->
             if j = keyHash then
-                let result = Map.tryAdd key value valueMap
+                let result = MapTree<_,_>.TryInsert (comparer, valueMap, KeyValuePair (key, value))
 
                 // OPTIMIZATION : If the result is the same as the input, return the original
                 // map instead since it wasn't modified.
@@ -178,14 +784,14 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Br (p, m, t0, t1) ->
             if matchPrefix (keyHash, p, m) then
                 if zeroBit (keyHash, m) then
-                    let left = PatriciaHashMap.TryAdd (keyHash, key, value, t0)
+                    let left = PatriciaHashMap.TryAdd (comparer, keyHash, key, value, t0)
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
                     if left == t0 then map
                     else Br (p, m, left, t1)
                 else
-                    let right = PatriciaHashMap.TryAdd (keyHash, key, value, t1)
+                    let right = PatriciaHashMap.TryAdd (comparer, keyHash, key, value, t1)
                     
                     // OPTIMIZATION : If the returned map is identical to the original map after
                     // adding the value to it, we can return this map without modifying it.
@@ -196,9 +802,9 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
 
     /// Insert a binding (key-value pair) into a map, returning a new, updated map.
     /// If a binding already exists for the same key, the map is not altered.
-    static member TryAdd (key : 'Key, value : 'T, map) =
+    static member TryAdd (comparer, key : 'Key, value : 'T, map) =
         let keyHash = uint32 <| hash key
-        PatriciaHashMap.TryAdd (keyHash, key, value, map)
+        PatriciaHashMap.TryAdd (comparer, keyHash, key, value, map)
 (*
     /// Computes the union of two PatriciaHashMaps.
     static member Union (s, t) : PatriciaHashMap<'Key, 'T> =
@@ -454,7 +1060,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         match map with
         | Empty -> ()
         | Lf (_, valueMap) ->
-            Map.iter action valueMap
+            MapTree<_,_>.Iterate action valueMap
         | Br (_, _, left, right) ->
             // Iterate over the left and right subtrees.
             PatriciaHashMap.Iterate (action, left)
@@ -465,7 +1071,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         match map with
         | Empty -> ()
         | Lf (_, valueMap) ->
-            Map.iterBack action valueMap
+            MapTree<_,_>.IterateBack action valueMap
         | Br (_, _, left, right) ->
             // Iterate over the right and left subtrees.
             PatriciaHashMap.Iterate (action, right)
@@ -477,7 +1083,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty ->
             state
         | Lf (_, valueMap) ->
-            Map.fold folder state valueMap
+            MapTree<_,_>.Fold folder state valueMap
         | Br (_, _, left, right) ->
             // Fold over the left and right subtrees.
             let state = PatriciaHashMap.Fold (folder, state, left)
@@ -489,7 +1095,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty ->
             state
         | Lf (_, valueMap) ->
-            Map.foldBack folder valueMap state
+            MapTree<_,_>.FoldBack folder valueMap state
         | Br (_, _, left, right) ->
             // Fold over the right and left subtrees.
             let state = PatriciaHashMap.FoldBack (folder, state, right)
@@ -501,7 +1107,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty ->
             None
         | Lf (_, valueMap) ->
-            Map.tryFindKey predicate valueMap
+            MapTree<_,_>.TryFindKey predicate valueMap
         | Br (_, _, left, right) ->
             // Visit the left subtree, and if necessary, the right subtree.
             match PatriciaHashMap.TryFindKey (predicate, left) with
@@ -516,7 +1122,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         | Empty ->
             None
         | Lf (_, valueMap) ->
-            Map.tryPick picker valueMap
+            MapTree<_,_>.TryPick picker valueMap
         | Br (_, _, left, right) ->
             // Visit the left subtree, and if necessary, the right subtree.
             match PatriciaHashMap.TryPick (picker, left) with
@@ -526,41 +1132,41 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                 result
 
     //
-    static member OfSeq (source : seq<'Key * 'T>) : PatriciaHashMap<'Key, 'T> =
+    static member OfSeq (comparer, source : seq<'Key * 'T>) : PatriciaHashMap<'Key, 'T> =
         (Empty, source)
         ||> Seq.fold (fun trie (key, value) ->
             let keyHash = uint32 <| hash key
-            PatriciaHashMap.Add (keyHash, key, value, trie))
+            PatriciaHashMap.Add (comparer, keyHash, key, value, trie))
 
     //
-    static member OfList (source : ('Key * 'T) list) : PatriciaHashMap<'Key, 'T> =
+    static member OfList (comparer, source : ('Key * 'T) list) : PatriciaHashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> List.fold (fun trie (key, value) ->
             let keyHash = uint32 <| hash key
-            PatriciaHashMap.Add (keyHash, key, value, trie))
+            PatriciaHashMap.Add (comparer, keyHash, key, value, trie))
 
     //
-    static member OfArray (source : ('Key * 'T)[]) : PatriciaHashMap<'Key, 'T> =
+    static member OfArray (comparer, source : ('Key * 'T)[]) : PatriciaHashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> Array.fold (fun trie (key, value) ->
             let keyHash = uint32 <| hash key
-            PatriciaHashMap.Add (keyHash, key, value, trie))
+            PatriciaHashMap.Add (comparer, keyHash, key, value, trie))
 
     //
-    static member OfMap (source : Map<'Key, 'T>) : PatriciaHashMap<'Key, 'T> =
+    static member OfMap (comparer, source : Map<'Key, 'T>) : PatriciaHashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
         (Empty, source)
         ||> Map.fold (fun trie key value ->
             let keyHash = uint32 <| hash key
-            PatriciaHashMap.Add (keyHash, key, value, trie))
+            PatriciaHashMap.Add (comparer, keyHash, key, value, trie))
 
     //
     static member ToSeq (map : PatriciaHashMap<'Key, 'T>) =
@@ -568,19 +1174,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
         match map with
         | Empty -> ()
         | Lf (_, valueMap) ->
-            yield! Map.toSeq valueMap
-        
-        (* OPTIMIZATION :   When one or both children of this node are leaves,
-                            we handle them directly since it's a little faster. *)
-        | Br (_, _, Lf (_, valueMap1), Lf (_, valueMap2)) ->
-            yield! Map.toSeq valueMap1
-            yield! Map.toSeq valueMap2
-
-        | Br (_, _, Lf (_, valueMap), right) ->
-            // Only handle the case where the left child is a leaf
-            // -- otherwise the traversal order would be altered.
-            yield! Map.toSeq valueMap
-            yield! PatriciaHashMap.ToSeq right
+            yield! MapTree<_,_>.ToSeq valueMap
 
         | Br (_, _, left, right) ->
             // Recursively visit the children.
@@ -602,6 +1196,11 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     static let empty : HashMap<'Key, 'T> =
         HashMap Empty
 
+    /// The comparer for the type of the keys used by this collection.
+    /// It is cached here for fast access.
+    //[<System.NonSerialized>]
+    static let comparer = LanguagePrimitives.FastGenericComparer<'Key>
+
     /// The empty HashMap.
     static member Empty
         with get () = empty
@@ -613,7 +1212,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
 
         // OPTIMIZE : Try to cast the sequence to array or list;
         // if it succeeds use the specialized method for that type for better performance.
-        HashMap (PatriciaHashMap.OfSeq elements)
+        HashMap (PatriciaHashMap.OfSeq (comparer, elements))
 
     /// The internal representation of the HashMap.
     member private __.Trie
@@ -643,7 +1242,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     member __.Item
         with get key =
             let keyHash = uint32 <| hash key
-            match PatriciaHashMap.TryFind (keyHash, key, trie) with
+            match PatriciaHashMap.TryFindByKey (comparer, keyHash, key, trie) with
             | Some v -> v
             | None ->
                 keyNotFound "The map does not contain a binding for the specified key."
@@ -651,7 +1250,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     /// The number of bindings in the HashMap.
     member __.Count
         with get () : int =
-            PatriciaHashMap.Count trie
+            PatriciaHashMap.Count trie |> Checked.int
 
     /// Is the map empty?
     member __.IsEmpty
@@ -664,13 +1263,13 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     /// element is in the domain of the HashMap and None if not.
     member __.TryFind (key : 'Key) : 'T option =
         let keyHash = uint32 <| hash key
-        PatriciaHashMap.TryFind (keyHash, key, trie)
+        PatriciaHashMap.TryFindByKey (comparer, keyHash, key, trie)
 
     /// Look up an element in the HashMap, raising KeyNotFoundException
     /// if no binding exists in the HashMap.
     member __.Find (key : 'Key) : 'T =
         let keyHash = uint32 <| hash key
-        match PatriciaHashMap.TryFind (keyHash, key, trie) with
+        match PatriciaHashMap.TryFindByKey (comparer, keyHash, key, trie) with
         | Some x -> x
         | None ->
             // TODO : Add a better error message which includes the key.
@@ -680,13 +1279,13 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     /// Tests if an element is in the domain of the HashMap.
     member __.ContainsKey (key : 'Key) : bool =
         let keyHash = uint32 <| hash key
-        PatriciaHashMap.ContainsKey (keyHash, key, trie)
+        PatriciaHashMap.ContainsKey (comparer, keyHash, key, trie)
 
     /// Returns a new HashMap with the binding added to this HashMap.
     member this.Add (key : 'Key, value : 'T) : HashMap<'Key, 'T> =
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
         let keyHash = uint32 <| hash key
-        let trie' = PatriciaHashMap.Add (keyHash, key, value, trie)
+        let trie' = PatriciaHashMap.Add (comparer, keyHash, key, value, trie)
         if trie == trie' then this
         else HashMap (trie')
 
@@ -694,7 +1293,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     member this.TryAdd (key : 'Key, value : 'T) : HashMap<'Key, 'T> =
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
         //let keyHash = uint32 <| hash key
-        let trie' = PatriciaHashMap.TryAdd (key, value, trie)
+        let trie' = PatriciaHashMap.TryAdd (comparer, key, value, trie)
         if trie == trie' then this
         else HashMap (trie')
 
@@ -703,7 +1302,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     member this.Remove (key : 'Key) : HashMap<'Key, 'T> =
         // If the trie isn't modified, just return this HashMap instead of creating a new one.
         let keyHash = uint32 <| hash key
-        let trie' = PatriciaHashMap.Remove (keyHash, key, trie)
+        let trie' = PatriciaHashMap.Remove (comparer, keyHash, key, trie)
         if trie == trie' then this
         else HashMap (trie')
 (*
@@ -714,7 +1313,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashMap.
-            let trie' = PatriciaHashMap.Union (trie, otherMap.Trie)
+            let trie' = PatriciaHashMap.Union (comparer, trie, otherMap.Trie)
             if trie == trie' then this
             elif otherMap.Trie == trie' then otherMap
             else HashMap (trie')
@@ -726,7 +1325,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashMap.
-            let trie' = PatriciaHashMap.Intersect (trie, otherMap.Trie)
+            let trie' = PatriciaHashMap.Intersect (comparer, trie, otherMap.Trie)
             if trie == trie' then this
             elif otherMap.Trie == trie' then otherMap
             else HashMap (trie')
@@ -738,7 +1337,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         else
             // If the result is the same (physical equality) to one of the inputs,
             // return that input instead of creating a new HashMap.
-            let trie' = PatriciaHashMap.Difference (trie, otherMap.Trie)
+            let trie' = PatriciaHashMap.Difference (comparer, trie, otherMap.Trie)
             if trie == trie' then this
             elif otherMap.Trie == trie' then otherMap
             else HashMap (trie')
@@ -751,14 +1350,14 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
     static member Singleton (key : 'Key, value : 'T) : HashMap<'Key, 'T> =
         let keyHash = uint32 <| hash key
         HashMap (
-            Lf (keyHash, Map.singleton key value))
+            Lf (keyHash, MapTree<_,_>.Singleton (KeyValuePair (key, value))))
 
     /// Returns a new HashMap made from the given bindings.
     static member OfSeq (source : seq<'Key * 'T>) : HashMap<'Key, 'T> =
         // Preconditions
         checkNonNull "source" source
 
-        HashMap (PatriciaHashMap.OfSeq source)
+        HashMap (PatriciaHashMap.OfSeq (comparer, source))
 
     /// Returns a new HashMap made from the given bindings.
     static member OfList (source : ('Key * 'T) list) : HashMap<'Key, 'T> =
@@ -769,7 +1368,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         if List.isEmpty source then
             HashMap.Empty
         else
-            HashMap (PatriciaHashMap.OfList source)
+            HashMap (PatriciaHashMap.OfList (comparer, source))
 
     /// Returns a new HashMap made from the given bindings.
     static member OfArray (source : ('Key * 'T)[]) : HashMap<'Key, 'T> =
@@ -780,7 +1379,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         if Array.isEmpty source then
             HashMap.Empty
         else
-            HashMap (PatriciaHashMap.OfArray source)
+            HashMap (PatriciaHashMap.OfArray (comparer, source))
 
     /// Returns a new HashMap made from the given bindings.
     static member OfMap (source : Map<'Key, 'T>) : HashMap<'Key, 'T> =
@@ -791,7 +1390,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         if Map.isEmpty source then
             HashMap.Empty
         else
-            HashMap (PatriciaHashMap.OfMap source)
+            HashMap (PatriciaHashMap.OfMap (comparer, source))
 
     //
     member __.ToSeq () =
@@ -1011,7 +1610,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         /// <inherit />
         member __.Count
             with get () =
-                PatriciaHashMap.Count trie
+                PatriciaHashMap.Count trie |> Checked.int
 
         /// <inherit />
         member __.IsReadOnly
@@ -1028,7 +1627,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         /// <inherit />
         member __.Contains (item : KeyValuePair<'Key, 'T>) =
             let keyHash = uint32 <| hash item.Key
-            match PatriciaHashMap.TryFind (keyHash, item.Key, trie) with
+            match PatriciaHashMap.TryFindByKey (comparer, keyHash, item.Key, trie) with
             | None ->
                 false
             | Some value ->
@@ -1041,8 +1640,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
             if arrayIndex < 0 then
                 argOutOfRange "arrayIndex" "The target array index cannot be negative."
 
-            let count = PatriciaHashMap.Count trie
-            if arrayIndex + count > Array.length array then
+            if arrayIndex + this.Count > Array.length array then
                 invalidArg "arrayIndex"
                     "There is not enough room in the array to copy the \
                      elements when starting at the specified index."
@@ -1061,7 +1659,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         member __.Item
             with get key =
                 let keyHash = uint32 <| hash key
-                match PatriciaHashMap.TryFind (keyHash, key, trie) with
+                match PatriciaHashMap.TryFindByKey (comparer, keyHash, key, trie) with
                 | Some value ->
                     value
                 | None ->
@@ -1098,7 +1696,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         /// <inherit />
         member __.ContainsKey key =
             let keyHash = uint32 <| hash key
-            PatriciaHashMap.ContainsKey (keyHash, key, trie)
+            PatriciaHashMap.ContainsKey (comparer, keyHash, key, trie)
 
         /// <inherit />
         member __.Remove _ =
@@ -1107,7 +1705,7 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
         /// <inherit />
         member __.TryGetValue (key, value) =
             let keyHash = uint32 <| hash key
-            match PatriciaHashMap.TryFind (keyHash, key, trie) with
+            match PatriciaHashMap.TryFindByKey (comparer, keyHash, key, trie) with
             | None ->
                 false
             | Some v ->
