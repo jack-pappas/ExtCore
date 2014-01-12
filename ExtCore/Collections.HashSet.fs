@@ -1429,23 +1429,31 @@ type HashSet<'T when 'T : comparison> private (trie : PatriciaHashSet<'T>) =
 
     //
     static member private Equals (left : HashSet<'T>, right : HashSet<'T>) =
-        Unchecked.equals left.Trie right.Trie
+        // OPTIMIZE : Would it be significantly faster if we re-implemented this to work
+        // directly on the SetTrees instead of using enumerators? Or, at least using an
+        // imperative loop instead of a recursive function?
+        use e1 = (left :> seq<_>).GetEnumerator ()
+        use e2 = (right :> seq<_>).GetEnumerator ()
+        let rec loop () =
+            let m1 = e1.MoveNext ()
+            let m2 = e2.MoveNext ()
+            (m1 = m2) && (not m1 || ((e1.Current = e2.Current) && loop ()))
+        loop ()
 
     //
     static member private Compare (left : HashSet<'T>, right : HashSet<'T>) =
-        Unchecked.compare left.Trie right.Trie
+        // OPTIMIZE : Re-implement this to operate directly on the SetTrees instead of using enumerators.
+        (PatriciaHashSet.ToSeq left.Trie, PatriciaHashSet.ToSeq right.Trie)
+        ||> Seq.compareWith (fun x y ->
+            comparer.Compare (x, y))
 
     /// <inherit />
-    override __.Equals other =
+    override this.Equals other =
         match other with
         | :? HashSet<'T> as other ->
-            Unchecked.equals trie other.Trie
+            HashSet<_>.Equals (this, other)
         | _ ->
             false
-
-    /// <inherit />
-    override __.GetHashCode () =
-        Unchecked.hash trie
 
     /// The number of bindings in the HashSet.
     member __.Count
@@ -1731,6 +1739,20 @@ type HashSet<'T when 'T : comparison> private (trie : PatriciaHashSet<'T>) =
             | Choice2Of2 result ->
                 set1,
                 set2.Add result), (HashSet.Empty, HashSet.Empty))
+
+    // OPTIMIZE : Instead of computing this repeatedly -- this type is immutable so we should
+    // lazily compute the hashcode once instead. However, we do need to account for the case
+    // where an instance is created via deserialization, so implement this with a mutable backing field
+    // which is initially set to zero (0); when GetHashCode() is called, it'll check the value
+    // and if equal to zero, it'll compute with ComputeHashCode() then store the value using Interlocked.Exchange().
+    member this.ComputeHashCode () =
+        let inline combineHash x y = (x <<< 1) + y + 631
+        this.Fold ((fun res x ->
+            combineHash res (hash x)), 0)
+        |> abs
+
+    override this.GetHashCode () =
+        this.ComputeHashCode ()
 
     /// Formats an element value for use within the ToString() method.
     static member (*inline*) private ElementString (element : obj) =

@@ -1220,23 +1220,24 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
 
     //
     static member private Equals (left : HashMap<'Key, 'T>, right : HashMap<'Key, 'T>) =
-        Unchecked.equals left.Trie right.Trie
+        HashMap<_,_>.Compare (left, right) = 0
 
     //
     static member private Compare (left : HashMap<'Key, 'T>, right : HashMap<'Key, 'T>) =
-        Unchecked.compare left.Trie right.Trie
+        (left, right)
+        ||> Seq.compareWith (fun (kvp1 : KeyValuePair<_,_>) (kvp2 : KeyValuePair<_,_>) ->
+            match comparer.Compare (kvp1.Key, kvp2.Key) with
+            | 0 ->
+                Unchecked.compare kvp1.Value kvp2.Value
+            | c -> c)
 
     /// <inherit />
-    override __.Equals other =
+    override this.Equals other =
         match other with
         | :? HashMap<'Key, 'T> as other ->
-            Unchecked.equals trie other.Trie
+            HashMap<_,_>.Equals (this, other)
         | _ ->
             false
-
-    /// <inherit />
-    override __.GetHashCode () =
-        Unchecked.hash trie
 
     //
     member __.Item
@@ -1529,6 +1530,21 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
                 map1,
                 map2.Add (key, value)), (HashMap.Empty, HashMap.Empty))
 
+    // OPTIMIZE : Instead of computing this repeatedly -- this type is immutable so we should
+    // lazily compute the hashcode once instead. However, we do need to account for the case
+    // where an instance is created via deserialization, so implement this with a mutable backing field
+    // which is initially set to zero (0); when GetHashCode() is called, it'll check the value
+    // and if equal to zero, it'll compute with ComputeHashCode() then store the value using Interlocked.Exchange().
+    member this.ComputeHashCode () =
+        let inline combineHash x y = (x <<< 1) + y + 631
+        this.Fold ((fun res x y ->
+            let res = combineHash res (hash x)
+            combineHash res (Unchecked.hash y)), 0)
+        |> abs
+
+    override this.GetHashCode () =
+        this.ComputeHashCode ()
+
     /// Formats an element value for use within the ToString() method.
     static member (*inline*) private ElementString (element : obj) =
         match box element with
@@ -1585,8 +1601,15 @@ type HashMap<'Key, [<EqualityConditionalOn; ComparisonConditionalOn>] 'T when 'K
 
     interface System.IComparable with
         /// <inherit />
-        member this.CompareTo other =
-            HashMap<_,_>.Compare (this, other :?> HashMap<'Key, 'T>)
+        member this.CompareTo obj =
+            match obj with
+            | :? HashMap<'Key, 'T> as other ->
+                HashMap<_,_>.Compare (this, other)
+            | null ->
+                nullArg "obj"
+            | _ ->
+                //let msg = SR.GetString SR.notComparable
+                invalidArg "obj" "The two objects have different types and are not comparable."
 
     interface System.IComparable<HashMap<'Key, 'T>> with
         /// <inherit />
@@ -1824,7 +1847,7 @@ module HashMap =
         checkNonNull "map" map
 
         map.Remove key
-(*
+ (*
     /// Returns a new map created by merging the two specified maps.
     [<CompiledName("Union")>]
     let inline union (map1 : HashMap<'Key, 'T>) (map2 : HashMap<'Key, 'T>) : HashMap<'Key, 'T> =
@@ -1851,7 +1874,7 @@ module HashMap =
         checkNonNull "map2" map2
 
         map1.Difference map2
-*)
+ *)
     /// Returns a new map made from the given bindings.
     [<CompiledName("OfSeq")>]
     let inline ofSeq source : HashMap<'Key, 'T> =
