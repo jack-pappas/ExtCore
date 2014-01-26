@@ -45,7 +45,7 @@ type internal SetTree<'T when 'T : comparison> =
         
         // OPTIMIZATION : If two trees are identical, there's no need to compare them.
         | t1 :: l1, t2 :: l2
-            when System.Object.ReferenceEquals (t1, t2) ->
+            when t1 == t2 ->
             // Continue comparing the lists.
             SetTree.CompareStacks (comparer, l1, l2)
         
@@ -90,7 +90,7 @@ type internal SetTree<'T when 'T : comparison> =
     //
     static member Compare (comparer : IComparer<'T>, s1 : SetTree<'T>, s2 : SetTree<'T>) : int =
         // OPTIMIZATION : If two trees are identical, there's no need to compare them.
-        if System.Object.ReferenceEquals (s1, s2) then 0
+        if s1 == s2 then 0
         else
             match s1, s2 with
             | Empty, Empty -> 0
@@ -340,14 +340,14 @@ type internal SetTree<'T when 'T : comparison> =
                 let l' = SetTree.Delete (comparer, l, value)
 
                 // Only rebalance the tree if an element was actually deleted.
-                if System.Object.ReferenceEquals (l', l) then tree
+                if l' == l then tree
                 else SetTree.mkt_bal_r (n, l', r)
             else
                 // x > n
                 let r' = SetTree.Delete (comparer, r, value)
                 
                 // Only rebalance the tree if an element was actually deleted.
-                if System.Object.ReferenceEquals (r', r) then tree
+                if r' == r then tree
                 else SetTree.mkt_bal_l (n, l, r')
 
     /// Adds a value to a SetTree.
@@ -370,14 +370,14 @@ type internal SetTree<'T when 'T : comparison> =
                 let l' = SetTree.Insert (comparer, l, value)
 
                 // Only rebalance the tree if an element was actually inserted.
-                if System.Object.ReferenceEquals (l', l) then tree
+                if l' == l then tree
                 else SetTree.mkt_bal_l (n, l', r)
             else
                 // x > n
                 let r' = SetTree.Insert (comparer, r, value)
                 
                 // Only rebalance the tree if an element was actually inserted.
-                if System.Object.ReferenceEquals (r', r) then tree
+                if r' == r then tree
                 else SetTree.mkt_bal_r (n, l, r')
 
     /// Counts the number of elements in the tree.
@@ -689,7 +689,7 @@ type internal SetTree<'T when 'T : comparison> =
     /// Computes the union of two SetTrees.
     static member Union (comparer : IComparer<'T>, t1 : SetTree<'T>, t2 : SetTree<'T>) : SetTree<'T> =
         // If the two trees are identical (physical equality), there's no need to do any work.
-        if System.Object.ReferenceEquals (t1, t2) then t1 else
+        if t1 == t2 then t1 else
         
         // Perf: tried bruteForce for low heights, but nothing significant
         match t1, t2 with
@@ -745,7 +745,7 @@ type internal SetTree<'T when 'T : comparison> =
     /// Computes the intersection of two SetTrees.
     static member Intersection (comparer : IComparer<'T>, tree1 : SetTree<'T>, tree2 : SetTree<'T>) : SetTree<'T> =
         // If the two trees are identical (physical equality), there's no need to do any work.
-        if System.Object.ReferenceEquals (tree1, tree2) then tree1
+        if tree1 == tree2 then tree1
         else
             // If either of the two trees are empty, the intersection is empty.
             match tree1, tree2 with
@@ -758,7 +758,7 @@ type internal SetTree<'T when 'T : comparison> =
     /// Returns a new SetTree created by removing the elements of the second SetTree from the first.
     static member Difference (comparer : IComparer<'T>, tree1 : SetTree<'T>, tree2 : SetTree<'T>) : SetTree<'T> =
         // If the two trees are identical (physical equality), there's no need to do any work.
-        if System.Object.ReferenceEquals (tree1, tree2) then SetTree.Empty
+        if tree1 == tree2 then SetTree.Empty
         else
             // If the first tree is empty, the result is empty;
             // If the second tree is empty, the result is the first tree.
