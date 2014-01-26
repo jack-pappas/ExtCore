@@ -820,11 +820,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     // The prefixes disagree.
                     PatriciaHashMap.Join (p, s, q, t)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
@@ -884,11 +880,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     | left, right ->
                         Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         PatriciaHashMap.Intersect (s0, t)
@@ -941,11 +933,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     | left, right ->
                         Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         match PatriciaHashMap.Difference (s0, t) with

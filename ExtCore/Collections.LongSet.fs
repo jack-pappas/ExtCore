@@ -28,29 +28,8 @@ type internal Mask64 = uint64
 type internal Key64 = uint64
 type internal Prefix64 = uint64
 
-/// Bitwise operations (64-bit) necessary for implementing Patricia tries.
+/// Bitwise operations (64-bit) necessary for implementing big-endian Patricia tries.
 module internal BitOps64 =
-    #if LITTLE_ENDIAN_TRIES
-    
-    //
-    let inline private leastSignificantSetBit (x : uint64) : uint64 =
-        x &&& (uint64 -(int64 x))
-
-    /// Finds the last (least-significant) bit at which p0 and p1 disagree.
-    /// Returns a power-of-two value containing this (and only this) bit.
-    let inline branchingBit (p0 : Prefix64, p1 : Prefix64) : Mask64 =
-        leastSignificantSetBit (p0 ^^^ p1)
-
-    /// Clears the indicated bit and sets all lower bits.
-    let inline mask (key : Key64, mask : Mask64) : Prefix64 =
-        key &&& (mask - 1u)
-
-    //
-    let (*inline*) shorter (m1 : Mask64, m2 : Mask64) : bool =
-        notImpl "BitOps.shorter (Little-Endian)"
-
-    #else
-    
     // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
     // OPTIMIZE : This could be even faster if we could take advantage of a built-in
     // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
@@ -83,8 +62,6 @@ module internal BitOps64 =
     let inline shorter (m1 : Mask64, m2 : Mask64) : bool =
         // NOTE : This must be an *unsigned* comparison for the results to be correct.
         m1 > m2
-
-    #endif
 
     //
     let inline matchPrefix (key : Key64, prefix : Prefix64, mask' : Mask64) : bool =
@@ -268,11 +245,7 @@ type private PatriciaSet64 =
                     // The prefixes disagree.
                     PatriciaSet64.Join (p, s, q, t)
             
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
@@ -355,11 +328,7 @@ type private PatriciaSet64 =
                         elif left == t0 && right == t1 then t
                         else Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         PatriciaSet64.Intersect (s0, t)
@@ -412,11 +381,7 @@ type private PatriciaSet64 =
                         if left == s0 && right == s1 then s
                         else Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         match PatriciaSet64.Difference (s0, t) with

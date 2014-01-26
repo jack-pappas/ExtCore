@@ -29,29 +29,8 @@ type internal Mask32 = uint32
 type internal Key32 = uint32
 type internal Prefix32 = uint32
 
-/// Bitwise operations (32-bit) necessary for implementing Patricia tries.
+/// Bitwise operations (32-bit) necessary for implementing big-endian Patricia tries.
 module internal BitOps32 =
-    #if LITTLE_ENDIAN_TRIES
-    
-    //
-    let inline private leastSignificantSetBit (x : uint32) : uint32 =
-        x &&& (uint32 -(int x))
-
-    /// Finds the last (least-significant) bit at which p0 and p1 disagree.
-    /// Returns a power-of-two value containing this (and only this) bit.
-    let inline branchingBit (p0 : Prefix32, p1 : Prefix32) : Mask32 =
-        leastSignificantSetBit (p0 ^^^ p1)
-
-    /// Clears the indicated bit and sets all lower bits.
-    let inline mask (key : Key32, mask : Mask32) : Prefix32 =
-        key &&& (mask - 1u)
-
-    //
-    let (*inline*) shorter (m1 : Mask32, m2 : Mask32) : bool =
-        notImpl "BitOps.shorter (Little-Endian)"
-
-    #else
-    
     // http://aggregate.org/MAGIC/#Most%20Significant%201%20Bit
     // OPTIMIZE : This could be even faster if we could take advantage of a built-in
     // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
@@ -83,8 +62,6 @@ module internal BitOps32 =
     let inline shorter (m1 : Mask32, m2 : Mask32) : bool =
         // NOTE : This must be an *unsigned* comparison for the results to be correct.
         m1 > m2
-
-    #endif
 
     //
     let inline matchPrefix (key : Key32, prefix : Prefix32, mask' : Mask32) : bool =
@@ -268,11 +245,7 @@ type private PatriciaSet32 =
                     // The prefixes disagree.
                     PatriciaSet32.Join (p, s, q, t)
             
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
@@ -355,11 +328,7 @@ type private PatriciaSet32 =
                         elif left == t0 && right == t1 then t
                         else Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         PatriciaSet32.Intersect (s0, t)
@@ -412,11 +381,7 @@ type private PatriciaSet32 =
                         if left == s0 && right == s1 then s
                         else Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         match PatriciaSet32.Difference (s0, t) with
