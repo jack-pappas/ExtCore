@@ -36,11 +36,15 @@ module internal BitOps32 =
     // CPU instruction here (such as 'bsr', 'ffs', or 'clz').
     // Could we expose these instructions through Mono?
     let inline private mostSignificantSetBit (x1 : uint32) =
-        let x2 = x1 ||| (x1 >>> 1)
-        let x3 = x2 ||| (x2 >>> 2)
-        let x4 = x3 ||| (x3 >>> 4)
-        let x5 = x4 ||| (x4 >>> 8)
-        let x6 = x5 ||| (x5 >>> 16)
+        let x6 =
+            let x5 =
+                let x4 =
+                    let x3 =
+                        let x2 = x1 ||| (x1 >>> 1)
+                        x2 ||| (x2 >>> 2)
+                    x3 ||| (x3 >>> 4)
+                x4 ||| (x4 >>> 8)
+            x5 ||| (x5 >>> 16)
         // OPTIMIZATION : p AND (NOT q) <-> p XOR q
         x6 ^^^ (x6 >>> 1)
 
