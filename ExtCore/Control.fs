@@ -146,10 +146,32 @@ type StatefulChoiceFunc<'State, 'T, 'Error> =
 
 /// <summary>
 /// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+type AsyncChoice<'T, 'Error> =
+    Async<Choice<'T, 'Error>>
+
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="T"></typeparam>
+type AsyncReaderFunc<'Env, 'T> =
+    'Env -> Async<'T>
+
+/// <summary>
+/// </summary>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 type AsyncStateFunc<'State, 'T> =
     'State -> Async<'T * 'State>
+
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+type AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+    'Env -> Async<Choice<'T, 'Error>>
 
 /// <summary>
 /// </summary>
@@ -158,10 +180,6 @@ type AsyncStateFunc<'State, 'T> =
 /// <typeparam name="Error"></typeparam>
 type AsyncProtectedStateFunc<'State, 'T, 'Error> =
     'State -> Async<Choice<'T * 'State, 'Error>>
-
-//
-type AsyncChoice<'T, 'Error> =
-    Async<Choice<'T, 'Error>>
 
 
 (*** Workflow Builders ***)
@@ -1431,6 +1449,178 @@ type AsyncChoiceBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
+type AsyncReaderBuilder () =
+    // 'T -> M<'T>
+    member __.Return value
+        : AsyncReaderFunc<'Env, 'T> =
+        fun _ ->
+            async.Return value
+
+    // M<'T> -> M<'T>
+    member __.ReturnFrom func
+        : AsyncReaderFunc<'Env, 'T> =
+        func
+
+    // unit -> M<'T>
+    member this.Zero ()
+        : AsyncReaderFunc<'Env, unit> =
+        fun _ ->
+            async.Zero ()
+
+    // (unit -> M<'T>) -> M<'T>
+    member this.Delay (f : unit -> AsyncReaderFunc<_,_>)
+        : AsyncReaderFunc<'Env, 'T> =
+        fun env -> f () env
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member __.Bind (m : AsyncReaderFunc<_,_>, k : 'T -> AsyncReaderFunc<_,_>)
+        : AsyncReaderFunc<'Env, 'U> =
+        fun env ->
+            async {
+            let! result = m env
+            return! k result env
+            }
+
+    // M<'T> -> M<'T> -> M<'T>
+    // or
+    // M<unit> -> M<'T> -> M<'T>
+    member this.Combine (r1 : AsyncReaderFunc<_,_>, r2 : AsyncReaderFunc<_,_>)
+        : AsyncReaderFunc<'Env, 'T> =
+        this.Bind (r1, (fun () -> r2))
+
+    // M<'T> -> M<'T> -> M<'T>
+    member __.TryWith (body : AsyncReaderFunc<_,_>, handler : exn -> AsyncReaderFunc<_,_>)
+        : AsyncReaderFunc<'Env, 'T> =
+        fun env ->
+        try body env
+        with ex ->
+            handler ex env
+
+    // M<'T> -> M<'T> -> M<'T>
+    member __.TryFinally (body : AsyncReaderFunc<_,_>, handler)
+        : AsyncReaderFunc<'Env, 'T> =
+        fun env ->
+        try body env
+        finally
+            handler ()
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncReaderFunc<_,_>)
+        : AsyncReaderFunc<'Env, 'U> =
+        this.TryFinally (body resource, fun () ->
+            if not <| isNull (box resource) then
+                resource.Dispose ())
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : AsyncReaderFunc<_,_>)
+        : AsyncReaderFunc<'Env, unit> =
+        if guard () then
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member this.For (sequence : seq<_>, body : 'T -> AsyncReaderFunc<_,_>)
+        : AsyncReaderFunc<'Env, unit> =
+        this.Using (sequence.GetEnumerator (), fun enum ->
+            this.While (
+                enum.MoveNext,
+                this.Delay (fun () ->
+                    body enum.Current)))
+
+/// <summary>
+/// </summary>
+[<Sealed>]
+type AsyncReaderChoiceBuilder () =
+    // 'T -> M<'T>
+    member __.Return value
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun _ ->
+            async.Return (Choice1Of2 value)
+
+    // M<'T> -> M<'T>
+    member __.ReturnFrom func
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+        func
+
+    // unit -> M<'T>
+    member this.Zero ()
+        : AsyncReaderChoiceFunc<'Env, unit, 'Error> =
+        fun _ ->
+            async.Return (Choice1Of2 ())
+
+    // (unit -> M<'T>) -> M<'T>
+    member this.Delay (f : unit -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun env -> f () env
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member __.Bind (m : AsyncReaderChoiceFunc<_,_,_>, k : 'T -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'U, 'Error> =
+        fun env ->
+            async {
+            let! result = m env
+            match result with
+            | Choice2Of2 error ->
+                return Choice2Of2 error
+            | Choice1Of2 value ->
+                return! k value env
+            }
+
+    // M<'T> -> M<'T> -> M<'T>
+    // or
+    // M<unit> -> M<'T> -> M<'T>
+    member this.Combine (r1 : AsyncReaderChoiceFunc<_,_,_>, r2 : AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+        this.Bind (r1, (fun () -> r2))
+
+    // M<'T> -> M<'T> -> M<'T>
+    member __.TryWith (body : AsyncReaderChoiceFunc<_,_,_>, handler : exn -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun env ->
+        try body env
+        with ex ->
+            handler ex env
+
+    // M<'T> -> M<'T> -> M<'T>
+    member __.TryFinally (body : AsyncReaderChoiceFunc<_,_,_>, handler)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun env ->
+        try body env
+        finally
+            handler ()
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'U, 'Error> =
+        this.TryFinally (body resource, fun () ->
+            if not <| isNull (box resource) then
+                resource.Dispose ())
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, unit, 'Error> =
+        if guard () then
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member this.For (sequence : seq<_>, body : 'T -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, unit, 'Error> =
+        this.Using (sequence.GetEnumerator (), fun enum ->
+            this.While (
+                enum.MoveNext,
+                this.Delay (fun () ->
+                    body enum.Current)))
+
+/// <summary>
+/// </summary>
+[<Sealed>]
 type AsyncProtectedStateBuilder () =
     // 'T -> M<'T>
     member __.Return value
@@ -1565,14 +1755,20 @@ module WorkflowBuilders =
     [<CompiledName("StatefulChoice")>]
     let statefulChoice = StatefulChoiceBuilder ()
     //
-    [<CompiledName("AsyncState")>]
-    let asyncState = AsyncStateBuilder ()
+    [<CompiledName("AsyncReader")>]
+    let asyncReader = AsyncReaderBuilder ()
     //
     [<CompiledName("AsyncMaybe")>]
     let asyncMaybe = AsyncMaybeBuilder ()
     //
     [<CompiledName("AsyncChoice")>]
     let asyncChoice = AsyncChoiceBuilder ()
+    //
+    [<CompiledName("AsyncReaderChoice")>]
+    let asyncReaderChoice = AsyncReaderChoiceBuilder ()
+    //
+    [<CompiledName("AsyncState")>]
+    let asyncState = AsyncStateBuilder ()
     //
     [<CompiledName("AsyncProtectedState")>]
     let asyncProtectedState = AsyncProtectedStateBuilder ()
