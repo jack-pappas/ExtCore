@@ -353,17 +353,29 @@ LazyList
 
 List
 ----
-- ``insert : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
+- ``insert : index:int -> value:'T -> list:'T list -> 'T list``
 
   Creates a new list by inserting the value at a given index in a list.
 
-- ``update : (index : int) -> (value : 'T) -> (list : 'T list) : 'T list``
+- ``isSorted : list:'T list -> bool (requires comparison)``
 
-  Creates a new list by setting the element at the specified index to a given value.
+  Determines if a list is sorted (in increasing order), using the default comparison for the element type of the list.
 
-- ``splice : (index : int) -> (list1 : 'T list) -> (list2 : 'T list) : 'T list``
+- ``isSortedBy : projection:('T -> 'Key) -> list:'T list -> bool (requires comparison)``
+
+  Determines if a list is sorted (in increasing order), using the given projection function to compute the sort value for each list item.
+
+- ``isSortedWith : comparison:('T -> 'T -> int) -> list:'T list -> bool``
+
+  Determines if a list is sorted (in increasing order), using the given comparison function to compare adjacent items in the list.
+
+- ``splice : (index : int) -> (list1 : 'T list) -> (list2 : 'T list) -> 'T list``
 
   Creates a new list by "splicing" the second list into the first at the given index.
+
+- ``update : index:int -> value:'T -> list:'T list -> 'T list``
+
+  Creates a new list by setting the element at the specified index to a given value.
 
 
 Map
