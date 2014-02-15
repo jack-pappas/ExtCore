@@ -465,18 +465,38 @@ ResizeArray
 Seq
 ---
 - ``fold2``
+
+  Like ``Array.fold2`` or ``List.fold2``, but folds over two input sequences.
+  The accumulator value is returned when one or both of the sequences is depleted.
+
 - ``choosei``
-- ``segment``
+
+  Indexed version of ``Seq.choose``.
+
+- ``segmentBy : projection:('T -> 'Key) -> source:seq<'T> -> seq<seq<'T>>``
 
   Groups elements of a sequence together "longitudinally" -- i.e., it works
   in a streaming fashion, rather than ``Seq.groupBy`` which needs to see the
   entire stream before returning. Alternatively, this can be thought of
   as a generalized form of ``Seq.windowed``.
 
+- ``segmentWith : predicate:('T -> 'T -> bool) -> source:seq<'T> -> seq<seq<'T>>``
+
+  Similar to ``Seq.segmentBy``. Applies ``predicate`` to each pair of adjacent elements in ``source``
+  to determine if they should be grouped into the same "segment".
+
 - ``sample``
 
   Takes a positive integer and a sequence.
   Returns a sequence containing every n-th element of the input sequence.
+
+- ``foldBy``
+- ``reduceBy``
+
+  Similar to ``Seq.groupBy``, but instead of building up the group sequence associated with each key,
+  perform ``fold`` or ``reduce`` operations over each of the group sequences on-the-fly. This allows
+  certain operations to be implemented more efficiently, because only the accumulator value is stored
+  for each key, rather than the entire grouped sequence.
 
 
 Set
