@@ -45,7 +45,7 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
         
         // OPTIMIZATION : If two trees are identical, there's no need to compare them.
         | t1 :: l1, t2 :: l2
-            when System.Object.ReferenceEquals (t1, t2) ->
+            when t1 == t2 ->
             // Continue comparing the lists.
             MapTree.CompareStacks (comparer, l1, l2)
         
@@ -90,7 +90,7 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
     //
     static member Compare (comparer : IComparer<'Key>, s1 : MapTree<'Key, 'Value>, s2 : MapTree<'Key, 'Value>) : int =
         // OPTIMIZATION : If two trees are identical, there's no need to compare them.
-        if System.Object.ReferenceEquals (s1, s2) then 0
+        if s1 == s2 then 0
         else
             match s1, s2 with
             | Empty, Empty -> 0
@@ -348,14 +348,14 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
                 let l' = MapTree.Delete (comparer, l, key)
 
                 // Only rebalance the tree if an element was actually deleted.
-                if System.Object.ReferenceEquals (l', l) then tree
+                if l' == l then tree
                 else MapTree.mkt_bal_r (kvp, l', r)
             else
                 // key > k
                 let r' = MapTree.Delete (comparer, r, key)
                 
                 // Only rebalance the tree if an element was actually deleted.
-                if System.Object.ReferenceEquals (r', r) then tree
+                if r' == r then tree
                 else MapTree.mkt_bal_l (kvp, l, r')
 
     /// Adds a value to a MapTree.
@@ -365,7 +365,7 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
         match tree with
         | Empty ->
             Node (Empty, Empty, newKvp, 1u)
-        | Node (l, r, kvp, h) as tree ->
+        | Node (l, r, kvp, h) ->
             let comparison = comparer.Compare (newKvp.Key, kvp.Key)
             if comparison = 0 then
                 // key = k
@@ -379,14 +379,14 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
                 let l' = MapTree.Insert (comparer, l, newKvp)
 
                 // Only rebalance the tree if an element was actually inserted.
-                if System.Object.ReferenceEquals (l', l) then tree
+                if l' == l then tree
                 else MapTree.mkt_bal_l (kvp, l', r)
             else
                 // key > k
                 let r' = MapTree.Insert (comparer, r, newKvp)
 
                 // Only rebalance the tree if an element was actually inserted.
-                if System.Object.ReferenceEquals (r', r) then tree
+                if r' == r then tree
                 else MapTree.mkt_bal_r (kvp, l, r')
 
     /// Adds a value to a MapTree.
@@ -396,7 +396,7 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
         match tree with
         | Empty ->
             Node (Empty, Empty, newKvp, 1u)
-        | Node (l, r, kvp, h) as tree ->
+        | Node (l, r, kvp, _) ->
             let comparison = comparer.Compare (newKvp.Key, kvp.Key)
             if comparison = 0 then
                 // key = k
@@ -408,14 +408,14 @@ type internal MapTree<'Key, 'Value when 'Key : comparison> =
                 let l' = MapTree.TryInsert (comparer, l, newKvp)
 
                 // Only rebalance the tree if an element was actually inserted.
-                if System.Object.ReferenceEquals (l', l) then tree
+                if l' == l then tree
                 else MapTree.mkt_bal_l (kvp, l', r)
             else
                 // key > k
                 let r' = MapTree.TryInsert (comparer, r, newKvp)
 
                 // Only rebalance the tree if an element was actually inserted.
-                if System.Object.ReferenceEquals (r', r) then tree
+                if r' == r then tree
                 else MapTree.mkt_bal_r (kvp, l, r')
 
     /// Counts the number of elements in the tree.
@@ -820,11 +820,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     // The prefixes disagree.
                     PatriciaHashMap.Join (p, s, q, t)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
@@ -884,11 +880,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     | left, right ->
                         Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         PatriciaHashMap.Intersect (s0, t)
@@ -941,11 +933,7 @@ type private PatriciaHashMap<'Key, [<EqualityConditionalOn; ComparisonConditiona
                     | left, right ->
                         Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         match PatriciaHashMap.Difference (s0, t) with

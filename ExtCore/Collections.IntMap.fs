@@ -238,11 +238,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                     // The prefixes disagree.
                     PatriciaMap32.Join (p, s, q, t)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     // q contains p. Merge t with a subtree of s.
                     if zeroBit (q, m) then
@@ -326,11 +322,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                         elif left == t0 && right == t1 then t
                         else Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         PatriciaMap32.Intersect (s0, t)
@@ -390,11 +382,7 @@ type private PatriciaMap32< [<EqualityConditionalOn; ComparisonConditionalOn>] '
                         if left == s0 && right == s1 then s
                         else Br (p, m, left, right)
 
-            #if LITTLE_ENDIAN_TRIES
-            elif m < n then
-            #else
             elif m > n then
-            #endif
                 if matchPrefix (q, p, m) then
                     if zeroBit (q, m) then
                         match PatriciaMap32.Difference (s0, t) with

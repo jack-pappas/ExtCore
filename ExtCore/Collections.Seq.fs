@@ -78,14 +78,14 @@ let replicate count source : seq<'T> =
     // HACK : The F# compiler gives a warning about the type parameter being
     // constrained if 'checkNonNull' is used here, even though it shouldn't.
     // Instead, we'll use Object.ReferenceEquals directly.
-    elif System.Object.ReferenceEquals (null, source) then
+    elif null == source then
         nullArg "source"
 
     // Cache the input sequence so it's only evaluated once.
     let cachedSeq = Seq.cache source
 
     seq {
-    for i = 0 to count - 1 do
+    for _ in 0 .. count - 1 do
         yield! cachedSeq
     }
 
