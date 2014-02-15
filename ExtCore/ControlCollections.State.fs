@@ -574,6 +574,104 @@ module ArrayView =
 
         results, state
 
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    [<CompiledName("Fold")>]
+    let fold (folder : 'InnerState -> 'T -> 'OuterState -> 'InnerState * 'OuterState)
+            (innerState : 'InnerState) (view : ArrayView<'T>) (outerState : 'OuterState) : 'InnerState * 'OuterState =
+        // If the ArrayView is empty, we can return immediately.
+        if ArrayView.isEmpty view then
+            innerState, outerState
+        else
+            let folder = FSharpFunc<_,_,_,_>.Adapt folder
+            
+            let array = view.Array
+            let offset = view.Offset
+            let count = view.Count
+
+            let mutable outerState = outerState
+            let mutable innerState = innerState
+
+            for i = 0 to count - 1 do
+                let innerState', outerState' = folder.Invoke (innerState, array.[offset + i], outerState)
+                innerState <- innerState'
+                outerState <- outerState'
+
+            innerState, outerState
+
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    /// The integer index passed to the function indicates the ArrayView index of the element being transformed.
+    [<CompiledName("FoldIndexed")>]
+    let foldi (folder : int -> 'InnerState -> 'T -> 'OuterState -> 'InnerState * 'OuterState)
+            (innerState : 'InnerState) (view : ArrayView<'T>) (outerState : 'OuterState)
+            : 'InnerState * 'OuterState =
+        // If the ArrayView is empty, we can return immediately.
+        if ArrayView.isEmpty view then
+            innerState, outerState
+        else
+            let folder = FSharpFunc<_,_,_,_,_>.Adapt folder
+
+            let array = view.Array
+            let offset = view.Offset
+            let count = view.Count
+
+            let mutable outerState = outerState
+            let mutable innerState = innerState
+
+            for i = 0 to count - 1 do
+                let innerState', outerState' = folder.Invoke (i, innerState, array.[offset + i], outerState)
+                innerState <- innerState'
+                outerState <- outerState'
+
+            innerState, outerState
+
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    /// Raises ArgumentException if the ArrayView is empty (has a Count of zero (0)).
+    [<CompiledName("Reduce")>]
+    let reduce (reduction : 'T -> 'T -> 'State -> 'T * 'State) (view : ArrayView<'T>) (state : 'State) : 'T * 'State =
+        // Preconditions
+        if ArrayView.isEmpty view then
+            invalidArg "view" "The ArrayView is empty."
+
+        let reduction = FSharpFunc<_,_,_,_>.Adapt reduction
+
+        let array = view.Array
+        let offset = view.Offset
+        let count = view.Count
+
+        let mutable result = ArrayView.first view
+        let mutable state = state
+
+        for i = 1 to count - 1 do
+            let result', state' = reduction.Invoke (result, array.[offset + i], state)
+            result <- result'
+            state <- state'
+
+        result, state
+
+    /// Applies a function to each element of the collection, threading an accumulator argument through the computation.
+    /// Raises ArgumentException if the ArrayView is empty (has a Count of zero (0)).
+    [<CompiledName("ReduceBack")>]
+    let reduceBack (reduction : 'T -> 'T -> 'State -> 'T * 'State) (view : ArrayView<'T>) (state : 'State) : 'T * 'State =
+        // Preconditions
+        if ArrayView.isEmpty view then
+            invalidArg "view" "The ArrayView is empty."
+
+        let reduction = FSharpFunc<_,_,_,_>.Adapt reduction
+        
+        let array = view.Array
+        let offset = view.Offset
+        let count = view.Count
+
+        let mutable result = ArrayView.last view
+        let mutable state = state
+
+        for i = count - 2 downto 0 do
+            let result', state' = reduction.Invoke (result, array.[offset + i], state)
+            result <- result'
+            state <- state'
+
+        result, state
+
 
 /// The F# Set module, lifted into the State monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

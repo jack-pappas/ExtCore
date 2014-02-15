@@ -716,6 +716,22 @@ module ArrayView =
     let mapi () : unit =
         Assert.Ignore "Test not yet implemented."
 
+    [<Test>]
+    let fold () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let foldi () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let reduce () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let reduceBack () : unit =
+        Assert.Ignore "Test not yet implemented."
+
 
 /// Tests for the ExtCore.Control.Collections.State.Set module.
 module Set =
