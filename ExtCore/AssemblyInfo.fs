@@ -29,16 +29,16 @@ open System.Security.Permissions
 
 
 // Version information
-[<assembly: AssemblyVersion("0.8.41")>]
-[<assembly: AssemblyFileVersion("0.8.41")>]
-[<assembly: AssemblyInformationalVersion("0.8.41")>]
+[<assembly: AssemblyVersion("0.8.42")>]
+[<assembly: AssemblyFileVersion("0.8.42")>]
+[<assembly: AssemblyInformationalVersion("0.8.42")>]
 
 // Assembly information
 [<assembly: AssemblyTitle("ExtCore")>]
 [<assembly: AssemblyDescription("An extended core library for F#.")>]
 [<assembly: NeutralResourcesLanguage("en-US")>]
 [<assembly: Guid("ecbe6801-9675-413e-849b-c3359721cf06")>]
-[<assembly: AssemblyCopyright("Copyright © Jack Pappas 2013")>]
+[<assembly: AssemblyCopyright("Copyright © Jack Pappas 2013-2014")>]
 [<assembly: ComVisible(false)>]
 
 // This assembly is CLS-compliant.
