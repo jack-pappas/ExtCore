@@ -21,6 +21,7 @@ limitations under the License.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ExtCore.Collections.Seq
 
+open System.Collections.Generic
 open LanguagePrimitives
 open OptimizedClosures
 open ExtCore
@@ -175,4 +176,112 @@ let sample interval (source : seq<'T>) : seq<'T> =
                 }
 
         sampleRec 0
+
+/// <summary>
+/// Applies a function to pairs of elements drawn from two sequences, threading an accumulator argument through the computation.
+/// If one sequence is shorter than the other then the remaining elements of the longer sequence are ignored.
+/// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="source1"></param>
+/// <param name="source2"></param>
+/// <returns></returns>
+[<CompiledName("Fold2")>]
+let fold2 (folder : 'State -> 'T1 -> 'T2 -> 'State) (state : 'State) (source1 : seq<'T1>) (source2 : seq<'T2>) =
+    // Preconditions
+    checkNonNull "source1" source1
+    checkNonNull "source2" source2
+
+    // Get enumerators for the input sequences.
+    let enumerator1 = source1.GetEnumerator ()
+    let enumerator2 = source2.GetEnumerator ()
+
+    let folder = FSharpFunc<_,_,_,_>.Adapt folder
+    let mutable state = state
+
+    // Fold until one (or both) of the input sequences are empty.
+    while enumerator1.MoveNext () && enumerator2.MoveNext () do
+        state <- folder.Invoke (state, enumerator1.Current, enumerator2.Current)
+
+    // Return the final state value.
+    state
+
+/// Helper function used to implement the 'segmentBy' function.
+/// Given an enumerator, produces one "segment" sequence.
+let private segmentByImpl (projection : 'T -> 'Key) (enumerator : IEnumerator<'T>) =
+    seq {
+    // Get the segment key from the first element in the segment.
+    let segmentKey = projection enumerator.Current
+
+    // Yield the first element in the segment.
+    yield enumerator.Current
+
+    // Take elements from the input sequence until we get to the end of the sequence,
+    // or we find an element which has a different key.
+    while enumerator.MoveNext () && projection enumerator.Current = segmentKey do
+        yield enumerator.Current
+    }
+    
+/// <summary>
+/// Groups consecutive elements from a sequence together into "segments".
+/// The specified projection function is applied to each element to produce a key;
+/// a new segment is started whenever an element's key is different from the previous element's key.
+/// </summary>
+/// <param name="projection"></param>
+/// <param name="source"></param>
+/// <returns></returns>
+[<CompiledName("SegmentBy")>]
+let segmentBy (projection : 'T -> 'Key) (source : seq<'T>) : seq<seq<'T>> =
+    // Preconditions
+    checkNonNull "source" source
+
+    /// Enumerator for the input sequence.
+    let enumerator = source.GetEnumerator ()
+
+    // Create segments using the enumerator until the sequence is empty.
+    seq {
+    while enumerator.MoveNext () do
+        yield segmentByImpl projection enumerator
+    }
+
+/// Helper function used to implement the 'segmentWith' function.
+/// Given an enumerator, produces one "segment" sequence.
+let private segmentWithImpl (predicate : FSharpFunc<'T, 'T, bool>) (enumerator : IEnumerator<'T>) =
+    seq {
+    // Yield the first element in the segment.
+    yield enumerator.Current
+
+    let lastElement = ref enumerator.Current
+
+    // Take elements from the input sequence, applying the predicate to each pair of adjacent
+    // elements, until the predicate returns false or the sequence is empty.
+    while enumerator.MoveNext () && predicate.Invoke (!lastElement, enumerator.Current) do
+        yield enumerator.Current
+        lastElement := enumerator.Current
+    }
+
+/// <summary>
+/// Groups consecutive elements from a sequence together into "segments".
+/// The specified predicate is applied to each adjacent pair of elements in the sequence;
+/// a new segment is started whenever the predicate returns 'false'.
+/// </summary>
+/// <param name="predicate"></param>
+/// <param name="source"></param>
+/// <returns></returns>
+/// <remarks>This function can be thought of as a generalized form of 'Seq.windowed'.</remarks>
+[<CompiledName("SegmentWith")>]
+let segmentWith (predicate : 'T -> 'T -> bool) (source : seq<'T>) : seq<seq<'T>> =
+    // Preconditions
+    checkNonNull "source" source
+
+    /// Enumerator for the input sequence.
+    let enumerator = source.GetEnumerator ()
+
+    let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+    // Create segments using the enumerator until the sequence is empty.
+    seq {
+    while enumerator.MoveNext () do
+        yield segmentWithImpl predicate enumerator
+    }
 

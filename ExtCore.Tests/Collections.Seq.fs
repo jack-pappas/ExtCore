@@ -193,3 +193,47 @@ let sample () : unit =
     |> Collection.assertEqual
         [| 0; 3; 6; 9; 12; 15; 18; 21; 24; 27; 30; 33; 36; 39; 42; 45; 48; 51;
            54; 57; 60; 63; 66; 69; 72; 75; 78; 81; 84; 87; 90; 93; 96; 99; |]
+
+[<Test>]
+let fold2 () : unit =
+    // Test case for when one of the input sequences is empty.
+    (Seq.empty, [| "a"; "b"; "c"|])
+    ||> Seq.fold2 (fun state x y ->
+        System.String.Concat (state, x, y)) "xyz"
+    |> assertEqual "xyz"
+
+    // Make sure the function stops once one of the input sequence is empty.
+    ([| "a"; "b"; "c" |], [| "A"; "B"; "C"; "D"; "E" |])
+    ||> Seq.fold2 (fun state x y ->
+        System.String.Concat (state, x, y)) ""
+    |> assertEqual "aAbBcC"
+
+    // Test case for when the input sequences have the same length.
+    ([| "a"; "b"; "c"; "d"; "e" |], [| "A"; "B"; "C"; "D"; "E" |])
+    ||> Seq.fold2 (fun state x y ->
+        System.String.Concat (state, x, y)) ""
+    |> assertEqual "aAbBcCdDeE"
+
+[<Test>]
+let segmentBy () : unit =
+    // Test case for an empty input sequence.
+    Seq.empty
+    |> Seq.segmentBy fst
+    |> Seq.isEmpty
+    |> assertTrue
+
+    // Sample usage test cases.
+    seq { 'a' .. 'k' }
+    |> Seq.segmentBy (fun c ->
+        int c / 3)
+    |> Collection.assertEqual
+     <| seq {
+        yield seq { 'a' .. 'c' }
+        yield seq { 'd' .. 'f' }
+        yield seq { 'g' .. 'i' }
+        yield seq { 'j' .. 'k' }
+        }
+
+[<Test>]
+let segmentWith () : unit =
+    Assert.Ignore "Test not yet implemented."

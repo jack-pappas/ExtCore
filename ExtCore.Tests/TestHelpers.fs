@@ -84,6 +84,18 @@ module Collection =
     let inline assertNotEquiv<'T, 'U when 'T :> seq<'U>> (expected : 'T) (actual : 'T) =
         CollectionAssert.AreNotEquivalent (expected, actual)
 
+    /// Asserts that a collection is empty.
+    let inline assertEmpty<'T, 'U when 'T :> seq<'U>> (sequence : 'T) =
+        CollectionAssert.IsEmpty sequence
+
+    /// Asserts that a collection is not empty.
+    let inline assertNotEmpty<'T, 'U when 'T :> seq<'U>> (sequence : 'T) =
+        CollectionAssert.IsNotEmpty sequence
+
+    /// Asserts that a collection is ordered.
+    let inline assertOrdered<'T, 'U when 'T :> seq<'U>> (sequence : 'T) =
+        CollectionAssert.IsOrdered sequence
+
 
 (* Fluent test helpers for use with NUnit and FsCheck. *)
 
