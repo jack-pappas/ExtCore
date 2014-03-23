@@ -25,8 +25,6 @@ open ExtCore
 type Multiset<'T when 'T : comparison> = Map<'T, uint32>
 
 /// Functional programming operators related to the Multiset<_> type.
-[<Experimental(
-    "This API is not finalized. No major changes are expected, but minor changes may be made in future versions based on user feedback.")>]
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Multiset =
     /// The empty multiset.
@@ -44,13 +42,13 @@ module Multiset =
 
     /// The total number of elements in the multiset.
     [<CompiledName("Count")>]
-    let count (set : Multiset<'T>) : uint64 =
+    let count (set : Multiset<'T>) : int64 =
         // Preconditions
         checkNonNull "set" set
 
-        (0UL, set)
+        (0L, set)
         ||> Map.fold (fun count _ cardinality ->
-            Checked.(+) (uint64 cardinality) count)
+            Checked.(+) (int64 cardinality) count)
 
     /// The number of distinct elements in the multiset.
     [<CompiledName("CountDistinct")>]
@@ -58,7 +56,7 @@ module Multiset =
         // Preconditions
         checkNonNull "set" set
 
-        uint32 <| Map.count set
+        Map.count set
 
     //
     [<CompiledName("Contains")>]
@@ -102,14 +100,19 @@ module Multiset =
     let addMany value count (set : Multiset<'T>) : Multiset<'T> =
         // Preconditions
         checkNonNull "set" set
+        if count < 0 then
+            argOutOfRange "count" "Cannot add a negative number of elements to the set."
 
-        // If the underlying map already contains the value as a key, increment the value's cardinality by the specified count
-        // and return; otherwise, add a new entry to the map for this value.
-        match Map.tryFind value set with
-        | None ->
-            Map.add value count set
-        | Some card ->
-            Map.add value (Checked.(+) card count) set
+        // If no elements are being added, just return the input set.
+        if count = 0 then set
+        else
+            // If the underlying map already contains the value as a key, increment the value's cardinality by the specified count
+            // and return; otherwise, add a new entry to the map for this value.
+            match Map.tryFind value set with
+            | None ->
+                Map.add value (uint32 count) set
+            | Some card ->
+                Map.add value (Checked.(+) card (uint32 count)) set
 
     //
     [<CompiledName("Remove")>]
@@ -132,6 +135,8 @@ module Multiset =
     let removeMany value count (set : Multiset<'T>) : Multiset<'T> =
         // Preconditions
         checkNonNull "set" set
+        if count < 0 then
+            argOutOfRange "count" "Cannot remove a negative number of elements from the set."
 
         match Map.tryFind value set with
         | None ->
@@ -139,10 +144,10 @@ module Multiset =
         | Some card ->
             // If cardinality is <= the specified number of copies of this element to remove,
             // remove the element from the set altogether.
-            if card <= count then
+            if card <= uint32 count then
                 Map.remove value set
             else
-                Map.add value (card - count) set
+                Map.add value (card - uint32 count) set
 
     //
     [<CompiledName("RemoveAll")>]
@@ -151,5 +156,3 @@ module Multiset =
         checkNonNull "set" set
 
         Map.remove value set
-
-

@@ -16,8 +16,8 @@ limitations under the License.
 
 *)
 
-/// Unit tests for the ExtCore.Collections.Multiset type and module.
-module Tests.ExtCore.Collections.Multiset
+/// Unit tests for the ExtCore.Collections.Multimap type and module.
+module Tests.ExtCore.Collections.Multimap
 
 open System
 open System.Collections
@@ -32,26 +32,6 @@ let isEmpty () =
 
 //
 [<Test>]
-let count () =
-    Assert.Ignore "Test not yet implemented."
-
-//
-[<Test>]
-let countDistinct () =
-    Assert.Ignore "Test not yet implemented."
-
-//
-[<Test>]
-let contains () =
-    Assert.Ignore "Test not yet implemented."
-
-//
-[<Test>]
-let card () =
-    Assert.Ignore "Test not yet implemented."
-
-//
-[<Test>]
 let singleton () =
     Assert.Ignore "Test not yet implemented."
 
@@ -62,20 +42,5 @@ let add () =
 
 //
 [<Test>]
-let addMany () =
-    Assert.Ignore "Test not yet implemented."
-
-//
-[<Test>]
 let remove () =
-    Assert.Ignore "Test not yet implemented."
-
-//
-[<Test>]
-let removeMany () =
-    Assert.Ignore "Test not yet implemented."
-
-//
-[<Test>]
-let removeAll () =
     Assert.Ignore "Test not yet implemented."
