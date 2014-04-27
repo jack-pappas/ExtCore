@@ -136,9 +136,8 @@ type ArgParser () =
         // Return the usage text.
         sb.ToString ()
 
-    /// Parse some of the arguments given by 'argv', starting at the given position
-    [<System.Obsolete("This method should not be used directly as it will be removed in a future revision of this library")>]
-    static member private ParsePartial (cursor, argv, argSpecs : ArgInfo list, ?other, ?usageText) =
+    /// Parse some of the arguments given by 'argv', starting at the given position.
+    static member ParsePartial (cursor, argv, argSpecs : ArgInfo list, ?other, ?usageText) =
         let other = defaultArg other ignore
         let usageText = defaultArg usageText ""
         let nargs = Array.length argv
