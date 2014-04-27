@@ -900,7 +900,7 @@ module Option =
             None
 
 
-/// Additional functional operators on Choice<_,_> values.
+/// <summary>Additional functional operators on Choice<_,_> values.</summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Choice =
     /// <summary>Does the Choice value represent a result value?</summary>
@@ -1167,7 +1167,7 @@ module Choice =
 
     /// <summary>
     /// Composes two functions designed for use with the 'choice' workflow.
-    /// This function is analagous to the F# (>>) operator.
+    /// This function is analagous to the F# (&gt;&gt;) operator.
     /// </summary>
     /// <param name="f"></param>
     /// <param name="g"></param>
@@ -1178,7 +1178,7 @@ module Choice =
 
     /// <summary>
     /// Composes two functions designed for use with the 'choice' workflow.
-    /// This function is analagous to the F# (<<) operator.
+    /// This function is analagous to the F# (&lt;&lt;) operator.
     /// </summary>
     /// <param name="f"></param>
     /// <param name="g"></param>
