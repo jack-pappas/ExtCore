@@ -60,6 +60,12 @@ let inline assertTrue condition =
 let inline assertFalse condition =
     Assert.IsFalse (condition)
 
+/// Asserts that the given function raises an exception of a specified exception type
+/// or a type which inherits from the specified exception type.
+[<RequiresExplicitTypeArguments>]
+let inline assertRaises<'T when 'T :> exn> assertion =
+    Assert.Throws (typeof<'T>, TestDelegate (assertion))
+    |> ignore
 
 /// Assertion functions for collections.
 [<RequireQualifiedAccess>]
