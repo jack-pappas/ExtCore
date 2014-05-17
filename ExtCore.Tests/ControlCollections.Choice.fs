@@ -440,11 +440,12 @@ module List =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``iter2 raises exn when lists have different lengths`` () : unit =
-        ([0..4], [0..7])
-        ||> Choice.List.iter2 (fun _ _ -> Choice2Of2 "Error")
-        |> ignore
+        assertRaises<System.ArgumentException> <| fun () ->
+            ([0..4], [0..7])
+            ||> Choice.List.iter2 (fun _ _ -> Choice2Of2 "Error")
+            |> ignore
 
     [<Test>]
     let iteri2 () : unit =
@@ -494,11 +495,12 @@ module List =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``map2 raises exn when lists have different lengths`` () : unit =
-        ([0..4], [0..7])
-        ||> Choice.List.map2 (fun _ _ -> Choice2Of2 "Error!")
-        |> ignore
+        assertRaises<System.ArgumentException> <| fun () ->
+            ([0..4], [0..7])
+            ||> Choice.List.map2 (fun _ _ -> Choice2Of2 "Error!")
+            |> ignore
 
     [<Test>]
     let mapi2 () : unit =
@@ -536,11 +538,12 @@ module List =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``mapi2 raises exn when lists have different lengths`` () : unit =
-        ([0..4], [0..7])
-        ||> Choice.List.mapi2 (fun _ _ _ -> Choice2Of2 "Error!")
-        |> ignore
+        assertRaises<System.ArgumentException> <| fun () ->
+            ([0..4], [0..7])
+            ||> Choice.List.mapi2 (fun _ _ _ -> Choice2Of2 "Error!")
+            |> ignore
 
     [<Test>]
     let fold () : unit =
