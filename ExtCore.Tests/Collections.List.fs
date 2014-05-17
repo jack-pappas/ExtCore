@@ -288,19 +288,99 @@ let countWith () : unit =
 
 [<Test>]
 let intersperse () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty list.
+    List.empty
+    |> List.intersperse 9999
+    |> List.isEmpty
+    |> assertTrue
+
+    // Test case for a single-element list.
+    [10]
+    |> List.intersperse 5
+    |> Collection.assertEqual [10]
+
+    // Sample usage test cases.
+    ["Mock"; "ing"; "bird"]
+    |> List.intersperse "yeah"
+    |> Collection.assertEqual ["Mock"; "yeah"; "ing"; "yeah"; "bird"]
+
+    [1; 2; 3; 4]
+    |> List.intersperse 5
+    |> Collection.assertEqual [1; 5; 2; 5; 3; 5; 4]
 
 [<Test>]
 let weave () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for both lists empty.
+    List.weave [] []
+    |> List.isEmpty
+    |> assertTrue
+
+    // Test case for the first list being empty.
+    // The second list should be returned immediately (without making a copy).
+    do
+        let lst = [3; 1; 0; 2]
+        List.weave [] lst
+        |> assertSame lst
+
+    // Test case for the second list being empty.
+    // The first list should be returned immediately (without making a copy).
+    do
+        let lst = [3; 1; 0; 2]
+        List.weave lst []
+        |> assertSame lst
+
+    // Sample usage test cases.
+    List.weave [1] [0; 2; 4]
+    |> Collection.assertEqual [1; 0; 2; 4]
+
+    List.weave [0; 2; 4] [1]
+    |> Collection.assertEqual [0; 1; 2; 4]
+
+    List.weave [2; 4; 8; 16] [1; 2; 3; 4]
+    |> Collection.assertEqual [2; 1; 4; 2; 8; 3; 16; 4]
 
 [<Test>]
 let exactlyOne () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty string.
+    assertRaises<System.ArgumentException> <| fun () ->
+        List.exactlyOne []
+        |> ignore
+    
+    // Test case for a single-element list.
+    ["Hello World!"]
+    |> List.exactlyOne
+    |> assertEqual "Hello World!"
+
+    // Test case for a multi-element list.
+    assertRaises<System.ArgumentException> <| fun () ->
+        List.exactlyOne [0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16]
+        |> ignore
 
 [<Test>]
 let distinct () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty string.
+    List.empty
+    |> List.distinct
+    |> List.isEmpty
+    |> assertTrue
+
+    // Sample usage test cases.
+    [0; 1; 2; 3; 4]
+    |> List.distinct
+    |> Collection.assertEqual [0; 1; 2; 3; 4]
+
+    [0; 1; 1; 2; 3; 2; 4; 5; 2]
+    |> List.distinct
+    |> Collection.assertEqual [0; 1; 2; 3; 4; 5]
+
+    [0; 2; 4; 1; 2; 0; 1; 3]
+    |> List.distinct
+    |> Collection.assertEqual [0; 1; 2; 3; 4]
+
+    // Repro for issue #8
+    ["A"; "N"; "N"; "A"]
+    |> List.distinct
+    |> Collection.assertEqual ["A"; "N"]
 
 
 open FsCheck

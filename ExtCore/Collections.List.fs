@@ -750,7 +750,7 @@ let distinct (list : 'T list) : 'T list =
     //                  The use of mutation is safe here because it's entirely local.
     
     /// Contains the distinct elements which have been seen in the list so far.
-    let itemSet = System.Collections.Generic.HashSet<_> ()
+    let itemSet = System.Collections.Generic.HashSet<_> (LanguagePrimitives.FastGenericEqualityComparer)
 
     /// The distinct elements from the list, in the order they were encountered.
     let distinctList = ResizeArray ()
