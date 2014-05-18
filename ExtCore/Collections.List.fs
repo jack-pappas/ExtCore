@@ -766,6 +766,9 @@ let distinct (list : 'T list) : 'T list =
             // Continue processing the rest of the list.
             traverse tl
 
+    // Traverse the input list to find the distinct elements.
+    traverse list
+
     // Traverse backwards over the ResizeArray to build up the result list in the correct order (so it doesn't need to be reversed).
     let mutable result = []
     for i = distinctList.Count - 1 downto 0 do
