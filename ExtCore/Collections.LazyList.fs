@@ -22,6 +22,10 @@ namespace ExtCore.Collections
 open System.Collections.Generic
 open ExtCore
 
+#if FX_ATLEAST_45
+open System.Runtime.ExceptionServices
+#endif
+
 #nowarn "21" // recursive initialization
 #nowarn "40" // recursive initialization
 
@@ -32,8 +36,13 @@ type internal LazyCellStatus<'T> =
     | Delayed of (unit -> LazyListCell<'T>)
     //
     | Value of LazyListCell<'T>
+#if FX_ATLEAST_45
+    //
+    | Exception of ExceptionDispatchInfo
+#else
     //
     | Exception of exn
+#endif
 
 //
 and [<NoEquality; NoComparison>]
@@ -68,6 +77,9 @@ and [<NoEquality; NoComparison; Sealed>]
     static let undefinedValue =
         System.InvalidOperationException "The value of the LazyList cell is undefined."
         :> exn
+        #if FX_ATLEAST_45
+        |> ExceptionDispatchInfo.Capture
+        #endif
         |> Exception
 
     //
@@ -92,12 +104,33 @@ and [<NoEquality; NoComparison; Sealed>]
                         status <- Value res
                         res
                     with ex ->
-                        status <- Exception ex
+                        status <-
+                            // For .NET 4.5 and newer, capture the exception using an ExceptionDispatchInfo
+                            // to preserve the exception's stack trace when reraising it again later (that is,
+                            // if a caller tries to get the value of this cell again).
+                            #if FX_ATLEAST_45
+                            Exception (ExceptionDispatchInfo.Capture ex)
+                            #else
+                            Exception ex
+                            #endif
+
+                        // Re-raise the exception so it's propagated to the calling thread.
                         reraise ()
                 | Value value ->
                     value
                 | Exception ex ->
+                    // In .NET 4.5 and newer, we capture the exception with an ExceptionDispatchInfo to preserve
+                    // the original stack trace; this means we need to re-raise the exception using the
+                    // ExceptionDispatchInfo.Throw() method instead of raising it the usual way.
+                    // NOTE: Unlike the 'raise' function, ExceptionDispatchInfo.Throw() returns 'unit', which means
+                    // it doesn't play nicely with F#'s type checker. To work around this, we make another call to
+                    // 'raise' immediately afterward; it won't be executed, but does satisfy the type-checker.
+                    #if FX_ATLEAST_45
+                    ex.Throw ()
+                    raise ex.SourceException
+                    #else
                     raise ex
+                    #endif
 
     /// <summary>Gets a value that indicates whether the <see cref="LazyList`1"/> is empty.</summary>
     /// <remarks>Forces the evaluation of the first element of the stream if it is not already evaluated.</remarks>
