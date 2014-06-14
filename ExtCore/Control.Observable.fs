@@ -23,20 +23,33 @@ open ExtCore
 open System
 open System.Threading
 
+#if FX_ATLEAST_45
+open System.Runtime.ExceptionServices
+#endif
+
 #nowarn "40"
 
 
-/// Union type that represents different messages that can be sent to the
-/// IObserver interface. The IObserver type is equivalent to a type that has
-/// just OnNext method that gets 'ObservableUpdate' as an argument.
-type ObservableUpdate<'T> =
+/// <summary>
+/// Union type that represents different messages that can be sent to the <see cref="T:System.IObserver`1{T}"/> interface.
+/// The IObserver type is equivalent to a type that only exposes an <c>OnNext</c> method accepting an instance of
+/// <see cref="T:Notification`1{T}"/> as an argument.
+/// </summary>
+/// <typeparam name="T">The notification argument type.</typeparam>
+/// <remarks>
+/// This type essentially replicates the functionality of the <see cref="T:System.Reactive.Notfication`1{T}"/> type
+/// found in the Reactive Extensions (Rx.NET) library.
+/// </remarks>
+[<NoComparison>]
+[<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
+type Notification<'T> =
     //
     | Completed
     //
     | Next of 'T
     //
     | Error of exn
-    
+
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Observable =

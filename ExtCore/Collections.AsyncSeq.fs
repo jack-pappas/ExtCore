@@ -555,10 +555,10 @@ module AsyncSeq =
             asyncSeq {
             let! msg = agent.PostAndAsyncReply Get
             match msg with
-            | ObservableUpdate.Completed -> ()
-            | ObservableUpdate.Error e ->
+            | Notification.Completed -> ()
+            | Notification.Error e ->
                 raise e
-            | ObservableUpdate.Next v ->
+            | Notification.Next v ->
                 yield v
                 yield! loop() }
 
