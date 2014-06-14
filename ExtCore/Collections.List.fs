@@ -750,7 +750,7 @@ let distinct (list : 'T list) : 'T list =
     //                  The use of mutation is safe here because it's entirely local.
     
     /// Contains the distinct elements which have been seen in the list so far.
-    let itemSet = System.Collections.Generic.HashSet<_> ()
+    let itemSet = System.Collections.Generic.HashSet<_> (LanguagePrimitives.FastGenericEqualityComparer)
 
     /// The distinct elements from the list, in the order they were encountered.
     let distinctList = ResizeArray ()
@@ -765,6 +765,9 @@ let distinct (list : 'T list) : 'T list =
 
             // Continue processing the rest of the list.
             traverse tl
+
+    // Traverse the input list to find the distinct elements.
+    traverse list
 
     // Traverse backwards over the ResizeArray to build up the result list in the correct order (so it doesn't need to be reversed).
     let mutable result = []

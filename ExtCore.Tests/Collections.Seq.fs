@@ -236,4 +236,20 @@ let segmentBy () : unit =
 
 [<Test>]
 let segmentWith () : unit =
-    Assert.Ignore "Test not yet implemented."
+    // Test case for an empty input sequence.
+    Seq.empty
+    |> Seq.segmentWith (fun _ _ -> true)
+    |> Seq.isEmpty
+    |> assertTrue
+
+    // Sample usage test cases.
+    seq { 'a' .. 'k' }
+    |> Seq.segmentWith (fun x y ->
+        (int x / 3) = (int y / 3))
+    |> Collection.assertEqual
+     <| seq {
+        yield seq { 'a' .. 'c' }
+        yield seq { 'd' .. 'f' }
+        yield seq { 'g' .. 'i' }
+        yield seq { 'j' .. 'k' }
+        }

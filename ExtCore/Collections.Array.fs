@@ -575,6 +575,46 @@ let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
         resultList2.ToArray ()
 
 /// <summary>
+/// Splits the collection into two (2) collections, containing the elements for which the given function returns
+/// <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively.
+/// The index passed to the function indicates the index of the element.
+/// </summary>
+/// <param name="partitioner"></param>
+/// <param name="array"></param>
+/// <returns></returns>
+/// <remarks>
+/// This function is similar to Array.partition, but it allows the returned collections to have different types.
+/// </remarks>
+[<CompiledName("MapPartitionIndexed")>]
+let mapiPartition (partitioner : int -> 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
+    // Preconditions
+    checkNonNull "array" array
+    
+    // OPTIMIZATION : If the input array is empty, immediately return empty results.
+    if Array.isEmpty array then
+        Array.empty, Array.empty
+    else
+        // Use ResizeArrays to hold the mapped values.
+        let resultList1 = ResizeArray ()
+        let resultList2 = ResizeArray ()
+
+        let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
+
+        // Partition the array, adding each element to the ResizeArray
+        // specific by the partition function.
+        let len = Array.length array
+        for i = 0 to len - 1 do
+            match partitioner.Invoke (i, array.[i]) with
+            | Choice1Of2 value ->
+                resultList1.Add value
+            | Choice2Of2 value ->
+                resultList2.Add value
+                
+        // Convert the ResizeArrays to arrays and return them.
+        resultList1.ToArray (),
+        resultList2.ToArray ()
+
+/// <summary>
 /// Splits the collection into three (3) collections, containing the elements for which the given
 /// function returns <c>Choice1Of3</c>, <c>Choice2Of3</c>, or <c>Choice3Of3</c>, respectively.
 /// </summary>

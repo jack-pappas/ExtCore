@@ -98,6 +98,8 @@
     <Compile Include="Collections.LongBimap.fs" />
     <Compile Include="Collections.HashSet.fs" />
     <Compile Include="Collections.HashMap.fs" />
+    <Compile Include="Collections.Multiset.fs" />
+    <Compile Include="Collections.Multimap.fs" />
     <Compile Include="Collections.LazyList.fs" />
     <Compile Include="Collections.Queue.fs" />
     <Compile Include="Collections.PriorityQueue.fs" />

@@ -137,11 +137,19 @@ String.Split
   This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly
   so it doesn't need to be reversed.
 
+String.Splits
+-------------
+This module should mirror the ``String.Split`` module, except that it's functions allow the separators to be specified as ``string``s instead of ``char``s.
+
 
 Substring
 ---------
 - ``split``
 - ``splits``
+
+  These should work like ``String.Split(...)``. ``split`` will allow the separators to be specified as a ``char[]``,
+  while ``splits`` will allow them to be specified as a ``string[]`` (e.g., to handle multi-character newline sequences).
+
 - ``exactlyOne``
 - ``foldi``
 - ``foldiBack``
@@ -173,6 +181,10 @@ Substring.Split
   
   This could simply use ``String.Split.foldBack`` (once implemented) to build the list on-the-fly
   so it doesn't need to be reversed.
+
+Substring.Splits
+----------------
+This module should mirror the ``Substring.Split`` module, except that it's functions allow the separators to be specified as ``string``s instead of ``char``s.
 
 
 Collections and Data Structures

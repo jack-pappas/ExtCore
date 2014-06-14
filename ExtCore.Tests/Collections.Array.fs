@@ -264,6 +264,10 @@ let mapPartition () : unit =
     |> Collection.assertEqual [| 1; 27; 125; 343; 729 |]
 
 [<Test>]
+let mapiPartition () : unit =
+    Assert.Ignore "Test not yet implemented."
+
+[<Test>]
 let mapPartition3 () : unit =
     let left, middle, right =
         [| 0 .. 15 |]
