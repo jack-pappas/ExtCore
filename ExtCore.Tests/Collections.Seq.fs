@@ -222,17 +222,63 @@ let segmentBy () : unit =
     |> Seq.isEmpty
     |> assertTrue
 
-    // Sample usage test cases.
+    (* Tests for special cases.
+       Cast these seqs to arrays before comparing, otherwise assertion failure messages are incomprehensible. *)
+
+    // Single-element (singleton) sequence.
+    Seq.singleton "Foo"
+    |> Seq.segmentBy id
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| "Foo" |] |]
+
+    // No segments with multiple elements.
+    seq { 0 .. 10 }
+    |> Seq.segmentBy id
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
+
+    // The first segment has a single element.
+    seq { 9 .. 19 }
+    |> Seq.segmentBy (fun x ->
+        x / 10)
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| 9 |]; [| 10 .. 19 |]; |]
+
+    // The last segment has a single element.
+    seq { 0 .. 10 }
+    |> Seq.segmentBy (fun x ->
+        x / 10)
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| 0 .. 9 |]; [| 10 |]; |]
+
+    (* Sample usage test cases. *)
     seq { 'a' .. 'k' }
     |> Seq.segmentBy (fun c ->
         int c / 3)
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
     |> Collection.assertEqual
-     <| seq {
-        yield seq { 'a' .. 'c' }
-        yield seq { 'd' .. 'f' }
-        yield seq { 'g' .. 'i' }
-        yield seq { 'j' .. 'k' }
+     <|(seq {
+        yield seq { 'a' .. 'b' }
+        yield seq { 'c' .. 'e' }
+        yield seq { 'f' .. 'h' }
+        yield seq { 'i' .. 'k' }
         }
+        |> Seq.map Seq.toArray
+        |> Seq.toArray)
 
 [<Test>]
 let segmentWith () : unit =
@@ -242,14 +288,62 @@ let segmentWith () : unit =
     |> Seq.isEmpty
     |> assertTrue
 
-    // Sample usage test cases.
+    (* Tests for special cases.
+       Cast these seqs to arrays before comparing, otherwise assertion failure messages are incomprehensible. *)
+
+    // Single-element (singleton) sequence.
+    Seq.singleton "Foo"
+    |> Seq.segmentWith (fun _ _ ->
+        Assert.Fail "The predicate function should not be called for a single-element sequence."
+        false)
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| "Foo" |] |]
+
+    // No segments with multiple elements.
+    seq { 0 .. 10 }
+    |> Seq.segmentWith (fun _ _ -> false)
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
+
+    // The first segment has a single element.
+    seq { 9 .. 19 }
+    |> Seq.segmentWith (fun x y ->
+        x / 10 = y / 10)
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| 9 |]; [| 10 .. 19 |]; |]
+
+    // The last segment has a single element.
+    seq { 0 .. 10 }
+    |> Seq.segmentWith (fun x y ->
+        x / 10 = y / 10)
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
+    |> Collection.assertEqual
+        [| [| 0 .. 9 |]; [| 10 |]; |]
+
+    (* Sample usage test cases. *)
     seq { 'a' .. 'k' }
     |> Seq.segmentWith (fun x y ->
         (int x / 3) = (int y / 3))
+    // Convert to array of arrays
+    |> Seq.map Seq.toArray
+    |> Seq.toArray
     |> Collection.assertEqual
-     <| seq {
-        yield seq { 'a' .. 'c' }
-        yield seq { 'd' .. 'f' }
-        yield seq { 'g' .. 'i' }
-        yield seq { 'j' .. 'k' }
+     <|(seq {
+        yield seq { 'a' .. 'b' }
+        yield seq { 'c' .. 'e' }
+        yield seq { 'f' .. 'h' }
+        yield seq { 'i' .. 'k' }
         }
+        |> Seq.map Seq.toArray
+        |> Seq.toArray)

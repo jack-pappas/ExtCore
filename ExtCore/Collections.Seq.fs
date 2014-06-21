@@ -206,58 +206,95 @@ let fold2 (folder : 'State -> 'T1 -> 'T2 -> 'State) (state : 'State) (source1 : 
     // Return the final state value.
     state
 
-/// Helper function used to implement the 'segmentBy' function.
-/// Given an enumerator, produces one "segment" sequence.
-let private segmentByImpl (projection : 'T -> 'Key) (enumerator : IEnumerator<'T>) =
-    seq {
-    // Get the segment key from the first element in the segment.
-    let segmentKey = projection enumerator.Current
-
-    // Yield the first element in the segment.
-    yield enumerator.Current
-
-    // Take elements from the input sequence until we get to the end of the sequence,
-    // or we find an element which has a different key.
-    while enumerator.MoveNext () && projection enumerator.Current = segmentKey do
-        yield enumerator.Current
-    }
-    
 /// <summary>
-/// Groups consecutive elements from a sequence together into "segments".
-/// The specified projection function is applied to each element to produce a key;
-/// a new segment is started whenever an element's key is different from the previous element's key.
+/// Wraps an <see cref="T:System.Collections.Generic.IEnumerator`1{T}"/> to provide an additional 'peek' operation.
 /// </summary>
-/// <param name="projection"></param>
-/// <param name="source"></param>
-/// <returns></returns>
-[<CompiledName("SegmentBy")>]
-let segmentBy (projection : 'T -> 'Key) (source : seq<'T>) : seq<seq<'T>> =
-    // Preconditions
-    checkNonNull "source" source
+/// <typeparam name="T">The type of objects to enumerate.</typeparam>
+[<Sealed>]
+type internal PeekableEnumerator<'T> (enumerator : IEnumerator<'T>) =
+    /// The current element in the enumerator.
+    let mutable current = Unchecked.defaultof<_>
+    
+    /// Holds the next element from the enumerator, i.e., the element following 'current'.
+    /// This is necessary to avoid skipping an element when peeking.
+    let mutable nextElement = None
+    
+    //
+    member __.Current
+        with get () = current
 
-    /// Enumerator for the input sequence.
-    let enumerator = source.GetEnumerator ()
+    //
+    member __.Peek () =
+        // If we've already seen the next element, we can return the cached value.
+        match nextElement with
+        | Some _ ->
+            nextElement
+        | None ->
+            // Try to read the next element from the enumerator.
+            // If we can read an element, cache it so if Peek() is called multiple times between
+            // calls to MoveNext(), we don't consume multiple elements from the underlying enumerator.
+            if enumerator.MoveNext () then
+                nextElement <- Some enumerator.Current
+                nextElement
+            else None
 
-    // Create segments using the enumerator until the sequence is empty.
-    seq {
-    while enumerator.MoveNext () do
-        yield segmentByImpl projection enumerator
-    }
+    //
+    member __.MoveNext () =
+        // If we've already read the next element, move that into 'current' and return it
+        // without advancing the underlying enumerator.
+        match nextElement with
+        | Some x ->
+            current <- x
+            nextElement <- None
+            true
+        | None ->
+            if enumerator.MoveNext () then
+                current <- enumerator.Current
+                true
+            else false
+
+    //
+    member __.Reset () =
+        enumerator.Reset ()
+        current <- Unchecked.defaultof<_>
+        nextElement <- None
+
+    interface System.IDisposable with
+        member __.Dispose () =
+            enumerator.Dispose ()
+
+    interface System.Collections.IEnumerator with
+        member this.Current
+            with get () = upcast this.Current
+        member this.MoveNext () =
+            this.MoveNext ()
+        member this.Reset () =
+            this.Reset ()
+
+    interface System.Collections.Generic.IEnumerator<'T> with
+        member this.Current
+            with get () = this.Current
+
 
 /// Helper function used to implement the 'segmentWith' function.
-/// Given an enumerator, produces one "segment" sequence.
-let private segmentWithImpl (predicate : FSharpFunc<'T, 'T, bool>) (enumerator : IEnumerator<'T>) =
+/// Given a peekable enumerator, produces one "segment" subsequence.
+let rec private segmentWithImpl (predicate : FSharpFunc<'T, 'T, bool>) (enumerator : PeekableEnumerator<'T>) =
     seq {
     // Yield the first element in the segment.
     yield enumerator.Current
 
-    let lastElement = ref enumerator.Current
-
-    // Take elements from the input sequence, applying the predicate to each pair of adjacent
-    // elements, until the predicate returns false or the sequence is empty.
-    while enumerator.MoveNext () && predicate.Invoke (!lastElement, enumerator.Current) do
-        yield enumerator.Current
-        lastElement := enumerator.Current
+    /// Are there any more elements in this segment?
+    match enumerator.Peek () with
+    | Some nextElement
+        when predicate.Invoke (enumerator.Current, nextElement) ->
+        // Move to the next element, then recurse to continue emitting this segment.
+        if enumerator.MoveNext () then
+            yield! segmentWithImpl predicate enumerator
+        else
+            // This should never happen -- when a 'Peek' operation returns Some, the following
+            // 'MoveNext' operation should always succeed.
+            raise <| exn "Peek() returned Some but the following call to MoveNext() returned false."
+    | _ -> ()
     }
 
 /// <summary>
@@ -274,14 +311,33 @@ let segmentWith (predicate : 'T -> 'T -> bool) (source : seq<'T>) : seq<seq<'T>>
     // Preconditions
     checkNonNull "source" source
 
-    /// Enumerator for the input sequence.
-    let enumerator = source.GetEnumerator ()
-
     let predicate = FSharpFunc<_,_,_>.Adapt predicate
+
+    /// Get an enumerator for the input sequence, then create a "peekable" wrapper for it.
+    use enumerator = new PeekableEnumerator<_> (source.GetEnumerator ())
 
     // Create segments using the enumerator until the sequence is empty.
     seq {
     while enumerator.MoveNext () do
         yield segmentWithImpl predicate enumerator
     }
+    
+/// <summary>
+/// Groups consecutive elements from a sequence together into "segments".
+/// The specified projection function is applied to each element to produce a key;
+/// a new segment is started whenever an element's key is different from the previous element's key.
+/// </summary>
+/// <param name="projection"></param>
+/// <param name="source"></param>
+/// <returns></returns>
+[<CompiledName("SegmentBy")>]
+let segmentBy (projection : 'T -> 'Key) (source : seq<'T>) : seq<seq<'T>> =
+    // Preconditions
+    checkNonNull "source" source
 
+    // Implement this function in terms of 'segmentWith'.
+    source
+    |> segmentWith (fun x y ->
+        // Consecutive elements belong to the same sequence if the 'projection' function
+        // returns the same key for both of them.
+        projection x = projection y)
