@@ -375,7 +375,7 @@ let distinct () : unit =
 
     [0; 2; 4; 1; 2; 0; 1; 3]
     |> List.distinct
-    |> Collection.assertEqual [0; 1; 2; 3; 4]
+    |> Collection.assertEqual [0; 2; 4; 1; 3]
 
     // Repro for issue #8
     ["A"; "N"; "N"; "A"]
