@@ -148,14 +148,14 @@ module Operators =
     /// <returns></returns>
     [<CompiledName("RefEquals")>]
     [<Obsolete("This function is redundant and will be removed in a future release. Use the (==) operator instead.")>]
-    let inline refEquals< ^T, ^U when ^T : not struct and ^U : not struct> (x : ^T) (y : ^U) =
+    let inline refEquals<'T, 'U when 'T : not struct and 'U : not struct> (x : 'T) (y : 'U) =
         System.Object.ReferenceEquals (x, y)
 
     /// <summary>Determines if a reference is a null reference.</summary>
     /// <param name="arg"></param>
     /// <returns></returns>
     [<CompiledName("IsNull")>]
-    let inline isNull< ^T when ^T : not struct> (arg : ^T) =
+    let inline isNull<'T when 'T : not struct> (arg : 'T) =
         // OPTIMIZE :   Implement with inline IL (ldnull, ldarg.0, ceq). We can't use LanguagePrimitives.PhysicalEquality because it
         //              requires the 'null' constraint which we don't want to require for this function.
         System.Object.ReferenceEquals (null, arg)
@@ -371,10 +371,9 @@ module Operators =
     /// Checks if a floating-point value represents a finite number.
     /// If not, a 'System.NotFiniteNumberException' is raised.
     [<CompiledName("CheckFinite")>]
-    let inline checkFinite (value : ^T) : unit =
-        ()
-        when ^T : float32 = (# "ckfinite" value : float32 #) |> ignore
-        when ^T : float = (# "ckfinite" value : float #) |> ignore
+    let inline checkFinite (value : ^T) : ^T =
+        when ^T : float32 = (# "ckfinite" value : float32 #)
+        when ^T : float = (# "ckfinite" value : float #)
     #endif
 *)
 
