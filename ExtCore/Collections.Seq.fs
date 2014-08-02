@@ -72,15 +72,11 @@ let projectKeys (mapping : 'T -> 'Key) (source : seq<'T>) =
 /// <param name="source"></param>
 /// <returns></returns>
 [<CompiledName("Replicate")>]
-let replicate count source : seq<'T> =
+let replicate count (source : seq<'T>) : seq<'T> =
     // Preconditions
+    checkNonNull "source" source
     if count < 0 then
         invalidArg "count" "The count cannot be negative."
-    // HACK : The F# compiler gives a warning about the type parameter being
-    // constrained if 'checkNonNull' is used here, even though it shouldn't.
-    // Instead, we'll use Object.ReferenceEquals directly.
-    elif null == source then
-        nullArg "source"
 
     // Cache the input sequence so it's only evaluated once.
     let cachedSeq = Seq.cache source
