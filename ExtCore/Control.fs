@@ -763,17 +763,28 @@ type MaybeBuilder () =
 /// </summary>
 [<Sealed>]
 type ChoiceBuilder () =
+    /// The zero value for this builder never changes and is immutable,
+    /// so create and reuse a single instance of it to avoid unnecessary allocations.
+    static let zero = Choice1Of2 ()
+
     // 'T -> M<'T>
     member inline __.Return value : Choice<'T, 'Error> =
         Choice1Of2 value
+
+#if FX_ATLEAST_FSHARP_3_0
+    // Error operation. Similar to the Return method ('return'), but used for returning an error value.
+    [<CustomOperation("error")>]
+    member inline __.Error value : Choice<'T, 'Error> =
+        Choice2Of2 value
+#endif
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom (m : Choice<'T, 'Error>) =
         m
 
     // unit -> M<'T>
-    member inline __.Zero () : Choice<unit, 'Error> =
-        Choice1Of2 ()
+    member __.Zero () : Choice<unit, 'Error> =
+        zero
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay (f : unit -> Choice<'T, 'Error>) : Choice<'T, 'Error> =
@@ -2113,7 +2124,6 @@ module Async =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AsyncChoice =
     open Microsoft.FSharp.Control
-
 
     /// Creates an AsyncChoice from an error value.
     [<CompiledName("Error")>]
