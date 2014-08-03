@@ -17,7 +17,6 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.Control.Cps
 
 open ExtCore
@@ -125,11 +124,11 @@ type TransactionBuilder () =
         //this.Bind (r1, (fun () -> r2))
         notImpl "TryWith"
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body, handler) =
         notImpl "TryWith"
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body, handler) =
         notImpl "TryFinally"
 
@@ -188,7 +187,7 @@ type ContBuilder () =
             r1 <| fun () ->
                 r2 cont
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : ContFunc<_,_>, handler : exn -> ContFunc<_,_>)
         : ContFunc<'T, 'K> =
         fun state ->
@@ -273,7 +272,7 @@ type StateContBuilder () =
             r1 state <| fun ((), state) ->
                 r2 state cont
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : StateContFunc<_,_,_>, handler : exn -> StateContFunc<_,_,_>)
         : StateContFunc<'State, 'T, 'K> =
         fun state cont ->
@@ -368,7 +367,7 @@ type MaybeContBuilder () =
             | Some () ->
                 r2 cont
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : MaybeContFunc<_,_>, handler : exn -> MaybeContFunc<_,_>)
         : MaybeContFunc<'T, 'K> =
         fun cont ->
@@ -463,7 +462,7 @@ type ChoiceContBuilder () =
             | Choice1Of2 () ->
                 r2 cont
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : ChoiceContFunc<_,_,_>, handler : exn -> ChoiceContFunc<_,_,_>)
         : ChoiceContFunc<'T, 'Error, 'K> =
         fun cont ->
@@ -557,7 +556,7 @@ type ProtectedStateContBuilder () =
                 | Choice1Of2 ((), state) ->
                     r2 state cont
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : ProtectedStateContFunc<_,_,_,_>, handler : exn -> ProtectedStateContFunc<_,_,_,_>)
         : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->

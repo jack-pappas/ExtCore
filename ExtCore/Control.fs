@@ -18,7 +18,6 @@ limitations under the License.
 
 *)
 
-//
 namespace ExtCore.Control
 
 open ExtCore
@@ -220,7 +219,7 @@ type LazyBuilder () =
         : Lazy<'T> =
         this.Bind (r1, fun () -> r2)
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member (*inline*) __.TryWith (body : Lazy<'T>, handler : exn -> 'T)
         : Lazy<'T> =
         lazy
@@ -229,7 +228,7 @@ type LazyBuilder () =
             with ex ->
                 handler ex
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member (*inline*) __.TryFinally (body : Lazy<_>, handler)
         : Lazy<'T> =
         lazy
@@ -305,7 +304,7 @@ type StateBuilder () =
         : StateFunc<'State, 'T> =
         this.Bind (r1, fun () -> r2)
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : StateFunc<_,_>, handler : exn -> StateFunc<_,_>)
         : StateFunc<'State, 'T> =
         fun state ->
@@ -313,7 +312,7 @@ type StateBuilder () =
             with ex ->
                 handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member inline __.TryFinally (body : StateFunc<_,_>, handler)
         : StateFunc<'State, 'T> =
         fun state ->
@@ -387,7 +386,7 @@ type ReaderBuilder () =
         : ReaderFunc<'Env, 'T> =
         this.Bind (r1, fun () -> r2)
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : ReaderFunc<_,_>, handler : exn -> ReaderFunc<_,_>)
         : ReaderFunc<'Env, 'T> =
         fun env ->
@@ -395,7 +394,7 @@ type ReaderBuilder () =
             with ex ->
                 handler ex env
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ReaderFunc<_,_>, handler)
         : ReaderFunc<'Env, 'T> =
         fun env ->
@@ -477,7 +476,7 @@ type ReaderStateBuilder () =
         : ReaderStateFunc<'Env, 'State, 'T> =
         this.Bind (r1, fun () -> r2)
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : ReaderStateFunc<_,_,_>, handler : exn -> ReaderStateFunc<_,_,_>)
         : ReaderStateFunc<'Env, 'State, 'T> =
         fun env state ->
@@ -485,7 +484,7 @@ type ReaderStateBuilder () =
             with ex ->
                 handler ex env state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ReaderStateFunc<_,_,_>, handler)
         : ReaderStateFunc<'Env, 'State, 'T> =
         fun env state ->
@@ -564,12 +563,12 @@ type WriterBuilder<'Writer
         let result, writer2 = r2
         result, writer.Combine (writer1, writer2)
 
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (exn -> M<'T>) -> M<'T>
 //    member inline __.TryWith (body, handler)
 //        : 'T * 'W =
 //        notImpl "TryWith"
 //
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (unit -> unit) -> M<'T>
 //    member inline __.TryFinally (body, handler)
 //        : 'T * 'W =
 //        notImpl "TryFinally"
@@ -639,7 +638,7 @@ type WriterBuilder<'Writer
 //        //this.Bind (r1, fun () -> r2)
 //        notImpl "Combine"
 //
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (exn -> M<'T>) -> M<'T>
 //    member __.TryWith (body : ReaderWriterStateFunc<_,_,_,_,_>, handler : exn -> ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, 'T>)
 //        : ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, 'T> =
 //        fun env state ->
@@ -647,7 +646,7 @@ type WriterBuilder<'Writer
 //        with ex ->
 //            handler ex env state
 //
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (unit -> unit) -> M<'T>
 //    member __.TryFinally (body : ReaderWriterStateFunc<_,_,_,_,_>, handler)
 //        : ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, 'T> =
 //        fun env state ->
@@ -718,14 +717,14 @@ type MaybeBuilder () =
     member inline __.Bind (value, f : 'T -> 'U option) : 'U option =
         Option.bind f value
 
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (exn -> M<'T>) -> M<'T>
 //    member this.TryWith (body, handler) : _ option =
 //        fun value ->
 //            try body value
 //            with ex ->
 //                handler ex
 //
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (unit -> unit) -> M<'T>
 //    member this.TryFinally (body, handler) : _ option =
 //        fun value ->
 //            try body value
@@ -808,14 +807,14 @@ type ChoiceBuilder () =
         | Choice1Of2 x ->
             f x
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : 'T -> Choice<'U, 'Error>, handler) =
         fun value ->
             try body value
             with ex ->
                 handler ex
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member inline __.TryFinally (body : 'T -> Choice<'U, 'Error>, handler) =
         fun value ->
             try body value
@@ -896,7 +895,7 @@ type ReaderChoiceBuilder () =
         | Choice1Of2 () ->
             r2 env
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : ReaderChoiceFunc<_,_,_>, handler : exn -> ReaderChoiceFunc<_,_,_>)
         : ReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
@@ -904,7 +903,7 @@ type ReaderChoiceBuilder () =
         with ex ->
             handler ex env
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ReaderChoiceFunc<_,_,_>, handler)
         : ReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
@@ -983,7 +982,7 @@ type ProtectedStateBuilder () =
         : ProtectedStateFunc<'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : ProtectedStateFunc<_,_,_>, handler : exn -> ProtectedStateFunc<_,_,_>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
@@ -991,7 +990,7 @@ type ProtectedStateBuilder () =
         with ex ->
             handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ProtectedStateFunc<_,_,_>, handler)
         : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
@@ -1069,7 +1068,7 @@ type ReaderProtectedStateBuilder () =
         : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : ReaderProtectedStateFunc<_,_,_,_>, handler : exn -> ReaderProtectedStateFunc<_,_,_,_>)
         : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         fun state ->
@@ -1077,7 +1076,7 @@ type ReaderProtectedStateBuilder () =
         with ex ->
             handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ReaderProtectedStateFunc<_,_,_,_>, handler)
         : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         fun state ->
@@ -1155,7 +1154,7 @@ type StatefulChoiceBuilder () =
         : StatefulChoiceFunc<'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : StatefulChoiceFunc<_,_,_>, handler : exn -> StatefulChoiceFunc<_,_,_>)
         : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
@@ -1163,7 +1162,7 @@ type StatefulChoiceBuilder () =
         with ex ->
             handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : StatefulChoiceFunc<_,_,_>, handler)
         : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
@@ -1239,7 +1238,7 @@ type AsyncStateBuilder () =
         : AsyncStateFunc<'State, 'T> =
         this.Bind (r1, fun () -> r2)
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : AsyncStateFunc<_,_>, handler : exn -> AsyncStateFunc<_,_>)
         : AsyncStateFunc<'State, 'T> =
         fun state ->
@@ -1247,7 +1246,7 @@ type AsyncStateBuilder () =
             with ex ->
                 handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncStateFunc<_,_>, handler)
         : AsyncStateFunc<'State, 'T> =
         fun state ->
@@ -1328,14 +1327,14 @@ type AsyncMaybeBuilder () =
             return! f result
         }
 
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (exn -> M<'T>) -> M<'T>
 //    member this.TryWith (body, handler) : Async<_ option> =
 //        fun value ->
 //            try body value
 //            with ex ->
 //                handler ex
 //
-//    // M<'T> -> M<'T> -> M<'T>
+//    // M<'T> * (unit -> unit) -> M<'T>
 //    member this.TryFinally (body, handler) : Async<_ option> =
 //        fun value ->
 //            try body value
@@ -1416,14 +1415,14 @@ type AsyncChoiceBuilder () =
             return! f x
         }
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member (*inline*) __.TryWith (body : 'T -> Async<Choice<'U, 'Error>>, handler) =
         fun value ->
             try body value
             with ex ->
                 handler ex
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member (*inline*) __.TryFinally (body : 'T -> Async<Choice<'U, 'Error>>, handler) =
         fun value ->
             try body value
@@ -1499,7 +1498,7 @@ type AsyncReaderBuilder () =
         : AsyncReaderFunc<'Env, 'T> =
         this.Bind (r1, (fun () -> r2))
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : AsyncReaderFunc<_,_>, handler : exn -> AsyncReaderFunc<_,_>)
         : AsyncReaderFunc<'Env, 'T> =
         fun env ->
@@ -1507,7 +1506,7 @@ type AsyncReaderBuilder () =
         with ex ->
             handler ex env
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncReaderFunc<_,_>, handler)
         : AsyncReaderFunc<'Env, 'T> =
         fun env ->
@@ -1587,7 +1586,7 @@ type AsyncReaderChoiceBuilder () =
         : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : AsyncReaderChoiceFunc<_,_,_>, handler : exn -> AsyncReaderChoiceFunc<_,_,_>)
         : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
@@ -1595,7 +1594,7 @@ type AsyncReaderChoiceBuilder () =
         with ex ->
             handler ex env
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncReaderChoiceFunc<_,_,_>, handler)
         : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
@@ -1677,7 +1676,7 @@ type AsyncProtectedStateBuilder () =
         : AsyncProtectedStateFunc<'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : AsyncProtectedStateFunc<_,_,_>, handler : exn -> AsyncProtectedStateFunc<_,_,_>)
         : AsyncProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
@@ -1685,7 +1684,7 @@ type AsyncProtectedStateBuilder () =
         with ex ->
             handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncProtectedStateFunc<_,_,_>, handler)
         : AsyncProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
@@ -1950,14 +1949,23 @@ module ReaderWriterState =
 module Maybe =
     //
     let dummy () = ()
+*)
 
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReaderChoice =
     //
-    let dummy () = ()
-*)
+    [<CompiledName("LiftReader")>]
+    let inline liftReader (readerFunc : ReaderFunc<'Env, 'T>) : ReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun env ->
+            Choice1Of2 (readerFunc env)
+
+    //
+    [<CompiledName("LiftChoice")>]
+    let inline liftChoice (choice : Choice<'T, 'Error>) : ReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun _ -> choice
+
 
 /// <summary>
 /// </summary>
@@ -1967,7 +1975,8 @@ module ProtectedState =
     [<CompiledName("LiftState")>]
     let inline liftState (stateFunc : StateFunc<'State, 'T>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
-        stateFunc >> Choice1Of2
+        fun state ->
+            Choice1Of2 (stateFunc state)
 
     //
     [<CompiledName("LiftChoice")>]
