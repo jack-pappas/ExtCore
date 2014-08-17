@@ -372,7 +372,6 @@ module Operators =
             else
                 raise <| System.ArgumentNullException paramName
 
-(*
     #if PROTO_COMPILER
     /// <summary>Checks whether a double-precision floating-point value is a
     /// finite real number and raises an exception if it is not.</summary>
@@ -390,7 +389,6 @@ module Operators =
     [<CompiledName("CheckFiniteSingle")>]
     let inline ckfinitef (x : float32) = (# "ckfinite" x : float32 #)
     #endif
-*)
 
     (* Active Patterns *)
 
