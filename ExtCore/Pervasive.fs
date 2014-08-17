@@ -299,12 +299,12 @@ module Operators =
         if mapped_x < mapped_y then mapped_y else mapped_x
 
     #if PROTO_COMPILER
-    (*
+(*
     /// Returns the RuntimeTypeHandle of the specified type.
+    [<RequiresExplicitTypeArguments>]
     [<CompiledName("TypeHandleOf")>]
-    let inline typehandleof<'T> : System.RuntimeTypeHandle =
-        (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
-    *)
+    let inline typehandleof<'T> = (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
+*)
     #endif
 
     (* Exception-related functions *)
@@ -312,6 +312,7 @@ module Operators =
     /// <summary>Raises a new exception of the specified type.</summary>
     /// <typeparam name="E">The type of exception to raise.</typeparam>
     /// <typeparam name="T"></typeparam>
+    [<RequiresExplicitTypeArguments>]
     [<CompiledName("RaiseNew")>]
     let inline raiseNew<'E, 'T when 'E :> exn and 'E : (new : unit -> 'E)> () : 'T =
         raise <| new 'E()
