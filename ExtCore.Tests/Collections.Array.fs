@@ -544,20 +544,29 @@ let unfoldBack () : unit =
             Some (n.ToString(), n - 1))
     |> Collection.assertEqual (Array.ofList ["1"; "2"; "3"; "4"; "5"])
 
+[<Test>]
+let init2 () : unit =
+    Assert.Ignore "Test not yet implemented."
+
 
 module Parallel =
-    //
+    (* TODO : When implementing these tests, make sure to test both that the returned result is correct
+              and also the behavior of the functions when an exception is thrown by the function being
+              passed in (e.g., the generator function for init2). Exceptions thrown during the operation
+              should be propagated to callers of these functions instead of returning partially-valid results. *)
+
+    [<Test>]
+    let init2 () : unit =
+        Assert.Ignore "Test not yet implemented."
+
     [<Test>]
     let mapInPlace () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    //
     [<Test>]
     let mapiInPlace () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    //
     [<Test>]
     let countWith () : unit =
         Assert.Ignore "Test not yet implemented."
-
