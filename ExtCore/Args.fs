@@ -64,6 +64,7 @@ open ExtCore
 
 /// The spec value describes the action of the argument,
 /// and whether it expects a following parameter.
+[<NoEquality; NoComparison>]
 type ArgType =
     //
     | Clear of bool ref
