@@ -441,11 +441,23 @@ module List =
             !iterationCount |> assertEqual 2
 
     [<Test>]
-    let ``iter2 raises exn when lists have different lengths`` () : unit =
+    let ``iter2 raises exn when lists have different lengths and function always returns result`` () : unit =
+        // NOTE : Choice.List.iter2 only raises the exception iff the lists have different lengths
+        //        and the action function does not return an error (Choice2Of2) before the length
+        //        imbalance is discovered (because the lists are traversed as needed, not up-front).
         assertRaises<System.ArgumentException> <| fun () ->
             ([0..4], [0..7])
-            ||> Choice.List.iter2 (fun _ _ -> Choice2Of2 "Error")
+            ||> Choice.List.iter2 (fun _ _ -> Choice1Of2 ())
             |> ignore
+
+    [<Test>]
+    let ``iter2 doesn't raise exn when lists have different lengths and function returns error`` () : unit =
+        // This should _not_ raise an exception, because an error value (Choice2Of2) is returned
+        // before the difference in the list lengths is discovered.
+        ([0..4], [0..7])
+        ||> Choice.List.iter2 (fun _ _ -> Choice2Of2 "Error!")
+        |> ignore
+        Assert.Pass ()
 
     [<Test>]
     let iteri2 () : unit =
@@ -496,11 +508,23 @@ module List =
             !iterationCount |> assertEqual 2
 
     [<Test>]
-    let ``map2 raises exn when lists have different lengths`` () : unit =
+    let ``map2 raises exn when lists have different lengths and function always returns result`` () : unit =
+        // NOTE : Choice.List.map2 only raises the exception iff the lists have different lengths
+        //        and the mapping function does not return an error (Choice2Of2) before the length
+        //        imbalance is discovered (because the lists are traversed as needed, not up-front).
         assertRaises<System.ArgumentException> <| fun () ->
             ([0..4], [0..7])
-            ||> Choice.List.map2 (fun _ _ -> Choice2Of2 "Error!")
+            ||> Choice.List.map2 (fun _ _ -> Choice1Of2 "Hello world!")
             |> ignore
+
+    [<Test>]
+    let ``map2 doesn't raise exn when lists have different lengths and function returns error`` () : unit =
+        // This should _not_ raise an exception, because an error value (Choice2Of2) is returned
+        // before the difference in the list lengths is discovered.
+        ([0..4], [0..7])
+        ||> Choice.List.map2 (fun _ _ -> Choice2Of2 "Error!")
+        |> ignore
+        Assert.Pass ()
 
     [<Test>]
     let mapi2 () : unit =
@@ -539,11 +563,23 @@ module List =
             !iterationCount |> assertEqual 2
 
     [<Test>]
-    let ``mapi2 raises exn when lists have different lengths`` () : unit =
+    let ``mapi2 raises exn when lists have different lengths and function always returns result`` () : unit =
+        // NOTE : Choice.List.mapi2 only raises the exception iff the lists have different lengths
+        //        and the mapping function does not return an error (Choice2Of2) before the length
+        //        imbalance is discovered (because the lists are traversed as needed, not up-front).
         assertRaises<System.ArgumentException> <| fun () ->
             ([0..4], [0..7])
-            ||> Choice.List.mapi2 (fun _ _ _ -> Choice2Of2 "Error!")
+            ||> Choice.List.mapi2 (fun _ _ _ -> Choice1Of2 "Hello world!")
             |> ignore
+
+    [<Test>]
+    let ``mapi2 doesn't raise exn when lists have different lengths and function returns error`` () : unit =
+        // This should _not_ raise an exception, because an error value (Choice2Of2) is returned
+        // before the difference in the list lengths is discovered.
+        ([0..4], [0..7])
+        ||> Choice.List.mapi2 (fun _ _ _ -> Choice2Of2 "Error!")
+        |> ignore
+        Assert.Pass ()
 
     [<Test>]
     let fold () : unit =

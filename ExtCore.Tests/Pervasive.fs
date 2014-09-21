@@ -305,7 +305,12 @@ module Enum =
 module Lazy =
     [<Test>]
     let force () : unit =
-        Assert.Ignore "Test not yet implemented."
+        let foo =
+            lazy
+                String.init 3 (fun x -> string <| char x + 'a')
+        foo
+        |> Lazy.force
+        |> assertEqual "abc"
 
     [<Test>]
     let value () : unit =
@@ -320,8 +325,26 @@ module Lazy =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let tryGetValue () : unit =
-        Assert.Ignore "Test not yet implemented."
+    let ``tryGetValue for unforced value`` () : unit =
+        let foo =
+            lazy
+                String.init 3 (fun x -> string <| char x + 'a')
+        foo
+        |> Lazy.tryGetValue
+        |> assertEqual None
+
+    [<Test>]
+    let ``tryGetValue for forced value`` () : unit =
+        let foo =
+            lazy
+                String.init 3 (fun x -> string <| char x + 'a')
+        
+        // Force evaluation of the value before calling Lazy.tryGetValue.
+        foo |> Lazy.force |> ignore
+
+        foo
+        |> Lazy.tryGetValue
+        |> assertEqual (Some "abc")
 
     [<Test>]
     let map () : unit =
