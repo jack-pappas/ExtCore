@@ -2099,6 +2099,22 @@ module StatefulChoice =
             : StatefulChoiceFunc<'State, 'U, 'Error> =
         bind (mapping >> ``return``) m
 
+    [<CompiledName("Attempt")>]
+    let attempt (generator : unit -> 'T) : StatefulChoiceFunc<'State, 'T, exn> =
+        statefulChoice {
+            let! state = getState
+            return! fun _ -> Choice.attempt generator, state }
+
+    [<CompiledName("MapError")>]
+    let mapError (map : 'Error -> 'Error2) (value : StatefulChoiceFunc<'State, 'T, 'Error>)
+            : StatefulChoiceFunc<'State, 'T, 'Error2> =
+        statefulChoice {
+            let! state = getState
+            let choice, state' = value state
+            return! 
+                match choice with
+                | Choice1Of2 c -> fun _ -> Choice1Of2 c, state'
+                | Choice2Of2 error -> fun _ -> Choice2Of2 (map error), state' }
 
 /// Functions for working with F# Async workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
