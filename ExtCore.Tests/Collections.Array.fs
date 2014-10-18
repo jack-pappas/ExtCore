@@ -575,6 +575,53 @@ module Parallel =
     let choosei () : unit =
         Assert.Ignore "Test not yet implemented."
 
+    [<Test>]
+    let ``choosei repro #1`` () : unit =
+        let n = 43
+        let m = 27
+        let arr = [|36; 26; 10; -21; -31; -22; -38; 20; 10; 19; 3; -28; -38; -29; 44; 34; 3; -13;
+                      -4; -14; 44; 28; 37; 27; 11; -20; -11; -21; -37; 21; 11; 20; 4; -27; -37; -28;
+                      -44; 35; 4; -12; -3|]
+
+        // Chooser function.
+        let chooser =
+            fun i x ->
+                if n = 0 then
+                    if x > m then Some x else None
+                else
+                    if x / n < m then Some x else None
+
+
+        let chooseResults =
+            arr |> Array.Parallel.choose (chooser -1)
+
+        let chooseiResults =
+            arr |> Array.Parallel.choosei chooser
+
+        Collection.assertEqual chooseResults chooseiResults
+
+    [<Test>]
+    let ``combineWorkerResults striped`` () =
+        let arr = [|36; 26; 10; -21; -31; -22; -38; 20; 10; 19; 3; -28; -38; -29; 44; 34; 3; -13;
+                      -4; -14; 44; 28; 37; 27; 11; -20; -11; -21; -37; 21; 11; 20; 4; -27; -37; -28;
+                      -44; 35; 4; -12; -3|]
+
+        let workerResults =
+            let workerCount = 11
+            let results = Array.init workerCount <| fun _ -> ResizeArray ()
+
+            for i = 0 to arr.Length - 1 do
+                System.Collections.Generic.KeyValuePair (i, arr.[i])
+                |> results.[i % workerCount].Add
+
+            ResizeArray results
+                
+        // Combine the results and check them.
+        workerResults
+        |> Array.Parallel.combineWorkerResults
+        |> Collection.assertEqual arr
+
+
     /// FsCheck-based tests for Array.Parallel functions.
     module FsCheck =
         open FsCheck

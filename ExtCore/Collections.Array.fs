@@ -1051,6 +1051,56 @@ module Parallel =
                     // determine how the lists compare to each other.
                     ElementIndexComparer.Instance.Compare (x.[count_x - 1], y.[count_y - 1])
 
+    //
+    let internal combineWorkerResults (workerResults : ResizeArray<ResizeArray<KeyValuePair<int, 'T>>>) : 'T[] =
+        /// The total number of chosen values (i.e., the length of the results array).
+        let chosenValueCount =
+            workerResults
+            |> ResizeArray.sumBy (fun localResults -> localResults.Count)
+
+        /// The array of results (chosen values).
+        let results = Array.zeroCreate chosenValueCount
+
+        /// The number of worker result lists.
+        let workerResultCount = workerResults.Count
+
+        // If there was only one worker result list (which may be the case if the array was small,
+        // or the system only has a single core), we don't need the fancy logic for merging result lists.
+        if workerResultCount = 1 then
+            let singleWorkerResult = workerResults.[0]
+            for i = 0 to results.Length - 1 do
+                results.[i] <- singleWorkerResult.[i].Value
+        else
+            // Sort the worker results before entering the loop.
+            workerResults.Sort LastElementComparer<_>.Instance
+
+            // Copy elements from the individual worker result lists into results.
+            // Each local results list has the chosen elements sorted by their original index in ascending order.
+            // Removing an element from the end of a list is a fast operation (only decrements an internal counter);
+            // we take advantage of that by copying elements into the results list backwards.
+            for resultIndex = chosenValueCount - 1 downto 0 do
+                // If the greatest index in the "next" worker result list is greater than the greatest index in
+                // the current best worker result list, we've finished processing a consecutive chunk of elements
+                // from the current best result list. Sort the worker lists according to the last elements of the lists.
+                // This avoids unnecessarily sorting the whole list of worker results on each iteration of the loop.
+                if LastElementComparer<_>.Instance.Compare (workerResults.[workerResultCount - 1], workerResults.[workerResultCount - 2]) < 0 then
+                    workerResults.Sort LastElementComparer<_>.Instance
+
+                /// The current worker result list.
+                let currentResultList = workerResults.[workerResultCount - 1]
+
+                /// The last index in the current worker result list.
+                let currentResultListLastIndex = currentResultList.Count - 1
+
+                // Copy the chosen value with the greatest element index into the current index of the results array.
+                results.[resultIndex] <- currentResultList.[currentResultListLastIndex].Value
+
+                // Remove the copied chosen value from the end of the current worker list.
+                currentResultList.RemoveAt currentResultListLastIndex
+
+        // Return the results array.
+        results
+
     /// <summary>
     /// 
     /// </summary>
@@ -1058,35 +1108,12 @@ module Parallel =
     let choosei (chooser : int -> 'T -> 'U option) (array: 'T[]) : 'U[] =
         checkNonNull "array" array
 
+        // If the input array is empty, immediately return an empty output array.
+        if Array.isEmpty array then Array.empty
+        else
+
         let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
-        let inputLength = array.Length
-        let lastInputIndex = inputLength - 1
-
-        let isChosen : bool [] = Array.zeroCreate inputLength
-        let results : 'U [] = Array.zeroCreate inputLength
-        
-        Parallel.For(0, inputLength, (fun i ->
-            match chooser.Invoke (i, array.[i]) with
-            | None -> ()
-            | Some v ->
-                isChosen.[i] <- true
-                results.[i] <- v
-        )) |> ignore
-
-        let mutable outputLength = 0
-        for i = 0 to lastInputIndex do
-            if isChosen.[i] then
-                outputLength <- outputLength + 1
-                        
-        let output = Array.zeroCreate outputLength
-        let mutable curr = 0
-        for i = 0 to lastInputIndex do
-            if isChosen.[i] then
-                output.[curr] <- results.[i]
-                curr <- curr + 1
-        output
-        (*
         /// Holds ResizeArrays containing the values chosen by each worker task in the loop.
         /// The index of each chosen value is included as a key so that the values can
         /// be re-assembled in the same order as their original source elements.
@@ -1122,42 +1149,7 @@ module Parallel =
 #endif
             |> ignore
 
-        /// The total number of chosen values (i.e., the length of the results array).
-        let chosenValueCount =
-            workerResults
-            |> ResizeArray.sumBy (fun localResults -> localResults.Count)
-
-        /// The array of results (chosen values).
-        let results = Array.zeroCreate chosenValueCount
-
-        /// The number of worker result lists.
-        let workerResultCount = workerResults.Count
-
-        // Copy elements from the individual worker result lists into results.
-        // Each local results list has the chosen elements sorted by their original index in ascending order.
-        // Removing an element from the end of a list is a fast operation (only decrements an internal counter);
-        // we take advantage of that by copying elements into the results list backwards.
-        for resultIndex = chosenValueCount - 1 downto 0 do
-            // If the greatest index in the "next" worker result list is greater than the greatest index in
-            // the current best worker result list, we've finished processing a consecutive chunk of elements
-            // from the current best result list. Sort the worker lists according to the last elements of the lists.
-            if LastElementComparer<_>.Instance.Compare (workerResults.[workerResultCount - 1], workerResults.[workerResultCount - 2]) > 0 then
-                workerResults.Sort LastElementComparer<_>.Instance
-
-            /// The current worker result list.
-            let currentResultList = workerResults.[workerResultCount - 1]
-
-            /// The last index in the current worker result list.
-            let currentResultListLastIndex = currentResultList.Count - 1
-
-            // Copy the chosen value with the greatest element index into the current index of the results array.
-            results.[resultIndex] <- currentResultList.[currentResultListLastIndex].Value
-
-            // Remove the copied chosen value from the end of the current worker list.
-            currentResultList.RemoveAt currentResultListLastIndex
-
-        // Return the results array.
-        results
-        *)
+        // Combine worker results and return.
+        combineWorkerResults workerResults
 
 #endif  // #if !FX_NO_TPL_PARALLEL
