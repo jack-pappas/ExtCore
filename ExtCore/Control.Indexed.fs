@@ -131,7 +131,7 @@ type IndexedStateBuilder () =
             with ex ->
                 handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member inline __.TryFinally (body : IndexedStateFunc<_,_,_>, handler)
         : IndexedStateFunc<'S1, 'S2, 'T> =
         fun state ->
@@ -214,7 +214,7 @@ type ReaderIndexedStateBuilder () =
             with ex ->
                 handler ex env state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ReaderIndexedStateFunc<_,_,_,_>, handler)
         : ReaderIndexedStateFunc<'Env, 'S1, 'S2, 'T> =
         fun env state ->
@@ -300,7 +300,7 @@ type ProtectedIndexedStateBuilder () =
         with ex ->
             handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ProtectedIndexedStateFunc<_,_,_,_>, handler)
         : ProtectedIndexedStateFunc<'S1, 'S2, 'T, 'Error> =
         fun state ->
@@ -386,7 +386,7 @@ type ReaderProtectedIndexedStateBuilder () =
         with ex ->
             handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ReaderProtectedIndexedStateFunc<_,_,_,_,_>, handler)
         : ReaderProtectedIndexedStateFunc<'Env, 'S1, 'S2, 'T, 'Error> =
         fun state ->
@@ -472,7 +472,7 @@ type IndexedStatefulChoiceBuilder () =
         with ex ->
             handler ex state
 
-    // M<'T> -> M<'T> -> M<'T>
+    // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : IndexedStatefulChoiceFunc<_,_,_,_>, handler)
         : IndexedStatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
         fun state ->

@@ -890,6 +890,30 @@ let unfoldBack (generator : 'State -> ('T * 'State) option) (state : 'State) : '
     let resultArray = results.ToArray ()
     System.Array.Reverse resultArray
     resultArray
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name="length"></param>
+/// <param name="generator"></param>
+/// <returns></returns>
+[<CompiledName("Initialize2")>]
+let init2 length (generator : int -> 'T1 * 'T2) : 'T1[] * 'T2[] =
+    // Preconditions
+    if length < 0 then
+        invalidArg "length" "The length of the array to initialize cannot be negative."
+
+    let array1 = Array.zeroCreate length
+    let array2 = Array.zeroCreate length
+
+    // Create each of the array elements using the generator function.
+    for i = 0 to length - 1 do
+        let x, y = generator i
+        array1.[i] <- x
+        array2.[i] <- y
+
+    // Return the initialized arrays.
+    array1, array2
     
 
 #if FX_NO_TPL_PARALLEL
@@ -899,6 +923,34 @@ module Parallel =
     open System
     open System.Threading
     open System.Threading.Tasks
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="length"></param>
+    /// <param name="generator"></param>
+    /// <returns></returns>
+    [<CompiledName("Initialize2")>]
+    let init2 length (generator : int -> 'T1 * 'T2) : 'T1[] * 'T2[] =
+        // Preconditions
+        if length < 0 then
+            invalidArg "length" "The length of the array to initialize cannot be negative."
+
+        let array1 = Array.zeroCreate length
+        let array2 = Array.zeroCreate length
+
+        // Create each of the array elements using the generator function.
+        // TODO : Instead of ignoring the result, keep it and check the IsCompleted property to
+        //        ensure the loop completed as expected; if it didn't, raise an exception instead
+        //        of returning a partially-initialized result.
+        Parallel.For (0, length, fun i ->
+            let x, y = generator i
+            array1.[i] <- x
+            array2.[i] <- y)
+        |> ignore
+
+        // Return the initialized arrays.
+        array1, array2
 
     /// <summary></summary>
     /// <param name="mapping"></param>

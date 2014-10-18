@@ -417,6 +417,10 @@ module Array =
 /// Tests for the ExtCore.Control.Collections.State.List module.
 module List =
     [<Test>]
+    let init () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
     let iter () : unit =
         // Test case for an empty list.
         do

@@ -1,6 +1,6 @@
 ﻿(*
 
-Copyright 2013 Jack Pappas
+Copyright 2013-2014 Jack Pappas
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,8 +40,14 @@ module Operators =
         |> assertEqual 5
 
     [<Test>]
-    let isNull () : unit =
-        Assert.Ignore "Test not yet implemented."
+    let ``isNull on null reference`` () : unit =
+        isNull null
+        |> assertTrue
+
+    [<Test>]
+    let ``isNull on non-null reference`` () : unit =
+        isNull "Hello World!"
+        |> assertFalse
 
     [<TestCase(false, false, ExpectedResult = true)>]
     [<TestCase(false, true, ExpectedResult = true)>]
@@ -73,10 +79,33 @@ module Operators =
 
     [<Test>]
     let tap () : unit =
-        Assert.Ignore "Test not yet implemented."
+        [| 1; 2; 3; 4; 5 |]
+        |> Array.map (fun x -> x * 2)
+        |> tap (fun arr ->
+            // Check that the input array has the expected values.
+            arr
+            |> Collection.assertEqual [| 2; 4; 6; 8; 10 |]
+
+            // Now, to test ordering of side effects, change one of the array values.
+            arr.[0] <- 123)
+        |> Collection.assertEqual [| 123; 4; 6; 8; 10 |]
 
     [<Test>]
-    let notlazy () : unit =
+    let ``notlazy returns a Lazy containing the input value or instance`` () : unit =
+        // Test with a value type.
+        do
+            let lz = notlazy 10
+            lz.Value |> assertEqual 10
+
+        // Test with a reference type.
+        do
+            let arr = [| 1; 2; 3; 4; 5 |]
+            let lz = notlazy arr
+            lz.Value
+            |> assertSame arr
+
+    [<Test>]
+    let ``notlazy always returns an instance with IsValueCreated=true`` () : unit =
         let value = notlazy 10
         assertTrue value.IsValueCreated
         
@@ -128,11 +157,23 @@ module Operators =
 
     [<Test>]
     let minWith () : unit =
-        Assert.Ignore "Test not yet implemented."
+        ("aaaa", "bbb")
+        ||> minWith String.length
+        |> assertEqual 3
+
+        ("abcd", "efgh")
+        ||> minWith Seq.max
+        |> assertEqual 'd'
 
     [<Test>]
     let maxWith () : unit =
-        Assert.Ignore "Test not yet implemented."
+        ("aaaa", "bbb")
+        ||> maxWith String.length
+        |> assertEqual 4
+
+        ("abcd", "efgh")
+        ||> maxWith Seq.max
+        |> assertEqual 'h'
 
 #if PROTO_COMPILER
     [<Test>]
@@ -140,25 +181,59 @@ module Operators =
         Assert.Ignore "Test not yet implemented."
 #endif
 
-    [<Test>]
+    [<Test; ExpectedException(typeof<System.NotFiniteNumberException>)>]
     let raiseNew () : unit =
+        raiseNew<System.NotFiniteNumberException, _> ()
+
+    /// Checks for a non-empty exeption message.
+    let private NonEmptyExceptionMessage (ex : exn) : unit =
+        Assert.IsNotNullOrEmpty ex.Message
+
+    [<Test; ExpectedException(typeof<System.NotImplementedException>,
+        Handler = "NonEmptyExceptionMessage")>]
+    let ``notImpl with empty message`` () : unit =
+        notImpl ""
+
+    [<Test; ExpectedException(typeof<System.NotImplementedException>,
+        ExpectedMessage = "This functionality not yet implemented. It's on the TODO list.")>]
+    let ``notImpl with nonempty message`` () : unit =
+        notImpl "This functionality not yet implemented. It's on the TODO list."
+
+    [<Test; ExpectedException(typeof<System.NotSupportedException>,
+        Handler = "NonEmptyExceptionMessage")>]
+    let ``notSupported with empty message`` () : unit =
+        notSupported ""
+
+    [<Test; ExpectedException(typeof<System.NotSupportedException>,
+        ExpectedMessage = "This functionality is not supported, because I didn't want to support it.")>]
+    let ``notSupported with nonempty message`` () : unit =
+        notSupported "This functionality is not supported, because I didn't want to support it."
+
+    [<Test>]
+    let ``argOutOfRange with empty paramname, empty message`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let notImpl () : unit =
+    let ``argOutOfRange with empty paramname, nonempty message`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let notSupported () : unit =
+    let ``argOutOfRange with nonempty paramname, empty message`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let argOutOfRange () : unit =
+    let ``argOutOfRange with nonempty paramname, nonempty message`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<Test>]
-    let keyNotFound () : unit =
-        Assert.Ignore "Test not yet implemented."
+    [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>,
+        Handler = "NonEmptyExceptionMessage")>]
+    let ``keyNotFound with empty message`` () : unit =
+        keyNotFound ""
+
+    [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>,
+        ExpectedMessage = "THAT KEY DOES NOT EXIST")>]
+    let ``keyNotFound with nonempty message`` () : unit =
+        keyNotFound "THAT KEY DOES NOT EXIST"
 
     [<Test>]
     let checkNonNull () : unit =
@@ -166,8 +241,40 @@ module Operators =
 
 #if PROTO_COMPILER
     [<Test>]
-    let checkFinite () : unit =
-        Assert.Ignore "Test not yet implemented."
+    let ``ckfinite with normal value`` () : unit =
+        1.234
+        |> ckfinite
+        |> assertEqual 1.234
+
+    [<Test; ExpectedException(typeof<System.NotFiniteNumberException>)>]
+    let ``ckfinite with infinity`` () : unit =
+        System.Double.PositiveInfinity
+        |> ckfinite
+        |> ignore
+
+    [<Test; ExpectedException(typeof<System.NotFiniteNumberException>)>]
+    let ``ckfinite with NaN`` () : unit =
+        System.Double.NaN
+        |> ckfinite
+        |> ignore
+
+    [<Test>]
+    let ``ckfinitef with normal value`` () : unit =
+        1.234f
+        |> ckfinitef
+        |> assertEqual 1.234f
+
+    [<Test; ExpectedException(typeof<System.NotFiniteNumberException>)>]
+    let ``ckfinitef with infinity`` () : unit =
+        System.Single.PositiveInfinity
+        |> ckfinitef
+        |> ignore
+
+    [<Test; ExpectedException(typeof<System.NotFiniteNumberException>)>]
+    let ``ckfinitef with NaN`` () : unit =
+        System.Single.NaN
+        |> ckfinitef
+        |> ignore
 #endif
 
     [<Test>]
@@ -198,7 +305,12 @@ module Enum =
 module Lazy =
     [<Test>]
     let force () : unit =
-        Assert.Ignore "Test not yet implemented."
+        let foo =
+            lazy
+                String.init 3 (fun x -> string <| char x + 'a')
+        foo
+        |> Lazy.force
+        |> assertEqual "abc"
 
     [<Test>]
     let value () : unit =
@@ -213,8 +325,26 @@ module Lazy =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let tryGetValue () : unit =
-        Assert.Ignore "Test not yet implemented."
+    let ``tryGetValue for unforced value`` () : unit =
+        let foo =
+            lazy
+                String.init 3 (fun x -> string <| char x + 'a')
+        foo
+        |> Lazy.tryGetValue
+        |> assertEqual None
+
+    [<Test>]
+    let ``tryGetValue for forced value`` () : unit =
+        let foo =
+            lazy
+                String.init 3 (fun x -> string <| char x + 'a')
+        
+        // Force evaluation of the value before calling Lazy.tryGetValue.
+        foo |> Lazy.force |> ignore
+
+        foo
+        |> Lazy.tryGetValue
+        |> assertEqual (Some "abc")
 
     [<Test>]
     let map () : unit =
@@ -303,12 +433,28 @@ module Option =
 /// Tests for the ExtCore.Choice module.
 module Choice =
     [<Test>]
-    let isResult () : unit =
-        Assert.Ignore "Test not yet implemented."
+    let ``isResult on Choice1Of2`` () : unit =
+        Choice1Of2 "Hello World!"
+        |> Choice.isResult
+        |> assertTrue
 
     [<Test>]
-    let isError () : unit =
-        Assert.Ignore "Test not yet implemented."
+    let ``isResult on Choice2Of2`` () : unit =
+        Choice2Of2 123456
+        |> Choice.isResult
+        |> assertFalse
+
+    [<Test>]
+    let ``isError on Choice1Of2`` () : unit =
+        Choice1Of2 "Hello World!"
+        |> Choice.isError
+        |> assertFalse
+
+    [<Test>]
+    let ``isError on Choice2Of2`` () : unit =
+        Choice2Of2 123456
+        |> Choice.isError
+        |> assertTrue
 
     [<Test>]
     let get () : unit =
@@ -375,18 +521,26 @@ module Choice =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let bindOrRaise () : unit =
+    let ``bindOrRaise on Choice1Of2`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<Test; ExpectedException(typeof<exn>)>]
-    let ``bindOrRaise raises exn for Choice2Of2`` () : unit =
+    [<Test; ExpectedException(typeof<exn>,
+        ExpectedMessage = "An error occurred within the computation.")>]
+    let ``bindOrRaise on Choice2Of2`` () : unit =
         Choice2Of2 (exn "An error occurred within the computation.")
         |> Choice.bindOrRaise
         |> ignore
 
     [<Test>]
-    let bindOrFail () : unit =
+    let ``bindOrFail on Choice1Of2`` () : unit =
         Assert.Ignore "Test not yet implemented."
+
+    [<Test; ExpectedException(typeof<exn>,
+        ExpectedMessage = "An error occurred within the computation.")>]
+    let ``bindOrFail on Choice2Of2`` () : unit =
+        Choice2Of2 "An error occurred within the computation."
+        |> Choice.bindOrFail
+        |> ignore
 
     [<Test>]
     let attempt () : unit =

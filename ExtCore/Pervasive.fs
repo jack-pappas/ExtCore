@@ -24,7 +24,9 @@ open System.Collections
 open System.Collections.Generic
 
 
-/// <summary>Represents an object whose underlying type is a value type that can also be assigned null like a reference type.</summary>
+/// <summary>
+/// Represents an object whose underlying type is a value type that can also be assigned null like a reference type.
+/// </summary>
 /// <typeparam name="T"></typeparam>
 type nullable<'T when 'T : struct and 'T : (new : unit -> 'T) and 'T :> System.ValueType> = System.Nullable<'T>
 
@@ -148,14 +150,14 @@ module Operators =
     /// <returns></returns>
     [<CompiledName("RefEquals")>]
     [<Obsolete("This function is redundant and will be removed in a future release. Use the (==) operator instead.")>]
-    let inline refEquals< ^T, ^U when ^T : not struct and ^U : not struct> (x : ^T) (y : ^U) =
+    let inline refEquals<'T, 'U when 'T : not struct and 'U : not struct> (x : 'T) (y : 'U) =
         System.Object.ReferenceEquals (x, y)
 
     /// <summary>Determines if a reference is a null reference.</summary>
     /// <param name="arg"></param>
     /// <returns></returns>
     [<CompiledName("IsNull")>]
-    let inline isNull< ^T when ^T : not struct> (arg : ^T) =
+    let inline isNull<'T when 'T : not struct> (arg : 'T) =
         // OPTIMIZE :   Implement with inline IL (ldnull, ldarg.0, ceq). We can't use LanguagePrimitives.PhysicalEquality because it
         //              requires the 'null' constraint which we don't want to require for this function.
         System.Object.ReferenceEquals (null, arg)
@@ -210,7 +212,8 @@ module Operators =
         value
 
     /// <summary>
-    /// Creates a 'lazy' value whose value is immediately available; that is, it does not need to execute a thunk to compute it's value.
+    /// Creates a 'lazy' value whose value is immediately available;
+    /// that is, it does not need to execute a thunk to compute it's value.
     /// </summary>
     [<CompiledName("NotLazy")>]
     let inline notlazy (value : 'T) =
@@ -238,7 +241,8 @@ module Operators =
 
     /// <summary>
     /// Applies the specified value to a function which can possibly return an error message.
-    /// If the function returns an error message, it is used to invoke <see cref="Debug.Fail"/>; otherwise, the value is returned unchanged.
+    /// If the function returns an error message, it is used to invoke <see cref="Debug.Fail"/>;
+    /// otherwise, the value is returned unchanged.
     /// This function is designed for implementing debugging assertions within a computation 'pipeline'.
     /// </summary>
     [<CompiledName("TapAssert")>]
@@ -295,21 +299,23 @@ module Operators =
         if mapped_x < mapped_y then mapped_y else mapped_x
 
     #if PROTO_COMPILER
-    (*
+(*
     /// Returns the RuntimeTypeHandle of the specified type.
+    [<RequiresExplicitTypeArguments>]
     [<CompiledName("TypeHandleOf")>]
-    let inline typehandleof<'T> : System.RuntimeTypeHandle =
-        (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
-    *)
+    let inline typehandleof<'T> = (# "ldtoken !0" type('T) : System.RuntimeTypeHandle #)
+*)
     #endif
 
     (* Exception-related functions *)
     
     /// <summary>Raises a new exception of the specified type.</summary>
-    /// <typeparam name="T">The type of exception to raise.</typeparam>
+    /// <typeparam name="E">The type of exception to raise.</typeparam>
+    /// <typeparam name="T"></typeparam>
+    [<RequiresExplicitTypeArguments>]
     [<CompiledName("RaiseNew")>]
-    let inline raiseNew<'T when 'T :> exn and 'T : (new : unit -> 'T)> () : 'T =
-        raise <| new 'T()
+    let inline raiseNew<'E, 'T when 'E :> exn and 'E : (new : unit -> 'E)> () : 'T =
+        raise <| new 'E()
 
     /// <summary>Raises a <see cref="System.NotImplementedException"/>.</summary>
     /// <param name="message">The exception message.</param>
@@ -356,27 +362,34 @@ module Operators =
     /// <summary>
     /// Determines if a reference is a null reference, and if it is, throws an <see cref="System.ArgumentNullException"/>.
     /// </summary>
+    /// <typeparam name="T"></typeparam>
     /// <param name="paramName">The name of the parameter that causes this exception.</param>
     /// <param name="arg">The reference to check.</param>
     [<CompiledName("CheckNonNull")>]
-    let inline checkNonNull< ^T when ^T : not struct> paramName (arg : ^T) =
+    let inline checkNonNull<'T when 'T : not struct> paramName (arg : 'T) =
         if isNull arg then
-            nullArg paramName
+            if System.String.IsNullOrWhiteSpace paramName then
+                raise <| System.ArgumentNullException ()
+            else
+                raise <| System.ArgumentNullException paramName
 
-(* The 'checkFinite' function is disabled for now until we add 'open' declarations
-   to every file in this project to allow us to use the --compiling-fslib flag
-   with the proto-compiler. *)
-(*
     #if PROTO_COMPILER
-    /// Checks if a floating-point value represents a finite number.
-    /// If not, a 'System.NotFiniteNumberException' is raised.
-    [<CompiledName("CheckFinite")>]
-    let inline checkFinite (value : ^T) : unit =
-        ()
-        when ^T : float32 = (# "ckfinite" value : float32 #) |> ignore
-        when ^T : float = (# "ckfinite" value : float #) |> ignore
+    /// <summary>Checks whether a double-precision floating-point value is a
+    /// finite real number and raises an exception if it is not.</summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>The unmodified input value, if it is a finite real number.</summary>
+    /// <exception cref="T:System.ArithmeticException"><paramref name="value"/> is a <c>NaN</c> or an infinity</exception>
+    [<CompiledName("CheckFiniteDouble")>]
+    let inline ckfinite (x : float) = (# "ckfinite" x : float #)
+
+    /// <summary>Checks whether a single-precision floating-point value is a
+    /// finite real number and raises an exception if it is not.</summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>The unmodified input value, if it is a finite real number.</summary>
+    /// <exception cref="T:System.ArithmeticException"><paramref name="value"/> is a <c>NaN</c> or an infinity</exception>
+    [<CompiledName("CheckFiniteSingle")>]
+    let inline ckfinitef (x : float32) = (# "ckfinite" x : float32 #)
     #endif
-*)
 
     (* Active Patterns *)
 
@@ -536,7 +549,8 @@ module Lazy =
     /// <param name="lazyValue3"></param>
     /// <returns></returns>
     [<CompiledName("Map3")>]
-    let map3 (mapping : 'T1 -> 'T2 -> 'T3 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) (lazyValue3 : Lazy<'T3>) : Lazy<'U> =
+    let map3 (mapping : 'T1 -> 'T2 -> 'T3 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) (lazyValue3 : Lazy<'T3>)
+        : Lazy<'U> =
         // Preconditions
         checkNonNull "lazyValue1" lazyValue1
         checkNonNull "lazyValue2" lazyValue2
@@ -600,8 +614,9 @@ module Lazy =
     /// <param name="creator"></param>
     /// <returns></returns>
     /// <remarks>
-    /// When consuming code forces evaluation of this value, it will already be available if the generator function has finished executing
-    /// in the background; otherwise, the calling thread is blocked until the generator finishes executing and the value is available.
+    /// When consuming code forces evaluation of this value, it will already be available if the
+    /// generator function has finished executing in the background; otherwise, the calling thread
+    /// is blocked until the generator finishes executing and the value is available.
     /// </remarks>
     [<CompiledName("Future")>]
     let future (creator : unit -> 'T) : Lazy<'T> =
@@ -622,7 +637,8 @@ module Lazy =
             lazy
                 failwith "The callback to create the lazily-evaluated value could not be enqueued in the .NET ThreadPool."
 
-    /// Callback delegate which forces evaluation of a Lazy<'T>, then sets a ManualResetEvent to signal the initialization has completed.
+    /// Callback delegate which forces evaluation of a Lazy<'T>,
+    /// then sets a ManualResetEvent to signal the initialization has completed.
     /// Meant to be used with ThreadPool.QueueUserWorkItem.
     let private tryForceCallback<'T> =
         System.Threading.WaitCallback (fun arg ->
@@ -828,9 +844,9 @@ module Option =
     /// <param name="value"></param>
     /// <returns></returns>
     /// <remarks>
-    /// This function is similar to the built-in <see cref="defaultArg"/> operator and <see cref="Option.fill"/>; however, those functions
-    /// require the default value to be created before they are called, while this function allows the default value to be created only
-    /// if it is needed.
+    /// This function is similar to the built-in <see cref="defaultArg"/> operator and <see cref="Option.fill"/>;
+    /// however, those functions require the default value to be created before they are called, while this function
+    /// allows the default value to be created only if it is needed.
     /// </remarks>
     [<CompiledName("FillWith")>]
     let inline fillWith generator (value : 'T option) =
@@ -849,8 +865,9 @@ module Option =
         | None -> generator ()
 
     /// <summary>
-    /// Invokes the specified generator function to create a value. If the function returns a value <c>res</c>, this function returns
-    /// <c>Some(res)</c>. If the function raises an exception, it is caught and ignored, and <c>None</c> is returned.
+    /// Invokes the specified generator function to create a value. If the function returns a value <c>res</c>,
+    /// this function returns <c>Some(res)</c>. If the function raises an exception, it is caught and ignored,
+    /// and <c>None</c> is returned.
     /// </summary>
     /// <param name="generator"></param>
     /// <returns></returns>
@@ -990,7 +1007,8 @@ module Choice =
     /// <param name="errorValue"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    // TODO :   Rename this to 'ofOptionDefault' or 'ofOptionWithDefault'. The "With" suffix should be reserved for higher-order functions. 
+    // TODO :   Rename this to 'ofOptionDefault' or 'ofOptionWithDefault'.
+    //          The "With" suffix should be reserved for higher-order functions. 
     [<CompiledName("OfOptionWith")>]
     let ofOptionWith (errorValue : 'Error) (value : 'T option) : Choice<'T, 'Error> =
         match value with
@@ -1056,10 +1074,10 @@ module Choice =
             Choice2Of2 error
 
     /// <summary>
-    /// Applies the specified binding function to a choice value representing a pair of result values (Choice1Of2). If the first component
-    /// of the pair represents an error value, the error is passed through without modification; otherwise, if the second component of the
-    /// pair represents an error value, the error is passed through without modification; otherwise, both components represent result
-    /// values, which are applied to the specified binding function.
+    /// Applies the specified binding function to a choice value representing a pair of result values (Choice1Of2).
+    /// If the first component of the pair represents an error value, the error is passed through without modification;
+    /// otherwise, if the second component of the pair represents an error value, the error is passed through without
+    /// modification; otherwise, both components represent result values, which are applied to the specified binding function.
     /// </summary>
     /// <param name="binding"></param>
     /// <param name="value1"></param>

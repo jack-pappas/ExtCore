@@ -277,6 +277,30 @@ module Array =
 /// The standard F# List module, lifted into the State monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
+    //
+    [<CompiledName("Initialize")>]
+    let init (length : int) (initializer : int -> 'State -> 'T * 'State) (state : 'State) : 'T list * 'State =
+        // Preconditions
+        if length < 0 then
+            invalidArg "length" "The number of elements in the initialized list must be non-negative."
+
+        // OPTIMIZATION : Return immediately if the length is zero.
+        if length = 0 then [], state
+        else
+            let initializer = FSharpFunc<_,_,_>.Adapt initializer
+            let mutable list = []
+            let mutable state = state
+
+            for i = 0 to length - 1 do
+                let el, state' = initializer.Invoke (i, state)
+
+                // Cons the initialized element to the list and set the state variable to the new state.
+                list <- el :: list
+                state <- state'
+
+            // Reverse the list before returning it so the elements are in the expected order.
+            List.rev list, state
+
     /// A specialization of List.iter which threads an accumulator through the computation;
     /// this allows the use of actions requiring a (possibly mutable) state variable.
     [<CompiledName("Iterate")>]

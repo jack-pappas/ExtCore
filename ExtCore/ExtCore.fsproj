@@ -78,6 +78,7 @@
     <Compile Include="Control.Observable.fs" />
     <Compile Include="Control.Indexed.fs" />
     <Compile Include="Control.Cps.fs" />
+    <Compile Include="Control.Tasks.fs" />
     <Compile Include="Collections.fs" />
     <Compile Include="Collections.Seq.fs" />
     <Compile Include="Collections.ListZipper.fs" />
