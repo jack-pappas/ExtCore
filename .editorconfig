@@ -1,0 +1,26 @@
+; Top-most EditorConfig file
+root = true
+
+; Unix-style newlines
+[*]
+end_of_line = LF
+
+; F# source files
+[*.fs]
+indent_style = space
+indent_size = 4
+
+; F# interface specifications
+[*.fsi]
+indent_style = space
+indent_size = 4
+
+; F# lexer specifications
+[*.fsl]
+indent_style = space
+indent_size = 4
+
+; F# parser specifications
+[*.fsy]
+indent_style = space
+indent_size = 4
