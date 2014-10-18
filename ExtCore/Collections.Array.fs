@@ -23,6 +23,7 @@ module ExtCore.Collections.Array
 
 open LanguagePrimitives
 open OptimizedClosures
+open System.Collections.Generic
 open ExtCore
 
 
@@ -890,6 +891,9 @@ let unfoldBack (generator : 'State -> ('T * 'State) option) (state : 'State) : '
     System.Array.Reverse resultArray
     resultArray
     
+
+#if FX_NO_TPL_PARALLEL
+#else
 /// Provides additional parallel operations on arrays.
 module Parallel =
     open System
@@ -937,8 +941,8 @@ module Parallel =
 
         Parallel.For (0, array.Length,
             System.Func<_> (fun _ -> 0),
-            System.Func<_,_,_,_> (fun i loopState localMatchCount ->
-                if predicate array.[i] then
+            System.Func<_,_,_,_> (fun idx loopState localMatchCount ->
+                if predicate array.[idx] then
                     localMatchCount + 1
                 else localMatchCount),
             System.Action<_> (fun localMatchCount ->
@@ -949,3 +953,159 @@ module Parallel =
         // Return the number of matching elements.
         !matchCount
 
+    /// Sorts key-value pairs with integer keys according to the value of the key.
+    [<Sealed>]
+    type private ElementIndexComparer<'T> () =
+        /// The single instance of this type.
+        static let instance = ElementIndexComparer<'T> ()
+        /// The single instance of the ElementIndexComparer`1 type.
+        static member Instance : IComparer<KeyValuePair<int, 'T>> =
+            upcast instance
+
+        interface IComparer<KeyValuePair<int, 'T>> with
+            member __.Compare (x, y) =
+                // Compare key values (element indices).
+                x.Key.CompareTo y.Key
+
+    //
+    [<Sealed>]
+    type private LastElementComparer<'T> () =
+        /// The single instance of this type.
+        static let instance = LastElementComparer<'T> ()
+        /// The single instance of the LastElementComparer`1 type.
+        static member Instance : IComparer<ResizeArray<KeyValuePair<int, 'T>>> =
+            upcast instance
+
+        interface IComparer<ResizeArray<KeyValuePair<int, 'T>>> with
+            member __.Compare (x, y) =
+                // Assumes the lists are non-null.
+
+                let count_x = x.Count
+                let count_y = y.Count
+
+                // Is 'x' empty?
+                if count_x = 0 then
+                    // If 'y' is also empty, then the lists are considered equal.
+                    if count_y = 0 then 0
+                    else
+                        // x < y
+                        -1
+                // Is 'y' empty?
+                elif count_y = 0 then
+                    // y < x
+                    1
+                else
+                    // Compare the key values of the last elements of the two lists to
+                    // determine how the lists compare to each other.
+                    ElementIndexComparer.Instance.Compare (x.[count_x - 1], y.[count_y - 1])
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [<CompiledName("ChooseIndexed")>]
+    let choosei (chooser : int -> 'T -> 'U option) (array: 'T[]) : 'U[] =
+        checkNonNull "array" array
+
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        let inputLength = array.Length
+        let lastInputIndex = inputLength - 1
+
+        let isChosen : bool [] = Array.zeroCreate inputLength
+        let results : 'U [] = Array.zeroCreate inputLength
+        
+        Parallel.For(0, inputLength, (fun i ->
+            match chooser.Invoke (i, array.[i]) with
+            | None -> ()
+            | Some v ->
+                isChosen.[i] <- true
+                results.[i] <- v
+        )) |> ignore
+
+        let mutable outputLength = 0
+        for i = 0 to lastInputIndex do
+            if isChosen.[i] then
+                outputLength <- outputLength + 1
+                        
+        let output = Array.zeroCreate outputLength
+        let mutable curr = 0
+        for i = 0 to lastInputIndex do
+            if isChosen.[i] then
+                output.[curr] <- results.[i]
+                curr <- curr + 1
+        output
+        (*
+        /// Holds ResizeArrays containing the values chosen by each worker task in the loop.
+        /// The index of each chosen value is included as a key so that the values can
+        /// be re-assembled in the same order as their original source elements.
+        let workerResults = ResizeArray<_> (System.Environment.ProcessorCount)
+
+        // Choose values from the array in parallel.
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> ResizeArray ()),
+            System.Func<_,_,_,_> (fun idx _ (localResults : ResizeArray<_>) ->
+                match chooser.Invoke (idx, array.[idx]) with
+                | None -> ()
+                | Some result ->
+                    // Add this result, along with it's original element index, to the list of local results for this worker.
+                    localResults.Add (KeyValuePair<_,_> (idx, result))
+                    
+                // Return the local results so they're passed to the next loop iteration.
+                localResults),
+            System.Action<_> (fun (localResults : ResizeArray<_>) ->
+                // Sort the local results from this worker in ascending order of element index.
+                // This is necessary because workers may steal chunks of elements from each other, meaning workers
+                // may process elements out of order.
+                localResults.Sort (ElementIndexComparer<_>.Instance)
+
+                // The worker results list must be locked when adding the results
+                // from this worker, to avoid concurrency issues.
+                lock workerResults <| fun () ->
+                    workerResults.Add localResults)
+            )
+#if DEBUG
+            |> tap (fun loopResult ->
+                System.Diagnostics.Debug.Assert (loopResult.IsCompleted,
+                    "The parallel-for loop did not complete successfully."))
+#endif
+            |> ignore
+
+        /// The total number of chosen values (i.e., the length of the results array).
+        let chosenValueCount =
+            workerResults
+            |> ResizeArray.sumBy (fun localResults -> localResults.Count)
+
+        /// The array of results (chosen values).
+        let results = Array.zeroCreate chosenValueCount
+
+        /// The number of worker result lists.
+        let workerResultCount = workerResults.Count
+
+        // Copy elements from the individual worker result lists into results.
+        // Each local results list has the chosen elements sorted by their original index in ascending order.
+        // Removing an element from the end of a list is a fast operation (only decrements an internal counter);
+        // we take advantage of that by copying elements into the results list backwards.
+        for resultIndex = chosenValueCount - 1 downto 0 do
+            // If the greatest index in the "next" worker result list is greater than the greatest index in
+            // the current best worker result list, we've finished processing a consecutive chunk of elements
+            // from the current best result list. Sort the worker lists according to the last elements of the lists.
+            if LastElementComparer<_>.Instance.Compare (workerResults.[workerResultCount - 1], workerResults.[workerResultCount - 2]) > 0 then
+                workerResults.Sort LastElementComparer<_>.Instance
+
+            /// The current worker result list.
+            let currentResultList = workerResults.[workerResultCount - 1]
+
+            /// The last index in the current worker result list.
+            let currentResultListLastIndex = currentResultList.Count - 1
+
+            // Copy the chosen value with the greatest element index into the current index of the results array.
+            results.[resultIndex] <- currentResultList.[currentResultListLastIndex].Value
+
+            // Remove the copied chosen value from the end of the current worker list.
+            currentResultList.RemoveAt currentResultListLastIndex
+
+        // Return the results array.
+        results
+        *)
+
+#endif  // #if !FX_NO_TPL_PARALLEL

@@ -561,3 +561,37 @@ module Parallel =
     let countWith () : unit =
         Assert.Ignore "Test not yet implemented."
 
+    //
+    [<Test>]
+    let choosei () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    /// FsCheck-based tests for Array.Parallel functions.
+    module FsCheck =
+        open FsCheck
+
+        (* Tests *)
+
+        [<Test>]
+        let ``choose and choosei equivalent``() =
+            assertProp "choose and choosei equivalent" <| fun (n : int) (m : int) (arr : int[]) ->
+                // Given some input array of integers, choose some of the values according to n and m.
+                // Do this with both Array.Parallel.choose and Array.Parallel.choosei and check that they produce the same results.
+                
+                // Chooser function.
+                let chooser =
+                    fun i x ->
+                        if n = 0 then
+                            if x > m then Some x else None
+                        else
+                            if x / n < m then Some x else None
+
+
+                let chooseResults =
+                    arr |> Array.Parallel.choose (chooser -1)
+
+                let chooseiResults =
+                    arr |> Array.Parallel.choosei chooser
+
+                chooseResults = chooseiResults
+
