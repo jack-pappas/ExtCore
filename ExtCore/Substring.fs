@@ -22,6 +22,7 @@ namespace ExtCore
 open System
 //open System.Diagnostics.Contracts
 open System.Globalization
+open System.Runtime.InteropServices
 
 
 /// Represents a segment of a string.
@@ -373,6 +374,19 @@ type substring =
         else
             this.String.Substring (this.Offset, this.Length)
 
+    //
+    member this.TryRead ([<Out>] c : byref<char>, [<Out>] remaining : byref<substring>) : bool =
+        if this.Length = 0 then
+            // Assign default values to the output parameters.
+            c <- Unchecked.defaultof<_>
+            remaining <- Unchecked.defaultof<_>
+            false
+        else
+            // Extract the first (left-most) character from the substring.
+            c <- this.[0]
+            remaining <- this.[1..]
+            true
+
     /// <summary>
     /// Compares two specified <see cref="substring"/> objects by evaluating the numeric values of the corresponding
     /// <see cref="Char"/> objects in each substring.
@@ -541,10 +555,12 @@ module Substring =
     /// <returns></returns>
     [<CompiledName("Read")>]
     let read (substr : substring) : (char * substring) option =
-        if substr.Length = 0 then None
-        else
-            // "Extract" the first (left-most) character from the substring.
-            Some (substr.[0], substr.[1..])
+        // Wrap the Substring.TryRead method in a more functional style.
+        let mutable c = Unchecked.defaultof<_>
+        let mutable remaining = Unchecked.defaultof<_>
+        if substr.TryRead (&c, &remaining) then
+            Some (c, remaining)
+        else None
 
     //
     let inline private subUnsafe (substr : substring) offset count : substring =
@@ -584,7 +600,15 @@ module Substring =
         if Seq.isEmpty source then
             System.String.Empty
         else
-            let sb = System.Text.StringBuilder ()
+            let sb =
+                // OPT: If the input source is an array, we can easily determine the exact capacity needed for the StringBuilder,
+                //      thereby avoiding (potentially) multiple resizes of the underlying buffer.
+                match source with
+                | :? (substring[]) as sourceArr ->
+                    let resultLength = Array.sumBy length sourceArr
+                    System.Text.StringBuilder (resultLength)
+                | _ ->
+                    System.Text.StringBuilder ()
             for substr in source do
                 sb.Append substr |> ignore
             sb.ToString ()
