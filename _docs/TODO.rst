@@ -76,6 +76,14 @@ Tests
 General
 =======
 
+Collections
+-----------
+- Implement structs like ``LimitedEqualityWrapper<'T>`` and ``LimitedComparisonWrapper<'T>``
+  which use the limited equality/comparison functions in ``LanguagePrimitives`` on the "wrapped"
+  object. This would make it easier to use the limited equality (for example) to speed up hashing
+  for objects stored in a ``HashSet<'T>``.
+
+
 Lazy
 ----
 - ``toAsync : lazyValue:Lazy<'T> -> Async<'T>``
