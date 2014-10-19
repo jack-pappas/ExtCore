@@ -55,9 +55,7 @@ open System.Security.Permissions
 
 (*  Makes internal modules, types, and functions visible
     to the test project so they can be unit-tested. *)
-#if DEBUG
 [<assembly: InternalsVisibleTo("ExtCore.Tests")>]
-#endif
 
 (* Dependency hints for Ngen *)
 [<assembly: DependencyAttribute("FSharp.Core", LoadHint.Always)>]
