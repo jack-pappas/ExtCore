@@ -1131,6 +1131,66 @@ module Parallel =
         !matchCount
 
     /// <summary>
+    /// Applies a mapping function to each element of the array, then repeatedly applies
+    /// a reduction function to each pair of results until one (1) result value remains.
+    /// </summary>
+    /// <param name="mapReduction"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    [<CompiledName("MapReduce")>]
+    let mapReduce (mapReduction : IMapReduction<'Key, 'T>) (array : 'Key[]) : 'T =
+        // Preconditions
+        checkNonNull "mapReduction" mapReduction
+        checkNonNull "array" array
+        if Array.isEmpty array then
+            invalidArg "array" "The array is empty."
+
+        /// Holds the reduction state, if any.
+        /// This is used when parallel workers finish their local results and need to combine
+        /// with the other worker results.
+        let state = ref None
+
+        /// Synchronization object for the reduction state.
+        let stateSyncRoot = obj ()
+
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> None),
+            System.Func<_,_,_,_> (fun idx _ (localResult : _ option) ->
+                /// The result of applying the mapping function to the current array element.
+                let mappedElement = mapReduction.Map array.[idx]
+
+                // If the local result hasn't been initialized yet, the result is just the
+                // current mapped array element.
+                match localResult with
+                | None ->
+                    Some mappedElement
+                | Some localResult ->
+                    // Combine (reduce) the existing local result with the mapped array element.
+                    Some (mapReduction.Reduce localResult mappedElement)),
+            System.Action<_> (fun (localResult : _ option) ->
+                match localResult with
+                | None ->
+                    // There is no local result, so there's nothing to be done.
+                    ()
+                | Some result ->
+                    // We need to modify the global state, so lock for synchronization.
+                    lock stateSyncRoot <| fun () ->
+                        state :=
+                            match !state with
+                            | None ->
+                                // The state has not yet been set; set it to this local result.
+                                localResult
+                            | Some existingState ->
+                                // There is already an existing state, so we need to combine (reduce) the
+                                // two states to get the new state value.
+                                Some (mapReduction.Reduce existingState result))
+            )
+        |> ignore
+
+        // Since we know the input array isn't empty, a state value _must_ have been set.
+        Option.get !state
+
+    /// <summary>
     /// </summary>
     // TODO : This could be implemented more efficiently by creating a bitvector where each bit corresponds
     //        to an array element, then having the workers set the bits of the bitvector where the predicate
