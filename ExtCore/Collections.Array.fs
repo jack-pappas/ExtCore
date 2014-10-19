@@ -1130,6 +1130,68 @@ module Parallel =
         // Return the number of matching elements.
         !matchCount
 
+    /// <summary>Applies a function to each element of the array, threading an accumulator argument
+    /// through the computation. If the input function is <c>f</c> and the elements are <c>i0...iN</c> 
+    /// then computes <c>f (... (f i0 i1)...) iN</c>.
+    /// Raises ArgumentException if the array has size zero.</summary>
+    /// <param name="reduction">The function to reduce a pair of elements to a single element.</param>
+    /// <param name="array">The input array.</param>
+    /// <exception cref="System.ArgumentException">Thrown when the input array is empty.</exception>
+    /// <returns>The final result of the redcutions.</returns>
+    [<CompiledName("Reduce")>]
+    let reduce (reduction : 'T -> 'T -> 'T) (array : 'T[]) : 'T =
+        // Preconditions
+        checkNonNull "array" array
+        if Array.isEmpty array then
+            invalidArg "array" "The array is empty."
+
+        /// Holds the reduction state, if any.
+        /// This is used when parallel workers finish their local results and need to combine
+        /// with the other worker results.
+        let state = ref None
+
+        /// Synchronization object for the reduction state.
+        let stateSyncRoot = obj ()
+
+        let reduction = FSharpFunc<_,_,_>.Adapt reduction
+
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> None),
+            System.Func<_,_,_,_> (fun idx _ (localResult : _ option) ->
+                /// The current array element.
+                let el = array.[idx]
+
+                // If the local result hasn't been initialized yet, the result is just the
+                // current array element.
+                match localResult with
+                | None ->
+                    Some el
+                | Some localResult ->
+                    // Combine (reduce) the existing local result with the current array element.
+                    Some <| reduction.Invoke (localResult, el)),
+            System.Action<_> (fun (localResult : _ option) ->
+                match localResult with
+                | None ->
+                    // There is no local result, so there's nothing to be done.
+                    ()
+                | Some result ->
+                    // We need to modify the global state, so lock for synchronization.
+                    lock stateSyncRoot <| fun () ->
+                        state :=
+                            match !state with
+                            | None ->
+                                // The state has not yet been set; set it to this local result.
+                                localResult
+                            | Some existingState ->
+                                // There is already an existing state, so we need to combine (reduce) the
+                                // two states to get the new state value.
+                                Some <| reduction.Invoke (existingState, result))
+            )
+        |> ignore
+
+        // Since we know the input array isn't empty, a state value _must_ have been set.
+        Option.get !state
+
     /// <summary>
     /// Applies a mapping function to each element of the array, then repeatedly applies
     /// a reduction function to each pair of results until one (1) result value remains.
@@ -1190,8 +1252,11 @@ module Parallel =
         // Since we know the input array isn't empty, a state value _must_ have been set.
         Option.get !state
 
-    /// <summary>
-    /// </summary>
+    /// <summary>Returns a new collection containing only the elements of the collection
+    /// for which the given predicate returns "true".</summary>
+    /// <param name="predicate">The function to test the input elements.</param>
+    /// <param name="array">The input array.</param>
+    /// <returns>An array containing the elements for which the given predicate returns true.</returns>
     // TODO : This could be implemented more efficiently by creating a bitvector where each bit corresponds
     //        to an array element, then having the workers set the bits of the bitvector where the predicate
     //        returns true. Then, we can compute the population count, create the output array, and copy the
