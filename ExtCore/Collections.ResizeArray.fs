@@ -604,8 +604,13 @@ let iteri2 action (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<
     for i = 0 to len - 1 do
         action.Invoke (i, resizeArray1.[i], resizeArray2.[i])
 
+/// <summary>
 /// Build a new array whose elements are the results of applying the given function
 /// to each of the elements of the array.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("Map")>]
 let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArray<'U> =
     // Preconditions
@@ -613,9 +618,14 @@ let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArra
 
     resizeArray.ConvertAll (System.Converter mapping)
 
+/// <summary>
 /// Build a new array whose elements are the results of applying the given function
 /// to each of the elements of the array. The integer index passed to the
 /// function indicates the index of element being transformed.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("MapIndexed")>]
 let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArray<'U> =
     // Preconditions
@@ -629,12 +639,17 @@ let mapi (mapping : int -> 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArr
         result.Add <| mapping.Invoke (i, resizeArray.[i])
     result
 
+/// <summary>
 /// Build a new collection whose elements are the results of applying the given function
 /// to the corresponding elements of the two collections pairwise. The two input
 /// arrays must have the same lengths.
+/// </summary>
+/// <param name="mapping"></param>
+/// <param name="resizeArray1"></param>
+/// <param name="resizeArray2"></param>
+/// <returns></returns>
 [<CompiledName("Map2")>]
-let map2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
-    : ResizeArray<'U> =
+let map2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : ResizeArray<'U> =
     // Preconditions
     checkNonNull "resizeArray1" resizeArray1
     checkNonNull "resizeArray2" resizeArray2
@@ -656,9 +671,13 @@ let map2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'
 /// to the corresponding elements of the two collections pairwise. The two input
 /// arrays must have the same lengths, otherwise an <c>ArgumentException</c> is raised.
 /// </summary>
+/// <summary></summary>
+/// <param name="mapping"></param>
+/// <param name="resizeArray1"></param>
+/// <param name="resizeArray2"></param>
+/// <returns></returns>
 [<CompiledName("MapIndexed2")>]
-let mapi2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>)
-    : ResizeArray<'U> =
+let mapi2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : ResizeArray<'U> =
     // Preconditions
     checkNonNull "resizeArray1" resizeArray1
     checkNonNull "resizeArray2" resizeArray2
@@ -680,6 +699,10 @@ let mapi2 mapping (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<
 /// through the computation. If the input function is <c>f</c> and the elements are <c>i0...iN</c> 
 /// then computes <c>f (... (f s i0)...) iN</c>.
 /// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("Fold")>]
 let fold (folder : 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) : 'State =
     // Preconditions
@@ -693,7 +716,13 @@ let fold (folder : 'State -> 'T -> 'State) state (resizeArray : ResizeArray<'T>)
         state <- folder.Invoke (state, resizeArray.[i])
     state
 
-//
+/// <summary></summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="resizeArray"></param>
+/// <param name="startIndex"></param>
+/// <param name="endIndex"></param>
+/// <returns></returns>
 [<CompiledName("FoldSub")>]
 let foldSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex endIndex : 'State =
     // Preconditions
@@ -717,9 +746,15 @@ let foldSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex e
         state <- folder.Invoke (state, resizeArray.[i])
     state
 
+/// <summary>
 /// Applies a function to each element of the collection, threading an accumulator argument
 /// through the computation. The integer index passed to the function indicates the
 /// index of the element within the collection.
+/// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("FoldIndexed")>]
 let foldi (folder : 'State -> int -> 'T -> 'State) state (resizeArray : ResizeArray<'T>) : 'State =
     // Preconditions
@@ -738,9 +773,13 @@ let foldi (folder : 'State -> int -> 'T -> 'State) state (resizeArray : ResizeAr
 /// threading an accumulator argument through the computation.  The two input arrays must
 /// have the same lengths, otherwise an <c>ArgumentException</c> is raised.
 /// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="resizeArray1"></param>
+/// <param name="resizeArray2"></param>
+/// <returns></returns>
 [<CompiledName("Fold2")>]
-let fold2 folder (state : 'State)
-    (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : 'State =
+let fold2 folder (state : 'State) (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) : 'State =
     // Preconditions
     checkNonNull "resizeArray1" resizeArray1
     checkNonNull "resizeArray2" resizeArray2
@@ -760,6 +799,10 @@ let fold2 folder (state : 'State)
 /// through the computation. If the input function is <c>f</c> and the elements are
 /// <c>i0...iN</c> then computes <c>f i0 (...(f iN s))</c>.
 /// </summary>
+/// <param name="folder"></param>
+/// <param name="resizeArray"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("FoldBack")>]
 let foldBack (folder : 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state : 'State =
     // Preconditions
@@ -772,7 +815,13 @@ let foldBack (folder : 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) s
         state <- folder.Invoke (resizeArray.[i], state)
     state
 
-//
+/// <summary></summary>
+/// <param name="folder"></param>
+/// <param name="resizeArray"></param>
+/// <param name="startIndex"></param>
+/// <param name="endIndex"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("FoldBackSub")>]
 let foldBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (state : 'State) : 'State =
     // Preconditions
@@ -796,7 +845,11 @@ let foldBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (stat
         state <- folder.Invoke (resizeArray.[i], state)
     state
 
-//
+/// <summary></summary>
+/// <param name="folder"></param>
+/// <param name="resizeArray"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("FoldBackIndexed")>]
 let foldiBack (folder : int -> 'T -> 'State -> 'State) (resizeArray : ResizeArray<'T>) state : 'State =
     // Preconditions
@@ -814,9 +867,13 @@ let foldiBack (folder : int -> 'T -> 'State -> 'State) (resizeArray : ResizeArra
 /// threading an accumulator argument through the computation.  The two input
 /// arrays must have the same lengths, otherwise an <c>ArgumentException</c> is raised.
 /// </summary>
+/// <param name="folder"></param>
+/// <param name="resizeArray1"></param>
+/// <param name="resizeArray2"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("FoldBack2")>]
-let foldBack2 folder (resizeArray1 : ResizeArray<'T1>)
-    (resizeArray2 : ResizeArray<'T2>) (state : 'State) : 'State =
+let foldBack2 folder (resizeArray1 : ResizeArray<'T1>) (resizeArray2 : ResizeArray<'T2>) (state : 'State) : 'State =
     // Preconditions
     checkNonNull "resizeArray1" resizeArray1
     checkNonNull "resizeArray2" resizeArray2
@@ -837,6 +894,9 @@ let foldBack2 folder (resizeArray1 : ResizeArray<'T1>)
 /// then computes <c>f (... (f i0 i1)...) iN</c>.
 /// Raises <c>ArgumentException</c> if the array has size zero.
 /// <summary>
+/// <param name="reduction"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("Reduce")>]
 let reduce (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) =
     // Preconditions
@@ -858,6 +918,9 @@ let reduce (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) =
 /// computes <c>f i0 (...(f iN-1 iN))</c>.
 /// Raises <c>ArgumentException</c> if the array has size zero.
 /// </summary>
+/// <param name="reduction"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("ReduceBack")>]
 let reduceBack (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) : 'T =
     // Preconditions
@@ -874,7 +937,13 @@ let reduceBack (reduction : 'T -> 'T -> 'T) (resizeArray : ResizeArray<'T>) : 'T
         state <- reduction.Invoke (resizeArray.[i], state)
     state
 
-//
+/// <summary></summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="resizeArray"></param>
+/// <param name="startIndex"></param>
+/// <param name="endIndex"></param>
+/// <returns></returns>
 [<CompiledName("ScanSub")>]
 let scanSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex endIndex : ResizeArray<'State> =
     // Preconditions
@@ -906,6 +975,10 @@ let scanSub folder (state : 'State) (resizeArray : ResizeArray<'T>) startIndex e
 /// <summary>
 /// Like <c>fold</c>, but return the intermediary and final results.
 /// </summary>
+/// <param name="folder"></param>
+/// <param name="state"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("Scan")>]
 let scan folder (state : 'State) (resizeArray : ResizeArray<'T>) : ResizeArray<'State> =
     // Preconditions
@@ -913,7 +986,13 @@ let scan folder (state : 'State) (resizeArray : ResizeArray<'T>) : ResizeArray<'
 
     scanSub folder state resizeArray 0 (length resizeArray - 1)
 
-//
+/// <summary></summary>
+/// <param name="folder"></param>
+/// <param name="resizeArray"></param>
+/// <param name="startIndex"></param>
+/// <param name="endIndex"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("ScanBackSub")>]
 let scanBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (state : 'State) : ResizeArray<'State> =
     // Preconditions
@@ -945,6 +1024,10 @@ let scanBackSub folder (resizeArray : ResizeArray<'T>) startIndex endIndex (stat
 /// <summary>
 /// Like <c>foldBack</c>, but return both the intermediary and final results.
 /// </summary>
+/// <param name="folder"></param>
+/// <param name="resizeArray"></param>
+/// <param name="state"></param>
+/// <returns></returns>
 [<CompiledName("ScanBack")>]
 let scanBack folder (resizeArray : ResizeArray<'T>) (state : 'State) : ResizeArray<'State> =
     // Preconditions
@@ -956,6 +1039,9 @@ let scanBack folder (resizeArray : ResizeArray<'T>) (state : 'State) : ResizeArr
 /// Split the collection into two collections, containing the elements for which
 /// the given predicate returns <c>true</c> and <c>false</c> respectively.
 /// </summary>
+/// <param name="predicate"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("Partition")>]
 let partition predicate (resizeArray : ResizeArray<'T>) : ResizeArray<'T> * ResizeArray<'T> =
     // Preconditions
@@ -974,9 +1060,14 @@ let partition predicate (resizeArray : ResizeArray<'T>) : ResizeArray<'T> * Resi
 
     trueResults, falseResults
 
-/// Splits the collection into two (2) collections, containing the elements for which the given
-/// function returns Choice1Of2 or Choice2Of2, respectively. This function is similar to
-/// ResizeArray.partition, but it allows the returned collections to have different types.
+/// <summary>
+/// Splits the collection into two (2) collections, containing the elements for which the
+/// given function returns <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively. This function is similar to
+/// <c>ResizeArray.partition</c>, but it allows the returned collections to have different element types.
+/// </summary>
+/// <param name="partitioner"></param>
+/// <param name="resizeArray"></param>
+/// <returns></returns>
 [<CompiledName("MapPartition")>]
 let mapPartition partitioner (resizeArray : ResizeArray<'T>) : ResizeArray<'U1> * ResizeArray<'U2> =
     // Preconditions
@@ -994,3 +1085,135 @@ let mapPartition partitioner (resizeArray : ResizeArray<'T>) : ResizeArray<'U1> 
             results2.Add value
 
     results1, results2
+
+/// <summary>Returns the sum of the elements in the ResizeArray.</summary>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The resulting sum.</returns>
+[<CompiledName("Sum")>]
+let inline sum (resizeArray : ResizeArray< ^T>) : ^T = 
+    checkNonNull "resizeArray" resizeArray
+
+    let mutable acc = LanguagePrimitives.GenericZero< (^T) >
+//    for x in resizeArray do
+//        acc <- Checked.(+) acc x
+    for i = 0 to resizeArray.Count - 1 do
+        acc <- Checked.(+) acc resizeArray.[i]
+    acc
+
+/// <summary>Returns the sum of the results generated by applying the function to each element of the ResizeArray.</summary>
+/// <param name="projection">The function to transform the ResizeArray elements into the type to be summed.</param>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The resulting sum.</returns>
+[<CompiledName("SumBy")>]
+let inline sumBy (projection : 'T -> ^U) (resizeArray : ResizeArray<'T>) : ^U = 
+    checkNonNull "resizeArray" resizeArray
+
+    let mutable acc = LanguagePrimitives.GenericZero< (^U) >
+//    for x in resizeArray do
+//        acc <- Checked.(+) acc (projection x)
+    for i = 0 to resizeArray.Count - 1 do
+        acc <- Checked.(+) acc (projection resizeArray.[i])
+    acc
+
+/// <summary>Returns the lowest of all elements of the ResizeArray, compared via Operators.min.</summary>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The minimum element.</returns>
+/// <exception cref="System.ArgumentException">Thrown when <paramref name="resizeArray"/> is empty.</exception>
+[<CompiledName("Min")>]
+let inline min (resizeArray : ResizeArray<'T>) =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if resizeArray.Count = 0 then
+        invalidArg "resizeArray" "The input collection is empty."
+
+    let mutable acc = resizeArray.[0]
+    for i = 1 to resizeArray.Count - 1 do
+        let curr = resizeArray.[i]
+        if curr < acc then
+            acc <- curr
+    acc
+
+/// <summary>Returns the lowest of all elements of the ResizeArray, compared via Operators.min on the function result.</summary>
+/// <param name="projection">The function to transform the elements into a type supporting comparison.</param>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The minimum element.</returns>
+/// <exception cref="System.ArgumentException">Thrown when <paramref name="resizeArray"/> is empty.</exception>
+[<CompiledName("MinBy")>]
+let inline minBy (projection : 'T -> 'U) (resizeArray : ResizeArray<'T>) =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if resizeArray.Count = 0 then
+        invalidArg "resizeArray" "The input collection is empty."
+
+    let mutable accv = resizeArray.[0]
+    let mutable acc = projection accv
+    for i = 1 to resizeArray.Count - 1 do
+        let currv = resizeArray.[i]
+        let curr = projection currv
+        if curr < acc then
+            acc <- curr
+            accv <- currv
+    accv
+
+/// <summary>Returns the greatest of all elements of the ResizeArray, compared via Operators.max on the function result.</summary>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The maximum element.</returns>
+/// <exception cref="System.ArgumentException">Thrown when <paramref name="resizeArray"/> is empty.</exception>
+[<CompiledName("Max")>]
+let inline max (resizeArray : ResizeArray<'T>) =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if resizeArray.Count = 0 then
+        invalidArg "resizeArray" "The input collection is empty."
+
+    let mutable acc = resizeArray.[0]
+    for i = 1 to resizeArray.Count - 1 do
+        let curr = resizeArray.[i]
+        if curr > acc then
+            acc <- curr
+    acc
+
+/// <summary>Returns the greatest of all elements of the ResizeArray, compared via Operators.max on the function result.</summary>
+/// <param name="projection">The function to transform the elements into a type supporting comparison.</param>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The maximum element.</returns>
+/// <exception cref="System.ArgumentException">Thrown when <paramref name="resizeArray"/> is empty.</exception>
+[<CompiledName("MaxBy")>]
+let inline maxBy (projection : 'T -> 'U) (resizeArray : ResizeArray<'T>) =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+    if resizeArray.Count = 0 then
+        invalidArg "resizeArray" "The input collection is empty."
+
+    let mutable accv = resizeArray.[0]
+    let mutable acc = projection accv
+    for i = 1 to resizeArray.Count - 1 do
+        let currv = resizeArray.[i]
+        let curr = projection currv
+        if curr > acc then
+            acc <- curr
+            accv <- currv
+    accv
+
+/// <summary>Returns the average of the elements in the ResizeArray.</summary>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The average of the elements in the ResizeArray.</returns>
+/// <exception cref="System.ArgumentException">Thrown when <paramref name="resizeArray"/> is empty.</exception>
+[<CompiledName("Average")>]
+let inline average (resizeArray : ResizeArray<'T>) : ^T =
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    Seq.average resizeArray
+
+/// <summary>Returns the average of the elements generated by applying the function to each element of the ResizeArray.</summary>
+/// <param name="projection">The function to transform the ResizeArray elements before averaging.</param>
+/// <param name="resizeArray">The input ResizeArray.</param>
+/// <returns>The computed average.</returns>
+/// <exception cref="System.ArgumentException">Thrown when <paramref name="resizeArray"/> is empty.</exception>
+[<CompiledName("AverageBy")>]
+let inline averageBy (projection : 'T -> ^U) (resizeArray : ResizeArray<'T>) : ^U = 
+    // Preconditions
+    checkNonNull "resizeArray" resizeArray
+
+    Seq.averageBy projection resizeArray
