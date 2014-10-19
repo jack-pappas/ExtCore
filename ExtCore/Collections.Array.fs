@@ -920,7 +920,6 @@ let init2 length (generator : int -> 'T1 * 'T2) : 'T1[] * 'T2[] =
 #else
 /// Provides additional parallel operations on arrays.
 module Parallel =
-    open System
     open System.Threading
     open System.Threading.Tasks
 
@@ -1130,6 +1129,58 @@ module Parallel =
 
         // Return the number of matching elements.
         !matchCount
+
+    /// <summary>
+    /// </summary>
+    // TODO : This could be implemented more efficiently by creating a bitvector where each bit corresponds
+    //        to an array element, then having the workers set the bits of the bitvector where the predicate
+    //        returns true. Then, we can compute the population count, create the output array, and copy the
+    //        filtered elements into it. This would probably only be slightly faster, but would reduce memory
+    //        usage of the order of the output size because we wouldn't need to keep an additional copy of each
+    //        filtered element in a ResizeArray before copying to the output array.
+    [<CompiledName("Filter")>]
+    let filter (predicate : 'T -> bool) (array : 'T[]) : 'T[] =
+        // Preconditions
+        checkNonNull "array" array
+
+        // If the input array is empty, immediately return an empty output array.
+        if Array.isEmpty array then Array.empty
+        else
+
+        /// Holds ResizeArrays containing the values chosen by each worker task in the loop.
+        /// The index of each chosen value is included as a key so that the values can
+        /// be re-assembled in the same order as their original source elements.
+        let workerResults = ResizeArray<_> (System.Environment.ProcessorCount)
+
+        // Choose values from the array in parallel.
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> ResizeArray ()),
+            System.Func<_,_,_,_> (fun idx _ (localResults : ResizeArray<_>) ->
+                let el = array.[idx]
+                if predicate el then
+                    // Add this element, along with its index, to the list of local results for this worker.
+                    localResults.Add (KeyValuePair<_,_> (idx, el))
+                    
+                // Return the local results so they're passed to the next loop iteration.
+                localResults),
+            System.Action<_> (fun (localResults : ResizeArray<_>) ->
+                // Sort the local results from this worker in ascending order of element index.
+                // This is necessary because workers may steal chunks of elements from each other, meaning workers
+                // may process elements out of order.
+                localResults.Sort (ElementIndexComparer<_>.Instance)
+
+                // The worker results list must be locked when adding the results
+                // from this worker, to avoid concurrency issues.
+                lock workerResults <| fun () ->
+                    workerResults.Add localResults)
+            )
+#if DEBUG
+            |> tap checkParallelLoopResult
+#endif
+            |> ignore
+
+        // Combine worker results and return.
+        combineWorkerResults workerResults
 
     /// <summary>
     /// 
