@@ -924,87 +924,6 @@ module Parallel =
     open System.Threading
     open System.Threading.Tasks
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="length"></param>
-    /// <param name="generator"></param>
-    /// <returns></returns>
-    [<CompiledName("Initialize2")>]
-    let init2 length (generator : int -> 'T1 * 'T2) : 'T1[] * 'T2[] =
-        // Preconditions
-        if length < 0 then
-            invalidArg "length" "The length of the array to initialize cannot be negative."
-
-        let array1 = Array.zeroCreate length
-        let array2 = Array.zeroCreate length
-
-        // Create each of the array elements using the generator function.
-        // TODO : Instead of ignoring the result, keep it and check the IsCompleted property to
-        //        ensure the loop completed as expected; if it didn't, raise an exception instead
-        //        of returning a partially-initialized result.
-        Parallel.For (0, length, fun i ->
-            let x, y = generator i
-            array1.[i] <- x
-            array2.[i] <- y)
-        |> ignore
-
-        // Return the initialized arrays.
-        array1, array2
-
-    /// <summary></summary>
-    /// <param name="mapping"></param>
-    /// <param name="array"></param>
-    /// <returns></returns>
-    [<CompiledName("MapInPlace")>]
-    let mapInPlace (mapping : 'T -> 'T) (array : 'T[]) : unit =
-        // Preconditions
-        checkNonNull "array" array
-
-        Parallel.For (0, array.Length, fun i ->
-            array.[i] <- mapping array.[i])
-        |> ignore
-
-    /// <summary></summary>
-    /// <param name="mapping"></param>
-    /// <param name="array"></param>
-    /// <returns></returns>
-    [<CompiledName("MapIndexedInPlace")>]
-    let mapiInPlace (mapping : int -> 'T -> 'T) (array : 'T[]) : unit =
-        // Preconditions
-        checkNonNull "array" array
-
-        let mapping = FSharpFunc<_,_,_>.Adapt mapping
-
-        Parallel.For (0, array.Length, fun i ->
-            array.[i] <- mapping.Invoke (i, array.[i]))
-        |> ignore
-
-    /// <summary></summary>
-    /// <param name="predicate"></param>
-    /// <param name="array"></param>
-    /// <returns></returns>
-    [<CompiledName("CountWith")>]
-    let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
-        // Preconditions
-        checkNonNull "array" array
-
-        let matchCount = ref 0
-
-        Parallel.For (0, array.Length,
-            System.Func<_> (fun _ -> 0),
-            System.Func<_,_,_,_> (fun idx loopState localMatchCount ->
-                if predicate array.[idx] then
-                    localMatchCount + 1
-                else localMatchCount),
-            System.Action<_> (fun localMatchCount ->
-                Interlocked.Add (matchCount, localMatchCount)
-                |> ignore)
-            ) |> ignore
-
-        // Return the number of matching elements.
-        !matchCount
-
     /// Sorts key-value pairs with integer keys according to the value of the key.
     [<Sealed>]
     type private ElementIndexComparer<'T> () =
@@ -1051,7 +970,12 @@ module Parallel =
                     // determine how the lists compare to each other.
                     ElementIndexComparer.Instance.Compare (x.[count_x - 1], y.[count_y - 1])
 
-    //
+    /// <summary>
+    /// Combines the results of individual workers (e.g., threads, tasks), according to the ordering
+    /// of elements in the original input array.
+    /// </summary>
+    /// <param name="workerResults"></param>
+    /// <returns></returns>
     let internal combineWorkerResults (workerResults : ResizeArray<ResizeArray<KeyValuePair<int, 'T>>>) : 'T[] =
         /// The total number of chosen values (i.e., the length of the results array).
         let chosenValueCount =
@@ -1101,11 +1025,121 @@ module Parallel =
         // Return the results array.
         results
 
+#if DEBUG
+    /// Debugging function to check that a parallel loop completed successfully.
+    let private checkParallelLoopResult (loopResult : ParallelLoopResult) : unit =
+        let msg =
+            let msgBase = "The parallel-for loop did not complete successfully."
+            let breakIteration = loopResult.LowestBreakIteration
+            if breakIteration.HasValue then
+                msgBase + sprintf " The loop was broken at index %i." breakIteration.Value
+            else msgBase
+        System.Diagnostics.Debug.Assert (loopResult.IsCompleted, msg)
+#endif
+
     /// <summary>
     /// 
     /// </summary>
+    /// <param name="length"></param>
+    /// <param name="generator"></param>
+    /// <returns></returns>
+    [<CompiledName("Initialize2")>]
+    let init2 length (generator : int -> 'T1 * 'T2) : 'T1[] * 'T2[] =
+        // Preconditions
+        if length < 0 then
+            invalidArg "length" "The length of the array to initialize cannot be negative."
+
+        let array1 = Array.zeroCreate length
+        let array2 = Array.zeroCreate length
+
+        // Create each of the array elements using the generator function.
+        // TODO : Instead of ignoring the result, keep it and check the IsCompleted property to
+        //        ensure the loop completed as expected; if it didn't, raise an exception instead
+        //        of returning a partially-initialized result.
+        Parallel.For (0, length, fun i ->
+            let x, y = generator i
+            array1.[i] <- x
+            array2.[i] <- y)
+#if DEBUG
+        |> tap checkParallelLoopResult
+#endif
+        |> ignore
+
+        // Return the initialized arrays.
+        array1, array2
+
+    /// <summary></summary>
+    /// <param name="mapping"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    [<CompiledName("MapInPlace")>]
+    let mapInPlace (mapping : 'T -> 'T) (array : 'T[]) : unit =
+        // Preconditions
+        checkNonNull "array" array
+
+        Parallel.For (0, array.Length, fun i ->
+            array.[i] <- mapping array.[i])
+#if DEBUG
+        |> tap checkParallelLoopResult
+#endif
+        |> ignore
+
+    /// <summary></summary>
+    /// <param name="mapping"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    [<CompiledName("MapIndexedInPlace")>]
+    let mapiInPlace (mapping : int -> 'T -> 'T) (array : 'T[]) : unit =
+        // Preconditions
+        checkNonNull "array" array
+
+        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+
+        Parallel.For (0, array.Length, fun i ->
+            array.[i] <- mapping.Invoke (i, array.[i]))
+#if DEBUG
+        |> tap checkParallelLoopResult
+#endif
+        |> ignore
+
+    /// <summary></summary>
+    /// <param name="predicate"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    [<CompiledName("CountWith")>]
+    let countWith (predicate : 'T -> bool) (array : 'T[]) : int =
+        // Preconditions
+        checkNonNull "array" array
+
+        let matchCount = ref 0
+
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> 0),
+            System.Func<_,_,_,_> (fun idx _ localMatchCount ->
+                if predicate array.[idx] then
+                    localMatchCount + 1
+                else localMatchCount),
+            System.Action<_> (fun localMatchCount ->
+                Interlocked.Add (matchCount, localMatchCount)
+                |> ignore)
+            )
+#if DEBUG
+        |> tap checkParallelLoopResult
+#endif
+        |> ignore
+
+        // Return the number of matching elements.
+        !matchCount
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="chooser"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
     [<CompiledName("ChooseIndexed")>]
     let choosei (chooser : int -> 'T -> 'U option) (array: 'T[]) : 'U[] =
+        // Preconditions
         checkNonNull "array" array
 
         // If the input array is empty, immediately return an empty output array.
@@ -1143,13 +1177,148 @@ module Parallel =
                     workerResults.Add localResults)
             )
 #if DEBUG
-            |> tap (fun loopResult ->
-                System.Diagnostics.Debug.Assert (loopResult.IsCompleted,
-                    "The parallel-for loop did not complete successfully."))
+            |> tap checkParallelLoopResult
 #endif
             |> ignore
 
         // Combine worker results and return.
         combineWorkerResults workerResults
+
+    /// <summary>
+    /// Splits the collection into two (2) collections, containing the elements for which the given function returns
+    /// <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively.
+    /// </summary>
+    /// <param name="partitioner"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// This function is similar to Array.partition, but it allows the returned collections to have different types.
+    /// </remarks>
+    [<CompiledName("MapPartition")>]
+    let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) (array : 'T[]) : 'U1[] * 'U2[] =
+        // Preconditions
+        checkNonNull "array" array
+
+        // If the input array is empty, immediately return empty output arrays.
+        if Array.isEmpty array then Array.empty, Array.empty
+        else
+
+        /// Holds ResizeArrays containing the Choice1Of2 values from each worker task in the loop.
+        /// The index of each chosen value is included as a key so that the values can
+        /// be re-assembled in the same order as their original source elements.
+        let workerResults1 = ResizeArray<_> (System.Environment.ProcessorCount)
+        /// Holds ResizeArrays containing the Choice1Of2 values from each worker task in the loop.
+        let workerResults2 = ResizeArray<_> (System.Environment.ProcessorCount)
+
+        // Partition values from the array in parallel.
+        // OPTIMIZATION : The thread-local results are passed around as a tuple of ResizeArrays. Since ResizeArrays are mutable
+        //                this means we can pass a single instance of the tuple through the loop instead of creating a new tuple
+        //                instance on each loop iteration.
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> ResizeArray (), ResizeArray ()),
+            System.Func<_,_,_,_> (fun idx _ (localResults : ResizeArray<_> * ResizeArray<_>) ->
+                match partitioner array.[idx] with
+                | Choice1Of2 result ->
+                    // Add this result, along with it's original element index, to the list of local results for this worker.
+                    (fst localResults).Add (KeyValuePair<_,_> (idx, result))
+                | Choice2Of2 result ->
+                    // Add this result, along with it's original element index, to the list of local results for this worker.
+                    (snd localResults).Add (KeyValuePair<_,_> (idx, result))
+
+                // Return the local results so they're passed to the next loop iteration.
+                localResults),
+            System.Action<_> (fun (localResults1 : ResizeArray<_>, localResults2 : ResizeArray<_>) ->
+                // Sort the local results from this worker in ascending order of element index.
+                // This is necessary because workers may steal chunks of elements from each other, meaning workers
+                // may process elements out of order.
+                localResults1.Sort (ElementIndexComparer<_>.Instance)
+                localResults2.Sort (ElementIndexComparer<_>.Instance)
+
+                // The worker results lists must be locked when adding the results
+                // from this worker, to avoid concurrency issues.
+                lock workerResults1 <| fun () ->
+                    workerResults1.Add localResults1
+                    workerResults2.Add localResults2)
+            )
+#if DEBUG
+            |> tap checkParallelLoopResult
+#endif
+            |> ignore
+
+        // Combine worker results and return.
+        // TODO : Perhaps utilize parallelism here -- instead of combining the worker result lists
+        //        serially, they could be combined in parallel to improve performance for large inputs.
+        combineWorkerResults workerResults1,
+        combineWorkerResults workerResults2
+
+    /// <summary>
+    /// Splits the collection into two (2) collections, containing the elements for which the given function returns
+    /// <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively.
+    /// The index passed to the function indicates the index of the element.
+    /// </summary>
+    /// <param name="partitioner"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// This function is similar to Array.partition, but it allows the returned collections to have different types.
+    /// </remarks>
+    [<CompiledName("MapPartitionIndexed")>]
+    let mapiPartition (partitioner : int -> 'T -> Choice<'U1, 'U2>) (array : 'T[]) : 'U1[] * 'U2[] =
+        // Preconditions
+        checkNonNull "array" array
+
+        // If the input array is empty, immediately return empty output arrays.
+        if Array.isEmpty array then Array.empty, Array.empty
+        else
+
+        let partitioner = FSharpFunc<_,_,_>.Adapt partitioner
+
+        /// Holds ResizeArrays containing the Choice1Of2 values from each worker task in the loop.
+        /// The index of each chosen value is included as a key so that the values can
+        /// be re-assembled in the same order as their original source elements.
+        let workerResults1 = ResizeArray<_> (System.Environment.ProcessorCount)
+        /// Holds ResizeArrays containing the Choice1Of2 values from each worker task in the loop.
+        let workerResults2 = ResizeArray<_> (System.Environment.ProcessorCount)
+
+        // Partition values from the array in parallel.
+        // OPTIMIZATION : The thread-local results are passed around as a tuple of ResizeArrays. Since ResizeArrays are mutable
+        //                this means we can pass a single instance of the tuple through the loop instead of creating a new tuple
+        //                instance on each loop iteration.
+        Parallel.For (0, array.Length,
+            System.Func<_> (fun _ -> ResizeArray (), ResizeArray ()),
+            System.Func<_,_,_,_> (fun idx _ (localResults : ResizeArray<_> * ResizeArray<_>) ->
+                match partitioner.Invoke (idx, array.[idx]) with
+                | Choice1Of2 result ->
+                    // Add this result, along with it's original element index, to the list of local results for this worker.
+                    (fst localResults).Add (KeyValuePair<_,_> (idx, result))
+                | Choice2Of2 result ->
+                    // Add this result, along with it's original element index, to the list of local results for this worker.
+                    (snd localResults).Add (KeyValuePair<_,_> (idx, result))
+
+                // Return the local results so they're passed to the next loop iteration.
+                localResults),
+            System.Action<_> (fun (localResults1 : ResizeArray<_>, localResults2 : ResizeArray<_>) ->
+                // Sort the local results from this worker in ascending order of element index.
+                // This is necessary because workers may steal chunks of elements from each other, meaning workers
+                // may process elements out of order.
+                localResults1.Sort (ElementIndexComparer<_>.Instance)
+                localResults2.Sort (ElementIndexComparer<_>.Instance)
+
+                // The worker results lists must be locked when adding the results
+                // from this worker, to avoid concurrency issues.
+                lock workerResults1 <| fun () ->
+                    workerResults1.Add localResults1
+                    workerResults2.Add localResults2)
+            )
+#if DEBUG
+            |> tap checkParallelLoopResult
+#endif
+            |> ignore
+
+        // Combine worker results and return.
+        // TODO : Perhaps utilize parallelism here -- instead of combining the worker result lists
+        //        serially, they could be combined in parallel to improve performance for large inputs.
+        combineWorkerResults workerResults1,
+        combineWorkerResults workerResults2
 
 #endif  // #if !FX_NO_TPL_PARALLEL
