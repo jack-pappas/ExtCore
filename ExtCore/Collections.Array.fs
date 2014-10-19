@@ -1243,6 +1243,64 @@ module Parallel =
         combineWorkerResults workerResults
 
     /// <summary>
+    /// Applies the given function pairwise to the two arrays.
+    /// Returns the array comprised of the results <c>x</c> for each element where the function returns <c>Some(x)</c>.
+    /// </summary>
+    /// <param name="chooser"></param>
+    /// <param name="array1"></param>
+    /// <param name="array2"></param>
+    /// <returns></returns>
+    [<CompiledName("Choose2")>]
+    let choose2 (chooser : 'T1 -> 'T2 -> 'U option) array1 array2 : 'U[] =
+        // Preconditions
+        checkNonNull "array1" array1
+        checkNonNull "array2" array2
+        if Array.length array1 <> Array.length array2 then
+            invalidArg "array2" "The arrays have different lengths."
+
+        // If the input arrays are empty, immediately return an empty output array.
+        if Array.isEmpty array1 then Array.empty
+        else
+
+        let chooser = FSharpFunc<_,_,_>.Adapt chooser
+
+        /// Holds ResizeArrays containing the values chosen by each worker task in the loop.
+        /// The index of each chosen value is included as a key so that the values can
+        /// be re-assembled in the same order as their original source elements.
+        let workerResults = ResizeArray<_> (System.Environment.ProcessorCount)
+
+        // Choose values from the array in parallel.
+        Parallel.For (0, array1.Length,
+            System.Func<_> (fun _ -> ResizeArray ()),
+            System.Func<_,_,_,_> (fun idx _ (localResults : ResizeArray<_>) ->
+                match chooser.Invoke (array1.[idx], array2.[idx]) with
+                | None -> ()
+                | Some result ->
+                    // Add this result, along with it's original element index, to the list of local results for this worker.
+                    localResults.Add (KeyValuePair<_,_> (idx, result))
+                    
+                // Return the local results so they're passed to the next loop iteration.
+                localResults),
+            System.Action<_> (fun (localResults : ResizeArray<_>) ->
+                // Sort the local results from this worker in ascending order of element index.
+                // This is necessary because workers may steal chunks of elements from each other, meaning workers
+                // may process elements out of order.
+                localResults.Sort (ElementIndexComparer<_>.Instance)
+
+                // The worker results list must be locked when adding the results
+                // from this worker, to avoid concurrency issues.
+                lock workerResults <| fun () ->
+                    workerResults.Add localResults)
+            )
+#if DEBUG
+            |> tap checkParallelLoopResult
+#endif
+            |> ignore
+
+        // Combine worker results and return.
+        combineWorkerResults workerResults
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="chooser"></param>
