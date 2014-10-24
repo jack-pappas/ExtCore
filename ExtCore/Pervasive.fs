@@ -248,11 +248,17 @@ module Operators =
     [<CompiledName("TapAssert")>]
     let tapAssert (asserter : 'T -> string option) (value : 'T) : 'T =
         match asserter value with
-        | None ->
-            value
+        | None -> ()
         | Some errorMsg ->
+            #if FX_SIMPLE_DIAGNOSTICS
+            System.Diagnostics.Debug.Assert (false, errorMsg)
+            #else
             System.Diagnostics.Debug.Fail errorMsg
-            value   // Necessary for type-inference purposes.
+            #endif
+
+        // Return the value without modifying it.
+        // This should only be returned if the asserter function returned None.
+        value
 
     /// <summary>
     /// Attempt to execute the function as a mutual-exclusion region using the input value as a lock. If the lock cannot be entered
@@ -1220,19 +1226,21 @@ module Printf =
     let inline bprintfn (builder : System.Text.StringBuilder) format : 'T =
         kbprintf (fun _ -> builder.AppendLine () |> ignore) builder format
 
-    /// <summary>Print formatted string to Debug listeners.</summary>
-    /// <param name="format"></param>
-    /// <returns></returns>
-    [<CompiledName("PrintFormatToDebugListeners")>]
-    let inline dprintf format : 'T =
-        ksprintf Debug.Write format
-
     /// <summary>Print formatted string to Debug listeners, adding a newline.</summary>
     /// <param name="format"></param>
     /// <returns></returns>
     [<CompiledName("PrintFormatLineToDebugListeners")>]
     let inline dprintfn format : 'T =
         ksprintf Debug.WriteLine format
+
+#if FX_SIMPLE_DIAGNOSTICS
+#else
+    /// <summary>Print formatted string to Debug listeners.</summary>
+    /// <param name="format"></param>
+    /// <returns></returns>
+    [<CompiledName("PrintFormatToDebugListeners")>]
+    let inline dprintf format : 'T =
+        ksprintf Debug.Write format
 
     /// <summary>Print formatted string to Trace listeners.</summary>
     /// <param name="format"></param>
@@ -1248,3 +1256,4 @@ module Printf =
     let inline tprintfn format : 'T =
         ksprintf Trace.WriteLine format
 
+#endif

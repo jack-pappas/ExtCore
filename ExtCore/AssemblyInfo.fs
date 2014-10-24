@@ -25,8 +25,11 @@ open System.Resources
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 open System.Security
-open System.Security.Permissions
 
+#if FX_ATLEAST_PORTABLE
+#else
+open System.Security.Permissions
+#endif
 
 // Version information
 [<assembly: AssemblyVersion("0.8.44")>]
@@ -37,9 +40,12 @@ open System.Security.Permissions
 [<assembly: AssemblyTitle("ExtCore")>]
 [<assembly: AssemblyDescription("An extended core library for F#.")>]
 [<assembly: NeutralResourcesLanguage("en-US")>]
-[<assembly: Guid("ecbe6801-9675-413e-849b-c3359721cf06")>]
 [<assembly: AssemblyCopyright("Copyright © Jack Pappas 2013-2014")>]
+#if FX_ATLEAST_PORTABLE
+#else
+[<assembly: Guid("ecbe6801-9675-413e-849b-c3359721cf06")>]
 [<assembly: ComVisible(false)>]
+#endif
 
 // This assembly is CLS-compliant.
 // TODO : Enable this once we can verify that the assembly is actually CLS-compliant.
@@ -57,11 +63,14 @@ open System.Security.Permissions
     to the test project so they can be unit-tested. *)
 [<assembly: InternalsVisibleTo("ExtCore.Tests")>]
 
+#if FX_ATLEAST_PORTABLE
+#else
 (* Dependency hints for Ngen *)
 [<assembly: DependencyAttribute("FSharp.Core", LoadHint.Always)>]
 [<assembly: DependencyAttribute("System", LoadHint.Always)>]
 [<assembly: DependencyAttribute("System.Core", LoadHint.Always)>]
 [<assembly: DefaultDependency(LoadHint.Always)>]
+#endif
 
 (* Automatically open the basic namespaces, as in FSharp.Core. *)
 [<assembly: AutoOpen("ExtCore")>]

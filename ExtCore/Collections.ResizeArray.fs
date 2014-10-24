@@ -309,7 +309,20 @@ let inline exists (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : boo
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
+    #if FX_ATLEAST_PORTABLE
+    // Simple implementation for portable libraries.
+    let mutable currentIndex = 0
+    let mutable foundMatch = false
+    while currentIndex < resizeArray.Count && not foundMatch do
+        if predicate resizeArray.[currentIndex] then
+            foundMatch <- true
+        else
+            currentIndex <- currentIndex + 1
+    foundMatch
+
+    #else
     resizeArray.Exists (System.Predicate predicate)
+    #endif
 
 /// Test elements of the two arrays pairwise to see if any pair of element satisfies the given predicate.
 /// Raise ArgumentException if the arrays have different lengths.
@@ -340,7 +353,20 @@ let inline forall (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : boo
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
+    #if FX_ATLEAST_PORTABLE
+    // Simple implementation for portable libraries.
+    let mutable currentIndex = 0
+    let mutable foundNonMatch = false
+    while currentIndex < resizeArray.Count && not foundNonMatch do
+        if not <| predicate resizeArray.[currentIndex] then
+            foundNonMatch <- true
+        else
+            currentIndex <- currentIndex + 1
+    not foundNonMatch
+
+    #else
     resizeArray.TrueForAll (System.Predicate predicate)
+    #endif
 
 /// Test elements of the two arrays pairwise to see if all pairs of elements satisfy the given predicate.
 /// Raise ArgumentException if the arrays have different lengths.
@@ -370,7 +396,18 @@ let inline filter (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : Res
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
+    #if FX_ATLEAST_PORTABLE
+    // Simple implementation for portable libraries.
+    let results = ResizeArray ()
+    for i = 0 to resizeArray.Count - 1 do
+        let el = resizeArray.[i]
+        if predicate el then
+            results.Add el
+    results
+
+    #else
     resizeArray.FindAll (System.Predicate predicate)
+    #endif
 
 /// <summary>
 /// Apply the given function to each element of the array. Return
@@ -406,7 +443,21 @@ let tryFind (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T option
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
-    match resizeArray.FindIndex (System.Predicate predicate) with
+    let elementIndex =
+        #if FX_ATLEAST_PORTABLE
+        let mutable elementIndex = -1
+        let mutable currentIndex = 0
+        while currentIndex < resizeArray.Count && elementIndex = -1 do
+            if predicate resizeArray.[currentIndex] then
+                elementIndex <- currentIndex
+            else
+                currentIndex <- currentIndex + 1
+        elementIndex
+        #else
+        resizeArray.FindIndex (System.Predicate predicate)
+        #endif
+
+    match elementIndex with
     | -1 ->
         None
     | index ->
@@ -421,7 +472,21 @@ let find (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : 'T =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
-    match resizeArray.FindIndex (System.Predicate predicate) with
+    let elementIndex =
+        #if FX_ATLEAST_PORTABLE
+        let mutable elementIndex = -1
+        let mutable currentIndex = 0
+        while currentIndex < resizeArray.Count && elementIndex = -1 do
+            if predicate resizeArray.[currentIndex] then
+                elementIndex <- currentIndex
+            else
+                currentIndex <- currentIndex + 1
+        elementIndex
+        #else
+        resizeArray.FindIndex (System.Predicate predicate)
+        #endif
+
+    match elementIndex with
     | -1 ->
         // TODO : Add a better error message.
         // keyNotFound ""
@@ -436,7 +501,21 @@ let tryFindIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int 
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
-    match resizeArray.FindIndex (System.Predicate predicate) with
+    let elementIndex =
+        #if FX_ATLEAST_PORTABLE
+        let mutable elementIndex = -1
+        let mutable currentIndex = 0
+        while currentIndex < resizeArray.Count && elementIndex = -1 do
+            if predicate resizeArray.[currentIndex] then
+                elementIndex <- currentIndex
+            else
+                currentIndex <- currentIndex + 1
+        elementIndex
+        #else
+        resizeArray.FindIndex (System.Predicate predicate)
+        #endif
+
+    match elementIndex with
     | -1 ->
         None
     | index ->
@@ -452,7 +531,21 @@ let findIndex (predicate : 'T -> bool) (resizeArray : ResizeArray<'T>) : int =
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
-    match resizeArray.FindIndex (System.Predicate predicate) with
+    let elementIndex =
+        #if FX_ATLEAST_PORTABLE
+        let mutable elementIndex = -1
+        let mutable currentIndex = 0
+        while currentIndex < resizeArray.Count && elementIndex = -1 do
+            if predicate resizeArray.[currentIndex] then
+                elementIndex <- currentIndex
+            else
+                currentIndex <- currentIndex + 1
+        elementIndex
+        #else
+        resizeArray.FindIndex (System.Predicate predicate)
+        #endif
+
+    match elementIndex with
     | -1 ->
         // TODO : Add a better error message.
         // keyNotFound ""
@@ -616,7 +709,16 @@ let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArra
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
+    #if FX_ATLEAST_PORTABLE
+    // Simple implementation for portable libraries.
+    let results = ResizeArray (resizeArray.Count)
+    for i = 0 to resizeArray.Count - 1 do
+        results.Add (mapping resizeArray.[i])
+    results
+
+    #else
     resizeArray.ConvertAll (System.Converter mapping)
+    #endif
 
 /// <summary>
 /// Build a new array whose elements are the results of applying the given function

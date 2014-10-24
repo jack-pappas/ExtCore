@@ -361,7 +361,16 @@ type substring =
     /// <summary>Copies the characters in this substring into a Unicode character array.</summary>
     /// <returns></returns>
     member this.ToCharArray () : char[] =
+        #if FX_ATLEAST_PORTABLE
+        // Manually implement String.ToCharArray(int,int) for portable libraries.
+        let chars = Array.zeroCreate this.Length
+        for i = 0 to this.Length - 1 do
+            chars.[i] <- this.String.[this.Offset + i]
+        chars
+
+        #else
         this.String.ToCharArray (this.Offset, this.Length)
+        #endif
 
     /// <inherit />
     override this.ToString () =

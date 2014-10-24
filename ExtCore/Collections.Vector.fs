@@ -58,10 +58,13 @@ type vector<'T> private (elements : 'T[]) =
         with get () =
             elements.Length
 
+#if FX_ATLEAST_PORTABLE
+#else
     /// Gets a 64-bit integer that represents the total number of elements in the Vector.
     member __.LongLength
         with get () =
             elements.LongLength
+#endif
 
     /// Returns the vector element at the specified index.
     member this.Item

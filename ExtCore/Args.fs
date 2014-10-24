@@ -221,6 +221,9 @@ type ArgParser () =
 
             findMatchingArg specs
 
+    #if FX_NO_SYSTEM_CONSOLE
+    #else
+
     /// Prints the help for each argument.
     static member Usage (specs, ?usage) =
         defaultArg usage ""
@@ -229,6 +232,7 @@ type ArgParser () =
 
     #if FX_NO_COMMAND_LINE_ARGS
     #else
+
     /// Parse the arguments given by System.Environment.GetEnvironmentVariables()
     /// according to the argument processing specifications "specs".
     /// Args begin with "-". Non-arguments are passed to "f" in
@@ -246,4 +250,5 @@ type ArgParser () =
             exit 1
         | _ ->
             reraise ()
+    #endif
     #endif

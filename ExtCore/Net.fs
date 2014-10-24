@@ -27,6 +27,8 @@ open ExtCore
 open ExtCore.Collections
 open ExtCore.IO
 
+#if FX_ATLEAST_PORTABLE
+#else
 
 /// Extensions that simplify working with HttpListener and related types.
 [<AutoOpen>]
@@ -91,3 +93,5 @@ module HttpExtensions =
             do! output.AsyncWrite (buffer, 0, buffer.Length)
             output.Close ()
             }
+
+#endif

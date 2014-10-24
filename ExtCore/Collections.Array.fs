@@ -154,9 +154,7 @@ let contains value (array : 'T[]) : bool =
     // Preconditions
     checkNonNull "array" array
 
-    System.Array.FindIndex (
-        array,
-        System.Predicate ((=) value)) <> -1
+    System.Array.IndexOf (array, value) <> -1
 
 /// <summary>Expands an array by creating a copy of it which has the specified number of empty elements appended to it.</summary>
 /// <param name="count"></param>

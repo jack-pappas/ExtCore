@@ -25,6 +25,8 @@ open OptimizedClosures
 open ExtCore
 open ExtCore.Collections
 
+#if FX_ATLEAST_PORTABLE
+#else
 
 /// Functions operating on or over files.
 [<RequireQualifiedAccess>]
@@ -386,6 +388,7 @@ module File =
 //
 //            notImpl "IO.File.Lines.mapPartition"
 
+#endif
 
 /// Extensions that simplify working with Stream using async sequences.
 [<AutoOpen>]

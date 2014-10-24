@@ -549,6 +549,8 @@ let init2 () : unit =
     Assert.Ignore "Test not yet implemented."
 
 
+#if FX_NO_TPL_PARALLEL
+#else
 module Parallel =
     (* TODO : When implementing these tests, make sure to test both that the returned result is correct
               and also the behavior of the functions when an exception is thrown by the function being
@@ -650,3 +652,5 @@ module Parallel =
                     arr |> Array.Parallel.choosei chooser
 
                 chooseResults = chooseiResults
+
+#endif
