@@ -16,7 +16,9 @@
         <tags>f# fsharp workflow collections immutable workflow monad computation fsharpx intmap lazylist</tags>
     </metadata>
     <files>
-        <file src="_build\NuGet\net40\ExtCore.XML" target="lib\net40\ExtCore.XML" />
-        <file src="_build\NuGet\net40\ExtCore.dll" target="lib\net40\ExtCore.dll" />
+        <file src="_build\NuGet\net40-Client\ExtCore.XML" target="lib\net40\ExtCore.XML" />
+        <file src="_build\NuGet\net40-Client\ExtCore.dll" target="lib\net40\ExtCore.dll" />
+        <file src="_build\NuGet\net40-Client\ExtCore.XML" target="lib\net40-Client\ExtCore.XML" />
+        <file src="_build\NuGet\net40-Client\ExtCore.dll" target="lib\net40-Client\ExtCore.dll" />
     </files>
 </package>
