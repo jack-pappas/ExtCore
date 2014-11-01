@@ -56,7 +56,7 @@ module HttpExtensions =
 
     type System.Net.HttpListenerRequest with
         /// Asynchronously reads the 'InputStream' of the request and converts it to a string
-        member this.AsyncInputString =
+        member this.AsyncInputString : Async<string> =
             async {
             use tmp = new MemoryStream ()
             for data in this.InputStream.AsyncReadSeq (16 * 1024) do

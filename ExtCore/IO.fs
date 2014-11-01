@@ -396,7 +396,7 @@ module IOExtensions =
     type System.IO.Stream with
         /// Asynchronously reads the stream in chunks of a specified size
         /// and returns the result as an asynchronous sequence.
-        member x.AsyncReadSeq (?bufferSize) =
+        member x.AsyncReadSeq (?bufferSize) : AsyncSeq<byte[]> =
             let bufferSize = defaultArg bufferSize 1024
             let buffer = Array.zeroCreate bufferSize
             let rec loop () =
@@ -410,7 +410,7 @@ module IOExtensions =
 
         /// Asynchronously writes all data specified by the 
         /// given asynchronous sequence to the stream.
-        member x.AsyncWriteSeq (input : AsyncSeq<byte[]>) =
+        member x.AsyncWriteSeq (input : AsyncSeq<byte[]>) : Async<unit> =
             // Preconditions
             checkNonNull "input" input
             
