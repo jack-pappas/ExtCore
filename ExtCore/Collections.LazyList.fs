@@ -29,7 +29,8 @@ open System.Runtime.ExceptionServices
 #nowarn "21" // recursive initialization
 #nowarn "40" // recursive initialization
 
-//
+/// <summary>Represents the evaluation status of a <see cref="T:LazyListCell`1{T}"/>.</summary>
+/// <typeparam name="T">The type of elements in the list.</typeparam>
 [<NoEquality; NoComparison>]
 type internal LazyCellStatus<'T> =
     //
@@ -44,32 +45,43 @@ type internal LazyCellStatus<'T> =
     | Exception of exn
 #endif
 
-//
+/// <summary>A lazy-list cell.</summary>
+/// <typeparam name="T">The type of elements in the list.</typeparam>
 and [<NoEquality; NoComparison>]
     [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
     internal LazyListCell<'T> =
-    //
+    /// Empty lazy-list cell.
     | Empty
-    //
-    | Cons of 'T * LazyList<'T>    
+    /// A lazy-list cell holding a value followed by another lazy list.
+    | Cons of 'T * LazyList<'T>
 
-/// LazyLists are possibly-infinite, cached sequences.  See also IEnumerable/Seq for
-/// uncached sequences. LazyLists normally involve delayed computations without 
-/// side-effects.  The results of these computations are cached and evaluations will be 
-/// performed only once for each element of the lazy list.  In contrast, for sequences 
-/// (IEnumerable) recomputation happens each time an enumerator is created and the sequence 
-/// traversed.
-///
-/// LazyLists can represent cached, potentially-infinite computations.  Because they are 
+/// <summary>
+/// LazyLists are possibly-infinite, cached sequences.
+/// LazyLists normally involve delayed computations without side-effects.
+/// The results of these computations are cached and evaluations will be performed only once for each element of the LazyList.
+/// In contrast, for sequences (seq{T}) recomputation happens each time an enumerator is created and the sequence traversed.
+/// </summary>
+/// <typeparam name="T">The type of elements in the list.</typeparam>
+/// <remarks>
+/// <para>
+/// LazyLists can represent cached, potentially-infinite computations. Because they are 
 /// cached they may cause memory leaks if some active code or data structure maintains a 
 /// live reference to the head of an infinite or very large lazy list while iterating it, 
 /// or if a reference is maintained after the list is no longer required.
-///
-/// Lazy lists may be matched using the LazyList.Cons and LazyList.Nil active patterns. 
-/// These may force the computation of elements of the list.
+/// </para>
+/// <para>
+/// Lazy lists may be destructured for pattern matching using the <c>(|Nil|Cons|)</c> active pattern
+/// in the <c>LazyListPatterns</c> module. Note that using the active patterns to destructure a LazyList
+/// may force computation of elements of the list; in turn, this may cause programs to hang or crash
+/// due to non-termination of the evaluation.
+/// </para>
+/// <para>
+/// See also IEnumerable/Seq for uncached sequences.
+/// </para>
+/// </remarks>
 and [<NoEquality; NoComparison; Sealed>]
 //[<StructuredFormatDisplay("")>]
-    LazyList<'T> internal (initialStatus) =
+    LazyList<'T> private (initialStatus) =
     //
     static let emptyList = LazyList (Value Empty)
     
@@ -124,7 +136,7 @@ and [<NoEquality; NoComparison; Sealed>]
                     // ExceptionDispatchInfo.Throw() method instead of raising it the usual way.
                     // NOTE: Unlike the 'raise' function, ExceptionDispatchInfo.Throw() returns 'unit', which means
                     // it doesn't play nicely with F#'s type checker. To work around this, we make another call to
-                    // 'raise' immediately afterward; it won't be executed, but does satisfy the type-checker.
+                    // 'raise' immediately afterward; it won't be executed, but it satisfies the type-checker.
                     #if FX_ATLEAST_45
                     ex.Throw ()
                     raise ex.SourceException
@@ -132,7 +144,7 @@ and [<NoEquality; NoComparison; Sealed>]
                     raise ex
                     #endif
 
-    /// <summary>Gets a value that indicates whether the <see cref="LazyList`1"/> is empty.</summary>
+    /// <summary>Gets a value that indicates whether the <see cref="T:LazyList`1{T}"/> is empty.</summary>
     /// <remarks>Forces the evaluation of the first element of the stream if it is not already evaluated.</remarks>
     member this.IsEmpty
         with get () =
@@ -186,7 +198,7 @@ and [<NoEquality; NoComparison; Sealed>]
         | Cons (hd, tl) ->
             Some (hd, tl)
 
-    /// <summary>Creates a sequence which enumerates the values in the <see cref="LazyList`1"/>.</summary>
+    /// <summary>Creates a sequence which enumerates the values in the <see cref="LazyList`1{T}"/>.</summary>
     member this.ToSeq () =
         this
         |> Seq.unfold (fun list ->
@@ -718,7 +730,7 @@ module LazyList =
                e.Dispose ()
                Empty
 
-    /// <summary>Build a <see cref="LazyList`1"/> from the given sequence of elements.</summary>
+    /// <summary>Build a <see cref="LazyList`1{T}"/> from the given sequence of elements.</summary>
     /// <param name="sequence"></param>
     /// <returns></returns>
     [<CompiledName("OfSeq")>]
@@ -729,7 +741,7 @@ module LazyList =
         sequence.GetEnumerator ()
         |> ofFreshIEnumerator
 
-    /// <summary>Create a <see cref="LazyList`1"/> containing the elements of the given list.</summary>
+    /// <summary>Create a <see cref="LazyList`1{T}"/> containing the elements of the given list.</summary>
     /// <param name="list"></param>
     /// <returns></returns>
     [<CompiledName("OfList")>]
@@ -753,7 +765,7 @@ module LazyList =
                 copyFrom (index + 1) array
                 |> consCell array.[index]
 
-    /// <summary>Create a <see cref="LazyList`1"/> containing the elements of the given array.</summary>
+    /// <summary>Create a <see cref="LazyList`1{T}"/> containing the elements of the given array.</summary>
     /// <param name="array"></param>
     /// <returns></returns>
     [<CompiledName("OfArray")>]
@@ -763,7 +775,7 @@ module LazyList =
 
         copyFrom 0 array
 
-    /// <summary>Create a <see cref="LazyList`1"/> containing the elements of the given vector.</summary>
+    /// <summary>Create a <see cref="LazyList`1{T}"/> containing the elements of the given vector.</summary>
     /// <param name="vector"></param>
     /// <returns></returns>
     [<CompiledName("OfVector")>]
@@ -800,7 +812,7 @@ module LazyList =
                 loop (hd :: acc) tl
         loop [] list
 
-    /// <summary>Build an array from the given <see cref="LazyList`1"/>.</summary>
+    /// <summary>Build an array from the given <see cref="LazyList`1{T}"/>.</summary>
     /// <param name="list"></param>
     /// <returns></returns>
     /// <remarks>This function will eagerly evaluate the entire list (and thus may not terminate).</remarks>
@@ -814,7 +826,7 @@ module LazyList =
         iter elements.Add list
         ResizeArray.toArray elements
 
-    /// <summary>Build a vector from the given <see cref="LazyList`1"/>.</summary>
+    /// <summary>Build a vector from the given <see cref="LazyList`1{T}"/>.</summary>
     /// <param name="list"></param>
     /// <returns></returns>
     /// <remarks>This function will eagerly evaluate the entire list (and thus may not terminate).</remarks>
@@ -831,7 +843,7 @@ module LazyList =
 
     /// <summary>Returns a LazyList that when enumerated returns at most N elements.</summary>
     /// <param name="count">The maximum number of items to enumerate.</param>
-    /// <returns>The resulting <see cref="LazyList`1"/>.</returns>
+    /// <returns>The resulting <see cref="LazyList`1{T}"/>.</returns>
     [<CompiledName("Truncate")>]
     let truncate count (list : LazyList<'T>) =
         // Preconditions
@@ -851,7 +863,7 @@ module LazyList =
 
 
 type LazyList<'T> with
-    /// <summary>Appends the second <see cref="LazyList`1"/> to the end of the first.</summary>
+    /// <summary>Appends the second <see cref="LazyList`1{T}"/> to the end of the first.</summary>
     /// <param name="list1"></param>
     /// <param name="list2"></param>
     /// <returns></returns>
@@ -875,14 +887,14 @@ type LazyListBuilder () =
         LazyList.singleton value
     member __.YieldFrom (list : LazyList<'T>) =
         list
-    member __.For (lazyList : LazyList<'T>, binding) =
+    member __.For (lazyList : LazyList<'T>, binding) : LazyList<'U> =
         LazyList.collect binding lazyList
-    member __.For (sequence, f) =
+    member __.For (sequence : seq<'T>, binding) : LazyList<'U> =
         // TODO :   Right now, we're evaluating the entire sequence, then wrapping the results in a LazyList.
         //          It would be more efficient to evaluate the sequence on-demand, though we need to decide if it's safe enough.
         //          Or, we could use type tests on 'sequence' so if it's an array, list, etc., we can use a more-efficient conversion to LazyList.
         // LazyList.collect f (LazyList.ofSeq sequence)
-        LazyList.collect f (LazyList.ofList (List.ofSeq sequence))
+        LazyList.collect binding (LazyList.ofList (List.ofSeq sequence))
     member __.Bind (lazyValue : Lazy<'T>, binding : 'T -> LazyList<'U>) =
         LazyList.Delayed (fun () ->
             lazyValue.Force ()
