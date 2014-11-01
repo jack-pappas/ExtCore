@@ -22,5 +22,7 @@
         <file src="_build\NuGet\net40-Client\ExtCore.dll" target="lib\net40-Client\ExtCore.dll" />
         <file src="_build\NuGet\net45\ExtCore.XML" target="lib\net45\ExtCore.XML" />
         <file src="_build\NuGet\net45\ExtCore.dll" target="lib\net45\ExtCore.dll" />
+        <file src="_build\NuGet\profile47\ExtCore.XML" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\ExtCore.XML" />
+        <file src="_build\NuGet\profile47\ExtCore.dll" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\ExtCore.dll" />
     </files>
 </package>
