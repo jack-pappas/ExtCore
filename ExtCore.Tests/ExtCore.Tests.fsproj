@@ -56,6 +56,27 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\net45\Release\ExtCore.Tests.XML</DocumentationFile>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile47)|AnyCPU' ">
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\profile47\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_NO_TPL_PARALLEL</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\profile47\Debug\ExtCore.Tests.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile47)|AnyCPU' ">
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\profile47\Release\</OutputPath>
+    <DefineConstants>TRACE;FX_ATLEAST_40;FX_NO_TPL_PARALLEL</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\profile47\Release\ExtCore.Tests.XML</DocumentationFile>
+  </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
@@ -127,12 +148,12 @@
       <HintPath>..\packages\FsCheck.0.9.3.0\lib\net40-Client\FsCheck.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
