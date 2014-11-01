@@ -668,10 +668,13 @@ module AsyncSeq =
 
 
 //
-module Seq = 
-    open ExtCore.Control
-
+module Seq =
+    /// <summary>
     /// Converts asynchronous sequence to a synchronous blocking sequence.
     /// The elements of the asynchronous sequence are consumed lazily.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    [<CompiledName("FromAsyncSeq")>]
     let ofAsyncSeq (input : AsyncSeq<'T>) : seq<'T> =
         AsyncSeq.toSeq input
