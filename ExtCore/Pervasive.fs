@@ -955,6 +955,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("IsResult")>]
     let inline isResult (value : Choice<'T, 'Error>) : bool =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 _ -> true
         | Choice2Of2 _ -> false
@@ -964,6 +967,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("IsError")>]
     let inline isError (value : Choice<'T, 'Error>) : bool =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 _ -> false
         | Choice2Of2 _ -> true
@@ -973,6 +979,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Get")>]
     let get (value : Choice<'T, 'Error>) =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             result
@@ -984,6 +993,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("GetError")>]
     let getError (value : Choice<'T, 'Error>) =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 _ ->
             invalidArg "value" "Cannot get the error because the Choice`2 instance is a result value."
@@ -1052,6 +1064,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("ToOption")>]
     let toOption (value : Choice<'T, 'Error>) : 'T option =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             Some result
@@ -1067,6 +1082,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (value : Choice<'T, 'Error>) =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             Choice1Of2 (mapping result)
@@ -1082,6 +1100,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("MapError")>]
     let mapError (mapping : 'Error1 -> 'Error2) (value : Choice<'T, 'Error1>) =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             Choice1Of2 result
@@ -1097,6 +1118,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Bind")>]
     let bind (binding : 'T -> Choice<'U, 'Error>) value =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             binding result
@@ -1115,6 +1139,10 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Bind2")>]
     let bind2 (binding : 'T -> 'U -> Choice<'V, 'Error>) value1 value2 =
+        // Preconditions
+        checkNonNull "value1" value1
+        checkNonNull "value2" value2
+
         match value1, value2 with
         | Choice1Of2 result1, Choice1Of2 result2 ->
             binding result1 result2
@@ -1128,6 +1156,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Exists")>]
     let exists (predicate : 'T -> bool) (value : Choice<'T, 'Error>) : bool =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             predicate result
@@ -1140,6 +1171,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Forall")>]
     let forall (predicate : 'T -> bool) (value : Choice<'T, 'Error>) : bool =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             predicate result
@@ -1153,6 +1187,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Fold")>]
     let fold (folder : 'State -> 'T -> 'State) (state : 'State) (value : Choice<'T, 'Error>) : 'State =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             folder state result
@@ -1166,6 +1203,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("FoldBack")>]
     let foldBack (folder : 'T -> 'State -> 'State) (value : Choice<'T, 'Error>) (state : 'State) : 'State =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             folder result state
@@ -1178,6 +1218,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("Iterate")>]
     let iter (action : 'T -> unit) (value : Choice<'T, 'Error>) : unit =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice2Of2 _ -> ()
         | Choice1Of2 result ->
@@ -1188,6 +1231,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("BindOrRaise")>]
     let inline bindOrRaise (value : Choice<'T, #exn>) : 'T =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             result
@@ -1199,6 +1245,9 @@ module Choice =
     /// <returns></returns>
     [<CompiledName("BindOrFail")>]
     let inline bindOrFail (value : Choice<'T, string>) : 'T =
+        // Preconditions
+        checkNonNull "value" value
+
         match value with
         | Choice1Of2 result ->
             result
