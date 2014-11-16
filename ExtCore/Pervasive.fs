@@ -102,16 +102,20 @@ module Operators =
     /// <param name="x">The first parameter.</param>
     /// <param name="y">The second parameter.</param>
     /// <returns></returns>
+    //[<Obsolete("This operator will be removed in a future release. Use the (===) operator instead.")>]
     let inline (==) (x : 'T) y =
         LanguagePrimitives.PhysicalEquality x y
 
-    /// Reference (physical) equality.
+    /// <summary>Reference (physical) equality.</summary>
+    /// <param name="x">The first parameter.</param>
+    /// <param name="y">The second parameter.</param>
+    /// <returns></returns>
     [<Obsolete("This operator will be removed in a future release. Use the (==) operator instead.")>]
     let inline (===) (x : 'T) y =
         LanguagePrimitives.PhysicalEquality x y
 
     /// Negated reference/physical-equality operator.
-    [<Obsolete("This operator will be removed in a future release. Use the (==) operator and the 'not' function instead.")>]
+    [<Obsolete("This operator will be removed in a future release. Use the (===) operator and the 'not' function instead.")>]
     let inline (!==) (x : 'T) y =
         not (LanguagePrimitives.PhysicalEquality x y)
 
@@ -217,7 +221,7 @@ module Operators =
     /// </summary>
     [<CompiledName("NotLazy")>]
     let inline notlazy (value : 'T) =
-        let result = Lazy.CreateFromValue value
+        let result = Lazy<'T>.CreateFromValue value
         result.Force () |> ignore
         result
 
@@ -460,6 +464,7 @@ module Enum =
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Lazy =
     open System.Threading
+    open System.Threading.Tasks
 
     /// <summary>
     /// Forces initialization of a lazily-initialized value (if it has not already been initialized) then returns the value.
@@ -484,7 +489,7 @@ module Lazy =
     /// <returns></returns>
     [<CompiledName("Create")>]
     let inline create creator : Lazy<'T> =
-        System.Lazy.Create creator
+        Lazy<'T>.Create creator
 
     /// <summary>
     /// Creates a lazily-initialized value which is immediately initialized to the given value. In other words, the
@@ -495,7 +500,7 @@ module Lazy =
     /// <returns></returns>
     [<CompiledName("Init")>]
     let inline init value : Lazy<'T> =
-        System.Lazy.CreateFromValue value
+        Lazy<'T>.CreateFromValue value
 
     /// <summary>
     /// Returns the value of a lazily-initialized value as <c>Some(value)</c> if it has already
@@ -525,7 +530,7 @@ module Lazy =
         // 'eagerly' for better performance.
         if lazyValue.IsValueCreated then
             mapping lazyValue.Value
-            |> System.Lazy.CreateFromValue
+            |> Lazy<'T>.CreateFromValue
         else
             lazy (mapping <| lazyValue.Force ())
 
@@ -544,7 +549,7 @@ module Lazy =
         // 'eagerly' for better performance (e.g., by avoiding the thunk).
         if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated then
             mapping lazyValue1.Value lazyValue2.Value
-            |> System.Lazy.CreateFromValue
+            |> Lazy<'T>.CreateFromValue
         else
             lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()))
 
@@ -566,7 +571,7 @@ module Lazy =
         // 'eagerly' for better performance (e.g., by avoiding the thunk).
         if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated && lazyValue3.IsValueCreated then
             mapping lazyValue1.Value lazyValue2.Value lazyValue3.Value
-            |> System.Lazy.CreateFromValue
+            |> Lazy<'T>.CreateFromValue
         else
             lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()) (lazyValue3.Force ()))
 
@@ -585,10 +590,12 @@ module Lazy =
                     function has any side effects, they'd occur immediately instead of when the 'lazy' returned by this function
                     was forced. Worse yet, this optimization would make the semantics of this function inconsistent since side
                     effects could potentially occur immediately OR lazily. *)
-        System.Lazy.Create <| fun () ->
+        Lazy<'T>.Create <| fun () ->
             let result = binding <| lazyValue.Force ()
             result.Force ()
 
+#if FX_NO_THREADPOOL
+#else
     /// Callback delegate which forces evaluation of a Lazy<'T>.
     /// Meant to be used with ThreadPool.QueueUserWorkItem.
     let private forceCallback<'T> =
@@ -601,17 +608,33 @@ module Lazy =
                 // Force the value, ignoring the result
                 lazyValue.Force () |> ignore
             with _ -> ())
+#endif
 
     /// <summary>Forces evaluation of a lazily-initalized value in the background, using the .NET ThreadPool.</summary>
     /// <param name="lazyValue"></param>
     /// <returns></returns>
     [<CompiledName("ForceBackground")>]
     let forceBackground (lazyValue : Lazy<'T>) : unit =
+        // Preconditions
+        checkNonNull "lazyValue" lazyValue
+
         // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
+#if FX_NO_THREADPOOL
+        // If the ThreadPool API can't be used directly, use the Task API instead.
+        Task.Run (fun () ->
+            // Swallow any exception raised when initializing the value; it'll be cached
+            // within the Lazy<_> and re-raised when the value is accessed later.
+            try
+                // Force the value, ignoring the result
+                lazyValue.Force () |> ignore
+            with _ -> ())
+        |> ignore
+#else
         // If the callback couldn't be enqueued, raise an exception.
         if not <| ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue) then
             failwith "The lazily-evaluated value could not be forced in the background, \
                       because the evaluation callback could not be enqueued in the .NET TheadPool."
+#endif
 
     /// <summary>
     /// Invokes the specified generator function to create a value in the background using
@@ -627,22 +650,16 @@ module Lazy =
     [<CompiledName("Future")>]
     let future (creator : unit -> 'T) : Lazy<'T> =
         // Create a lazy value which uses the specified generator function.
-        let lazyValue = Lazy.Create creator
+        let lazyValue = Lazy<'T>.Create creator
 
-        // Evaluate the lazily-initialized value on a .NET ThreadPool thread.
-        if ThreadPool.QueueUserWorkItem (forceCallback<'T>, lazyValue) then
-            // Return the lazy value. The value will be evaluated in the threadpool,
-            // so it'll either be ready immediately when the code consuming this lazy value
-            // calls .Force(), or the calling thread will block until the value is available.
-            lazyValue
-        else
-            // If QueueUserWorkItem returned false, we return a lazy value which raises an exception
-            // when forced so it's obvious the callback couldn't be enqueued in the ThreadPool.
-            // Raising an exception is preferable to simply evaluating the creator function on this thread
-            // because that could lead to unexpected (and possibly dangerous) behavior like DoS vulnerabilities.
-            lazy
-                failwith "The callback to create the lazily-evaluated value could not be enqueued in the .NET ThreadPool."
+        // Force initialization of the value in the background.
+        forceBackground lazyValue
 
+        // Return the lazy value.
+        lazyValue
+
+#if FX_NO_THREADPOOL
+#else
     /// Callback delegate which forces evaluation of a Lazy<'T>,
     /// then sets a ManualResetEvent to signal the initialization has completed.
     /// Meant to be used with ThreadPool.QueueUserWorkItem.
@@ -664,7 +681,13 @@ module Lazy =
             // operation fails; raising an exception on a ThreadPool thread is generally not a great idea.
             // TODO : We could pass a 'ref' cell into this callback, and use that to pass the .Set() result back.
             initCompleted.Set () |> ignore)
+#endif
 
+(* TODO : The 'tryForce' function could be modified to use the Task API instead of directly
+          using the ThreadPool API, which would allow it to be included in portable profile builds.
+          It's excluded for now to make it easier to get the portable builds working. *)
+#if FX_NO_THREADPOOL
+#else
     /// <summary>
     /// Forces evaluation of a lazily-initialized value, if necessary.
     /// If the evaluation is completed within the specified timeout period, returns <c>Some x</c>
@@ -681,6 +704,7 @@ module Lazy =
     [<CompiledName("TryForce")>]
     let tryForce (timeout : System.TimeSpan) (lazyValue : Lazy<'T>) : 'T option =
         // Preconditions
+        checkNonNull "lazyValue" lazyValue
         if timeout < TimeSpan.Zero then
             argOutOfRange "timeout" "The timeout duration cannot be negative."
 
@@ -720,7 +744,7 @@ module Lazy =
                     // Get the initialized value and return it.
                     Some lazyValue.Value
                 else None
-            
+#endif
 
 /// Additional functional operators on options.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

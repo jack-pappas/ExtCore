@@ -18,6 +18,9 @@ limitations under the License.
 
 namespace ExtCore.Net
 
+#if FX_ATLEAST_PORTABLE
+#else
+
 open System
 open System.IO
 open System.Net
@@ -26,9 +29,6 @@ open System.Threading
 open ExtCore
 open ExtCore.Collections
 open ExtCore.IO
-
-#if FX_ATLEAST_PORTABLE
-#else
 
 /// Extensions that simplify working with HttpListener and related types.
 [<AutoOpen>]
