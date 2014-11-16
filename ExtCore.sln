@@ -27,7 +27,7 @@ Global
 		Release (profile7)|Any CPU = Release (profile7)|Any CPU
 		Release (profile47)|Any CPU = Release (profile47)|Any CPU
 		Release (profile78)|Any CPU = Release (profile78)|Any CPU
-		Release (profile289)|Any CPU = Release (profile259)|Any CPU
+		Release (profile259)|Any CPU = Release (profile259)|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (net40)|Any CPU.ActiveCfg = Debug (net40)|Any CPU
