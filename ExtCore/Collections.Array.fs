@@ -1134,8 +1134,9 @@ module Parallel =
     /// Raises ArgumentException if the array has size zero.</summary>
     /// <param name="reduction">The function to reduce a pair of elements to a single element.</param>
     /// <param name="array">The input array.</param>
-    /// <exception cref="System.ArgumentException">Thrown when the input array is empty.</exception>
-    /// <returns>The final result of the redcutions.</returns>
+    /// <exception cref="System.ArgumentNullException">Thrown when <paramref name="array"/> is null.</exception>
+    /// <exception cref="System.ArgumentException">Thrown when <paramref name="array"/> is empty.</exception>
+    /// <returns>The final result of the reductions.</returns>
     [<CompiledName("Reduce")>]
     let reduce (reduction : 'T -> 'T -> 'T) (array : 'T[]) : 'T =
         // Preconditions
