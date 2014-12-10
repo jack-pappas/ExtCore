@@ -32,9 +32,9 @@ open System.Security.Permissions
 #endif
 
 // Version information
-[<assembly: AssemblyVersion("0.8.44")>]
-[<assembly: AssemblyFileVersion("0.8.44")>]
-[<assembly: AssemblyInformationalVersion("0.8.44")>]
+[<assembly: AssemblyVersion("0.8.45")>]
+[<assembly: AssemblyFileVersion("0.8.45")>]
+[<assembly: AssemblyInformationalVersion("0.8.45")>]
 
 // Assembly information
 [<assembly: AssemblyTitle("ExtCore")>]
