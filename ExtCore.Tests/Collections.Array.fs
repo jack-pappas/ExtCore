@@ -370,7 +370,7 @@ let mapInPlace () : unit =
         arr
         |> Array.mapInPlace (fun el ->
             el * 2)
-        arr |> Collection.assertEqual [| 0; 2; 4; 6; 8; |]
+        arr |> Collection.assertEqual [| 0..2..8 |]
 
     do
         let colors =
@@ -558,19 +558,109 @@ module Parallel =
               should be propagated to callers of these functions instead of returning partially-valid results. *)
 
     [<Test>]
+    let ``combineWorkerResults striped`` () =
+        let arr = [|36; 26; 10; -21; -31; -22; -38; 20; 10; 19; 3; -28; -38; -29; 44; 34; 3; -13;
+                      -4; -14; 44; 28; 37; 27; 11; -20; -11; -21; -37; 21; 11; 20; 4; -27; -37; -28;
+                      -44; 35; 4; -12; -3|]
+
+        let workerResults =
+            let workerCount = 11
+            let results = Array.init workerCount <| fun _ -> ResizeArray ()
+
+            for i = 0 to arr.Length - 1 do
+                System.Collections.Generic.KeyValuePair (i, arr.[i])
+                |> results.[i % workerCount].Add
+
+            ResizeArray results
+                
+        // Combine the results and check them.
+        workerResults
+        |> Array.Parallel.combineWorkerResults
+        |> Collection.assertEqual arr
+
+    [<Test>]
     let init2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
     let mapInPlace () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let arr = Array.empty
+            arr
+            |> Array.Parallel.mapInPlace (fun el ->
+                el * 2)
+            arr |> Collection.assertEqual Array.empty
+
+        // Sample usage test cases.
+        do
+            let arr = [| 0..4 |]
+            arr
+            |> Array.Parallel.mapInPlace (fun el ->
+                el * 2)
+            arr |> Collection.assertEqual [| 0..2..8 |]
+
+        do
+            let colors =
+                [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+                   "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"; |]
+            colors
+            |> Array.Parallel.mapInPlace (fun colorName ->
+                colorName.ToLowerInvariant ())
+            colors |> Collection.assertEqual [|
+                "black"; "blue"; "cyan"; "darkblue"; "darkgray";
+                "darkgreen"; "darkmagenta"; "darkred"; "darkyellow"; "gray"; "green"; |]
 
     [<Test>]
     let mapiInPlace () : unit =
-        Assert.Ignore "Test not yet implemented."
+        // Test case for an empty array.
+        do
+            let arr = Array.empty
+            arr
+            |> Array.Parallel.mapiInPlace (fun idx el ->
+                el * (2 + idx))
+            arr |> Collection.assertEqual Array.empty
+
+        // Sample usage test cases.
+        do
+            let arr = [| 0..4 |]
+            arr
+            |> Array.Parallel.mapiInPlace (fun idx el ->
+                el * (2 + idx))
+            arr |> Collection.assertEqual [| 0; 3; 8; 15; 24; |]
+
+        do
+            let colors =
+                [| "Black"; "Blue"; "Cyan"; "DarkBlue"; "DarkGray";
+                   "DarkGreen"; "DarkMagenta"; "DarkRed"; "DarkYellow"; "Gray"; "Green"; |]
+            colors
+            |> Array.Parallel.mapiInPlace (fun idx colorName ->
+                if idx % 2 = 0 then
+                    colorName.ToLowerInvariant ()
+                else
+                    colorName.ToUpperInvariant ())
+            colors |> Collection.assertEqual [|
+                "black"; "BLUE"; "cyan"; "DARKBLUE"; "darkgray";
+                "DARKGREEN"; "darkmagenta"; "DARKRED"; "darkyellow"; "GRAY"; "green"; |]
 
     [<Test>]
     let countWith () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let reduce () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let mapReduce () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let filter () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let choose2 () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
@@ -603,25 +693,36 @@ module Parallel =
         Collection.assertEqual chooseResults chooseiResults
 
     [<Test>]
-    let ``combineWorkerResults striped`` () =
-        let arr = [|36; 26; 10; -21; -31; -22; -38; 20; 10; 19; 3; -28; -38; -29; 44; 34; 3; -13;
-                      -4; -14; 44; 28; 37; 27; 11; -20; -11; -21; -37; 21; 11; 20; 4; -27; -37; -28;
-                      -44; 35; 4; -12; -3|]
+    let mapPartition () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-        let workerResults =
-            let workerCount = 11
-            let results = Array.init workerCount <| fun _ -> ResizeArray ()
+    [<Test>]
+    let mapiPartition () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-            for i = 0 to arr.Length - 1 do
-                System.Collections.Generic.KeyValuePair (i, arr.[i])
-                |> results.[i % workerCount].Add
+    [<Test>]
+    let max () : unit =
+        Assert.Ignore "Test not yet implemented."
 
-            ResizeArray results
-                
-        // Combine the results and check them.
-        workerResults
-        |> Array.Parallel.combineWorkerResults
-        |> Collection.assertEqual arr
+    [<Test>]
+    let maxBy () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let min () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let minBy () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let sum () : unit =
+        Assert.Ignore "Test not yet implemented."
+
+    [<Test>]
+    let sumBy () : unit =
+        Assert.Ignore "Test not yet implemented."
 
 
     /// FsCheck-based tests for Array.Parallel functions.
