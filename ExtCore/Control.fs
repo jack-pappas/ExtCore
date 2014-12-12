@@ -180,6 +180,14 @@ type AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
 type AsyncProtectedStateFunc<'State, 'T, 'Error> =
     'State -> Async<Choice<'T * 'State, 'Error>>
 
+/// <summary>
+/// </summary>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+type AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+    'State -> Async<Choice<'T, 'Error> * 'State>
+
 
 (*** Workflow Builders ***)
 
@@ -1718,6 +1726,94 @@ type AsyncProtectedStateBuilder () =
                 this.Delay (fun () ->
                     body enum.Current)))
 
+/// <summary>
+/// </summary>
+[<Sealed>]
+type AsyncStatefulChoiceBuilder () =
+    // 'T -> M<'T>
+    member __.Return value
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+        fun state ->
+            async.Return (Choice1Of2 value, state)
+
+    // M<'T> -> M<'T>
+    member __.ReturnFrom func
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+        func
+
+    // unit -> M<'T>
+    member this.Zero ()
+        : AsyncStatefulChoiceFunc<'State, unit, 'Error> =
+        fun state ->
+            async.Return (Choice1Of2 (), state)
+
+    // (unit -> M<'T>) -> M<'T>
+    member this.Delay (f : unit -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+        fun state -> f () state
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member __.Bind (m : AsyncStatefulChoiceFunc<_,_,_>, k : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'U, 'Error> =
+        fun state ->
+            async {
+            let! result, state = m state
+            match result with
+            | Choice2Of2 error ->
+                return (Choice2Of2 error, state)
+            | Choice1Of2 value ->
+                return! k value state
+            }
+
+    // M<'T> -> M<'T> -> M<'T>
+    // or
+    // M<unit> -> M<'T> -> M<'T>
+    member this.Combine (r1 : AsyncStatefulChoiceFunc<_,_,_>, r2 : AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+        this.Bind (r1, (fun () -> r2))
+
+    // M<'T> * (exn -> M<'T>) -> M<'T>
+    member __.TryWith (body : AsyncStatefulChoiceFunc<_,_,_>, handler : exn -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+        fun state ->
+        try body state
+        with ex ->
+            handler ex state
+
+    // M<'T> * (unit -> unit) -> M<'T>
+    member __.TryFinally (body : AsyncStatefulChoiceFunc<_,_,_>, handler)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+        fun state ->
+        try body state
+        finally
+            handler ()
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'U, 'Error> =
+        this.TryFinally (body resource, fun () ->
+            if not <| isNull (box resource) then
+                resource.Dispose ())
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, unit, 'Error> =
+        if guard () then
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member this.For (sequence : seq<_>, body : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, unit, 'Error> =
+        this.Using (sequence.GetEnumerator (), fun enum ->
+            this.While (
+                enum.MoveNext,
+                this.Delay (fun () ->
+                    body enum.Current)))
+
 
 /// <summary>
 /// </summary>
@@ -1782,6 +1878,9 @@ module WorkflowBuilders =
     //
     [<CompiledName("AsyncProtectedState")>]
     let asyncProtectedState = AsyncProtectedStateBuilder ()
+    //
+    [<CompiledName("AsyncStatefulChoice")>]
+    let asyncStatefulChoice = AsyncStatefulChoiceBuilder ()
 
 
 (*** Workflow helper modules ***)
