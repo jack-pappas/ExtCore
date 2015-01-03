@@ -211,14 +211,14 @@ type LazyBuilder () =
         notlazy ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : Lazy<'T>, k : 'T -> Lazy<'U>)
+    member inline __.Bind (lazyValue : Lazy<'T>, binder : 'T -> Lazy<'U>)
         : Lazy<'U> =
-        Lazy.bind k m
+        Lazy.bind binder lazyValue
 
     // (unit -> M<'T>) -> M<'T>
-    member inline this.Delay (f : unit -> Lazy<_>)
+    member inline this.Delay (generator : unit -> Lazy<_>)
         : Lazy<'T> =
-        this.Bind (this.Return (), f)
+        this.Bind (this.Return (), generator)
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -245,12 +245,16 @@ type LazyBuilder () =
             finally
                 handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member (*inline*) this.Using (resource : ('T :> System.IDisposable), body : 'T -> Lazy<_>)
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member (*inline*) this.Using (resource : ('T :> System.IDisposable), binding : 'T -> Lazy<_>)
         : Lazy<'U> =
-        this.TryFinally (body resource, (fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ()))
+        Lazy<'T>.Create <| fun () ->
+            try
+                let result = binding resource
+                result.Force ()
+            finally
+                if not <| isNull (box resource) then
+                    resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : Lazy<_>)
@@ -278,10 +282,10 @@ type LazyBuilder () =
 [<Sealed>]
 type StateBuilder () =
     // 'T -> M<'T>
-    member inline __.Return (x)
+    member inline __.Return value
         : StateFunc<'State, 'T> =
         fun state ->
-        x, state
+        value, state
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
@@ -294,16 +298,16 @@ type StateBuilder () =
         this.Return ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : StateFunc<_, 'T>, k : 'T -> StateFunc<_,_>)
+    member inline __.Bind (computation : StateFunc<_, 'T>, binder : 'T -> StateFunc<_,_>)
         : StateFunc<'State, 'U> =
         fun state ->
-            let result, state = m state
-            (k result) state
+            let result, state = computation state
+            (binder result) state
 
     // (unit -> M<'T>) -> M<'T>
-    member inline this.Delay (f : unit -> StateFunc<_,_>)
+    member inline this.Delay (generator : unit -> StateFunc<_,_>)
         : StateFunc<'State, 'T> =
-        this.Bind (this.Return (), f)
+        this.Bind (this.Return (), generator)
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -313,35 +317,38 @@ type StateBuilder () =
         this.Bind (r1, fun () -> r2)
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member inline __.TryWith (body : StateFunc<_,_>, handler : exn -> StateFunc<_,_>)
+    member inline __.TryWith (computation : StateFunc<_,_>, catchHandler : exn -> StateFunc<_,_>)
         : StateFunc<'State, 'T> =
         fun state ->
-            try body state
+            try computation state
             with ex ->
-                handler ex state
+                catchHandler ex state
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member inline __.TryFinally (body : StateFunc<_,_>, handler)
+    member inline __.TryFinally (computation : StateFunc<_,_>, compensation)
         : StateFunc<'State, 'T> =
         fun state ->
-            try body state
+            try computation state
             finally
-                handler ()
+                compensation ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member inline this.Using (resource : ('T :> System.IDisposable), body : 'T -> StateFunc<_,_>)
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), binder : 'T -> StateFunc<_,_>)
         : StateFunc<'State, 'U> =
-        this.TryFinally (body resource, (fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ()))
+        fun state ->
+            try binder resource state
+            finally
+                if not <| isNull (box resource) then
+                    resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : StateFunc<_,_>)
+    member this.While (guard, body : StateFunc<'State, unit>)
         : StateFunc<'State, unit> =
-        if guard () then
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
+        fun state ->
+            let mutable state = state
+            while guard () do
+                state <- snd <| body state
+            (), state
 
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
@@ -376,16 +383,16 @@ type ReaderBuilder () =
         fun _ -> ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (f : ReaderFunc<_,_>, k : 'T -> ReaderFunc<_,_>)
+    member __.Bind (f : ReaderFunc<_,_>, binder : 'T -> ReaderFunc<_,_>)
         : ReaderFunc<'Env, 'U> =
         fun env ->
             let result = f env
-            k result env
+            binder result env
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ReaderFunc<_,_>)
+    member this.Delay (generator : unit -> ReaderFunc<_,_>)
         : ReaderFunc<'Env, 'T> =
-        this.Bind (this.Zero (), f)
+        this.Bind (this.Zero (), generator)
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -410,22 +417,21 @@ type ReaderBuilder () =
             finally
                 handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderFunc<_,_>)
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), binder : 'T -> ReaderFunc<_,_>)
         : ReaderFunc<'Env, 'U> =
-        try body resource
-        finally
-            if not <| isNull (box resource) then
-                resource.Dispose ()
+        fun env ->
+            try binder resource env
+            finally
+                if not <| isNull (box resource) then
+                    resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : ReaderFunc<_,_>)
         : ReaderFunc<'Env, unit> =
-        if guard () then
-            // OPTIMIZE : Could we manually invoke 'body' here, then call this.While recursively?
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
+        fun env ->
+            while guard () do
+                body env
 
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
@@ -466,16 +472,16 @@ type ReaderStateBuilder () =
         this.Return ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ReaderStateFunc<_,_,_>, k : 'T -> ReaderStateFunc<_,_,_>)
+    member __.Bind (m : ReaderStateFunc<_,_,_>, binder : 'T -> ReaderStateFunc<_,_,_>)
         : ReaderStateFunc<'Env, 'State, 'U> =
         fun env state ->
             let result, state = m env state
-            (k result) env state
+            (binder result) env state
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ReaderStateFunc<_,_,_>)
+    member __.Delay (generator : unit -> ReaderStateFunc<_,_,_>)
         : ReaderStateFunc<'Env, 'State, 'T> =
-        this.Bind (this.Return (), f)
+        generator ()
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -500,20 +506,23 @@ type ReaderStateBuilder () =
             finally
                 handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : _ -> ReaderStateFunc<_,_,_>)
         : ReaderStateFunc<'Env, 'State, 'U> =
-        this.TryFinally (body resource, (fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ()))
+        fun env state ->
+            try body resource env state
+            finally
+                if not <| isNull (box resource) then
+                    resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : ReaderStateFunc<_,_,_>)
         : ReaderStateFunc<'Env, 'State, unit> =
-        if guard () then
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
+        fun env state ->
+            let mutable state = state
+            while guard () do
+                state <- snd <| body env state
+            (), state
 
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
@@ -551,9 +560,9 @@ type WriterBuilder<'Writer
         (), writer
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay f
+    member __.Delay generator
         : 'T * 'Writer =
-        f ()
+        generator ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
     member __.Bind (m : 'T * 'Writer, k : 'T -> 'U * 'Writer)
@@ -581,7 +590,7 @@ type WriterBuilder<'Writer
 //        : 'T * 'W =
 //        notImpl "TryFinally"
 //
-//    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+//    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
 //    member this.Using (resource : ('T :> System.IDisposable), body) =
 //        try body resource
 //        finally
@@ -634,7 +643,7 @@ type WriterBuilder<'Writer
 //        notImpl "Bind"
 //
 //    // (unit -> M<'T>) -> M<'T>
-//    member __.Delay (f : unit -> ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, 'T>)
+//    member __.Delay (generator : unit -> ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, 'T>)
 //        : ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, 'T> =
 //        notImpl "Delay"
 //
@@ -662,7 +671,7 @@ type WriterBuilder<'Writer
 //        finally
 //            handler ()
 //
-//    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+//    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
 //    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderWriterStateFunc<_,_,_,_,_>)
 //        : ReaderWriterStateFunc<'Env, 'Output, 'S1, 'S2, unit> =
 //        try body resource
@@ -705,11 +714,11 @@ type MaybeBuilder () =
 
     // unit -> M<'T>
     member inline __.Zero () : unit option =
-        Some ()     // TODO : Should this be None?
+        Some ()
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (f : unit -> 'T option) : 'T option =
-        f ()
+    member __.Delay (generator : unit -> 'T option) : 'T option =
+        generator ()
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -722,8 +731,8 @@ type MaybeBuilder () =
             r2
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (value, f : 'T -> 'U option) : 'U option =
-        Option.bind f value
+    member inline __.Bind (value, binder : 'T -> 'U option) : 'U option =
+        Option.bind binder value
 
 //    // M<'T> * (exn -> M<'T>) -> M<'T>
 //    member this.TryWith (body, handler) : _ option =
@@ -739,8 +748,8 @@ type MaybeBuilder () =
 //            finally
 //                handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : _ -> _ option) : _ option =
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), body : _ -> _ option) : 'U option =
         try body resource
         finally
             if not <| isNull (box resource) then
@@ -794,8 +803,8 @@ type ChoiceBuilder () =
         zero
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (f : unit -> Choice<'T, 'Error>) : Choice<'T, 'Error> =
-        f ()
+    member __.Delay (generator : unit -> Choice<'T, 'Error>) : Choice<'T, 'Error> =
+        generator ()
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -808,12 +817,12 @@ type ChoiceBuilder () =
             r2
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (value, f : 'T -> Choice<'U, 'Error>) : Choice<'U, 'Error> =
+    member inline __.Bind (value, binder : 'T -> Choice<'U, 'Error>) : Choice<'U, 'Error> =
         match value with
         | Choice2Of2 error ->
             Choice2Of2 error
         | Choice1Of2 x ->
-            f x
+            binder x
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
     member inline __.TryWith (body : 'T -> Choice<'U, 'Error>, handler) =
@@ -829,7 +838,7 @@ type ChoiceBuilder () =
             finally
                 handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : _ -> Choice<_,_>)
         : Choice<'U, 'Error> =
         try body resource
@@ -877,19 +886,19 @@ type ReaderChoiceBuilder () =
         fun _ -> Choice1Of2 ()
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (f : unit -> ReaderChoiceFunc<'Env, 'T, 'Error>)
+    member __.Delay (generator : unit -> ReaderChoiceFunc<'Env, 'T, 'Error>)
         : ReaderChoiceFunc<'Env, 'T, 'Error> =
-        f ()
+        generator ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (f : ReaderChoiceFunc<_,_,_>, k : 'T -> ReaderChoiceFunc<_,_,_>)
+    member __.Bind (f : ReaderChoiceFunc<_,_,_>, binder : 'T -> ReaderChoiceFunc<_,_,_>)
         : ReaderChoiceFunc<'Env, 'U, 'Error> =
         fun env ->
         match f env with
         | Choice2Of2 error ->
             Choice2Of2 error
         | Choice1Of2 result ->
-            k result env
+            binder result env
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -919,10 +928,11 @@ type ReaderChoiceBuilder () =
         finally
             handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member __.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderChoiceFunc<_,_,_>)
         : ReaderChoiceFunc<'Env, 'U, 'Error> =
-        try body resource
+        fun env ->
+        try body resource env
         finally
             if not <| isNull (box resource) then
                 resource.Dispose ()
@@ -963,25 +973,24 @@ type ProtectedStateBuilder () =
         func
 
     // unit -> M<'T>
-    member this.Zero ()
+    member inline this.Zero ()
         : ProtectedStateFunc<'State, unit, 'Error> =
-        fun state ->
-        Choice1Of2 ((), state)
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ProtectedStateFunc<_,_,_>)
+    member __.Delay (generator : unit -> ProtectedStateFunc<_,_,_>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
-        fun state -> f () state
+        fun state -> generator () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ProtectedStateFunc<_,_,_>, k : 'T -> ProtectedStateFunc<_,_,_>)
+    member __.Bind (m : ProtectedStateFunc<_,_,_>, binder : 'T -> ProtectedStateFunc<_,_,_>)
         : ProtectedStateFunc<'State, 'U, 'Error> =
         fun state ->
         match m state with
         | Choice2Of2 error ->
             Choice2Of2 error
         | Choice1Of2 (value, state) ->
-            k value state
+            binder value state
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -1006,12 +1015,15 @@ type ProtectedStateBuilder () =
         finally
             handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateFunc<_,_,_>)
         : ProtectedStateFunc<'State, 'U, 'Error> =
-        this.TryFinally (body resource, fun () ->
+        fun state ->
+        try
+            body resource state
+        finally
             if not <| isNull (box resource) then
-                resource.Dispose ())
+                resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : ProtectedStateFunc<_,_,_>)
@@ -1060,14 +1072,14 @@ type ReaderProtectedStateBuilder () =
         fun env state -> f () env state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ReaderProtectedStateFunc<_,_,_,_>, k : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
+    member __.Bind (m : ReaderProtectedStateFunc<_,_,_,_>, binder : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
         : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
         fun env state ->
         match m env state with
         | Choice2Of2 error ->
             Choice2Of2 error
         | Choice1Of2 (value, state) ->
-            k value env state
+            binder value env state
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -1079,25 +1091,28 @@ type ReaderProtectedStateBuilder () =
     // M<'T> * (exn -> M<'T>) -> M<'T>
     member __.TryWith (body : ReaderProtectedStateFunc<_,_,_,_>, handler : exn -> ReaderProtectedStateFunc<_,_,_,_>)
         : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun state ->
-        try body state
+        fun env state ->
+        try body env state
         with ex ->
-            handler ex state
+            handler ex env state
 
     // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : ReaderProtectedStateFunc<_,_,_,_>, handler)
         : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun state ->
-        try body state
+        fun env state ->
+        try body env state
         finally
             handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
         : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
-        this.TryFinally (body resource, fun () ->
+        fun env state ->
+        try
+            body resource env state
+        finally
             if not <| isNull (box resource) then
-                resource.Dispose ())
+                resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : ReaderProtectedStateFunc<_,_,_,_>)
@@ -1135,23 +1150,22 @@ type StatefulChoiceBuilder () =
         func
 
     // unit -> M<'T>
-    member this.Zero ()
+    member inline this.Zero ()
         : StatefulChoiceFunc<'State, unit, 'Error> =
-        fun state ->
-        (Choice1Of2 ()), state
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> StatefulChoiceFunc<_,_,_>)
+    member this.Delay (generator : unit -> StatefulChoiceFunc<_,_,_>)
         : StatefulChoiceFunc<'State, 'T, 'Error> =
-        fun state -> f () state
+        fun state -> generator () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (f : StatefulChoiceFunc<_,_,_>, k : 'T -> StatefulChoiceFunc<_,_,_>)
+    member __.Bind (computation : StatefulChoiceFunc<_,_,_>, binder : 'T -> StatefulChoiceFunc<_,_,_>)
         : StatefulChoiceFunc<'State, 'U, 'Error> =
         fun state ->
-        match f state with
+        match computation state with
         | (Choice1Of2 value), state ->
-            k value state
+            binder value state
         | (Choice2Of2 error), state ->
             (Choice2Of2 error), state    
         
@@ -1178,12 +1192,15 @@ type StatefulChoiceBuilder () =
         finally
             handler ()
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StatefulChoiceFunc<_,_,_>)
         : StatefulChoiceFunc<'State, 'U, 'Error> =
-        this.TryFinally (body resource, (fun () ->
+        fun state ->
+        try
+            body resource state
+        finally
             if not <| isNull (box resource) then
-                resource.Dispose ()))
+                resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : StatefulChoiceFunc<_,_,_>)
@@ -1210,10 +1227,10 @@ type StatefulChoiceBuilder () =
 [<Sealed>]
 type AsyncStateBuilder () =
     // 'T -> M<'T>
-    member __.Return (x)
+    member __.Return (value : 'T)
         : AsyncStateFunc<'State, 'T> =
         fun state ->
-            async.Return (x, state)
+            async.Return (value, state)
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
@@ -1221,23 +1238,23 @@ type AsyncStateBuilder () =
         func
 
     // unit -> M<'T>
-    member this.Zero ()
+    member inline this.Zero ()
         : AsyncStateFunc<'State, unit> =
         this.Return ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : AsyncStateFunc<_, 'T>, k : 'T -> AsyncStateFunc<_,_>)
+    member __.Bind (m : AsyncStateFunc<_, 'T>, binder : 'T -> AsyncStateFunc<_,_>)
         : AsyncStateFunc<'State, 'U> =
         fun state ->
             async {
             let! result, state = m state
-            return! (k result) state
+            return! (binder result) state
             }
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> AsyncStateFunc<_,_>)
+    member this.Delay (generator : unit -> AsyncStateFunc<_,_>)
         : AsyncStateFunc<'State, 'T> =
-        this.Bind (this.Return (), f)
+        this.Bind (this.Zero (), generator)
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -1250,24 +1267,28 @@ type AsyncStateBuilder () =
     member __.TryWith (body : AsyncStateFunc<_,_>, handler : exn -> AsyncStateFunc<_,_>)
         : AsyncStateFunc<'State, 'T> =
         fun state ->
-            try body state
-            with ex ->
-                handler ex state
+            async.TryWith (
+                async.Delay (fun () -> body state),
+                fun ex ->
+                    async.Delay (fun () -> handler ex state))
 
     // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncStateFunc<_,_>, handler)
         : AsyncStateFunc<'State, 'T> =
         fun state ->
-            try body state
-            finally
-                handler ()
+            async.TryFinally (
+                async.Delay (fun () -> body state),
+                handler)
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncStateFunc<_,_>)
         : AsyncStateFunc<'State, 'U> =
-        this.TryFinally (body resource, (fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ()))
+        this.TryFinally (
+            this.Delay (fun () ->
+                body resource),
+            fun () ->
+                if not <| isNull (box resource) then
+                    resource.Dispose ())
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : AsyncStateFunc<_,_>)
@@ -1295,21 +1316,19 @@ type AsyncStateBuilder () =
 type AsyncMaybeBuilder () =
     // 'T -> M<'T>
     member (*inline*) __.Return value : Async<'T option> =
-        Some value
-        |> async.Return
+        async.Return <| Some value
 
     // M<'T> -> M<'T>
     member (*inline*) __.ReturnFrom value : Async<'T option> =
         value
 
     // unit -> M<'T>
-    member (*inline*) __.Zero () : Async<unit option> =
-        Some ()     // TODO : Should this be None?
-        |> async.Return
+    member inline this.Zero () : Async<unit option> =
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (f : unit -> Async<'T option>) : Async<'T option> =
-        f ()
+    member __.Delay (generator : unit -> Async<'T option>) : Async<'T option> =
+        async.Delay generator
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -1325,36 +1344,27 @@ type AsyncMaybeBuilder () =
         }
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member (*inline*) __.Bind (value, f : 'T -> Async<'U option>) : Async<'U option> =
+    member (*inline*) __.Bind (value, binder : 'T -> Async<'U option>) : Async<'U option> =
         async {
         let! value' = value
         match value' with
         | None ->
             return None
         | Some result ->
-            return! f result
+            return! binder result
         }
 
-//    // M<'T> * (exn -> M<'T>) -> M<'T>
-//    member this.TryWith (body, handler) : Async<_ option> =
-//        fun value ->
-//            try body value
-//            with ex ->
-//                handler ex
-//
-//    // M<'T> * (unit -> unit) -> M<'T>
-//    member this.TryFinally (body, handler) : Async<_ option> =
-//        fun value ->
-//            try body value
-//            finally
-//                handler ()
+    // M<'T> * (exn -> M<'T>) -> M<'T>
+    member inline __.TryWith (computation : Async<'T option>, catchHandler : exn -> Async<'T option>) : Async<'T option> =
+        async.TryWith (computation, catchHandler)
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : _ -> Async<_ option>) : Async<_ option> =
-        try body resource
-        finally
-            if not <| isNull (box resource) then
-                resource.Dispose ()
+    // M<'T> * (unit -> unit) -> M<'T>
+    member inline __.TryFinally (computation : Async<'T option>, compensation : unit -> unit) : Async<'T option> =
+        async.TryFinally (computation, compensation)
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member inline __.Using (resource : ('T :> System.IDisposable), binder : 'T -> Async<'U option>) : Async<'U option> =
+        async.Using (resource, binder)
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : Async<_ option>) : Async<_ option> =
@@ -1390,13 +1400,12 @@ type AsyncChoiceBuilder () =
         asyncChoice
 
     // unit -> M<'T>
-    member (*inline*) __.Zero () : Async<Choice<unit, 'Error>> =
-        Choice1Of2 ()
-        |> async.Return
+    member inline this.Zero () : Async<Choice<unit, 'Error>> =
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (f : unit -> Async<Choice<'T, 'Error>>) : Async<Choice<'T, 'Error>> =
-        f ()
+    member inline this.Delay (generator : unit -> Async<Choice<'T, 'Error>>) : Async<Choice<'T, 'Error>> =
+        async.Delay generator
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -1412,7 +1421,7 @@ type AsyncChoiceBuilder () =
         }
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member (*inline*) __.Bind (value : Async<Choice<'T, 'Error>>, f : 'T -> Async<Choice<'U, 'Error>>)
+    member (*inline*) __.Bind (value : Async<Choice<'T, 'Error>>, binder : 'T -> Async<Choice<'U, 'Error>>)
         : Async<Choice<'U, 'Error>> =
         async {
         let! value' = value
@@ -1420,30 +1429,23 @@ type AsyncChoiceBuilder () =
         | Choice2Of2 error ->
             return Choice2Of2 error
         | Choice1Of2 x ->
-            return! f x
+            return! binder x
         }
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member (*inline*) __.TryWith (body : 'T -> Async<Choice<'U, 'Error>>, handler) =
-        fun value ->
-            try body value
-            with ex ->
-                handler ex
+    member inline __.TryWith (computation : Async<Choice<'T, 'Error>>, catchHandler : exn -> Async<Choice<'T, 'Error>>)
+        : Async<Choice<'T, 'Error>> =
+        async.TryWith(computation, catchHandler)
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member (*inline*) __.TryFinally (body : 'T -> Async<Choice<'U, 'Error>>, handler) =
-        fun value ->
-            try body value
-            finally
-                handler ()
+    member inline __.TryFinally (computation : Async<Choice<'T, 'Error>>, compensation : unit -> unit)
+        : Async<Choice<'T, 'Error>> =
+        async.TryFinally (computation, compensation)
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : _ -> Async<Choice<_,_>>)
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member inline __.Using (resource : ('T :> System.IDisposable), binder : _ -> Async<Choice<'U, 'Error>>)
         : Async<Choice<'U, 'Error>> =
-        try body resource
-        finally
-            if not <| isNull (box resource) then
-                resource.Dispose ()
+        async.Using (resource, binder)
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : Async<Choice<unit, 'Error>>) : Async<Choice<_,_>> =
@@ -1480,15 +1482,14 @@ type AsyncReaderBuilder () =
         func
 
     // unit -> M<'T>
-    member this.Zero ()
+    member inline this.Zero ()
         : AsyncReaderFunc<'Env, unit> =
-        fun _ ->
-            async.Zero ()
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> AsyncReaderFunc<_,_>)
+    member __.Delay (generator : unit -> AsyncReaderFunc<_,_>)
         : AsyncReaderFunc<'Env, 'T> =
-        fun env -> f () env
+        fun env -> generator () env
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
     member __.Bind (m : AsyncReaderFunc<_,_>, k : 'T -> AsyncReaderFunc<_,_>)
@@ -1510,24 +1511,28 @@ type AsyncReaderBuilder () =
     member __.TryWith (body : AsyncReaderFunc<_,_>, handler : exn -> AsyncReaderFunc<_,_>)
         : AsyncReaderFunc<'Env, 'T> =
         fun env ->
-        try body env
-        with ex ->
-            handler ex env
+            async.TryWith (
+                async.Delay (fun () -> body env),
+                fun ex ->
+                    async.Delay (fun () -> handler ex env))
 
     // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncReaderFunc<_,_>, handler)
         : AsyncReaderFunc<'Env, 'T> =
         fun env ->
-        try body env
-        finally
-            handler ()
+            async.TryFinally (
+                async.Delay (fun () -> body env),
+                handler)
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncReaderFunc<_,_>)
         : AsyncReaderFunc<'Env, 'U> =
-        this.TryFinally (body resource, fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ())
+        this.TryFinally (
+            this.Delay (fun () ->
+                body resource),
+            fun () ->
+                if not <| isNull (box resource) then
+                    resource.Dispose ())
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : AsyncReaderFunc<_,_>)
@@ -1564,15 +1569,14 @@ type AsyncReaderChoiceBuilder () =
         func
 
     // unit -> M<'T>
-    member this.Zero ()
+    member inline this.Zero ()
         : AsyncReaderChoiceFunc<'Env, unit, 'Error> =
-        fun _ ->
-            async.Return (Choice1Of2 ())
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> AsyncReaderChoiceFunc<_,_,_>)
+    member this.Delay (generator : unit -> AsyncReaderChoiceFunc<_,_,_>)
         : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
-        fun env -> f () env
+        fun env -> generator () env
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
     member __.Bind (m : AsyncReaderChoiceFunc<_,_,_>, k : 'T -> AsyncReaderChoiceFunc<_,_,_>)
@@ -1598,24 +1602,28 @@ type AsyncReaderChoiceBuilder () =
     member __.TryWith (body : AsyncReaderChoiceFunc<_,_,_>, handler : exn -> AsyncReaderChoiceFunc<_,_,_>)
         : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
-        try body env
-        with ex ->
-            handler ex env
+            async.TryWith (
+                async.Delay (fun () -> body env),
+                fun ex ->
+                    async.Delay (fun () -> handler ex env))
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member __.TryFinally (body : AsyncReaderChoiceFunc<_,_,_>, handler)
+    member this.TryFinally (body : AsyncReaderChoiceFunc<_,_,_>, handler)
         : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
-        try body env
-        finally
-            handler ()
+            async.TryFinally (
+                async.Delay (fun () -> body env),
+                handler)
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncReaderChoiceFunc<_,_,_>)
         : AsyncReaderChoiceFunc<'Env, 'U, 'Error> =
-        this.TryFinally (body resource, fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ())
+        this.TryFinally (
+            this.Delay (fun () ->
+                body resource),
+            fun () ->
+                if not <| isNull (box resource) then
+                    resource.Dispose ())
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : AsyncReaderChoiceFunc<_,_,_>)
@@ -1653,16 +1661,14 @@ type AsyncProtectedStateBuilder () =
         func
 
     // unit -> M<'T>
-    member this.Zero ()
+    member inline this.Zero ()
         : AsyncProtectedStateFunc<'State, unit, 'Error> =
-        fun state ->
-            Choice1Of2 ((), state)
-            |> async.Return
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> AsyncProtectedStateFunc<_,_,_>)
+    member this.Delay (generator : unit -> AsyncProtectedStateFunc<_,_,_>)
         : AsyncProtectedStateFunc<'State, 'T, 'Error> =
-        fun state -> f () state
+        fun state -> generator () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
     member __.Bind (m : AsyncProtectedStateFunc<_,_,_>, k : 'T -> AsyncProtectedStateFunc<_,_,_>)
@@ -1688,24 +1694,28 @@ type AsyncProtectedStateBuilder () =
     member __.TryWith (body : AsyncProtectedStateFunc<_,_,_>, handler : exn -> AsyncProtectedStateFunc<_,_,_>)
         : AsyncProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
-        try body state
-        with ex ->
-            handler ex state
+            async.TryWith (
+                async.Delay (fun () -> body state),
+                fun ex ->
+                    async.Delay (fun () -> handler ex state))
 
     // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncProtectedStateFunc<_,_,_>, handler)
         : AsyncProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
-        try body state
-        finally
-            handler ()
+            async.TryFinally (
+                async.Delay (fun () -> body state),
+                handler)
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncProtectedStateFunc<_,_,_>)
         : AsyncProtectedStateFunc<'State, 'U, 'Error> =
-        this.TryFinally (body resource, fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ())
+        this.TryFinally (
+            this.Delay (fun () ->
+                body resource),
+            fun () ->
+                if not <| isNull (box resource) then
+                    resource.Dispose ())
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : AsyncProtectedStateFunc<_,_,_>)
@@ -1742,15 +1752,14 @@ type AsyncStatefulChoiceBuilder () =
         func
 
     // unit -> M<'T>
-    member this.Zero ()
+    member inline this.Zero ()
         : AsyncStatefulChoiceFunc<'State, unit, 'Error> =
-        fun state ->
-            async.Return (Choice1Of2 (), state)
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> AsyncStatefulChoiceFunc<_,_,_>)
+    member this.Delay (generator : unit -> AsyncStatefulChoiceFunc<_,_,_>)
         : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
-        fun state -> f () state
+        fun state -> generator () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
     member __.Bind (m : AsyncStatefulChoiceFunc<_,_,_>, k : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
@@ -1776,24 +1785,28 @@ type AsyncStatefulChoiceBuilder () =
     member __.TryWith (body : AsyncStatefulChoiceFunc<_,_,_>, handler : exn -> AsyncStatefulChoiceFunc<_,_,_>)
         : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
-        try body state
-        with ex ->
-            handler ex state
+            async.TryWith (
+                async.Delay (fun () -> body state),
+                fun ex ->
+                    async.Delay (fun () ->handler ex state))
 
     // M<'T> * (unit -> unit) -> M<'T>
     member __.TryFinally (body : AsyncStatefulChoiceFunc<_,_,_>, handler)
         : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
-        try body state
-        finally
-            handler ()
+            async.TryFinally (
+                async.Delay (fun () -> body state),
+                handler)
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
         : AsyncStatefulChoiceFunc<'State, 'U, 'Error> =
-        this.TryFinally (body resource, fun () ->
-            if not <| isNull (box resource) then
-                resource.Dispose ())
+        this.TryFinally (
+            this.Delay (fun () ->
+                body resource),
+            fun () ->
+                if not <| isNull (box resource) then
+                    resource.Dispose ())
 
     // (unit -> bool) * M<'T> -> M<'T>
     member this.While (guard, body : AsyncStatefulChoiceFunc<_,_,_>)
@@ -2198,6 +2211,7 @@ module StatefulChoice =
             : StatefulChoiceFunc<'State, 'U, 'Error> =
         bind (mapping >> ``return``) m
 
+    //
     [<CompiledName("Attempt")>]
     let attempt (generator : unit -> 'T) : StatefulChoiceFunc<'State, 'T, exn> =
         statefulChoice {
@@ -2205,6 +2219,7 @@ module StatefulChoice =
         return! fun _ -> Choice.attempt generator, state
         }
 
+    //
     [<CompiledName("MapError")>]
     let mapError (map : 'Error1 -> 'Error2) (value : StatefulChoiceFunc<'State, 'T, 'Error1>)
             : StatefulChoiceFunc<'State, 'T, 'Error2> =
@@ -2216,6 +2231,7 @@ module StatefulChoice =
             | Choice1Of2 c -> fun _ -> Choice1Of2 c, state'
             | Choice2Of2 error -> fun _ -> Choice2Of2 (map error), state'
         }
+
 
 /// Functions for working with F# Async workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
