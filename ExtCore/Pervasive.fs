@@ -468,7 +468,7 @@ module Lazy =
 
     /// <summary>
     /// Forces initialization of a lazily-initialized value (if it has not already been initialized) then returns the value.
-    /// <summary>
+    /// </summary>
     /// <param name="lazyValue"></param>
     /// <returns></returns>
     [<CompiledName("Force")>]
@@ -517,7 +517,7 @@ module Lazy =
             Some lazyValue.Value
         else None
 
-    /// <summary>Transforms a lazily-initialized value by applying it to the given mapping function.
+    /// <summary>Transforms a lazily-initialized value by applying it to the given mapping function.</summary>
     /// <param name="mapping"></param>
     /// <param name="lazyValue"></param>
     /// <returns></returns>
@@ -534,7 +534,7 @@ module Lazy =
         else
             lazy (mapping <| lazyValue.Force ())
 
-    /// <summary>Transforms two (2) lazily-initialized values by applying them to the given mapping function.
+    /// <summary>Transforms two (2) lazily-initialized values by applying them to the given mapping function.</summary>
     /// <param name="mapping"></param>
     /// <param name="lazyValue1"></param>
     /// <param name="lazyValue2"></param>
@@ -553,7 +553,7 @@ module Lazy =
         else
             lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()))
 
-    /// <summary>Transforms three (3) lazily-initialized values by applying them to the given mapping function.
+    /// <summary>Transforms three (3) lazily-initialized values by applying them to the given mapping function.</summary>
     /// <param name="mapping"></param>
     /// <param name="lazyValue1"></param>
     /// <param name="lazyValue2"></param>
@@ -772,14 +772,14 @@ module Option =
     let inline toNull (value : 'T option) =
         match value with Some x -> x | None -> null
 
-    /// <summary>Creates an F# option from a nullable value.
+    /// <summary>Creates an F# option from a nullable value.</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("OfNullable")>]
     let inline ofNullable (value : Nullable<'T>) =
         if value.HasValue then Some value.Value else None
 
-    /// <summary>Creates a nullable value from an F# option.
+    /// <summary>Creates a nullable value from an F# option.</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("ToNullable")>]
