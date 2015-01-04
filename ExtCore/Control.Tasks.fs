@@ -41,9 +41,9 @@ type TaskBuilder () =
         task
 
     // unit -> M<'T>
-    member inline __.Zero ()
+    member inline this.Zero ()
         : Task<unit> =
-        new Task<unit> (fun () -> ())
+        this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay (taskThunk : unit -> Task<'T>)
@@ -60,7 +60,7 @@ type TaskBuilder () =
             task.Result)
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (task : Task<'T>, binder : 'T -> Task<'U>)
+    member __.Bind (task : Task<'T>, binder : 'T -> Task<'U>)
         : Task<'U> =
         task.ContinueWith<'U>(fun (task : Task<'T>) ->
             // Apply the result from 'task' to the binder function to create a new task.
@@ -73,7 +73,7 @@ type TaskBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (task1 : Task<unit>, task2 : Task<'T>)
+    member __.Combine (task1 : Task<unit>, task2 : Task<'T>)
         : Task<'T> =
         task1.ContinueWith<'T> (fun (_ : Task<unit>) ->
             // Run 'task2' synchronously, then return it's result.
@@ -81,7 +81,7 @@ type TaskBuilder () =
             task2.Result)
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member inline __.TryWith (body : Task<'T>, handler : System.AggregateException -> Task<'T>)
+    member __.TryWith (body : Task<'T>, handler : System.AggregateException -> Task<'T>)
         : Task<'T> =
         new Task<'T>(fun () ->
             try
@@ -103,7 +103,7 @@ type TaskBuilder () =
                 handlerTask.Result)
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member inline __.TryFinally (body : Task<'T>, handler : unit -> unit)
+    member __.TryFinally (body : Task<'T>, handler : unit -> unit)
         : Task<'T> =
         new Task<'T>(fun () ->
             try
@@ -117,10 +117,21 @@ type TaskBuilder () =
                 // Run the handler function.
                 handler ())
 
-    // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> Task<_>)
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member this.Using (resource : ('T :> System.IDisposable), binding : 'T -> Task<'U>)
         : Task<'U> =
-        this.TryFinally (body resource, (fun () ->
+        let body = new Task<_>(fun () ->
+            // Apply the resource to the binding function to create a new task
+            // (which presumably uses the resource).
+            let task = binding resource
+
+            // Run the task.
+            task.RunSynchronously ()
+            task.Wait ()
+
+            // Return the result from the task.
+            task.Result)
+        this.TryFinally (body, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
