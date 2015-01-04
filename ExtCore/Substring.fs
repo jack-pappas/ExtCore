@@ -278,7 +278,7 @@ type substring =
     /// or if the current instance is an empty substring.
     /// </returns>
     member this.LastIndexOf (value : char) : int =
-        this.LastIndexOf (value, 0)
+        this.LastIndexOf (value, this.Length - 1)
 
     /// <summary>
     /// Reports the zero-based index position of the last occurrence of a specified Unicode character within this instance.
