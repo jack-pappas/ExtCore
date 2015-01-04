@@ -18,9 +18,77 @@ limitations under the License.
 
 namespace Tests.ExtCore.Control
 
+open System
+open System.Runtime.CompilerServices
 open ExtCore.Control
 open NUnit.Framework
 //open FsCheck
+
+
+/// Test fixture which tests that the .Using() member of AsyncChoiceBuilder
+/// disposes the supplied resource at the correct point in the program's execution.
+[<TestFixture; Sealed>]
+type AsyncChoiceBuilderDisposeFixture() =
+    let disposed = StrongBox (false)
+
+    let createDisposable (disposed : StrongBox<bool>) =
+        { new IDisposable with
+            member __.Dispose () =
+                printfn "disposing!"
+                disposed.Value <- true }
+
+    let createAsyncChoiceDisposable() =
+        async { return Choice1Of2(createDisposable disposed) }
+
+    let waitAsyncChoice() =
+        asyncChoice {
+            printfn "waiting"
+        }
+
+    let shouldNotBeDisposed() =
+        printfn "Should not be disposed. Checking..."
+        Assert.IsFalse(disposed.Value)
+
+    let createAsyncDisposable() = async { return (createDisposable disposed) }
+
+    let waitAsync() =
+        async {
+            printfn "waiting"
+        }
+
+    [<SetUp>]
+    member __.Setup () : unit =
+        disposed.Value <- false
+
+    [<TearDown>]
+    member __.Teardown () : unit =
+        printfn "Should be disposed. Checking..."
+        Assert.IsTrue(disposed.Value)
+
+    // asyncChoice wrong behavior
+    [<Test>]
+    member __.UsingAsyncChoice() : unit =
+        asyncChoice {
+            use! d = createAsyncChoiceDisposable()
+            shouldNotBeDisposed()
+            let! a = waitAsyncChoice()
+            shouldNotBeDisposed()
+        }
+        |> Async.RunSynchronously
+        |> Choice.get
+        |> ignore
+
+    // async - expected behavior
+    [<Test>]
+    member __.UsingAsync() : unit =
+        async {
+            use! d = createAsyncDisposable()
+            shouldNotBeDisposed()
+            do! waitAsync()
+            shouldNotBeDisposed()
+        }
+        |> Async.RunSynchronously
+        |> ignore
 
 
 /// Tests for the ExtCore.Control.State module.
