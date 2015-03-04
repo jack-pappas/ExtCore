@@ -982,6 +982,19 @@ module Seq =
         | None ->
             Choice1Of2 ()
 
+    [<CompiledName("Exists")>]
+    let exists (predicate : 'T -> Choice<bool, 'Error>) (sequence : seq<'T>) : Choice<bool, 'Error> = 
+        // Preconditions
+        checkNonNull "seq" seq
+
+        sequence
+        |> Seq.map predicate
+        |> Seq.tryPick (function 
+               | Choice1Of2 true -> Some(Choice1Of2 true)
+               | Choice1Of2 false -> None
+               | Choice2Of2 err -> Some(Choice2Of2 err))
+        |> defaultArg <| Choice1Of2 false
+
 
 /// The standard F# Set module, lifted into the Choice monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
