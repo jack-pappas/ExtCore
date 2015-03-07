@@ -736,6 +736,35 @@ module Seq =
 
             !iterationCount |> assertEqual 3
 
+    [<Test>]
+    let exists () =
+        let getTestSequence failAtTheEnd = 
+            seq { 
+                yield! [ 1..10 ]
+                if failAtTheEnd then failwith "should not be reached"
+            }
+
+        let createPredicate errorAt positiveAt = 
+            function 
+            | x when x = errorAt -> Choice2Of2 ()
+            | x when x = positiveAt -> Choice1Of2 true
+            | _ -> Choice1Of2 false
+
+        do
+            getTestSequence true
+            |> Choice.Seq.exists (createPredicate 100 3)
+            |> assertEqual (Choice1Of2 true)
+
+        do
+            getTestSequence true
+            |> Choice.Seq.exists (createPredicate 2 5)
+            |> assertEqual (Choice2Of2 ())
+
+        do
+            getTestSequence false
+            |> Choice.Seq.exists (createPredicate 100 100)
+            |> assertEqual (Choice1Of2 false)
+
 
 /// Tests for the ExtCore.Control.Collections.Choice.Set module.
 module Set =
