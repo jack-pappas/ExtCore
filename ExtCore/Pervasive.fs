@@ -822,6 +822,12 @@ module Option =
         | None ->
             Choice2Of2 errorValue
 
+    //
+    [<CompiledName("OfString")>]
+    let ofString (str : string) : string option =
+        if String.IsNullOrEmpty str then None
+        else Some str
+
     /// <summary>
     /// Creates an F# option from a value <c>x</c>.
     /// When the specified condition is <c>true</c>, returns <c>Some(x)</c>; otherwise, <c>None</c>.
