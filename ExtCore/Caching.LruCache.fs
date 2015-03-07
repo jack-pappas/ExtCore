@@ -596,8 +596,8 @@ type LruCache<'Key, [<EqualityConditionalOn>] 'T when 'Key : comparison>
             // Now check that the caches contain the same key/value pairs in the same order.
             // We don't care about 'currentIndex' or the key indices themselves, as that's an
             // implementation detail and invisible to the user.
-            let cache1Enum = (cache1.ToSeq ()).GetEnumerator ()
-            let cache2Enum = (cache2.ToSeq ()).GetEnumerator ()
+            use cache1Enum = (cache1.ToSeq ()).GetEnumerator ()
+            use cache2Enum = (cache2.ToSeq ()).GetEnumerator ()
 
             /// Indicates whether the cache-sequences contain the exact same key-value pairs.
             let mutable cacheSeqsEqual = true

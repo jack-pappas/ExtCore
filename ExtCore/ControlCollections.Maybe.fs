@@ -408,7 +408,7 @@ module Seq =
 
         let mutable foundError = false
 
-        let enumerator = sequence.GetEnumerator ()
+        use enumerator = sequence.GetEnumerator ()
         while enumerator.MoveNext () && not foundError do
             match action enumerator.Current with
             | None ->

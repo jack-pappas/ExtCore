@@ -157,7 +157,7 @@ let sample interval (source : seq<'T>) : seq<'T> =
     // OPTIMIZATION : If the sampling interval is 1, there's no need to create a new sequence, just return the original.
     if interval = 1 then source
     else
-        let enumerator = source.GetEnumerator ()
+        use enumerator = source.GetEnumerator ()
 
         //
         let rec sampleRec currentWidth =
@@ -169,7 +169,7 @@ let sample interval (source : seq<'T>) : seq<'T> =
                 // Recurse, incrementing the interval width, or resetting it if we've hit the end of this interval.
                 let currentWidth = currentWidth + 1
                 yield! sampleRec (if currentWidth = interval then 0 else currentWidth)
-                }
+            }
 
         sampleRec 0
 
@@ -189,8 +189,8 @@ let fold2 (folder : 'State -> 'T1 -> 'T2 -> 'State) (state : 'State) (source1 : 
     checkNonNull "source2" source2
 
     // Get enumerators for the input sequences.
-    let enumerator1 = source1.GetEnumerator ()
-    let enumerator2 = source2.GetEnumerator ()
+    use enumerator1 = source1.GetEnumerator ()
+    use enumerator2 = source2.GetEnumerator ()
 
     let folder = FSharpFunc<_,_,_,_>.Adapt folder
     let mutable state = state
@@ -201,6 +201,18 @@ let fold2 (folder : 'State -> 'T1 -> 'T2 -> 'State) (state : 'State) (source1 : 
 
     // Return the final state value.
     state
+
+(*
+//
+[<CompiledName("Segment")>]
+let segment (length : int) (source : seq<'T>) : seq<seq<'T>> =
+    // Preconditions
+    checkNonNull "source" source
+    if length < 1 then
+        argOutOfRange "length" "The segment length must be a positive integer."
+
+    notImpl ""
+*)
 
 /// <summary>
 /// Wraps an <see cref="T:System.Collections.Generic.IEnumerator`1{T}"/> to provide an additional 'peek' operation.

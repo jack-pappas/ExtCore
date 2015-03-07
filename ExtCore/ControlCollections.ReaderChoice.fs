@@ -430,7 +430,7 @@ module Seq =
         let action = FSharpFunc<_,_,_>.Adapt action
         let mutable error = None
 
-        let enumerator = sequence.GetEnumerator ()
+        use enumerator = sequence.GetEnumerator ()
         while enumerator.MoveNext () && Option.isNone error do
             match action.Invoke (enumerator.Current, env) with
             | Choice2Of2 err ->

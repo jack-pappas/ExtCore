@@ -22,6 +22,13 @@ module Tests.ExtCore.Collections.Seq
 open NUnit.Framework
 //open FsCheck
 
+/// Creates a reference-counting wrapper over a sequence.
+let private refCounter<'T, 'TSeq when 'TSeq :> seq<'T>> (source : 'TSeq) =
+    Tests.ExtCore.RefCountEnumerable<'T> (source)
+
+let [<Literal>] sourceRefCountNonZeroMsg =
+    "One or more of the enumerators created for the source sequence was not disposed."
+
 
 [<Test>]
 let appendSingleton () : unit =
@@ -37,58 +44,83 @@ let appendSingleton () : unit =
 
 [<Test>]
 let projectValues () : unit =
-    seq { 'a' .. 'e' }
-    |> Seq.projectValues (fun asciiChar ->
-        asciiChar.ToString().ToUpper())
-    |> Seq.toList
-    |> Collection.assertEqual
-       ['a', "A";
-        'b', "B";
-        'c', "C";
-        'd', "D";
-        'e', "E"]
+    do
+        let source = refCounter <|  seq { 'a' .. 'e' }
+
+        source
+        |> Seq.projectValues (fun asciiChar ->
+            asciiChar.ToString().ToUpper())
+        |> Seq.toList
+        |> Collection.assertEqual
+           ['a', "A";
+            'b', "B";
+            'c', "C";
+            'd', "D";
+            'e', "E"]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
 [<Test>]
 let projectKeys () : unit =
-    seq {
-        yield "Red"
-        yield "Blue"
-        yield "Green"
-        yield "Yellow" }
-    |> Seq.projectKeys String.length
-    |> Seq.toList
-    |> Collection.assertEqual
-       [3, "Red";
-        4, "Blue";
-        5, "Green";
-        6, "Yellow"]
+    do
+        let source = refCounter <| seq {
+            yield "Red"
+            yield "Blue"
+            yield "Green"
+            yield "Yellow" }
+
+        source
+        |> Seq.projectKeys String.length
+        |> Seq.toList
+        |> Collection.assertEqual
+           [3, "Red";
+            4, "Blue";
+            5, "Green";
+            6, "Yellow"]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
 [<Test>]
 let replicate () : unit =
     // Replicating an empty sequence should return an empty sequence.
-    Seq.replicate 4 Seq.empty
-    |> Seq.isEmpty
-    |> assertTrue
+    do
+        let source = refCounter Seq.empty
+
+        source
+        |> Seq.replicate 4
+        |> Seq.isEmpty
+        |> assertTrue
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // Basic usage test.
-    seq {
-        yield "Red"
-        yield "Blue"
-        yield "Green"
-        yield "Yellow" }
-    |> Seq.replicate 4
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| "Red"; "Blue"; "Green"; "Yellow";
-           "Red"; "Blue"; "Green"; "Yellow";
-           "Red"; "Blue"; "Green"; "Yellow";
-           "Red"; "Blue"; "Green"; "Yellow"; |]
+    do
+        let source = refCounter <| seq {
+            yield "Red"
+            yield "Blue"
+            yield "Green"
+            yield "Yellow" }
+
+        source
+        |> Seq.replicate 4
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| "Red"; "Blue"; "Green"; "Yellow";
+               "Red"; "Blue"; "Green"; "Yellow";
+               "Red"; "Blue"; "Green"; "Yellow";
+               "Red"; "Blue"; "Green"; "Yellow"; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // Make sure the input sequence is only evaluated once.
     do
         let elementEvalCount = ref 0
 
-        seq {
+        let source = refCounter <| seq {
             incr elementEvalCount
             yield "Red"
             incr elementEvalCount
@@ -97,6 +129,8 @@ let replicate () : unit =
             yield "Green"
             incr elementEvalCount
             yield "Yellow" }
+
+        source
         |> Seq.replicate 4
         |> Seq.toArray
         |> Collection.assertEqual
@@ -108,14 +142,23 @@ let replicate () : unit =
         !elementEvalCount
         |> assertEqual 4
 
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
+
 [<Test>]
 let repeat () : unit =
     // Basic usage test.
-    Seq.repeat "Hello World!"
-    |> Seq.take 5
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; |]
+    do
+        let source = refCounter <| Seq.repeat "Hello World!"
+
+        source
+        |> Seq.take 5
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
 [<Test>]
 let cycle () : unit =
@@ -153,197 +196,328 @@ let cycle () : unit =
 [<Test>]
 let countWith () : unit =
     // Test case for an empty sequence.
-    Array.empty
-    |> Seq.ofArray
-    |> Seq.countWith (fun x ->
-        x % 7 = 0)
-    |> assertEqual 0L
+    do
+        let source = refCounter Array.empty
+
+        source
+        |> Seq.countWith (fun x ->
+            x % 7 = 0)
+        |> assertEqual 0L
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // Sample usage test cases.
-    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
-    |> Seq.ofArray
-    |> Seq.countWith (fun x ->
-        x < 0)
-    |> assertEqual 0L
+    do
+        let source = refCounter [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+        
+        source
+        |> Seq.countWith (fun x ->
+            x < 0)
+        |> assertEqual 0L
 
-    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
-    |> Seq.ofArray
-    |> Seq.countWith (fun x ->
-        x % 7 = 0)
-    |> assertEqual 1L
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
-    [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
-    |> Seq.ofArray
-    |> Seq.countWith (fun x ->
-        x % 3 = 0)
-    |> assertEqual 4L
+    do
+        let source = refCounter [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+
+        source
+        |> Seq.countWith (fun x ->
+            x % 7 = 0)
+        |> assertEqual 1L
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
+
+    do
+        let source = refCounter [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
+        
+        source
+        |> Seq.countWith (fun x ->
+            x % 3 = 0)
+        |> assertEqual 4L
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
 [<Test>]
 let sample () : unit =
     // Test case for an empty sequence
-    Seq.empty
-    |> Seq.sample 3
-    |> Seq.isEmpty
-    |> assertTrue
+    do
+        let source = refCounter Seq.empty
+
+        source
+        |> Seq.sample 3
+        |> Seq.isEmpty
+        |> assertTrue
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // Sample usage test cases.
-    seq { 0 .. 100 }
-    |> Seq.sample 3
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| 0; 3; 6; 9; 12; 15; 18; 21; 24; 27; 30; 33; 36; 39; 42; 45; 48; 51;
-           54; 57; 60; 63; 66; 69; 72; 75; 78; 81; 84; 87; 90; 93; 96; 99; |]
+    do
+        let source = refCounter <| seq { 0 .. 100 }
+
+        source
+        |> Seq.sample 3
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| 0; 3; 6; 9; 12; 15; 18; 21; 24; 27; 30; 33; 36; 39; 42; 45; 48; 51;
+               54; 57; 60; 63; 66; 69; 72; 75; 78; 81; 84; 87; 90; 93; 96; 99; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
 [<Test>]
 let fold2 () : unit =
     // Test case for when one of the input sequences is empty.
-    (Seq.empty, [| "a"; "b"; "c"|])
-    ||> Seq.fold2 (fun state x y ->
-        System.String.Concat (state, x, y)) "xyz"
-    |> assertEqual "xyz"
+    do
+        let source1 = refCounter Seq.empty
+        let source2 = refCounter [| "a"; "b"; "c"|]
+        
+        (source1, source2)
+        ||> Seq.fold2 (fun state x y ->
+            System.String.Concat (state, x, y)) "xyz"
+        |> assertEqual "xyz"
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source1.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source2.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // Make sure the function stops once one of the input sequence is empty.
-    ([| "a"; "b"; "c" |], [| "A"; "B"; "C"; "D"; "E" |])
-    ||> Seq.fold2 (fun state x y ->
-        System.String.Concat (state, x, y)) ""
-    |> assertEqual "aAbBcC"
+    do
+        let source1 = refCounter [| "a"; "b"; "c" |]
+        let source2 = refCounter [| "A"; "B"; "C"; "D"; "E" |]
+
+        ([| "a"; "b"; "c" |], [| "A"; "B"; "C"; "D"; "E" |])
+        ||> Seq.fold2 (fun state x y ->
+            System.String.Concat (state, x, y)) ""
+        |> assertEqual "aAbBcC"
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source1.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source2.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // Test case for when the input sequences have the same length.
-    ([| "a"; "b"; "c"; "d"; "e" |], [| "A"; "B"; "C"; "D"; "E" |])
-    ||> Seq.fold2 (fun state x y ->
-        System.String.Concat (state, x, y)) ""
-    |> assertEqual "aAbBcCdDeE"
+    do
+        let source1 = refCounter [| "a"; "b"; "c"; "d"; "e" |]
+        let source2 = refCounter [| "A"; "B"; "C"; "D"; "E" |]
+
+        (source1, source2)
+        ||> Seq.fold2 (fun state x y ->
+            System.String.Concat (state, x, y)) ""
+        |> assertEqual "aAbBcCdDeE"
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source1.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source2.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
 [<Test>]
 let segmentBy () : unit =
     // Test case for an empty input sequence.
-    Seq.empty
-    |> Seq.segmentBy fst
-    |> Seq.isEmpty
-    |> assertTrue
+    do
+        let source = refCounter Seq.empty
+
+        source
+        |> Seq.segmentBy fst
+        |> Seq.isEmpty
+        |> assertTrue
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     (* Tests for special cases.
        Cast these seqs to arrays before comparing, otherwise assertion failure messages are incomprehensible. *)
 
     // Single-element (singleton) sequence.
-    Seq.singleton "Foo"
-    |> Seq.segmentBy id
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| "Foo" |] |]
+    do
+        let source = refCounter <| Seq.singleton "Foo"
+
+        source
+        |> Seq.segmentBy id
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| "Foo" |] |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // No segments with multiple elements.
-    seq { 0 .. 10 }
-    |> Seq.segmentBy id
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
+    do
+        let source = refCounter <| seq { 0 .. 10 }
+
+        source
+        |> Seq.segmentBy id
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // The first segment has a single element.
-    seq { 9 .. 19 }
-    |> Seq.segmentBy (fun x ->
-        x / 10)
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| 9 |]; [| 10 .. 19 |]; |]
+    do
+        let source = refCounter <| seq { 9 .. 19 }
+
+        source
+        |> Seq.segmentBy (fun x ->
+            x / 10)
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| 9 |]; [| 10 .. 19 |]; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // The last segment has a single element.
-    seq { 0 .. 10 }
-    |> Seq.segmentBy (fun x ->
-        x / 10)
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| 0 .. 9 |]; [| 10 |]; |]
+    do
+        let source = refCounter <| seq { 0 .. 10 }
+
+        source
+        |> Seq.segmentBy (fun x ->
+            x / 10)
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| 0 .. 9 |]; [| 10 |]; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     (* Sample usage test cases. *)
-    seq { 'a' .. 'k' }
-    |> Seq.segmentBy (fun c ->
-        int c / 3)
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-     <|(seq {
-        yield seq { 'a' .. 'b' }
-        yield seq { 'c' .. 'e' }
-        yield seq { 'f' .. 'h' }
-        yield seq { 'i' .. 'k' }
-        }
+    do
+        let source = refCounter <| seq { 'a' .. 'k' }
+
+        source
+        |> Seq.segmentBy (fun c ->
+            int c / 3)
+        // Convert to array of arrays
         |> Seq.map Seq.toArray
-        |> Seq.toArray)
+        |> Seq.toArray
+        |> Collection.assertEqual
+         <|(seq {
+            yield seq { 'a' .. 'b' }
+            yield seq { 'c' .. 'e' }
+            yield seq { 'f' .. 'h' }
+            yield seq { 'i' .. 'k' }
+            }
+            |> Seq.map Seq.toArray
+            |> Seq.toArray)
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
 [<Test>]
 let segmentWith () : unit =
     // Test case for an empty input sequence.
-    Seq.empty
-    |> Seq.segmentWith (fun _ _ -> true)
-    |> Seq.isEmpty
-    |> assertTrue
+    do
+        let source = refCounter Seq.empty
+    
+        source
+        |> Seq.segmentWith (fun _ _ -> true)
+        |> Seq.isEmpty
+        |> assertTrue
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     (* Tests for special cases.
        Cast these seqs to arrays before comparing, otherwise assertion failure messages are incomprehensible. *)
 
     // Single-element (singleton) sequence.
-    Seq.singleton "Foo"
-    |> Seq.segmentWith (fun _ _ ->
-        Assert.Fail "The predicate function should not be called for a single-element sequence."
-        false)
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| "Foo" |] |]
+    do
+        let source = refCounter <| Seq.singleton "Foo"
+
+        source
+        |> Seq.segmentWith (fun _ _ ->
+            Assert.Fail "The predicate function should not be called for a single-element sequence."
+            false)
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| "Foo" |] |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // No segments with multiple elements.
-    seq { 0 .. 10 }
-    |> Seq.segmentWith (fun _ _ -> false)
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
+    do
+        let source = refCounter <| seq { 0 .. 10 }
+
+        source
+        |> Seq.segmentWith (fun _ _ -> false)
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // The first segment has a single element.
-    seq { 9 .. 19 }
-    |> Seq.segmentWith (fun x y ->
-        x / 10 = y / 10)
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| 9 |]; [| 10 .. 19 |]; |]
+    do
+        let source = refCounter <| seq { 9 .. 19 }
+
+        source
+        |> Seq.segmentWith (fun x y ->
+            x / 10 = y / 10)
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| 9 |]; [| 10 .. 19 |]; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     // The last segment has a single element.
-    seq { 0 .. 10 }
-    |> Seq.segmentWith (fun x y ->
-        x / 10 = y / 10)
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-        [| [| 0 .. 9 |]; [| 10 |]; |]
+    do
+        let source = refCounter <| seq { 0 .. 10 }
+
+        source
+        |> Seq.segmentWith (fun x y ->
+            x / 10 = y / 10)
+        // Convert to array of arrays
+        |> Seq.map Seq.toArray
+        |> Seq.toArray
+        |> Collection.assertEqual
+            [| [| 0 .. 9 |]; [| 10 |]; |]
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)
 
     (* Sample usage test cases. *)
-    seq { 'a' .. 'k' }
-    |> Seq.segmentWith (fun x y ->
-        (int x / 3) = (int y / 3))
-    // Convert to array of arrays
-    |> Seq.map Seq.toArray
-    |> Seq.toArray
-    |> Collection.assertEqual
-     <|(seq {
-        yield seq { 'a' .. 'b' }
-        yield seq { 'c' .. 'e' }
-        yield seq { 'f' .. 'h' }
-        yield seq { 'i' .. 'k' }
-        }
+    do
+        let source = refCounter <| seq { 'a' .. 'k' }
+
+        source
+        |> Seq.segmentWith (fun x y ->
+            (int x / 3) = (int y / 3))
+        // Convert to array of arrays
         |> Seq.map Seq.toArray
-        |> Seq.toArray)
+        |> Seq.toArray
+        |> Collection.assertEqual
+         <|(seq {
+            yield seq { 'a' .. 'b' }
+            yield seq { 'c' .. 'e' }
+            yield seq { 'f' .. 'h' }
+            yield seq { 'i' .. 'k' }
+            }
+            |> Seq.map Seq.toArray
+            |> Seq.toArray)
+
+        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
+            sourceRefCountNonZeroMsg)

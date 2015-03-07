@@ -402,7 +402,7 @@ module Seq =
         let action = FSharpFunc<_,_,_>.Adapt action
         let mutable foundError = false
 
-        let enumerator = sequence.GetEnumerator ()
+        use enumerator = sequence.GetEnumerator ()
         while enumerator.MoveNext () && not foundError do
             match action.Invoke (enumerator.Current, env) with
             | None ->

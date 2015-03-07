@@ -967,7 +967,7 @@ module Seq =
 
         let mutable error = None
 
-        let enumerator = sequence.GetEnumerator ()
+        use enumerator = sequence.GetEnumerator ()
         while enumerator.MoveNext () && Option.isNone error do
             match action enumerator.Current with
             | Choice2Of2 err ->
