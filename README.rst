@@ -10,7 +10,7 @@ ExtCore
 
 *ExtCore* is an extended core library for F#. *ExtCore* is designed to the same coding guidelines and quality standards as the F# core library (*FSharp.Core*), so the API is simple and intuitive to use.
 
-*ExtCore* *does not* aim to be a "batteries-included" library; instead, *ExtCore* functionality is concentrated into a few key areas:
+*ExtCore* **does not** aim to be a "batteries-included" library; instead, *ExtCore* functionality is concentrated into a few key areas:
 
 - *Pervasives*
 
