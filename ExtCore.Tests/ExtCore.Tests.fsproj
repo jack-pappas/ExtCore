@@ -15,23 +15,23 @@
     <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (net40)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin\net40\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\net40\Debug\ExtCore.Tests.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (net40)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\net40\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40</DefineConstants>
+    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\net40\Release\ExtCore.Tests.XML</DocumentationFile>
   </PropertyGroup>
