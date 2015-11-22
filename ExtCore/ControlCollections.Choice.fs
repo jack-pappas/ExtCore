@@ -963,7 +963,7 @@ module Seq =
     [<CompiledName("Iterate")>]
     let iter (action : 'T -> Choice<unit, 'Error>) (sequence : seq<'T>) : Choice<unit, 'Error> =
         // Preconditions
-        checkNonNull "seq" seq
+        checkNonNull "sequence" sequence
 
         let mutable error = None
 
@@ -985,7 +985,7 @@ module Seq =
     [<CompiledName("Exists")>]
     let exists (predicate : 'T -> Choice<bool, 'Error>) (sequence : seq<'T>) : Choice<bool, 'Error> = 
         // Preconditions
-        checkNonNull "seq" seq
+        checkNonNull "sequence" sequence
 
         sequence
         |> Seq.map predicate
