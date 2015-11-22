@@ -767,12 +767,17 @@ type MaybeBuilder () =
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
     member this.For (sequence : seq<_>, body : 'T -> unit option) : _ option =
-        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
-        this.Using (sequence.GetEnumerator (), fun enum ->
-            this.While (
-                enum.MoveNext,
-                this.Delay (fun () ->
-                    body enum.Current)))
+        use enumerator = sequence.GetEnumerator ()
+
+        let mutable foundNone = false
+        while enumerator.MoveNext () && not foundNone do
+            if Option.isNone (body enumerator.Current) then
+                foundNone <- true
+
+        // If we broke out of the loop early because the 'body' function
+        // return None for some element, return None (to propagate the failure).
+        // Otherwise, return the 'zero' value (representing a 'success' which carries no value).
+        if foundNone then None else this.Zero ()
 
 
 /// <summary>
@@ -787,12 +792,10 @@ type ChoiceBuilder () =
     member inline __.Return value : Choice<'T, 'Error> =
         Choice1Of2 value
 
-#if FX_ATLEAST_FSHARP_3_0
     // Error operation. Similar to the Return method ('return'), but used for returning an error value.
     [<CustomOperation("error")>]
     member inline __.Error value : Choice<'T, 'Error> =
         Choice2Of2 value
-#endif
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom (m : Choice<'T, 'Error>) =
@@ -858,12 +861,19 @@ type ChoiceBuilder () =
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
     member this.For (sequence : seq<_>, body : 'T -> Choice<unit, 'Error>) =
-        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
-        this.Using (sequence.GetEnumerator (), fun enum ->
-            this.While (
-                enum.MoveNext,
-                this.Delay (fun () ->
-                    body enum.Current)))
+        use enumerator = sequence.GetEnumerator ()
+
+        let mutable errorResult = Unchecked.defaultof<_>
+        while enumerator.MoveNext () && isNull errorResult do
+            match body enumerator.Current with
+            | Choice1Of2 () -> ()
+            | error ->
+                errorResult <- error
+
+        // If we broke out of the loop early because the 'body' function
+        // returned an error for some element, return the error.
+        // Otherwise, return the 'zero' value (representing a 'success' which carries no value).
+        if isNull errorResult then this.Zero () else errorResult
 
 
 /// <summary>
