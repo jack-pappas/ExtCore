@@ -518,21 +518,51 @@ module Lazy =
         else None
 
     /// <summary>Transforms a lazily-initialized value by applying it to the given mapping function.</summary>
-    /// <param name="mapping"></param>
-    /// <param name="lazyValue"></param>
-    /// <returns></returns>
+    /// <param name="mapping">A mapping function applied to the lazily-initialized value to produce a new value.</param>
+    /// <param name="lazyValue">A lazily-initialized value.</param>
+    /// <returns>
+    /// The lazily-evaluated result of applying <paramref name="mapping"/> to <paramref name="lazyValue"/>.
+    /// </returns>
+    /// <c>mapImmediately</c> differs from <c>map</c> in that, if the lazily-initialized value
+    /// has already been evaluated, the mapping function is immediately applied to the value.
+    /// This distinction matters primarily when the mapping function has side effects (such as raising an exception),
+    /// since they will occur at different times depending on whether the value has been initialized.
+    /// It is recommended to use <c>map</c> for such cases to ensure side effects are handled uniformly.
+    /// </remarks>
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (lazyValue : Lazy<'T>) : Lazy<'U> =
         // Preconditions
         checkNonNull "lazyValue" lazyValue
 
-        // If the value has already been created, perform the mapping
-        // 'eagerly' for better performance.
+        lazy (mapping lazyValue.Value)
+
+    /// <summary>
+    /// Transforms a lazily-initialized value by applying it to the given mapping function.
+    /// </summary>
+    /// <param name="mapping">A mapping function applied to the lazily-initialized value to produce a new value.</param>
+    /// <param name="lazyValue">A lazily-initialized value.</param>
+    /// <returns>
+    /// The lazily-evaluated result of applying <paramref name="mapping"/> to <paramref name="lazyValue"/>.
+    /// </returns>
+    /// <remarks>
+    /// <c>mapImmediately</c> differs from <c>map</c> in that, if the lazily-initialized value
+    /// has already been evaluated, the mapping function is immediately applied to the value.
+    /// This distinction matters primarily when the mapping function has side effects (such as raising an exception),
+    /// since they will occur at different times depending on whether the value has been initialized.
+    /// It is recommended to use <c>map</c> for such cases to ensure side effects are handled uniformly.
+    /// </remarks>
+    [<CompiledName("MapImmediately")>]
+    let mapImmediately (mapping : 'T -> 'U) (lazyValue : Lazy<'T>) : Lazy<'U> =
+        // Preconditions
+        checkNonNull "lazyValue" lazyValue
+
+        // Apply 'mapping' eagerly if the value has already been initialized.
         if lazyValue.IsValueCreated then
-            mapping lazyValue.Value
+            lazyValue.Value
+            |> mapping
             |> Lazy<'T>.CreateFromValue
         else
-            lazy (mapping <| lazyValue.Force ())
+            lazy (mapping lazyValue.Value)
 
     /// <summary>Transforms two (2) lazily-initialized values by applying them to the given mapping function.</summary>
     /// <param name="mapping"></param>
@@ -545,13 +575,26 @@ module Lazy =
         checkNonNull "lazyValue1" lazyValue1
         checkNonNull "lazyValue2" lazyValue2
 
+        lazy (mapping lazyValue1.Value lazyValue2.Value)
+
+    /// <summary>Transforms two (2) lazily-initialized values by applying them to the given mapping function.</summary>
+    /// <param name="mapping"></param>
+    /// <param name="lazyValue1"></param>
+    /// <param name="lazyValue2"></param>
+    /// <returns></returns>
+    [<CompiledName("MapImmediately2")>]
+    let mapImmediately2 (mapping : 'T1 -> 'T2 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) : Lazy<'U> =
+        // Preconditions
+        checkNonNull "lazyValue1" lazyValue1
+        checkNonNull "lazyValue2" lazyValue2
+
         // If both values have already been created, perform the mapping
         // 'eagerly' for better performance (e.g., by avoiding the thunk).
         if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated then
             mapping lazyValue1.Value lazyValue2.Value
             |> Lazy<'T>.CreateFromValue
         else
-            lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()))
+            lazy (mapping lazyValue1.Value lazyValue2.Value)
 
     /// <summary>Transforms three (3) lazily-initialized values by applying them to the given mapping function.</summary>
     /// <param name="mapping"></param>
@@ -567,13 +610,29 @@ module Lazy =
         checkNonNull "lazyValue2" lazyValue2
         checkNonNull "lazyValue3" lazyValue3
 
+        lazy (mapping lazyValue1.Value lazyValue2.Value lazyValue3.Value)
+
+    /// <summary>Transforms three (3) lazily-initialized values by applying them to the given mapping function.</summary>
+    /// <param name="mapping"></param>
+    /// <param name="lazyValue1"></param>
+    /// <param name="lazyValue2"></param>
+    /// <param name="lazyValue3"></param>
+    /// <returns></returns>
+    [<CompiledName("MapImmediately3")>]
+    let mapImmediately3 (mapping : 'T1 -> 'T2 -> 'T3 -> 'U) (lazyValue1 : Lazy<'T1>) (lazyValue2 : Lazy<'T2>) (lazyValue3 : Lazy<'T3>)
+        : Lazy<'U> =
+        // Preconditions
+        checkNonNull "lazyValue1" lazyValue1
+        checkNonNull "lazyValue2" lazyValue2
+        checkNonNull "lazyValue3" lazyValue3
+
         // If all values have already been created, perform the mapping
         // 'eagerly' for better performance (e.g., by avoiding the thunk).
         if lazyValue1.IsValueCreated && lazyValue2.IsValueCreated && lazyValue3.IsValueCreated then
             mapping lazyValue1.Value lazyValue2.Value lazyValue3.Value
             |> Lazy<'T>.CreateFromValue
         else
-            lazy (mapping (lazyValue1.Force ()) (lazyValue2.Force ()) (lazyValue3.Force ()))
+            lazy (mapping lazyValue1.Value lazyValue2.Value lazyValue3.Value)
 
     /// <summary></summary>
     /// <param name="binding"></param>
