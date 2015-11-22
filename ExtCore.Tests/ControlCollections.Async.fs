@@ -1089,5 +1089,10 @@ module Seq =
     module Parallel =
         [<Test>]
         let batch () : unit =
-            Assert.Ignore "Test not yet implemented."
+            [|1..10|]
+            |> Seq.map (fun x -> async { return x * x })
+            |> Async.Seq.Parallel.batch 3
+            |> Seq.toArray
+            |> Collection.assertEqual
+              [|1; 4; 9; 16; 25; 36; 49; 64; 81; 100|]
 
