@@ -90,56 +90,85 @@ type AsyncChoiceBuilderDisposeFixture() =
         |> Async.RunSynchronously
         |> ignore
 
-/// Tests for the ExtCore.Control.Maybe module and computation builder.
-module Maybe =
-    [<Test>]
-    let ``basic test of for loop in 'maybe' builder`` () : unit =
-        let count = ref 0
-        let result = maybe {
-            for i in [1;2;3] do
-                incr count
-            return true
-        }
+/// <summary>
+/// Tests for <see cref="ExtCore.Control.MaybeBuilder"/>.
+/// </summary>
+module MaybeBuilder =
+    /// <summary>Tests for <see cref="ExtCore.Control.MaybeBuilder.For"/>.</summary>
+    module ``MaybeBuilder_For`` =
+        [<Test>]
+        let ``simple test`` () : unit =
+            let count = ref 0
+            let data = [| 1..3 |]
+            let result = maybe {
+                for i in data do
+                    incr count
+                return true
+            }
 
-        // Check the loop iteration count is correct.
-        assertEqual 3 !count
+            // Check the loop iteration count is correct.
+            assertEqual 3 !count
 
-        // Check the result of the computation.
-        assertEqual (Some true) result
+            // Check the result of the computation.
+            assertEqual (Some true) result
 
-    [<Test>]
-    [<Ignore("This test is currently broken (due to a bug in the implementation being tested). It hangs or fails with a StackOverflowException, so it's disabled for now.")>]
-    let ``basic test of while loop in 'maybe' builder`` () : unit =
-        let count = ref 0
-        let result = maybe {
-            while !count < 3 do
-                incr count
-            return true
-        }
+    /// <summary>Tests for <see cref="ExtCore.Control.MaybeBuilder.While"/>.</summary>
+    module ``MaybeBuilder_While`` =
+        [<Test>]
+        let ``simple test`` () : unit =
+            let count = ref 0
+            let result = maybe {
+                while !count < 3 do
+                    incr count
+                return true
+            }
 
-        // Check the loop iteration count is correct.
-        assertEqual 3 !count
+            // Check the loop iteration count is correct.
+            assertEqual 3 !count
 
-        // Check the result of the computation.
-        assertEqual (Some true) result
+            // Check the result of the computation.
+            assertEqual (Some true) result
 
 
-/// Tests for the ExtCore.Control.Choice module and computation builder.
-module Choice =
-    [<Test>]
-    let ``basic test of for loop in 'choice' builder`` () : unit =
-        let count = ref 0
-        let result = choice {
-            for i in [1;2;3] do
-                incr count
-            return true
-        }
+/// <summary>
+/// Tests for <see cref="ExtCore.Control.ChoiceBuilder"/>.
+/// </summary>
+module ChoiceBuilder =
+    /// <summary>Tests for <see cref="ExtCore.Control.ChoiceBuilder.For"/>.</summary>
+    module ``ChoiceBuilder_For`` =
+        [<Test>]
+        let ``simple test`` () : unit =
+            let count = ref 0
+            let data = [| 1..3 |]
+            let result = choice {
+                for i in data do
+                    incr count
+                return true
+            }
 
-        // Check the loop iteration count is correct.
-        assertEqual 3 !count
+            // Check the loop iteration count is correct.
+            assertEqual 3 !count
 
-        // Check the result of the computation.
-        assertEqual (Choice1Of2 true) result
+            // Check the result of the computation.
+            assertEqual (Choice1Of2 true) result
+
+    /// <summary>Tests for <see cref="ExtCore.Control.ChoiceBuilder.While"/>.</summary>
+    module ``ChoiceBuilder_While`` =
+        [<Test>]
+        let ``simple test`` () : unit =
+            let count = ref 0
+            let data = [| 1..3 |]
+            let result = choice {
+                while !count < 3 do
+                    incr count
+                return true
+            }
+
+            // Check the loop iteration count is correct.
+            assertEqual 3 !count
+
+            // Check the result of the computation.
+            assertEqual (Choice1Of2 true) result
 
 
 /// Tests for the ExtCore.Control.State module.

@@ -24,7 +24,7 @@ open ExtCore
 
 
 /// <summary>
-/// Type extensions for the <see cref="Microsoft.FSharp.Core.Async&lt;'T&gt;"/> type.
+/// Type extensions for the <see cref="Microsoft.FSharp.Core.Async&lt;T&gt;"/> type.
 /// </summary>
 [<AutoOpen>]
 module AsyncExtensions =
@@ -705,68 +705,122 @@ type WriterBuilder<'Writer
 [<Sealed>]
 type MaybeBuilder () =
     // 'T -> M<'T>
-    member inline __.Return value : 'T option =
+#if DEBUG
+    member __.Return
+#else
+    member inline __.Return
+#endif
+        value : 'T option =
         Some value
 
     // M<'T> -> M<'T>
-    member inline __.ReturnFrom value : 'T option =
+#if DEBUG
+    member __.ReturnFrom
+#else
+    member inline __.ReturnFrom
+#endif
+        value : 'T option =
         value
 
     // unit -> M<'T>
-    member inline __.Zero () : unit option =
-        Some ()
+#if DEBUG
+    member __.Zero () : 'T option =
+#else
+    member inline __.Zero () : 'T option =
+#endif
+        None
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (generator : unit -> 'T option) : 'T option =
+#if DEBUG
+    member __.Delay (generator : unit -> 'T) =
+#else
+    member inline __.Delay (generator : unit -> 'T) =
+#endif
+        generator
+
+    // The signature of Run corresponds closely to that of Delay.
+    // This computation builder needs to define Run because Delay doesn't force evaluation
+    // of the thunk it's given (it simply returns it).
+    member __.Run (generator) : 'T option =
         generator ()
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+#if DEBUG
+    member __.Bind
+#else
+    member inline __.Bind
+#endif
+        (value, binder : 'T -> 'U option) : 'U option =
+        Option.bind binder value
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1, r2 : 'T option) : 'T option =
+#if DEBUG
+    member __.Combine
+#else
+    member inline __.Combine
+#endif
+        (r1, r2 : 'T option) : 'T option =
         match r1 with
         | None ->
             None
         | Some () ->
             r2
 
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (value, binder : 'T -> 'U option) : 'U option =
-        Option.bind binder value
+    // This overload of 'Combine' is needed for the implementations of some of the
+    // other builder methods (e.g., While, TryWith, TryFinally) to work correctly.
+#if DEBUG
+    member this.Combine
+#else
+    member inline this.Combine
+#endif
+        (r1 : 'T option, r2) : 'U option =
+        this.Bind (r1, r2)
 
-//    // M<'T> * (exn -> M<'T>) -> M<'T>
-//    member this.TryWith (body, handler) : _ option =
-//        fun value ->
-//            try body value
-//            with ex ->
-//                handler ex
-//
-//    // M<'T> * (unit -> unit) -> M<'T>
-//    member this.TryFinally (body, handler) : _ option =
-//        fun value ->
-//            try body value
-//            finally
-//                handler ()
+    // M<'T> * (exn -> M<'T>) -> M<'T>
+    member __.TryWith (body, handler) : 'T option =
+        try body ()
+        with ex ->
+            handler ex
+
+    // M<'T> * (unit -> unit) -> M<'T>
+    member __.TryFinally (body : unit -> 'T option, handler) : 'T option =
+        try body ()
+        finally
+            handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : _ -> _ option) : 'U option =
+    member __.Using (resource : ('T :> System.IDisposable), body : _ -> _ option) : 'U option =
         try body resource
         finally
             if not <| isNull (box resource) then
                 resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : _ option) : _ option =
+    member this.While (guard, body : unit -> unit option) : _ option =
+#if false
         if guard () then
-            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
-            this.Bind (body, (fun () -> this.While (guard, body)))
+            match body () with
+            | None -> None
+            | Some _ ->
+                this.While (guard, body)
         else
-            this.Zero ()
+            // Return Some () to indicate success when the loop
+            // finishes normally (because the guard returned false).
+            Some ()
+#else
+        while guard () do body () |> ignore
+        // Return Some () to indicate success when the loop
+        // finishes normally (because the guard returned false).
+        Some ()
+#endif
 
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> unit option) : _ option =
+    member __.For (sequence : seq<_>, body : 'T -> unit option) : _ option =
+#if false
         use enumerator = sequence.GetEnumerator ()
 
         let mutable foundNone = false
@@ -777,7 +831,19 @@ type MaybeBuilder () =
         // If we broke out of the loop early because the 'body' function
         // return None for some element, return None (to propagate the failure).
         // Otherwise, return the 'zero' value (representing a 'success' which carries no value).
-        if foundNone then None else this.Zero ()
+        if foundNone then None else Some ()
+#else
+        // Apply the body function to each element of the sequence.
+        // It seems like we should be checking the return value of the body
+        // and short-circuiting if it returns None (see above).
+        // However, the F# compiler emits a call to Zero () at the end of a
+        // 'for' loop body so checking the result causes loops to only ever
+        // evaluate the body for the first element of the sequence then stop.
+        for x in sequence do
+            body x |> ignore
+        Some ()
+
+#endif
 
 
 /// <summary>
@@ -789,16 +855,16 @@ type ChoiceBuilder () =
     static let zero = Choice1Of2 ()
 
     // 'T -> M<'T>
-    member inline __.Return value : Choice<'T, 'Error> =
+    member __.Return value : Choice<'T, 'Error> =
         Choice1Of2 value
 
     // Error operation. Similar to the Return method ('return'), but used for returning an error value.
     [<CustomOperation("error")>]
-    member inline __.Error value : Choice<'T, 'Error> =
+    member __.Error value : Choice<'T, 'Error> =
         Choice2Of2 value
 
     // M<'T> -> M<'T>
-    member inline __.ReturnFrom (m : Choice<'T, 'Error>) =
+    member __.ReturnFrom (m : Choice<'T, 'Error>) =
         m
 
     // unit -> M<'T>
@@ -806,8 +872,20 @@ type ChoiceBuilder () =
         zero
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (generator : unit -> Choice<'T, 'Error>) : Choice<'T, 'Error> =
+    member __.Delay (generator : unit -> Choice<'T, 'Error>) : unit -> Choice<'T, 'Error> =
+        generator
+
+    //
+    member __.Run (generator : unit -> Choice<'T, 'Error>) : Choice<'T, 'Error> =
         generator ()
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member inline __.Bind (value, binder : 'T -> Choice<'U, 'Error>) : Choice<'U, 'Error> =
+        match value with
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 x ->
+            binder x
 
     // M<'T> -> M<'T> -> M<'T>
     // or
@@ -819,27 +897,21 @@ type ChoiceBuilder () =
         | Choice1Of2 () ->
             r2
 
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (value, binder : 'T -> Choice<'U, 'Error>) : Choice<'U, 'Error> =
-        match value with
-        | Choice2Of2 error ->
-            Choice2Of2 error
-        | Choice1Of2 x ->
-            binder x
+    //
+    member __.Combine (r1 : Choice<'T, 'Error>, r2) : Choice<'U, 'Error> =
+        Choice.bind r2 r1
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member inline __.TryWith (body : 'T -> Choice<'U, 'Error>, handler) =
-        fun value ->
-            try body value
-            with ex ->
-                handler ex
+    member inline __.TryWith (body : unit -> Choice<'T, 'Error>, handler) =
+        try body ()
+        with ex ->
+            handler ex
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member inline __.TryFinally (body : 'T -> Choice<'U, 'Error>, handler) =
-        fun value ->
-            try body value
-            finally
-                handler ()
+    member inline __.TryFinally (body : unit -> Choice<'T, 'Error>, handler) =
+        try body ()
+        finally
+            handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
     member this.Using (resource : ('T :> System.IDisposable), body : _ -> Choice<_,_>)
@@ -850,11 +922,15 @@ type ChoiceBuilder () =
                 resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : Choice<unit, 'Error>) : Choice<_,_> =
+    member this.While (guard, body : unit -> Choice<unit, 'Error>) : Choice<_,_> =
         if guard () then
-            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
-            this.Bind (body, (fun () -> this.While (guard, body)))
+            match body () with
+            | Choice1Of2 () ->
+                this.While (guard, body)
+            | err -> err
         else
+            // Return Choice1Of2 () to indicate success when the loop
+            // finishes normally (because the guard returned false).
             this.Zero ()
 
     // seq<'T> * ('T -> M<'U>) -> M<'U>
