@@ -42,19 +42,19 @@ mono $fsharp_dir/lib/proto/fsc-proto.exe -o:./build/net40-Client/ExtCore.dll --d
 framework_lib_dir=4.5
 mono $fsharp_dir/lib/proto/fsc-proto.exe -o:./build/net45/ExtCore.dll --doc:./build/net45/ExtCore.xml -r:$mono_lib_dir/$framework_lib_dir/System.dll -r:$mono_lib_dir/$framework_lib_dir/System.Core.dll -r:$mono_lib_dir/$framework_lib_dir/System.Numerics.dll --define:TRACE --define:PROTO_COMPILER --define:FX_ATLEAST_40 --define:FX_ATLEAST_45 --define:FX_ATLEAST_FSHARP_3_0 --debug:pdbonly --optimize+ --fullpaths --nowarn:42,75,1204 --platform:anycpu --target:library --extraoptimizationloops:1 $extcore_files
 
-# profile47
-framework_lib_dir=xbuild-frameworks/.NETPortable/v4.0/Profile/Profile47
-mono $fsharp_dir/lib/proto/fsc-proto.exe -o:./build/profile47/ExtCore.dll --doc:./build/profile47/ExtCore.xml -r:$mono_lib_dir/$framework_lib_dir/System.dll -r:$mono_lib_dir/$framework_lib_dir/System.Core.dll -r:$mono_lib_dir/$framework_lib_dir/System.Numerics.dll --define:TRACE --define:PROTO_COMPILER --define:FX_ATLEAST_FSHARP_3_0 --define:FX_NO_SYSTEM_CONSOLE --define:FX_ATLEAST_PORTABLE --define:FX_SIMPLE_DIAGNOSTICS --define:FX_NO_TPL_PARALLEL --debug:pdbonly --optimize+ --fullpaths --nowarn:42,75,1204 --platform:anycpu --target:library --extraoptimizationloops:1 $extcore_files
-
-# profile7
+# profile7 (portable-net45+win8) (netstandard1.1)
 framework_lib_dir=xbuild-frameworks/.NETPortable/v4.5/Profile/Profile7
 mono $fsharp_dir/lib/proto/fsc-proto.exe -o:./build/profile7/ExtCore.dll --doc:./build/profile7/ExtCore.xml -r:$mono_lib_dir/$framework_lib_dir/System.dll -r:$mono_lib_dir/$framework_lib_dir/System.Core.dll -r:$mono_lib_dir/$framework_lib_dir/System.Numerics.dll --define:TRACE --define:PROTO_COMPILER --define:FX_ATLEAST_FSHARP_3_0 --define:FX_NO_SYSTEM_CONSOLE --define:FX_ATLEAST_PORTABLE --define:FX_SIMPLE_DIAGNOSTICS --define:FX_NO_TPL_PARALLEL --debug:pdbonly --optimize+ --fullpaths --nowarn:42,75,1204 --platform:anycpu --target:library --extraoptimizationloops:1 $extcore_files
 
-# profile78
+# profile47 (portable-net45+sl5+win8)
+framework_lib_dir=xbuild-frameworks/.NETPortable/v4.0/Profile/Profile47
+mono $fsharp_dir/lib/proto/fsc-proto.exe -o:./build/profile47/ExtCore.dll --doc:./build/profile47/ExtCore.xml -r:$mono_lib_dir/$framework_lib_dir/System.dll -r:$mono_lib_dir/$framework_lib_dir/System.Core.dll -r:$mono_lib_dir/$framework_lib_dir/System.Numerics.dll --define:TRACE --define:PROTO_COMPILER --define:FX_ATLEAST_FSHARP_3_0 --define:FX_NO_SYSTEM_CONSOLE --define:FX_ATLEAST_PORTABLE --define:FX_SIMPLE_DIAGNOSTICS --define:FX_NO_TPL_PARALLEL --debug:pdbonly --optimize+ --fullpaths --nowarn:42,75,1204 --platform:anycpu --target:library --extraoptimizationloops:1 $extcore_files
+
+# profile78 (portable-net45+win8+wp8) (netstandard1.0)
 framework_lib_dir=xbuild-frameworks/.NETPortable/v4.5/Profile/Profile78
 mono $fsharp_dir/lib/proto/fsc-proto.exe -o:./build/profile78/ExtCore.dll --doc:./build/profile78/ExtCore.xml -r:$mono_lib_dir/$framework_lib_dir/System.dll -r:$mono_lib_dir/$framework_lib_dir/System.Core.dll --define:TRACE --define:PROTO_COMPILER --define:FX_ATLEAST_FSHARP_3_0 --define:FX_NO_SYSTEM_CONSOLE --define:FX_ATLEAST_PORTABLE --define:FX_SIMPLE_DIAGNOSTICS --define:FX_NO_TPL_PARALLEL --debug:pdbonly --optimize+ --fullpaths --nowarn:42,75,1204 --platform:anycpu --target:library --extraoptimizationloops:1 $extcore_files
 
-# profile259
+# profile259 (portable-net45+win8+wpa81+wp8) (netstandard1.0)
 framework_lib_dir=xbuild-frameworks/.NETPortable/v4.5/Profile/Profile259
 mono $fsharp_dir/lib/proto/fsc-proto.exe -o:./build/profile259/ExtCore.dll --doc:./build/profile259/ExtCore.xml -r:$mono_lib_dir/$framework_lib_dir/System.dll -r:$mono_lib_dir/$framework_lib_dir/System.Core.dll --define:TRACE --define:PROTO_COMPILER --define:FX_ATLEAST_FSHARP_3_0 --define:FX_NO_SYSTEM_CONSOLE --define:FX_ATLEAST_PORTABLE --define:FX_SIMPLE_DIAGNOSTICS --define:FX_NO_TPL_PARALLEL --debug:pdbonly --optimize+ --fullpaths --nowarn:42,75,1204 --platform:anycpu --target:library --extraoptimizationloops:1 $extcore_files
 

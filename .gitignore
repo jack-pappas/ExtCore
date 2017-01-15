@@ -75,13 +75,16 @@ _ReSharper*/
 
 # Build Output
 #pkg
-#[Bb]uild
+[Bb]uild
 /_build/*
 
 
 ###############################################################################
 # Project-specific patterns
 ###############################################################################
+
+# Ignore the tools folder (where e.g., NUnit.Runners is unpacked)
+[Tt]ools
 
 # Ignore the NuGet build folder, it's only needed when building the package
 _NuGetBuild/*

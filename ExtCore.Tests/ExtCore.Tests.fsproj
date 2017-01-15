@@ -23,7 +23,7 @@
     <OutputPath>bin\net40\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Debug\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\net40\Debug\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (net40)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -33,7 +33,7 @@
     <OutputPath>bin\net40\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Release\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\net40\Release\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (net45)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -44,7 +44,7 @@
     <OutputPath>bin\net45\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Debug\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\net45\Debug\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (net45)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -54,7 +54,7 @@
     <OutputPath>bin\net45\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Release\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\net45\Release\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile47)|AnyCPU' ">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -65,7 +65,7 @@
     <OutputPath>bin\profile47\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Debug\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile47\Debug\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile47)|AnyCPU' ">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -75,7 +75,7 @@
     <OutputPath>bin\profile47\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Release\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile47\Release\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile7)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -86,7 +86,7 @@
     <OutputPath>bin\profile7\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Debug\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile7\Debug\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile7)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -96,7 +96,7 @@
     <OutputPath>bin\profile7\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Release\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile7\Release\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile78)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -107,7 +107,7 @@
     <OutputPath>bin\profile78\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Debug\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile78\Debug\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile78)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -117,7 +117,7 @@
     <OutputPath>bin\profile78\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Release\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile78\Release\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile259)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -128,7 +128,7 @@
     <OutputPath>bin\profile259\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Debug\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile259\Debug\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile259)|AnyCPU' ">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -138,7 +138,7 @@
     <OutputPath>bin\profile259\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Release\ExtCore.Tests.XML</DocumentationFile>
+    <DocumentationFile>bin\profile259\Release\ExtCore.Tests.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">12</MinimumVisualStudioVersion>

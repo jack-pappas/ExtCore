@@ -25,7 +25,7 @@
     <OutputPath>bin\net40\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Debug\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\net40\Debug\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -41,7 +41,7 @@
     <OutputPath>bin\net40\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Release\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\net40\Release\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -57,7 +57,7 @@
     <OutputPath>bin\net45\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Debug\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\net45\Debug\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -72,7 +72,7 @@
     <OutputPath>bin\net45\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Release\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\net45\Release\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -89,7 +89,7 @@
     <OutputPath>bin\profile47\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Debug\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile47\Debug\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -105,7 +105,7 @@
     <OutputPath>bin\profile47\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Release\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile47\Release\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -123,7 +123,7 @@
     <OutputPath>bin\profile7\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Debug\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile7\Debug\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -140,7 +140,7 @@
     <OutputPath>bin\profile7\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Release\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile7\Release\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -158,7 +158,7 @@
     <OutputPath>bin\profile78\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Debug\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile78\Debug\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -175,7 +175,7 @@
     <OutputPath>bin\profile78\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Release\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile78\Release\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -193,7 +193,7 @@
     <OutputPath>bin\profile259\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Debug\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile259\Debug\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>
@@ -210,7 +210,7 @@
     <OutputPath>bin\profile259\Release\</OutputPath>
     <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Release\ExtCore.XML</DocumentationFile>
+    <DocumentationFile>bin\profile259\Release\ExtCore.xml</DocumentationFile>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>20,25,64</WarningsAsErrors>

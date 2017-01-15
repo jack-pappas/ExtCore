@@ -16,13 +16,34 @@
         <tags>f# fsharp workflow collections immutable workflow monad computation fsharpx intmap lazylist</tags>
     </metadata>
     <files>
-        <file src="_build\NuGet\net40-Client\ExtCore.XML" target="lib\net40\ExtCore.XML" />
-        <file src="_build\NuGet\net40-Client\ExtCore.dll" target="lib\net40\ExtCore.dll" />
-        <file src="_build\NuGet\net40-Client\ExtCore.XML" target="lib\net40-Client\ExtCore.XML" />
-        <file src="_build\NuGet\net40-Client\ExtCore.dll" target="lib\net40-Client\ExtCore.dll" />
-        <file src="_build\NuGet\net45\ExtCore.XML" target="lib\net45\ExtCore.XML" />
-        <file src="_build\NuGet\net45\ExtCore.dll" target="lib\net45\ExtCore.dll" />
-        <file src="_build\NuGet\profile47\ExtCore.XML" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\ExtCore.XML" />
-        <file src="_build\NuGet\profile47\ExtCore.dll" target="lib\portable-net45+sl5+netcore45+MonoAndroid1+MonoTouch1\ExtCore.dll" />
+        <!-- .NET 4.0 (Client) -->
+        <file src="build/net40-Client/ExtCore.xml" target="lib/net40/ExtCore.xml" />
+        <file src="build/net40-Client/ExtCore.dll" target="lib/net40/ExtCore.dll" />
+
+        <!-- .NET 4.0 (Full) -->
+        <file src="build/net40-Client/ExtCore.xml" target="lib/net40-Client/ExtCore.xml" />
+        <file src="build/net40-Client/ExtCore.dll" target="lib/net40-Client/ExtCore.dll" />
+
+        <!-- .NET 4.5 -->
+        <file src="build/net45/ExtCore.xml" target="lib/net45/ExtCore.xml" />
+        <file src="build/net45/ExtCore.dll" target="lib/net45/ExtCore.dll" />
+
+        <!-- Profile7 -->
+        <file src="build/profile7/ExtCore.xml" target="lib/portable-net45+win8/ExtCore.xml" />
+        <file src="build/profile7/ExtCore.dll" target="lib/portable-net45+win8/ExtCore.dll" />
+
+        <!-- Profile47 -->
+        <file src="build/profile47/ExtCore.xml" target="lib/portable-net45+sl5+win8/ExtCore.xml" />
+        <file src="build/profile47/ExtCore.dll" target="lib/portable-net45+sl5+win8/ExtCore.dll" />
+
+        <!-- Profile78 -->
+        <file src="build/profile78/ExtCore.xml" target="lib/portable-net45+win8+wp8/ExtCore.xml" />
+        <file src="build/profile78/ExtCore.dll" target="lib/portable-net45+win8+wp8/ExtCore.dll" />
+
+        <!-- Profile259 -->
+        <file src="build/profile259/ExtCore.xml" target="lib/portable-net45+win8+wpa81+wp8/ExtCore.xml" />
+        <file src="build/profile259/ExtCore.dll" target="lib/portable-net45+win8+wpa81+wp8/ExtCore.dll" />
+
+        <!-- TODO: Add netstandard and netcore builds -->
     </files>
 </package>

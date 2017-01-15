@@ -33,7 +33,7 @@ Documentation
   we also need to fill in descriptions for parameters (``<param>``), return values (``<returns>``),
   type parameters (``<typeparam>``) and so on.
 
-- Generate some nice-looking documentation from the XML documentation file (``ExtCore.XML``) generated
+- Generate some nice-looking documentation from the XML documentation file (``ExtCore.xml``) generated
   when the library is compiled. This needs to be done in a way that can be automated so it can be
   added to the build process.
 
