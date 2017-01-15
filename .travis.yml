@@ -7,7 +7,7 @@ env:
 install:
   - wget "http://download.mono-project.com/archive/mdk-latest-stable.pkg"
   - sudo installer -pkg "mdk-latest-stable.pkg" -target /
-  - nuget install NUnit.Runners -Version 2.6.3 -OutputDirectory tools
+  - mono .nuget/NuGet.exe install NUnit.Runners -Version 2.6.3 -OutputDirectory tools
 
 # TODO : Add before_script section to clone fsharp/fsharp repo and compile it, so fsc-proto can be used.
 #        Cache the compiled fsharp build (using travis CI caching functionality) so it doesn't have to run every time.
