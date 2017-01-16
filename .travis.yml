@@ -24,10 +24,10 @@ install:
 script:
   - xbuild /property:Configuration="Release (net40)" ExtCore.sln
   - xbuild /property:Configuration="Release (net45)" ExtCore.sln
-#  - xbuild /property:Configuration="Release (profile7)" ExtCore.sln
-#  - xbuild /property:Configuration="Release (profile47)" ExtCore.sln
-#  - xbuild /property:Configuration="Release (profile78)" ExtCore.sln
-#  - xbuild /property:Configuration="Release (profile259)" ExtCore.sln
+  - xbuild /property:Configuration="Release (profile7)" ExtCore.sln
+  - xbuild /property:Configuration="Release (profile47)" ExtCore.sln
+  - xbuild /property:Configuration="Release (profile78)" ExtCore.sln
+  - xbuild /property:Configuration="Release (profile259)" ExtCore.sln
   - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/net40/Release/ExtCore.Tests.dll
   - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/net45/Release/ExtCore.Tests.dll
 #  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/profile7/Release/ExtCore.Tests.dll
