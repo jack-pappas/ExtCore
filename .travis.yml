@@ -13,10 +13,13 @@ env:
     - EnableNuGetPackageRestore=true
 
 install:
+  - nuget restore ExtCore.sln
   - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory tools
 
 # TODO : Add before_script section to clone fsharp/fsharp repo and compile it, so fsc-proto can be used.
 #        Cache the compiled fsharp build (using travis CI caching functionality) so it doesn't have to run every time.
+# TODO : Use build matrix to run two jobs; one where we build/test via the solution, and another where we build through proto-compile
+#        https://docs.travis-ci.com/user/customizing-the-build/#Explicitly-Including-Jobs
 
 script:
   - xbuild /property:Configuration="Release (net40)" ExtCore.sln
