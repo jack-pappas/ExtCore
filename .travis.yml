@@ -1,13 +1,19 @@
-language: objective-c
+language: csharp
+
+# Use container-based infrastructure with Ubuntu Trusty (14.04)
+dist: trusty
+sudo: false
+
+# TODO : Enable both mono and dotnet builds: https://docs.travis-ci.com/user/languages/csharp/#Testing-Against-Mono-and-.NET-Core
+mono:
+  - latest
 
 env:
   global:
     - EnableNuGetPackageRestore=true
 
 install:
-  - wget "http://download.mono-project.com/archive/mdk-latest-stable.pkg"
-  - sudo installer -pkg "mdk-latest-stable.pkg" -target /
-  - mono .nuget/NuGet.exe install NUnit.Runners -Version 2.6.3 -OutputDirectory tools
+  - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory tools
 
 # TODO : Add before_script section to clone fsharp/fsharp repo and compile it, so fsc-proto can be used.
 #        Cache the compiled fsharp build (using travis CI caching functionality) so it doesn't have to run every time.
@@ -19,9 +25,9 @@ script:
 #  - xbuild /property:Configuration="Release (profile47)" ExtCore.sln
 #  - xbuild /property:Configuration="Release (profile78)" ExtCore.sln
 #  - xbuild /property:Configuration="Release (profile259)" ExtCore.sln
-  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.3/tools/nunit-console.exe ./ExtCore.Tests/bin/net40/Release/ExtCore.Tests.dll
-  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.3/tools/nunit-console.exe ./ExtCore.Tests/bin/net45/Release/ExtCore.Tests.dll
-#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.3/tools/nunit-console.exe ./ExtCore.Tests/bin/profile7/Release/ExtCore.Tests.dll
-#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.3/tools/nunit-console.exe ./ExtCore.Tests/bin/profile47/Release/ExtCore.Tests.dll
-#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.3/tools/nunit-console.exe ./ExtCore.Tests/bin/profile78/Release/ExtCore.Tests.dll
-#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.3/tools/nunit-console.exe ./ExtCore.Tests/bin/profile259/Release/ExtCore.Tests.dll
+  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/net40/Release/ExtCore.Tests.dll
+  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/net45/Release/ExtCore.Tests.dll
+#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/profile7/Release/ExtCore.Tests.dll
+#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/profile47/Release/ExtCore.Tests.dll
+#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/profile78/Release/ExtCore.Tests.dll
+#  - mono --runtime=v4.0.30319 ./tools/NUnit.Runners.2.6.4/tools/nunit-console.exe ./ExtCore.Tests/bin/profile259/Release/ExtCore.Tests.dll
