@@ -32,15 +32,15 @@ open System.Security.Permissions
 #endif
 
 // Version information
-[<assembly: AssemblyVersion("0.8.46")>]
-[<assembly: AssemblyFileVersion("0.8.46")>]
-[<assembly: AssemblyInformationalVersion("0.8.46")>]
+[<assembly: AssemblyVersion("0.8.47")>]
+[<assembly: AssemblyFileVersion("0.8.47")>]
+[<assembly: AssemblyInformationalVersion("0.8.47")>]
 
 // Assembly information
 [<assembly: AssemblyTitle("ExtCore")>]
 [<assembly: AssemblyDescription("An extended core library for F#.")>]
 [<assembly: NeutralResourcesLanguage("en-US")>]
-[<assembly: AssemblyCopyright("Copyright © Jack Pappas 2013-2014")>]
+[<assembly: AssemblyCopyright("Copyright © Jack Pappas 2013-2017")>]
 #if FX_ATLEAST_PORTABLE
 #else
 [<assembly: Guid("ecbe6801-9675-413e-849b-c3359721cf06")>]
