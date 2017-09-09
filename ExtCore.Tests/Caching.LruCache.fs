@@ -118,12 +118,13 @@ let find () : unit =
     |> fst
     |> assertEqual 'a'
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``find raises exn when key is not found`` () : unit =
-    [(5, 'a'); (3, 'b')]
-    |> LruCache.ofList 100u
-    |> LruCache.find 9
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [(5, 'a'); (3, 'b')]
+        |> LruCache.ofList 100u
+        |> LruCache.find 9
+        |> ignore) |> ignore
 
 [<Test>]
 let add () : unit =
@@ -341,24 +342,26 @@ let pick () : unit =
         else None)
     |> assertEqual 'a'
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``pick raises exn on empty input`` () : unit =
-    LruCache.empty
-    |> LruCache.pick (fun k v ->
-        if (k + v) % 2 = 0 then
-            Some (v + 1)
-        else None)
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        LruCache.empty
+        |> LruCache.pick (fun k v ->
+            if (k + v) % 2 = 0 then
+                Some (v + 1)
+            else None)
+        |> ignore) |> ignore
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``pick raises exn when no match is found`` () : unit =
-    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
-    |> LruCache.ofArray 100u
-    |> LruCache.pick (fun k v ->
-        if System.Char.IsControl v then
-            Some (int v + k)
-        else None)
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
+        |> LruCache.ofArray 100u
+        |> LruCache.pick (fun k v ->
+            if System.Char.IsControl v then
+                Some (int v + k)
+            else None)
+        |> ignore) |> ignore
 
 [<Test>]
 let map () : unit =
@@ -470,7 +473,7 @@ let fold () : unit =
         let testMap =
             [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
             |> LruCache.ofArray 100u
-            
+
         (0, testMap)
         ||> LruCache.fold (fun counter k v ->
             elements.Add (counter + k + int v)
@@ -648,7 +651,7 @@ module FsCheck =
                 let! capacity = Arb.generate<int>
                 let! keys = Arb.generate
                 let! values = Arb.generate
-            
+
                 // It seems FsCheck requires the use of sequences here --
                 // using List.fold2 to build the IntMap causes FsCheck to crash.
                 let kvpSeq = (Seq.ofList keys, Seq.ofList values) ||> Seq.zip
@@ -657,7 +660,7 @@ module FsCheck =
 
     /// Registers the FsCheck generators so they're already loaded
     /// when NUnit runs the tests in this fixture.
-    [<TestFixtureSetUp>]
+    [<OneTimeSetUp>]
     let registerFsCheckGenerators =
         Arb.register<LruCacheGenerator> () |> ignore
 

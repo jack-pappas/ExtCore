@@ -219,12 +219,13 @@ let find () : unit =
     |> IntBimap.find 8
     |> assertEqual "bar"
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``find raises exn when key is not found`` () : unit =
-    [(5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car")]
-    |> IntBimap.ofList
-    |> IntBimap.find 3
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [(5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car")]
+        |> IntBimap.ofList
+        |> IntBimap.find 3
+        |> ignore) |> ignore
 
 [<Test>]
 let findValue () : unit =
@@ -233,12 +234,13 @@ let findValue () : unit =
     |> IntBimap.findValue "baz"
     |> assertEqual 2
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``findValue raises exn when value is not found`` () : unit =
-    [(5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car")]
-    |> IntBimap.ofList
-    |> IntBimap.findValue "Hello"
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [(5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car")]
+        |> IntBimap.ofList
+        |> IntBimap.findValue "Hello"
+        |> ignore) |> ignore
 
 [<Test>]
 let remove () : unit =
@@ -313,7 +315,7 @@ let add () : unit =
     |> IntBimap.add 8 "bar"
     |> assertEqual
         (IntBimap.ofArray [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |])
-    
+
     // Test case for when the key and value already exist in the IntBimap, but they aren't paired.
     [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |]
     |> IntBimap.ofArray
@@ -359,7 +361,7 @@ let tryAdd () : unit =
     |> IntBimap.tryAdd 8 "bar"
     |> assertEqual
         (IntBimap.ofArray [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |])
-    
+
     // Test case for when the key and value already exist in the IntBimap, but they aren't paired.
     [| (5, "foo"); (8, "bar"); (2, "baz"); (9, "cdr"); (6, "car"); |]
     |> IntBimap.ofArray

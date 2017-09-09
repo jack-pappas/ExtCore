@@ -32,7 +32,7 @@ module Operators =
     let flip () : unit =
         do
             let join (x : string) (y : string) = x + " " + y
-                
+
             (flip join) "World!" "Hello"
             |> assertEqual "Hello World!"
 
@@ -108,7 +108,7 @@ module Operators =
     let ``notlazy always returns an instance with IsValueCreated=true`` () : unit =
         let value = notlazy 10
         assertTrue value.IsValueCreated
-        
+
         let value = notlazy "Hello World!"
         assertTrue value.IsValueCreated
 
@@ -181,33 +181,35 @@ module Operators =
         Assert.Ignore "Test not yet implemented."
 #endif
 
-    [<Test; ExpectedException(typeof<System.NotFiniteNumberException>)>]
+    [<Test>]
     let raiseNew () : unit =
-        raiseNew<System.NotFiniteNumberException, _> ()
+        Assert.Throws<System.NotFiniteNumberException>(fun () ->
+            raiseNew<System.NotFiniteNumberException, _> ()) |> ignore
 
     /// Checks for a non-empty exeption message.
     let private NonEmptyExceptionMessage (ex : exn) : unit =
-        Assert.IsNotNullOrEmpty ex.Message
+        Assert.IsNotNull ex.Message
+        Assert.IsNotEmpty ex.Message
 
-    [<Test; ExpectedException(typeof<System.NotImplementedException>,
-        Handler = "NonEmptyExceptionMessage")>]
-    let ``notImpl with empty message`` () : unit =
-        notImpl ""
-
-    [<Test; ExpectedException(typeof<System.NotImplementedException>,
-        ExpectedMessage = "This functionality not yet implemented. It's on the TODO list.")>]
-    let ``notImpl with nonempty message`` () : unit =
-        notImpl "This functionality not yet implemented. It's on the TODO list."
-
-    [<Test; ExpectedException(typeof<System.NotSupportedException>,
-        Handler = "NonEmptyExceptionMessage")>]
-    let ``notSupported with empty message`` () : unit =
-        notSupported ""
-
-    [<Test; ExpectedException(typeof<System.NotSupportedException>,
-        ExpectedMessage = "This functionality is not supported, because I didn't want to support it.")>]
-    let ``notSupported with nonempty message`` () : unit =
-        notSupported "This functionality is not supported, because I didn't want to support it."
+//    [<Test; ExpectedException(typeof<System.NotImplementedException>,
+//        Handler = "NonEmptyExceptionMessage")>]
+//    let ``notImpl with empty message`` () : unit =
+//        notImpl ""
+//
+//    [<Test; ExpectedException(typeof<System.NotImplementedException>,
+//        ExpectedMessage = "This functionality not yet implemented. It's on the TODO list.")>]
+//    let ``notImpl with nonempty message`` () : unit =
+//        notImpl "This functionality not yet implemented. It's on the TODO list."
+//
+//    [<Test; ExpectedException(typeof<System.NotSupportedException>,
+//        Handler = "NonEmptyExceptionMessage")>]
+//    let ``notSupported with empty message`` () : unit =
+//        notSupported ""
+//
+//    [<Test; ExpectedException(typeof<System.NotSupportedException>,
+//        ExpectedMessage = "This functionality is not supported, because I didn't want to support it.")>]
+//    let ``notSupported with nonempty message`` () : unit =
+//        notSupported "This functionality is not supported, because I didn't want to support it."
 
     [<Test>]
     let ``argOutOfRange with empty paramname, empty message`` () : unit =
@@ -225,15 +227,13 @@ module Operators =
     let ``argOutOfRange with nonempty paramname, nonempty message`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>,
-        Handler = "NonEmptyExceptionMessage")>]
+    [<Test>] //        Handler = "NonEmptyExceptionMessage")>]
     let ``keyNotFound with empty message`` () : unit =
-        keyNotFound ""
+        Assert.Throws<System.Collections.Generic.KeyNotFoundException>(fun () -> keyNotFound "") |> ignore
 
-    [<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>,
-        ExpectedMessage = "THAT KEY DOES NOT EXIST")>]
+    [<Test>] //        ExpectedMessage = "THAT KEY DOES NOT EXIST")>]
     let ``keyNotFound with nonempty message`` () : unit =
-        keyNotFound "THAT KEY DOES NOT EXIST"
+        Assert.Throws<System.Collections.Generic.KeyNotFoundException>(fun () -> keyNotFound "THAT KEY DOES NOT EXIST") |> ignore
 
     [<Test>]
     let checkNonNull () : unit =
@@ -338,7 +338,7 @@ module Lazy =
         let foo =
             lazy
                 String.init 3 (fun x -> string <| char x + 'a')
-        
+
         // Force evaluation of the value before calling Lazy.tryGetValue.
         foo |> Lazy.force |> ignore
 
@@ -524,23 +524,23 @@ module Choice =
     let ``bindOrRaise on Choice1Of2`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<Test; ExpectedException(typeof<exn>,
-        ExpectedMessage = "An error occurred within the computation.")>]
+    [<Test>] //        ExpectedMessage = "An error occurred within the computation.")>]
     let ``bindOrRaise on Choice2Of2`` () : unit =
-        Choice2Of2 (exn "An error occurred within the computation.")
-        |> Choice.bindOrRaise
-        |> ignore
+        Assert.Throws<exn>(fun () ->
+            Choice2Of2 (exn "An error occurred within the computation.")
+            |> Choice.bindOrRaise
+            |> ignore) |> ignore
 
     [<Test>]
     let ``bindOrFail on Choice1Of2`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
-    [<Test; ExpectedException(typeof<exn>,
-        ExpectedMessage = "An error occurred within the computation.")>]
+    [<Test>] // ExpectedMessage = "An error occurred within the computation.")>]
     let ``bindOrFail on Choice2Of2`` () : unit =
-        Choice2Of2 "An error occurred within the computation."
-        |> Choice.bindOrFail
-        |> ignore
+        Assert.Throws<exn>(fun () ->
+            Choice2Of2 "An error occurred within the computation."
+            |> Choice.bindOrFail
+            |> ignore) |> ignore
 
     [<Test>]
     let attempt () : unit =

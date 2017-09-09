@@ -32,7 +32,7 @@ open ExtCore
 /// <param name="source"></param>
 /// <returns></returns>
 [<CompiledName("AppendSingleton")>]
-let inline appendSingleton (value : 'T) (source : seq<'T>) =
+let appendSingleton (value : 'T) (source : seq<'T>) =
     Seq.append source (Seq.singleton value)
 
 /// <summary>
@@ -107,7 +107,7 @@ let cycle count (generator : int -> 'T) : seq<'T> =
     // Preconditions
     if count < 0 then
         invalidArg "count" "The count cannot be negative."
-    
+
     // If the count is zero, return an empty sequence.
     if count = 0 then
         Seq.empty
@@ -222,11 +222,11 @@ let segment (length : int) (source : seq<'T>) : seq<seq<'T>> =
 type internal PeekableEnumerator<'T> (enumerator : IEnumerator<'T>) =
     /// The current element in the enumerator.
     let mutable current = Unchecked.defaultof<_>
-    
+
     /// Holds the next element from the enumerator, i.e., the element following 'current'.
     /// This is necessary to avoid skipping an element when peeking.
     let mutable nextElement = None
-    
+
     //
     member __.Current
         with get () = current
@@ -329,7 +329,7 @@ let segmentWith (predicate : 'T -> 'T -> bool) (source : seq<'T>) : seq<seq<'T>>
     while enumerator.MoveNext () do
         yield segmentWithImpl predicate enumerator
     }
-    
+
 /// <summary>
 /// Groups consecutive elements from a sequence together into "segments".
 /// The specified projection function is applied to each element to produce a key;

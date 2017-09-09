@@ -32,7 +32,7 @@ let isEmpty () : unit =
     HashSet.empty
     |> HashSet.isEmpty
     |> assertTrue
-    
+
     HashSet.singleton 5
     |> HashSet.isEmpty
     |> assertFalse
@@ -373,7 +373,7 @@ let ofSeq () : unit =
     Seq.empty
     |> HashSet.ofSeq
     |> assertEqual HashSet.empty
-    
+
     seq {
         yield! seq { 2 .. 5 }
         yield 11
@@ -738,14 +738,15 @@ let pick () : unit =
         else None)
     |> assertEqual 3
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``pick raises exn on empty input`` () : unit =
-    HashSet.empty
-    |> HashSet.pick (fun el ->
-        if el % 3 = 2 then
-            Some (el + 1)
-        else None)
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        HashSet.empty
+        |> HashSet.pick (fun el ->
+            if el % 3 = 2 then
+                Some (el + 1)
+            else None)
+        |> ignore) |> ignore
 
 
 (* SetModule and SetType tests from the F# source distribution (in FSharp.Core.Unittests). *)
@@ -768,7 +769,7 @@ module SetType =
         let ie = (new HashSet<char>(['a'; 'b'; 'c'])) :> IEnumerable
         //let alphabet = new HashSet<char>([| 'a' .. 'z' |])
         let enum = ie.GetEnumerator()
-        
+
         let testStepping () : unit =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
@@ -779,7 +780,7 @@ module SetType =
             Assert.AreEqual(enum.Current, 'c')
             Assert.AreEqual(enum.MoveNext(), false)
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-    
+
         testStepping()
         enum.Reset()
         testStepping()
@@ -791,7 +792,7 @@ module SetType =
         // Empty IE
         let ie = (new HashSet<char>([])) :> IEnumerable  // Note no type args
         let enum = ie.GetEnumerator()
-        
+
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
         Assert.AreEqual(enum.MoveNext(), false)
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
@@ -803,7 +804,7 @@ module SetType =
         // Legit IE
         let ie =(new HashSet<char>(['a'; 'b'; 'c'])) :> IEnumerable<char>
         let enum = ie.GetEnumerator()
-        
+
         let testStepping () : unit =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
@@ -814,55 +815,55 @@ module SetType =
             Assert.AreEqual(enum.Current, 'c')
             Assert.AreEqual(enum.MoveNext(), false)
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-        
+
         testStepping()
         enum.Reset()
         testStepping()
-    
+
     [<Test>]
     [<Ignore("The failure of this test may to be due to a bug in the compiler-generated seq implementation. \
               This test is ignored for now until that is fixed or the workaround (implementing a custom enumerator) is implemented.")>]
     let ``IEnumerable<T> (Empty)`` () : unit =
         // Empty IE
-        let ie = (new HashSet<int>([])) :> IEnumerable<int>  
+        let ie = (new HashSet<int>([])) :> IEnumerable<int>
         let enum = ie.GetEnumerator()
-        
+
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
         Assert.AreEqual(enum.MoveNext(), false)
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-        
+
     [<Test>]
     let ``ICollection (Legit)`` () : unit =
-        // Legit IC        
+        // Legit IC
         let ic = (new HashSet<int>([1;2;3;4])) :> ICollection<int>
-        let st = new HashSet<int>([1;2;3;4])        
-        
-        Assert.IsTrue(ic.Contains(3)) 
+        let st = new HashSet<int>([1;2;3;4])
+
+        Assert.IsTrue(ic.Contains(3))
         let newArr = Array.create 5 0
-        ic.CopyTo(newArr,0) 
+        ic.CopyTo(newArr,0)
         Assert.IsTrue(ic.IsReadOnly)
 
     [<Test>]
     let ``ICollection (Empty)`` () : unit =
         // Empty IC
         let ic = (new HashSet<string>([])) :> ICollection<string>
-        Assert.IsFalse(ic.Contains("A") )     
+        Assert.IsFalse(ic.Contains("A") )
         let newArr = Array.create 5 "a"
-        ic.CopyTo(newArr,0) 
-    
+        ic.CopyTo(newArr,0)
+
     [<Test>]
     let ``IComparable (Legit)`` () : unit =
         // Legit IC
-        let ic = (new HashSet<int>([1;2;3;4])) :> IComparable    
-        Assert.AreEqual(ic.CompareTo(new HashSet<int>([1;2;3;4])),0) 
-    
+        let ic = (new HashSet<int>([1;2;3;4])) :> IComparable
+        Assert.AreEqual(ic.CompareTo(new HashSet<int>([1;2;3;4])),0)
+
     [<Test>]
-    let ``IComparable (Empty)`` () : unit =    
+    let ``IComparable (Empty)`` () : unit =
         // Empty IC
-        let ic = (new HashSet<string>([])) :> IComparable   
+        let ic = (new HashSet<string>([])) :> IComparable
         Assert.AreEqual(ic.CompareTo(HashSet.empty<string>),0)
-        
-        
+
+
     // Base class methods
     [<Test>]
     let ObjectGetHashCode () : unit =
@@ -870,14 +871,14 @@ module SetType =
         let x = HashSet.ofList [1; 2; 3]
         let y = HashSet.ofList [3; 2; 1]
         Assert.AreEqual(x.GetHashCode(), y.GetHashCode())
-    
+
     [<Test>]
     let ObjectToString () : unit =
         Assert.AreEqual("hashSet [1; 2; 3; ... ]", (new HashSet<int>([1;2;3;4])).ToString())
         Assert.AreEqual("hashSet []", (HashSet.empty).ToString())
         Assert.AreEqual("hashSet [1; 3]", (new HashSet<decimal>([1M;3M])).ToString())
-        
-    
+
+
     [<Test>]
     let ``ObjectEquals (Basic)`` () : unit =
         // All three are different references, but equality has been
@@ -899,7 +900,7 @@ module SetType =
         let b = HashSet.empty<string>
         Assert.IsFalse( b.Equals(a) )
         Assert.IsFalse( a.Equals(b) )
-        
+
     [<Test>]
     let ``ObjectEquals (co- and contra-variance)`` () : unit =
         // Co/contra variance not supported
@@ -907,126 +908,126 @@ module SetType =
         let b = HashSet.empty
         Assert.IsFalse(a.Equals(b))
         Assert.IsFalse(b.Equals(a))
-        
+
     [<Test>]
     let ``ObjectEquals (Self-equality)`` () : unit =
         // Self equality
         let a = new HashSet<int>([1])
         Assert.IsTrue( (a = a) )
         Assert.IsTrue(a.Equals(a))
-        
+
     [<Test>]
     let ``ObjectEquals (Null)`` () : unit =
         // Null
         let a = new HashSet<int>([1])
-        Assert.IsFalse(a.Equals(null))  
-        
-        
+        Assert.IsFalse(a.Equals(null))
+
+
     // Instance methods
     [<Test>]
-    let Add () : unit =    
+    let Add () : unit =
         let l = new HashSet<int>([1 .. 10])
         let ad = l.Add 88
         Assert.IsTrue(ad.Contains(88))
-    
+
         let e : HashSet<string> = HashSet.empty<string>
         let ade = e.Add "A"
         Assert.IsTrue(ade.Contains("A"))
-        
+
         let s = HashSet.singleton 168
         let ads = s.Add 100
         Assert.IsTrue(ads.Contains(100))
-        
+
     [<Test>]
-    let Contains () : unit =    
+    let Contains () : unit =
         let i = new HashSet<int>([1 .. 10])
         Assert.IsTrue(i.Contains(8))
-    
+
         let e : HashSet<string> = HashSet.empty<string>
         Assert.IsFalse(e.Contains("A"))
-        
+
         let s = HashSet.singleton 168
         Assert.IsTrue(s.Contains(168))
-    
+
     [<Test>]
-    let Count () : unit =    
+    let Count () : unit =
         let l = new HashSet<int>([1 .. 10])
         Assert.AreEqual(l.Count, 10)
-    
+
         let e : HashSet<string> = HashSet.empty<string>
         Assert.AreEqual(e.Count, 0)
-        
+
         let s = HashSet.singleton 'a'
-        Assert.AreEqual(s.Count, 1)        
-        
+        Assert.AreEqual(s.Count, 1)
+
     [<Test>]
     let IsEmpty () : unit =
         let i = new HashSet<int>([1 .. 10])
         Assert.IsFalse(i.IsEmpty)
-    
+
         let e : HashSet<string> = HashSet.empty<string>
         Assert.IsTrue(e.IsEmpty)
-        
+
         let s = HashSet.singleton 168
-        Assert.IsFalse(s.IsEmpty)   
-        
+        Assert.IsFalse(s.IsEmpty)
+
     [<Test>]
     let IsSubsetOf () : unit =
         let fir = new HashSet<int>([1 .. 20])
         let sec = new HashSet<int>([1 .. 10])
         Assert.IsTrue(sec.IsSubsetOf(fir))
         Assert.IsTrue(HashSet.isSubset sec fir)
-    
+
         let e : HashSet<int> = HashSet.empty<int>
         Assert.IsTrue(e.IsSubsetOf(fir))
         Assert.IsTrue(HashSet.isSubset e fir)
-        
+
         let s = HashSet.singleton 8
-        Assert.IsTrue(s.IsSubsetOf(fir)) 
+        Assert.IsTrue(s.IsSubsetOf(fir))
         Assert.IsTrue(HashSet.isSubset s fir)
-        
+
         let s100 = set [0..100]
         let s101 = set [0..101]
-        for i = 0 to 100 do 
+        for i = 0 to 100 do
             Assert.IsFalse( (set [-1..i]).IsSubsetOf s100)
             Assert.IsTrue( (set [0..i]).IsSubsetOf s100)
             Assert.IsTrue( (set [0..i]).IsProperSubsetOf s101)
-           
-        
+
+
     [<Test>]
     let IsSupersetOf () : unit =
         let fir = new HashSet<int>([1 .. 10])
         let sec = new HashSet<int>([1 .. 20])
         Assert.IsTrue(sec.IsSupersetOf(fir))
         Assert.IsTrue(HashSet.isSuperset sec fir)
-    
+
         let e : HashSet<int> = HashSet.empty<int>
         Assert.IsFalse(e.IsSupersetOf(fir))
         Assert.IsFalse(HashSet.isSuperset e fir)
-        
+
         let s = HashSet.singleton 168
-        Assert.IsFalse(s.IsSupersetOf(fir))  
+        Assert.IsFalse(s.IsSupersetOf(fir))
         Assert.IsFalse(HashSet.isSuperset s fir)
 
         let s100 = set [0..100]
         let s101 = set [0..101]
-        for i = 0 to 100 do 
+        for i = 0 to 100 do
             Assert.IsFalse( s100.IsSupersetOf (set [-1..i]))
             Assert.IsTrue( s100.IsSupersetOf (set [0..i]))
             Assert.IsTrue( s101.IsSupersetOf (set [0..i]))
-        
+
     [<Test>]
-    let Remove () : unit =    
+    let Remove () : unit =
         let i = new HashSet<int>([1;2;3;4])
         Assert.AreEqual(i.Remove 3,(new HashSet<int>([1;2;4])))
-    
+
         let e : HashSet<string> = HashSet.empty<string>
         Assert.AreEqual(e.Remove "A", e)
-        
+
         let s = HashSet.singleton 168
         Assert.AreEqual(s.Remove 168, HashSet.empty<int>)
-        
-        
+
+
     // Static methods
     [<Test>]
     let Addition () : unit =
@@ -1034,16 +1035,16 @@ module SetType =
         let sec = new HashSet<int>([2;4;6])
         Assert.AreEqual(fir + sec, new HashSet<int>([1;2;3;4;5;6]))
         Assert.AreEqual(HashSet.op_Addition(fir,sec), new HashSet<int>([1;2;3;4;5;6]))
-    
+
         let e : HashSet<int> = HashSet.empty<int>
         Assert.AreEqual(e + e, e)
         Assert.AreEqual(HashSet.op_Addition(e,e),e)
-        
+
         let s1 = HashSet.singleton 8
         let s2 = HashSet.singleton 6
         Assert.AreEqual(s1 + s2, new HashSet<int>([8;6]))
         Assert.AreEqual(HashSet.op_Addition(s1,s2), new HashSet<int>([8;6]))
-        
+
 
     [<Test>]
     let Subtraction () : unit =
@@ -1052,12 +1053,12 @@ module SetType =
         Assert.AreEqual(fir - sec, new HashSet<int>([1;3;5]))
         Assert.AreEqual(HashSet.difference fir sec, new HashSet<int>([1;3;5]))
         Assert.AreEqual(HashSet.op_Subtraction(fir,sec), new HashSet<int>([1;3;5]))
-    
+
         let e : HashSet<int> = HashSet.empty<int>
         Assert.AreEqual(e - e, e)
         Assert.AreEqual(HashSet.difference e e, e)
         Assert.AreEqual(HashSet.op_Subtraction(e,e),e)
-        
+
         let s1 = HashSet.singleton 8
         let s2 = HashSet.singleton 6
         Assert.AreEqual(s1 - s2, new HashSet<int>([8]))
@@ -1077,8 +1078,8 @@ module SetModule =
     [<Test>]
     let empty () : unit =
         let emptySet = HashSet.empty
-        if HashSet.count emptySet <> 0 then Assert.Fail()    
-        
+        if HashSet.count emptySet <> 0 then Assert.Fail()
+
         let c : HashSet<int>    = HashSet.empty
         let d : HashSet<string> = HashSet.empty
         ()
@@ -1088,10 +1089,10 @@ module SetModule =
         let intSingleton = HashSet.singleton 5
         Assert.IsTrue(intSingleton.Count = 1)
         Assert.IsTrue(intSingleton.Contains(5))
-                
+
         let stringSingleton = HashSet.singleton (null)
         Assert.IsFalse(stringSingleton.Contains(""))
-        
+
     [<Test>]
     let add () : unit =
         let empty = HashSet.empty
@@ -1099,11 +1100,11 @@ module SetModule =
         let xy    = HashSet.add 'y' x
         let xyz   = HashSet.add 'z' xy
         let wxyz  = HashSet.add 'w' xyz
-        
+
         Assert.IsTrue(HashSet.count xy   = 2)
         Assert.IsTrue(HashSet.count xyz  = 3)
         Assert.IsTrue(HashSet.count wxyz = 4)
-        
+
     [<Test>]
     let contains () : unit =
         // Empty set searching for null = false
@@ -1116,48 +1117,48 @@ module SetModule =
         let odds = new HashSet<int>([1 .. 2 .. 11])
         if HashSet.contains 6 odds <> false then Assert.Fail()
         ()
-        
+
     [<Test>]
-    let count () : unit = 
+    let count () : unit =
         let empty = HashSet.empty
         if HashSet.count empty <> 0 then Assert.Fail()
-        
+
         let one = HashSet.add 1 empty
         if HashSet.count one <> 1 then Assert.Fail()
-        
+
         let multi = new HashSet<char>([| 'a' .. 'z' |])
         if HashSet.count multi <> 26 then Assert.Fail()
         ()
-        
+
     [<Test>]
-    let diff () : unit = 
+    let diff () : unit =
         // Given a large set and removing 0, 1, x elements...
         let alphabet = new HashSet<char>([| 'a' .. 'z' |])
         let emptyChar = HashSet.empty : HashSet<char>
-        
+
         let removeEmpty = alphabet - emptyChar
         assertEqual alphabet removeEmpty
-        
+
         let number = HashSet.singleton '1'
         let removeNumber = alphabet - number
         assertEqual alphabet removeNumber
-        
+
         let vowels = new HashSet<char>([| 'a'; 'e'; 'i'; 'o'; 'u' |])
         let noVowels = alphabet - vowels
         assertEqual 21 noVowels.Count
-        
+
         // Give a set of 0, 1, x elements remove some other set
         let odds  = new HashSet<int>([1 .. 2 .. 10])
         let evens = new HashSet<int>([2 .. 2 .. 10])
-        
+
         let emptyNum = HashSet.empty : HashSet<int>
         let removeOddsFromEmpty = emptyNum - odds
         assertEqual emptyNum removeOddsFromEmpty
-        
+
         let one = HashSet.singleton 1
         let removeOddsFrom1 = one - odds
         assertEqual emptyNum removeOddsFrom1
-        
+
         let evensSansOdds = evens - odds
         assertEqual evens evensSansOdds
 
@@ -1166,22 +1167,22 @@ module SetModule =
         let emptySet1 : HashSet<string> = HashSet.empty
         let emptySet2 : HashSet<string> = HashSet.empty
         if (emptySet1 = emptySet2) <> true then Assert.Fail()
-        
+
         let a  = new HashSet<int>([1; 2; 3; 4; 5])
         let b = new HashSet<int>([1; 3; 5])
-        
+
         if (a = b) <> false then Assert.Fail()
-        
+
         let a = a |> HashSet.remove 2 |> HashSet.remove 4
         if (a = b) <> true then Assert.Fail()
         ()
-        
+
     [<Test>]
     let ``compare (empty sets)`` () : unit =
         // Comparing empty sets
         let emptyString1 = HashSet.empty : HashSet<string>
         let emptyString2 = HashSet.empty : HashSet<string>
-        
+
         if compare emptyString1 emptyString1 <> 0 then Assert.Fail()
         if compare emptyString1 emptyString2 <> 0 then Assert.Fail()
 
@@ -1200,7 +1201,7 @@ module SetModule =
         // Comparing multi-element sets
         let alphabet = new HashSet<char>(['a' .. 'z'])
         let vowels   = new HashSet<char>(['a'; 'e'; 'i'; 'o'; 'u'])
-        
+
         let noVowelAlpa = alphabet - vowels
         if compare noVowelAlpa alphabet     <> 1  then Assert.Fail()
         if compare alphabet alphabet        <> 0  then Assert.Fail()
@@ -1210,71 +1211,71 @@ module SetModule =
 
     [<Test>]
     let exists () : unit =
-        
+
         let emptyInt = HashSet.empty : HashSet<int>
         if HashSet.exists (fun _ -> true) emptyInt <> false then Assert.Fail()
-        
+
         let x = HashSet.singleton 'x'
         if HashSet.exists (fun c -> c = 'x') x  <> true  then Assert.Fail()
         if HashSet.exists (fun c -> c <> 'x') x <> false then Assert.Fail()
-        
+
         let letNumPairs = new HashSet<string * int>([("one", 1); ("two", 2); ("three", 3)])
         if HashSet.exists (fun (text, num) -> text = "one" && num = 1) letNumPairs <> true then Assert.Fail()
         if HashSet.exists (fun (text, num) -> text = "four") letNumPairs           <> false then Assert.Fail()
         ()
-        
+
     [<Test>]
     let filter () : unit =
         let emptyComplex = HashSet.empty : HashSet<int * (string * HashSet<decimal>) list * HashSet<int * string * (char * char * char)>>
-        let fileredEmpty = HashSet.filter (fun _ -> false) emptyComplex 
+        let fileredEmpty = HashSet.filter (fun _ -> false) emptyComplex
         if (fileredEmpty = emptyComplex) <> true then Assert.Fail()
-        
+
         let nullSet = HashSet.singleton null
         if nullSet.Count <> 1 then Assert.Fail()
         let filteredNull = HashSet.filter (fun x -> x <> null) nullSet
         if filteredNull.Count <> 0 then Assert.Fail()
-        
+
         let digits = new HashSet<int>([1 .. 10])
         let evens  = new HashSet<int>([2 .. 2 .. 10])
         let filteredDigits = HashSet.filter(fun i -> i % 2 = 0) digits
         if (filteredDigits = evens) <> true then Assert.Fail()
         ()
-        
+
 
     [<Test>]
     let map () : unit =
         let emptySet : HashSet<string> = HashSet.empty
-        
+
         let result = HashSet.map (fun _ -> Assert.Fail(); "") emptySet
         if (emptySet = result) <> true then Assert.Fail()
-        
+
         let alphabet = new HashSet<_>(['a' .. 'z'])
         let capped = HashSet.map (fun c -> Char.ToUpper(c)) alphabet
-        
+
         if HashSet.exists (fun c -> c = Char.ToLower(c)) capped then Assert.Fail()
         ()
 
     [<Test>]
     let fold () : unit =
-        
+
         let emptySet : HashSet<decimal> = HashSet.empty
         let result = HashSet.fold (fun _ _ -> Assert.Fail(); -1I) 0I emptySet
         assertEqual 0I result
-        
+
         let input = new HashSet<_>([1; 2; 3; 4; 5])
-        
+
         HashSet.fold (+) 0 input
         |> assertEqual 15
-        
+
     [<Test>]
     let foldBack () : unit =
-        
+
         let emptySet : HashSet<decimal> = HashSet.empty
         let result = HashSet.foldBack (fun _ _ -> Assert.Fail(); -1I) emptySet 0I
         assertEqual 0I result
-        
+
         let input = new HashSet<_>([1; 2; 3; 4; 5])
-        
+
         HashSet.foldBack (+) input 0
         |> assertEqual 15
 
@@ -1283,7 +1284,7 @@ module SetModule =
         (HashSet.empty : HashSet<string>)
         |> HashSet.forall (fun _ -> Assert.Fail(); false)
         |> assertTrue
-        
+
         let seta = new HashSet<_>( [1 .. 99] |> List.map (fun i -> i.ToString()) )
         let result = seta |> HashSet.forall (fun str -> str.Length < 3)
         Assert.IsTrue(result)
@@ -1295,31 +1296,31 @@ module SetModule =
 
     [<Test>]
     let intersect () : unit =
-        
+
         let emptySet1 : HashSet<int> = HashSet.empty
         let emptySet2 : HashSet<int> = HashSet.empty
         let four                = HashSet.singleton 4
-       
+
         let emptyInterEmpty = HashSet.intersect emptySet1 emptySet2
         Assert.IsTrue( (emptyInterEmpty = emptySet1) )
-        
+
         let xInterEmpty = HashSet.intersect four emptySet1
         Assert.IsFalse( (four = xInterEmpty) )
-        
+
         let emptyInterX = HashSet.intersect emptySet1 four
         Assert.IsFalse( (four = emptyInterX) )
         ()
-    
+
     [<Test>]
     let intersect2 () : unit =
         let a = new HashSet<int>([3; 4; 5; 6])
         let b = new HashSet<int>([5; 6; 7; 8])
-        
+
         let intersection   = HashSet.intersect a b
         let expectedResult = new HashSet<int>([5; 6])
         Assert.IsTrue( (intersection = expectedResult) )
 
-    
+
     [<Test>]
     let intersectMany () : unit =
         (* IntersectAll
@@ -1329,25 +1330,25 @@ module SetModule =
                4567
                 567
                  67 *)
-        let setsToIntersect = 
+        let setsToIntersect =
             [
                 for i = 1 to 6 do
                     yield new HashSet<int>([i .. 7])
             ]
-            
+
         let result : HashSet<_> = HashSet.intersectMany setsToIntersect
         Assert.IsTrue(result.Count = 2)
-        
-        let contains x s = s |> HashSet.exists (fun i -> i = x) 
+
+        let contains x s = s |> HashSet.exists (fun i -> i = x)
         Assert.IsTrue(contains 6 result)
         Assert.IsTrue(contains 7 result)
-                  
+
     [<Test>]
     let intersectMany2 () : unit =
         let all   = new HashSet<_>([1 .. 10])
         let odds  = new HashSet<_>([1 .. 2 .. 10])
         let evens = new HashSet<_>([2 .. 2 .. 10])
-        
+
         let result = HashSet.intersectMany [odds; evens; all]
         Assert.IsTrue(HashSet.count result = 0)
 
@@ -1355,11 +1356,11 @@ module SetModule =
     let intersectMany3 () : unit =
         let all   = new HashSet<_>([1 .. 10])
         let empty = HashSet.empty : HashSet<int>
-        
+
         let result = HashSet.intersectMany [all; empty; all]
         Assert.IsTrue(HashSet.count result = 0)
-        
-        
+
+
     [<Test>]
     let intersectMany4 () : unit =
         checkThrowsArgumentException (fun () -> HashSet.intersectMany (Seq.empty : seq<HashSet<int>>) |> ignore)
@@ -1370,36 +1371,36 @@ module SetModule =
         let emptySet1 : HashSet<int> = HashSet.empty
         let emptySet2 : HashSet<int> = HashSet.empty
         let four                 = HashSet.singleton 4
-       
+
         let emptyUnionEmpty = HashSet.union emptySet1 emptySet2
         Assert.IsTrue( (emptyUnionEmpty = emptySet1) )
-        
+
         let xUnionEmpty = HashSet.union four emptySet1
         Assert.IsTrue( (four = xUnionEmpty) )
-        
+
         let emptyUnionX = HashSet.union emptySet1 four
         Assert.IsTrue( (four = emptyUnionX) )
         ()
-    
+
     [<Test>]
     let union2 () : unit =
         let a = new HashSet<int>([1; 2; 3; 4])
         let b = new HashSet<int>([5; 6; 7; 8])
-        
+
         let union = HashSet.union a b
         let expectedResult = new HashSet<int>([1 .. 8])
         Assert.IsTrue( (union = expectedResult) )
 
     [<Test>]
     let union3 () : unit =
-        let x : HashSet<_> = 
+        let x : HashSet<_> =
             HashSet.singleton 1
             |> HashSet.union (HashSet.singleton 1)
             |> HashSet.union (HashSet.singleton 1)
             |> HashSet.union (HashSet.singleton 1)
-            
+
         Assert.IsTrue(x.Count = 1)
-        
+
     [<Test>]
     let unionMany () : unit =
         let odds  = new HashSet<int>([1 .. 2 .. 10])
@@ -1407,7 +1408,7 @@ module SetModule =
         let empty = HashSet.empty : HashSet<int>
         let rest  = new HashSet<int>([11 .. 19])
         let zero  = HashSet.singleton 0
-        
+
         let result : HashSet<_> = HashSet.unionMany [odds; evens; empty; rest; zero]
         Assert.IsTrue(result.Count = 20)
 
@@ -1415,20 +1416,20 @@ module SetModule =
     let unionMany2 () : unit =
         let result : HashSet<_> = HashSet.unionMany (Seq.empty : seq<HashSet<string>>)
         Assert.IsTrue(result.Count = 0)
-        
+
     [<Test>]
     let isEmpty () : unit =
         let zero  = HashSet.empty : HashSet<decimal>
         let zero2 = new HashSet<int>([])
         let one   = HashSet.singleton "foo"
         let n     = new HashSet<_>( [1 .. 10] )
-        
+
         Assert.IsTrue(HashSet.isEmpty zero)
         Assert.IsTrue(HashSet.isEmpty zero2)
-        
+
         Assert.IsFalse(HashSet.isEmpty one)
         Assert.IsFalse(HashSet.isEmpty n)
-        
+
     [<Test>]
     let iter () : unit =
 
@@ -1437,27 +1438,27 @@ module SetModule =
 
         // Full set
         let elements = [| for i = 0 to 9 do yield false |]
-        
+
         let set = new HashSet<_>(['0' .. '9'])
         HashSet.iter (fun c ->
             let i = int c - int '0'
             elements.[i] <- true) set
-        
+
         Assert.IsTrue (Array.forall ( (=) true ) elements)
 
     [<Test>]
     let partition () : unit =
-        
+
         // Empty
         let resulta, resultb = HashSet.partition (fun (x : int) -> Assert.Fail(); false) HashSet.empty
         Assert.IsTrue(resulta.Count = 0 && resultb.Count = 0)
 
         // One
         let single = HashSet.singleton "foo"
-        
+
         let resulta, resultb = HashSet.partition (fun (str : string) -> str.Length <> 3) single
         Assert.IsTrue(resulta.Count = 0 && resultb.Count = 1)
-        
+
         let resulta, resultb = HashSet.partition (fun (str : string) -> str.Length = 3) single
         Assert.IsTrue(resulta.Count = 1 && resultb.Count = 0)
 
@@ -1471,43 +1472,43 @@ module SetModule =
 
     [<Test>]
     let remove () : unit =
-        
+
         let emptySet : HashSet<int> = HashSet.empty
         let result = HashSet.remove 42 emptySet
         Assert.IsTrue(result.Count = 0)
-        
+
         // One
         let single = HashSet.singleton 100I
         let resulta = HashSet.remove 100I single
         let resultb = HashSet.remove   1I single
-        
+
         Assert.IsTrue (resulta.Count = 0)
         Assert.IsTrue (resultb.Count = 1)
-        
+
         // Multi
         let a = new HashSet<int>([1 .. 5])
         Assert.IsTrue(a.Count = 5)
-        
+
         let b = HashSet.remove 3 a
         Assert.IsTrue(b.Count = 4)
         // Call again, double delete
         let c = HashSet.remove 3 b
         Assert.IsTrue(c.Count = 4)
-        
+
         Assert.IsFalse(HashSet.exists ( (=) 3 ) c)
 
     [<Test>]
     let ofList () : unit =
-        
+
         // Empty
         let emptySet = HashSet.ofList ([] : (string * int * HashSet<int>) list)
         Assert.IsTrue(HashSet.isEmpty emptySet)
-        
+
         // Single
         let single = HashSet.ofList [1]
         Assert.IsTrue(single.Count = 1)
         Assert.IsTrue(HashSet.exists ( (=) 1 ) single)
-        
+
         // Multi
         let multi = HashSet.ofList ["mon"; "tue"; "wed"; "thu"; "fri"]
         Assert.IsTrue(multi.Count = 5)
@@ -1520,11 +1521,11 @@ module SetModule =
         // Empty
         let emptySet : HashSet<byte> = HashSet.empty
         Assert.IsTrue(HashSet.toList emptySet = [])
-        
+
         // Single
         let single = HashSet.singleton "stuff"
         Assert.IsTrue(HashSet.toList single = ["stuff"])
-        
+
         // Multi
         let multi = new HashSet<_>([5; 2; 3; 1; 4])
         HashSet.toList multi
@@ -1532,16 +1533,16 @@ module SetModule =
 
     [<Test>]
     let ofArray () : unit =
-        
+
         // Empty
         let emptySet = HashSet.ofArray ([| |] : (string * int * HashSet<int>) [])
         Assert.IsTrue(HashSet.isEmpty emptySet)
-        
+
         // Single
         let single = HashSet.ofArray [| 1 |]
         Assert.IsTrue(single.Count = 1)
         Assert.IsTrue(HashSet.exists ( (=) 1 ) single)
-        
+
         // Multi
         let multi = HashSet.ofArray [| "mon"; "tue"; "wed"; "thu"; "fri" |]
         Assert.IsTrue(multi.Count = 5)
@@ -1554,11 +1555,11 @@ module SetModule =
         // Empty
         let emptySet : HashSet<byte> = HashSet.empty
         Assert.IsTrue(HashSet.toArray emptySet = [| |])
-        
+
         // Single
         let single = HashSet.singleton "stuff"
         Assert.IsTrue(HashSet.toArray single = [| "stuff" |])
-        
+
         // Multi
         let multi = new HashSet<_>([5; 2; 3; 1; 4])
         Assert.IsTrue(HashSet.toArray multi = [| 1; 2; 3; 4; 5 |])
@@ -1566,16 +1567,16 @@ module SetModule =
 
     [<Test>]
     let ofSeq () : unit =
-        
+
         // Empty
         let emptySet = HashSet.ofSeq ([| |] : (string * int * HashSet<int>) [])
         Assert.IsTrue(HashSet.isEmpty emptySet)
-        
+
         // Single
         let single = HashSet.ofSeq [ 1 ]
         Assert.IsTrue(single.Count = 1)
         Assert.IsTrue(HashSet.exists ( (=) 1 ) single)
-        
+
         // Multi
         let multi = HashSet.ofSeq [| "mon"; "tue"; "wed"; "thu"; "fri" |]
         Assert.IsTrue(multi.Count = 5)
@@ -1589,12 +1590,12 @@ module SetModule =
         let emptySet : HashSet<byte> = HashSet.empty
         let emptySeq = HashSet.toSeq emptySet
         Assert.IsTrue (Seq.length emptySeq = 0)
-        
+
         // Single
         let single = HashSet.singleton "stuff"
         let singleSeq = HashSet.toSeq single
         Assert.IsTrue(Seq.toList singleSeq = [ "stuff" ])
-        
+
         // Multi
         let multi = new HashSet<_>([5; 2; 3; 1; 4])
         let multiSeq = HashSet.toSeq multi
@@ -1619,29 +1620,29 @@ module SetModule =
         Assert.IsFalse(HashSet.isProperSuperset HashSet.empty HashSet.empty)
         Assert.IsFalse(HashSet.isProperSuperset set1 set1)
         Assert.IsFalse(HashSet.isProperSuperset set2 set1)
-        
+
     // ----- Not associated with a module function -----
 
     // TODO : If possible, modify this test to work with FsCheck instead.
     [<Test>]
     let ``General Test #1`` () : unit =
         // Retruns a random permutation of integers between the two bounds.
-        let randomPermutation lowerBound upperBound = 
+        let randomPermutation lowerBound upperBound =
             let items = ResizeArray<_>([lowerBound .. upperBound])
             let rng = new Random()
-            
+
             let randomPermutation = ResizeArray<int>()
             while items.Count > 0 do
                 let idx = rng.Next() % items.Count
                 let i = items.[idx]
                 items.RemoveAt(idx)
                 randomPermutation.Add(i)
-            
+
             randomPermutation.ToArray()
-        
+
         for i in 0..50 do
             let permutation = randomPermutation 0 i
-            
+
             let set : HashSet<int> ref = ref HashSet.empty
             // Add permutation items to set in order
             Array.iter (fun i -> set := HashSet.add i !set) permutation

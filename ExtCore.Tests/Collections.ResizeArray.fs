@@ -27,7 +27,7 @@ open NUnit.Framework
 
 
 // TODO : Remove this ASAP, replacing any uses with direct calls to Assert.IsTrue.
-let private test msg condition =
+let private test msg (condition: bool) =
     Assert.IsTrue (condition, sprintf "MiniTest '%s'" msg)
 
 
@@ -50,7 +50,7 @@ let ``Basic Tests`` () : unit =
     test "ra_findIndex_b"
         (try ResizeArray.findIndex (fun i -> i >= 20) (ra [0..10]) |> ignore; false
          with _ -> true)
-       
+
     test "ra_find_indexi_a"
         (ResizeArray.findIndexi (=) (ra [1; 2; 3; 3; 2; 1]) = 3)
 
@@ -164,7 +164,7 @@ let ``Basic Tests`` () : unit =
 
     test "ra_first b"
         (ra [1..100] |> ResizeArray.tryPick (fun x -> None) = None)
-            
+
     test "ra_first c"
         (ra [] |> ResizeArray.tryPick (fun _ -> Some 42) = None)
 

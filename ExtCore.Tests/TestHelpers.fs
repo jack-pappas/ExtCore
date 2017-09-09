@@ -53,11 +53,11 @@ let inline assertNotSame<'T when 'T : not struct> (expected : 'T) (actual : 'T) 
     Assert.AreNotSame (expected, actual)
 
 /// Asserts that a condition is true.
-let inline assertTrue condition =
+let inline assertTrue (condition: bool) =
     Assert.IsTrue (condition)
 
 /// Asserts that a condition is false.
-let inline assertFalse condition =
+let inline assertFalse (condition: bool) =
     Assert.IsFalse (condition)
 
 /// Asserts that the given function raises an exception of a specified exception type
@@ -113,7 +113,7 @@ type private NUnitRunner () =
         member x.OnShrink (_,_) = ()
         member x.OnFinished (name, result) =
             match result with
-            | TestResult.True data ->
+            | TestResult.True (data, _) ->
                 // TODO : Log the result data.
                 Runner.onFinishedToString name result
                 |> stdout.WriteLine
@@ -176,9 +176,9 @@ let countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd (seq : seq<'T>) =
                 ie.Reset()
                 }
 
-    { new seq<'T> with 
-            member __.GetEnumerator () = enumerator () 
-        interface System.Collections.IEnumerable with 
+    { new seq<'T> with
+            member __.GetEnumerator () = enumerator ()
+        interface System.Collections.IEnumerable with
             member __.GetEnumerator () = enumerator () :> _ }
 
 let countEnumeratorsAndCheckedDisposedAtMostOnce (seq : seq<'T>) =
@@ -212,10 +212,10 @@ let countEnumeratorsAndCheckedDisposedAtMostOnce (seq : seq<'T>) =
                 }
 
     { new seq<'T> with
-            member __.GetEnumerator () = enumerator () 
-        interface System.Collections.IEnumerable with 
+            member __.GetEnumerator () = enumerator ()
+        interface System.Collections.IEnumerable with
             member __.GetEnumerator () = enumerator () :> _ }
-        
+
 /// Check that the lambda throws an exception of the given type.
 /// Otherwise calls Assert.Fail().
 let private checkThrowsExn<'Exn when 'Exn :> exn> (f : unit -> unit) : unit =

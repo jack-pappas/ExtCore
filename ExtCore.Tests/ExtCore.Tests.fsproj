@@ -1,154 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug (net40)</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{85b78e3d-abfd-4a79-a9f7-26b586c56a94}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>ExtCore.Tests</RootNamespace>
-    <AssemblyName>ExtCore.Tests</AssemblyName>
-    <Name>ExtCore.Tests</Name>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-    <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
+    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (net40)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\net40\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Debug\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (net40)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\net40\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Release\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (net45)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\net45\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Debug\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (net45)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\net45\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Release\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile47)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile47\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Debug\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile47)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile47\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Release\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile7)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile7\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Debug\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile7)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile7\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Release\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile78)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile78\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Debug\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile78)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile78\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Release\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile259)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile259\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Debug\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile259)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile259\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Release\ExtCore.Tests.xml</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup>
-    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">12</MinimumVisualStudioVersion>
-  </PropertyGroup>
-  <PropertyGroup>
-    <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
-  </PropertyGroup>
-  <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
-    <None Include="packages.config" />
     <Compile Include="TestHelpers.fs" />
     <Compile Include="RefCountEnumerable.fs" />
     <Compile Include="Pervasive.fs" />
@@ -209,33 +63,10 @@
     <Compile Include="Args.fs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="FsCheck">
-      <HintPath>..\packages\FsCheck.0.9.3.0\lib\net40-Client\FsCheck.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <ProjectReference Include="..\ExtCore\ExtCore.fsproj">
-      <Name>ExtCore</Name>
-      <Project>{ae097a63-ecc1-43fc-98cd-ef943b690012}</Project>
-      <Private>True</Private>
-    </ProjectReference>
+    <ProjectReference Include="..\ExtCore\ExtCore.fsproj" />
   </ItemGroup>
-  <Import Project="$(SolutionDir).nuget\nuget.targets" Condition="Exists('$(SolutionDir).nuget\nuget.targets')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-	     Other similar extension points exist, see Microsoft.Common.targets.
-	<Target Name="BeforeBuild">
-	</Target>
-	<Target Name="AfterBuild">
-	</Target>
-	-->
+  <ItemGroup>
+    <PackageReference Include="FsCheck" Version="2.10.0" />
+    <PackageReference Include="NUnit" Version="3.8.1" />
+  </ItemGroup>
 </Project>

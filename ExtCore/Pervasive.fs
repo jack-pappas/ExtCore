@@ -76,7 +76,7 @@ module Operators =
                     raise <| System.IndexOutOfRangeException ()
                 else
                     this.Array.[this.Offset + index]
-                
+
             and set index value =
                 if index < 0 || index >= this.Count then
                     raise <| System.IndexOutOfRangeException ()
@@ -318,7 +318,7 @@ module Operators =
     #endif
 
     (* Exception-related functions *)
-    
+
     /// <summary>Raises a new exception of the specified type.</summary>
     /// <typeparam name="E">The type of exception to raise.</typeparam>
     /// <typeparam name="T"></typeparam>
@@ -734,7 +734,7 @@ module Lazy =
                 // Force the value, ignoring the result
                 lazyValue.Force () |> ignore
             with _ -> ()
-                    
+
             // Set the ManualResetEvent to signal that initialization of the value is complete.
             // The return value is ignored here because there's not much we can do if the .Set()
             // operation fails; raising an exception on a ThreadPool thread is generally not a great idea.
@@ -780,7 +780,7 @@ module Lazy =
             // Force evaluation of the lazy value on a .NET ThreadPool thread.
             // The current (calling) thread is blocked until evaluation is complete or
             // the timeout duration elapses, whichever comes first.
-            
+
             /// The EventWaitHandle which signals that initialization of the value is complete.
             // NOTE :   'let' is used here instead of 'use' because the WaitHandle is disposed by
             //          the ThreadPool callback; otherwise, if this function times out, an exn
@@ -1115,7 +1115,7 @@ module Choice =
     /// <param name="value"></param>
     /// <returns></returns>
     // TODO :   Rename this to 'ofOptionDefault' or 'ofOptionWithDefault'.
-    //          The "With" suffix should be reserved for higher-order functions. 
+    //          The "With" suffix should be reserved for higher-order functions.
     [<CompiledName("OfOptionWith")>]
     let ofOptionWith (errorValue : 'Error) (value : 'T option) : Choice<'T, 'Error> =
         match value with
@@ -1140,7 +1140,7 @@ module Choice =
 
     /// <summary>
     /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
-    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>.
     /// </summary>
     /// <param name="mapping"></param>
     /// <param name="value"></param>

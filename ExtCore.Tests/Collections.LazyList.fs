@@ -32,7 +32,7 @@ let private nats =
     0 |> LazyList.unfold (fun z -> Some (z, z + 1))
 
 // TODO : Remove this ASAP, replacing any uses with direct calls to Assert.IsTrue or 'assertTrue'.
-let private test msg condition =
+let private test msg (condition: bool) =
     Assert.IsTrue (condition, sprintf "MiniTest '%s'" msg)
 
 [<Test>]
@@ -207,7 +207,7 @@ module PowerPackTests =
     [<Test>]
     let ``Basic Test #1`` () : unit =
         let l = LazyList.ofList [1;2;3]
-    
+
         let res = ref 2
         for i in LazyList.toSeq l do
             res := !res + i
@@ -218,7 +218,7 @@ module PowerPackTests =
         for i in LazyList.toSeq l do
             res := !res + i
         Assert.AreEqual (8, !res, "test2398984: LazyList.toSeq")
-  
+
     [<Test>]
     let ``Basic Test #2`` () : unit =
         let res = ref 2
@@ -429,4 +429,4 @@ module PowerPackTests =
         check "<dispoal>" !numActiveEnumerators 0
         check "IEnumerableTest.append, infinite, infinite, then take" (Seq.take 2 (Seq.append (LazyList.repeat "a" |> LazyList.toSeq) (LazyList.repeat "b" |> LazyList.toSeq)) |> countEnumeratorsAndCheckedDisposedAtMostOnceAtEnd |> Seq.toList) [ "a"; "a" ]
         check "<dispoal>" !numActiveEnumerators 0
-    
+

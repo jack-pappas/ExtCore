@@ -210,7 +210,7 @@ let countWith () : unit =
     // Sample usage test cases.
     do
         let source = refCounter [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
-        
+
         source
         |> Seq.countWith (fun x ->
             x < 0)
@@ -232,7 +232,7 @@ let countWith () : unit =
 
     do
         let source = refCounter [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
-        
+
         source
         |> Seq.countWith (fun x ->
             x % 3 = 0)
@@ -275,7 +275,7 @@ let fold2 () : unit =
     do
         let source1 = refCounter Seq.empty
         let source2 = refCounter [| "a"; "b"; "c"|]
-        
+
         (source1, source2)
         ||> Seq.fold2 (fun state x y ->
             System.String.Concat (state, x, y)) "xyz"
@@ -423,7 +423,7 @@ let segmentWith () : unit =
     // Test case for an empty input sequence.
     do
         let source = refCounter Seq.empty
-    
+
         source
         |> Seq.segmentWith (fun _ _ -> true)
         |> Seq.isEmpty

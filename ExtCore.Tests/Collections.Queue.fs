@@ -154,7 +154,7 @@ module QueueModule =
         |> Queue.toArray
         |> assertEqual
             [| "Hello" |]
-    
+
         Queue.empty
         |> Queue.enqueue "foo"
         |> Queue.enqueue "bar"
@@ -247,11 +247,12 @@ module QueueModule =
             result |> assertEqual "cdr"
             Queue.length queue |> assertEqual 0
 
-    [<Test; ExpectedException(typeof<System.InvalidOperationException>)>]
+    [<Test>]
     let ``dequeue raises exn when queue is empty`` () : unit =
-        Queue.empty
-        |> Queue.dequeue
-        |> ignore
+        Assert.Throws<System.InvalidOperationException>(fun () ->
+            Queue.empty
+            |> Queue.dequeue
+            |> ignore) |> ignore
 
     [<Test>]
     let ofList () : unit =
