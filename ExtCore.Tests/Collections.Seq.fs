@@ -58,8 +58,7 @@ let projectValues () : unit =
             'd', "D";
             'e', "E"]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let projectKeys () : unit =
@@ -79,8 +78,7 @@ let projectKeys () : unit =
             5, "Green";
             6, "Yellow"]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let replicate () : unit =
@@ -93,8 +91,7 @@ let replicate () : unit =
         |> Seq.isEmpty
         |> assertTrue
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // Basic usage test.
     do
@@ -113,8 +110,7 @@ let replicate () : unit =
                "Red"; "Blue"; "Green"; "Yellow";
                "Red"; "Blue"; "Green"; "Yellow"; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // Make sure the input sequence is only evaluated once.
     do
@@ -142,8 +138,7 @@ let replicate () : unit =
         !elementEvalCount
         |> assertEqual 4
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let repeat () : unit =
@@ -157,8 +152,7 @@ let repeat () : unit =
         |> Collection.assertEqual
             [| "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; "Hello World!"; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let cycle () : unit =
@@ -204,8 +198,7 @@ let countWith () : unit =
             x % 7 = 0)
         |> assertEqual 0L
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // Sample usage test cases.
     do
@@ -216,8 +209,7 @@ let countWith () : unit =
             x < 0)
         |> assertEqual 0L
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     do
         let source = refCounter [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
@@ -227,8 +219,7 @@ let countWith () : unit =
             x % 7 = 0)
         |> assertEqual 1L
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     do
         let source = refCounter [| 0; 1; 2; 3; 4; 5; 6; 8; 9; 10; 16 |]
@@ -238,8 +229,7 @@ let countWith () : unit =
             x % 3 = 0)
         |> assertEqual 4L
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let sample () : unit =
@@ -252,8 +242,7 @@ let sample () : unit =
         |> Seq.isEmpty
         |> assertTrue
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // Sample usage test cases.
     do
@@ -266,8 +255,7 @@ let sample () : unit =
             [| 0; 3; 6; 9; 12; 15; 18; 21; 24; 27; 30; 33; 36; 39; 42; 45; 48; 51;
                54; 57; 60; 63; 66; 69; 72; 75; 78; 81; 84; 87; 90; 93; 96; 99; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let fold2 () : unit =
@@ -281,10 +269,8 @@ let fold2 () : unit =
             System.String.Concat (state, x, y)) "xyz"
         |> assertEqual "xyz"
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source1.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source2.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source1.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source2.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // Make sure the function stops once one of the input sequence is empty.
     do
@@ -296,10 +282,8 @@ let fold2 () : unit =
             System.String.Concat (state, x, y)) ""
         |> assertEqual "aAbBcC"
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source1.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source2.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source1.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source2.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // Test case for when the input sequences have the same length.
     do
@@ -311,10 +295,8 @@ let fold2 () : unit =
             System.String.Concat (state, x, y)) ""
         |> assertEqual "aAbBcCdDeE"
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source1.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source2.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source1.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source2.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let segmentBy () : unit =
@@ -327,8 +309,7 @@ let segmentBy () : unit =
         |> Seq.isEmpty
         |> assertTrue
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     (* Tests for special cases.
        Cast these seqs to arrays before comparing, otherwise assertion failure messages are incomprehensible. *)
@@ -345,8 +326,7 @@ let segmentBy () : unit =
         |> Collection.assertEqual
             [| [| "Foo" |] |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // No segments with multiple elements.
     do
@@ -360,8 +340,7 @@ let segmentBy () : unit =
         |> Collection.assertEqual
             [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // The first segment has a single element.
     do
@@ -376,8 +355,7 @@ let segmentBy () : unit =
         |> Collection.assertEqual
             [| [| 9 |]; [| 10 .. 19 |]; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // The last segment has a single element.
     do
@@ -392,8 +370,7 @@ let segmentBy () : unit =
         |> Collection.assertEqual
             [| [| 0 .. 9 |]; [| 10 |]; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     (* Sample usage test cases. *)
     do
@@ -415,8 +392,7 @@ let segmentBy () : unit =
             |> Seq.map Seq.toArray
             |> Seq.toArray)
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
 [<Test>]
 let segmentWith () : unit =
@@ -429,8 +405,7 @@ let segmentWith () : unit =
         |> Seq.isEmpty
         |> assertTrue
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     (* Tests for special cases.
        Cast these seqs to arrays before comparing, otherwise assertion failure messages are incomprehensible. *)
@@ -449,8 +424,7 @@ let segmentWith () : unit =
         |> Collection.assertEqual
             [| [| "Foo" |] |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // No segments with multiple elements.
     do
@@ -464,8 +438,7 @@ let segmentWith () : unit =
         |> Collection.assertEqual
             [| [| 0 |]; [| 1 |]; [| 2 |]; [| 3 |]; [| 4 |]; [| 5 |]; [| 6 |]; [| 7 |]; [| 8 |]; [| 9 |]; [| 10 |]; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // The first segment has a single element.
     do
@@ -480,8 +453,7 @@ let segmentWith () : unit =
         |> Collection.assertEqual
             [| [| 9 |]; [| 10 .. 19 |]; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     // The last segment has a single element.
     do
@@ -496,8 +468,7 @@ let segmentWith () : unit =
         |> Collection.assertEqual
             [| [| 0 .. 9 |]; [| 10 |]; |]
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)
 
     (* Sample usage test cases. *)
     do
@@ -519,5 +490,4 @@ let segmentWith () : unit =
             |> Seq.map Seq.toArray
             |> Seq.toArray)
 
-        Assert.AreEqual (LanguagePrimitives.GenericZero, source.EnumeratorReferenceCount,
-            sourceRefCountNonZeroMsg)
+        Assert.AreEqual (0, source.EnumeratorReferenceCount, sourceRefCountNonZeroMsg)

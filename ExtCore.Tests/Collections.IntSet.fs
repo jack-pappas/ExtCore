@@ -164,7 +164,7 @@ let maxElementSigned () : unit =
 
 [<Test>]
 let ``maxElementSigned raises exn for empty set`` () : unit =
-    Assert.Throws<KeyNotFoundException>(fun () -> IntSet.maxElementSigned IntSet.empty |> ignore) |> ignore
+    Assert.Throws<ArgumentException>(fun () -> IntSet.maxElementSigned IntSet.empty |> ignore) |> ignore
 
 [<Test>]
 let add () : unit =
