@@ -5,6 +5,8 @@ build_script:
     ./install_dotnet.ps1
 - cmd: >-
     dotnet --version
+- cmd: >-
     dotnet build ExtCore.sln
+- cmd: >-
     dotnet test ExtCore.Tests\ExtCore.Tests.fsproj
 test: off
