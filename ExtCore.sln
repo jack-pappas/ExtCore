@@ -7,6 +7,12 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExtCore", "ExtCore\ExtCore.
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExtCore.Tests", "ExtCore.Tests\ExtCore.Tests.fsproj", "{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{308ECB02-6B2C-4D9F-94AF-32D98BAD9A5C}"
+ProjectSection(SolutionItems) = preProject
+	appveyor.yml = appveyor.yml
+	install_dotnet.ps1 = install_dotnet.ps1
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug (net40)|Any CPU = Debug (net40)|Any CPU
