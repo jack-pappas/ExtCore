@@ -3,6 +3,7 @@ image: Visual Studio 2017
 build_script:
 - ps: >-
     ./install_dotnet.ps1
+- cmd: >-
     dotnet --version
     dotnet build ExtCore.sln
     dotnet test ExtCore.Tests\ExtCore.Tests.fsproj
