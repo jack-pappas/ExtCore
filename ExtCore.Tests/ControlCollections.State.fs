@@ -280,8 +280,8 @@ module Array =
             |> assertEqual
                 [| "1:red"; "1:orange"; "2:yellow"; "3:green"; "5:blue"; "8:violet"; |]
             finalState |> assertEqual 122
-            
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+
+    [<Test>]
     let ``map2 raises exn when arrays have different lengths`` () : unit =
         let testFunc =
             ([| 1..3 |], [| 2..10 |])
@@ -289,8 +289,9 @@ module Array =
                 state {
                 return ()
                 })
-        State.run testFunc 15
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            State.run testFunc 15
+            |> ignore) |> ignore
 
     [<Test>]
     let mapi2 () : unit =
@@ -330,7 +331,7 @@ module Array =
                 [| "1:red"; "1:ORANGE"; "2:yellow"; "3:GREEN"; "5:blue"; "8:VIOLET"; |]
             finalState |> assertEqual 122
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``mapi2 raises exn when arrays have different lengths`` () : unit =
         let testFunc =
             ([| 1..3 |], [| 2..10 |])
@@ -338,8 +339,9 @@ module Array =
                 state {
                 return ()
                 })
-        State.run testFunc 15
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            State.run testFunc 15
+            |> ignore) |> ignore
 
     [<Test>]
     let fold () : unit =
@@ -358,7 +360,7 @@ module Array =
             String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
-            
+
         // Sample usage test cases.
         do
             let testFunc =
@@ -390,7 +392,7 @@ module Array =
             String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
-            
+
         // Sample usage test cases.
         do
             let testFunc =
@@ -569,7 +571,7 @@ module List =
             String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
-            
+
         // Sample usage test cases.
         do
             let testFunc =
@@ -686,7 +688,7 @@ module TaggedArray =
             String.isEmpty foldResult |> assertTrue
             finalState |> assertEqual 7
             !iterationCount |> assertEqual 0
-            
+
         // Sample usage test cases.
         do
             let testFunc =

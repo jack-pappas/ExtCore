@@ -267,11 +267,12 @@ module Array =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``map2 raises exn when arrays have different lengths`` () : unit =
-        ([| 0..4 |], [| 0..7|])
-        ||> Maybe.Array.map2 (fun _ _ -> None)
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            ([| 0..4 |], [| 0..7|])
+            ||> Maybe.Array.map2 (fun _ _ -> None)
+            |> ignore) |> ignore
 
     [<Test>]
     let fold () : unit =
@@ -373,11 +374,12 @@ module Array =
 
             !iterationCount |> assertEqual 3
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``reduce raises exn for empty array`` () : unit =
-        Array.empty
-        |> Maybe.Array.reduce (fun _ _ -> None)
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            Array.empty
+            |> Maybe.Array.reduce (fun _ _ -> None)
+            |> ignore) |> ignore
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.List module.
@@ -470,11 +472,12 @@ module List =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``iter2 raises exn when lists have different lengths`` () : unit =
-        ([0..4], [0..7])
-        ||> Maybe.List.iter2 (fun _ _ -> None)
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            ([0..4], [0..7])
+            ||> Maybe.List.iter2 (fun _ _ -> None)
+            |> ignore) |> ignore
 
     [<Test>]
     let map2 () : unit =
@@ -512,11 +515,12 @@ module List =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``map2 raises exn when lists have different lengths`` () : unit =
-        ([0..4], [0..7])
-        ||> Maybe.List.map2 (fun _ _ -> None)
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            ([0..4], [0..7])
+            ||> Maybe.List.map2 (fun _ _ -> None)
+            |> ignore) |> ignore
 
     [<Test>]
     let mapi2 () : unit =
@@ -554,11 +558,12 @@ module List =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``mapi2 raises exn when lists have different lengths`` () : unit =
-        ([0..4], [0..7])
-        ||> Maybe.List.mapi2 (fun _ _ _ -> None)
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            ([0..4], [0..7])
+            ||> Maybe.List.mapi2 (fun _ _ _ -> None)
+            |> ignore) |> ignore
 
 
 /// Tests for the ExtCore.Control.Collections.Maybe.Seq module.

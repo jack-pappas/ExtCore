@@ -331,11 +331,12 @@ module Array =
 
             !iterationCount |> assertEqual 2
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``map2 raises exn when arrays have different lengths`` () : unit =
-        ([| 0..4 |], [| 0..7|])
-        ||> Choice.Array.map2 (fun _ _ -> Choice2Of2 "Error!")
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            ([| 0..4 |], [| 0..7|])
+            ||> Choice.Array.map2 (fun _ _ -> Choice2Of2 "Error!")
+            |> ignore) |> ignore
 
     [<Test>]
     let reduce () : unit =
@@ -368,11 +369,12 @@ module Array =
 
             !iterationCount |> assertEqual 3
 
-    [<Test; ExpectedException(typeof<System.ArgumentException>)>]
+    [<Test>]
     let ``reduce raises exn for empty array`` () : unit =
-        Array.empty
-        |> Choice.Array.reduce (fun _ _ -> Choice2Of2 "Error!")
-        |> ignore
+        Assert.Throws<System.ArgumentException>(fun () ->
+            Array.empty
+            |> Choice.Array.reduce (fun _ _ -> Choice2Of2 "Error!")
+            |> ignore) |> ignore
 
 
 /// Tests for the ExtCore.Control.Collections.Choice.List module.
@@ -738,14 +740,14 @@ module Seq =
 
     [<Test>]
     let exists () =
-        let getTestSequence failAtTheEnd = 
-            seq { 
+        let getTestSequence failAtTheEnd =
+            seq {
                 yield! [ 1..10 ]
                 if failAtTheEnd then failwith "should not be reached"
             }
 
-        let createPredicate errorAt positiveAt = 
-            function 
+        let createPredicate errorAt positiveAt =
+            function
             | x when x = errorAt -> Choice2Of2 ()
             | x when x = positiveAt -> Choice1Of2 true
             | _ -> Choice1Of2 false

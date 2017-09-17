@@ -231,12 +231,13 @@ let findIndexOf () : unit =
     |> String.findIndexOf 'l'
     |> assertEqual 2
 
-[<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
+[<Test>]
 let ``findIndexOf raises exn when the string does not contain the character`` () : unit =
     // Test case for a string which does not contain the specified character.
-    "Hello World!"
-    |> String.findIndexOf 'j'
-    |> ignore
+    Assert.Throws<System.Collections.Generic.KeyNotFoundException>(fun () ->
+        "Hello World!"
+        |> String.findIndexOf 'j'
+        |> ignore) |> ignore
 
 [<Test>]
 let tryFindIndex () : unit =
@@ -290,15 +291,16 @@ let findIndex () : unit =
         c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
     |> assertEqual 1
 
-[<Test; ExpectedException(typeof<System.Collections.Generic.KeyNotFoundException>)>]
+[<Test>]
 let ``findIndex raises exn when the string does not contain a matching character`` () : unit =
     // Test case for a non-empty string which does not contain a matching character.
-    "Glyndyfrdwy"
-    |> String.findIndex (fun c ->
-        // Is this a vowel (in English)?
-        let c = System.Char.ToLowerInvariant c
-        c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
-    |> ignore
+    Assert.Throws<System.Collections.Generic.KeyNotFoundException>(fun () ->
+        "Glyndyfrdwy"
+        |> String.findIndex (fun c ->
+            // Is this a vowel (in English)?
+            let c = System.Char.ToLowerInvariant c
+            c = 'a' || c = 'e' || c = 'i' || c = 'o' || c = 'u')
+        |> ignore) |> ignore
 
 [<Test>]
 let fold () : unit =

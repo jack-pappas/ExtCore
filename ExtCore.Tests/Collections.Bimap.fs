@@ -219,12 +219,13 @@ let find () : unit =
     |> Bimap.find "bar"
     |> assertEqual 8
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``find raises exn when key is not found`` () : unit =
-    [("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6)]
-    |> Bimap.ofList
-    |> Bimap.find "Hello"
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6)]
+        |> Bimap.ofList
+        |> Bimap.find "Hello"
+        |> ignore) |> ignore
 
 [<Test>]
 let findValue () : unit =
@@ -233,12 +234,13 @@ let findValue () : unit =
     |> Bimap.findValue 2
     |> assertEqual "baz"
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``findValue raises exn when value is not found`` () : unit =
-    [("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6)]
-    |> Bimap.ofList
-    |> Bimap.findValue 33
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6)]
+        |> Bimap.ofList
+        |> Bimap.findValue 33
+        |> ignore) |> ignore
 
 [<Test>]
 let remove () : unit =
@@ -313,7 +315,7 @@ let add () : unit =
     |> Bimap.add "bar" 8
     |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
-    
+
     // Test case for when the key and value already exist in the Bimap, but they aren't paired.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray
@@ -359,7 +361,7 @@ let tryAdd () : unit =
     |> Bimap.tryAdd "bar" 8
     |> assertEqual
         (Bimap.ofArray [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |])
-    
+
     // Test case for when the key and value already exist in the Bimap, but they aren't paired.
     [| ("foo", 5); ("bar", 8); ("baz", 2); ("cdr", 9); ("car", 6); |]
     |> Bimap.ofArray

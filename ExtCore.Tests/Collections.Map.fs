@@ -30,7 +30,7 @@ let keys () : unit =
     Map.empty
     |> Map.keys
     |> assertEqual Set.empty
-    
+
     Map.empty
     |> Map.add "Red" ConsoleColor.Red
     |> Map.add "Green" ConsoleColor.Green
@@ -236,7 +236,7 @@ let mapPartition () : unit =
            ConsoleColor.Green, 5;
            ConsoleColor.Black, 5;
            ConsoleColor.White, 5; |])
-        
+
 [<Test>]
 let union () : unit =
     let initial1 =
@@ -368,7 +368,7 @@ let pivot () : unit =
             ConsoleColor.Green, "Green" |]
         |> Map.pivot
         |> assertEqual expected
-        
+
 [<Test>]
 let pivotKeySet () : unit =
     let colorCategory = function
@@ -513,7 +513,7 @@ let update () : unit =
     |> Map.update ConsoleColor.Blue "DarkBlue"
     |> assertEqual expected
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``update raises exn when map doesn't contain key`` () : unit =
     let initial =
         Map.empty
@@ -524,9 +524,10 @@ let ``update raises exn when map doesn't contain key`` () : unit =
         |> Map.add ConsoleColor.Cyan "Cyan"
 
     // An exception should be raised when there's no existing binding with a given key.
-    initial
-    |> Map.update ConsoleColor.White "White"
-    |> assertEqual initial
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        initial
+        |> Map.update ConsoleColor.White "White"
+        |> assertEqual initial) |> ignore
 
 [<Test>]
 let countWith () : unit =

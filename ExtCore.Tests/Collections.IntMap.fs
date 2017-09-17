@@ -102,12 +102,13 @@ let find () : unit =
     |> IntMap.find 5
     |> assertEqual 'a'
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``find raises exn when key is not found`` () : unit =
-    [(5, 'a'); (3, 'b')]
-    |> IntMap.ofList
-    |> IntMap.find 9
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [(5, 'a'); (3, 'b')]
+        |> IntMap.ofList
+        |> IntMap.find 9
+        |> ignore) |> ignore
 
 [<Test>]
 let findOrDefault () : unit =
@@ -225,7 +226,7 @@ let difference () : unit =
 [<Test>]
 let isSubmapOfBy () : unit =
     let map1 = IntMap.ofList [(1,1);(2,2)]
-        
+
     map1.IsSubmapOfBy ((=),
         IntMap.ofList [(1,1)])
     |> assertTrue
@@ -412,24 +413,26 @@ let pick () : unit =
         else None)
     |> assertEqual 'd'
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``pick raises exn on empty input`` () : unit =
-    IntMap.empty
-    |> IntMap.pick (fun k v ->
-        if (k + v) % 2 = 0 then
-            Some (v + 1)
-        else None)
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        IntMap.empty
+        |> IntMap.pick (fun k v ->
+            if (k + v) % 2 = 0 then
+                Some (v + 1)
+            else None)
+        |> ignore) |> ignore
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``pick raises exn when no match is found`` () : unit =
-    [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
-    |> IntMap.ofArray
-    |> IntMap.pick (fun k v ->
-        if System.Char.IsControl v then
-            Some (int v + k)
-        else None)
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd'); (17, 'a'); (4, 'g'); (12, 'b'); (14, 'c'); (11, 'F'); (4, 'G'); |]
+        |> IntMap.ofArray
+        |> IntMap.pick (fun k v ->
+            if System.Char.IsControl v then
+                Some (int v + k)
+            else None)
+        |> ignore) |> ignore
 
 [<Test>]
 let map () : unit =
@@ -704,128 +707,128 @@ module MapType =
         // Legit IE
         let ie = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable
         let enum = ie.GetEnumerator()
-        
+
         let testStepping() =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(1,1))
-            
+
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(2,4))
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current :?> KeyValuePair<int,int>, KeyValuePair<int,int>(3,9))
             Assert.AreEqual(enum.MoveNext(), false)
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-    
+
         testStepping()
         enum.Reset()
         testStepping()
-    
+
         // Empty IE
         let ie = [] |> IntMap.ofList :> IEnumerable  // Note no type args
         let enum = ie.GetEnumerator()
-        
+
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
         Assert.AreEqual(enum.MoveNext(), false)
-        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
-    
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+
     [<Test>]
-    let IEnumerable_T() =        
+    let IEnumerable_T() =
         // Legit IE
         let ie = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IEnumerable<KeyValuePair<_,_>>
         let enum = ie.GetEnumerator()
-        
+
         let testStepping() =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(1,1))
-            
+
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(2,4))
             Assert.AreEqual(enum.MoveNext(), true)
             Assert.AreEqual(enum.Current, new KeyValuePair<int,int>(3,9))
             Assert.AreEqual(enum.MoveNext(), false)
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-    
+
         testStepping()
         enum.Reset()
         testStepping()
-    
+
         // Empty IE
         let ie = [] |> IntMap.ofList :> IEnumerable  // Note no type args
         let enum = ie.GetEnumerator()
-        
+
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
         Assert.AreEqual(enum.MoveNext(), false)
-        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)  
-    
-    
+        checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
+
+
     [<Test>]
-    let IDictionary() =        
+    let IDictionary() =
         // Legit ID
-        let id = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IDictionary<_,_> 
-        
-        Assert.IsTrue(id.ContainsKey(1))   
-        Assert.IsFalse(id.ContainsKey(5))  
-        Assert.AreEqual(id.[1], 1)  
-        Assert.AreEqual(id.[3], 9) 
+        let id = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IDictionary<_,_>
+
+        Assert.IsTrue(id.ContainsKey(1))
+        Assert.IsFalse(id.ContainsKey(5))
+        Assert.AreEqual(id.[1], 1)
+        Assert.AreEqual(id.[3], 9)
         CollectionAssert.AreEqual(id.Keys,   [| 1; 2; 3|] :> ICollection<_>)
         CollectionAssert.AreEqual(id.Values, [| 1; 4; 9|] :> ICollection<_>)
-        
+
         checkThrowsNotSupportedException(fun () -> id.[2] <-88)
 
         checkThrowsNotSupportedException(fun () -> id.Add(new KeyValuePair<int,int>(4,16)))
         Assert.IsTrue(id.TryGetValue(1, ref 1))
         Assert.IsFalse(id.TryGetValue(100, ref 1))
         checkThrowsNotSupportedException(fun () -> id.Remove(1) |> ignore)
-        
+
         // Empty ID
-        let id = IntMap.empty :> IDictionary<int, int>   // Note no type args  
+        let id = IntMap.empty :> IDictionary<int, int>   // Note no type args
         Assert.IsFalse(id.ContainsKey(5))
-        checkThrowsKeyNotFoundException(fun () -> id.[1] |> ignore)  
+        checkThrowsKeyNotFoundException(fun () -> id.[1] |> ignore)
         CollectionAssert.AreEqual(id.Keys,   [| |] :> ICollection<_>)
-        CollectionAssert.AreEqual(id.Values, [| |] :> ICollection<_>) 
-    
+        CollectionAssert.AreEqual(id.Values, [| |] :> ICollection<_>)
+
     [<Test>]
-    let ICollection() =        
+    let ICollection() =
         // Legit IC
         let ic = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> ICollection<KeyValuePair<_,_>>
-        
+
         Assert.AreEqual(ic.Count, 3)
-        Assert.IsTrue(ic.Contains(new KeyValuePair<int,int>(3,9))) 
+        Assert.IsTrue(ic.Contains(new KeyValuePair<int,int>(3,9)))
         let newArr = Array.create 5 (new KeyValuePair<int,int>(3,9))
-        ic.CopyTo(newArr,0) 
+        ic.CopyTo(newArr,0)
         Assert.IsTrue(ic.IsReadOnly)
-        
-        
+
+
         // raise ReadOnlyCollection exception
         checkThrowsNotSupportedException(fun () -> ic.Add(new KeyValuePair<int,int>(3,9)) |> ignore)
         checkThrowsNotSupportedException(fun () -> ic.Clear() |> ignore)
-        checkThrowsNotSupportedException(fun () -> ic.Remove(new KeyValuePair<int,int>(3,9)) |> ignore) 
-        
-            
+        checkThrowsNotSupportedException(fun () -> ic.Remove(new KeyValuePair<int,int>(3,9)) |> ignore)
+
+
         // Empty IC
-        let ic = IntMap.empty :> ICollection<KeyValuePair<int, int>>   
-        Assert.IsFalse(ic.Contains(new KeyValuePair<int,int>(3,9)))      
+        let ic = IntMap.empty :> ICollection<KeyValuePair<int, int>>
+        Assert.IsFalse(ic.Contains(new KeyValuePair<int,int>(3,9)))
         let newArr = Array.create 5 (new KeyValuePair<int,int>(0,0))
-        ic.CopyTo(newArr,0) 
-    
+        ic.CopyTo(newArr,0)
+
     [<Test>]
     [<Ignore("This test fails due to a known and expected divergence from the standard F# Map behavior.")>]
-    let IComparable() =        
+    let IComparable() =
         // Legit IC
-        let ic = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IComparable    
-        Assert.AreEqual(ic.CompareTo([(1,1);(2,4);(3,9)]|> IntMap.ofList),0) 
-        Assert.AreEqual(ic.CompareTo([(1,1);(3,9);(2,4)]|> IntMap.ofList),0) 
-        Assert.AreEqual(ic.CompareTo([(1,1);(9,81);(2,4)]|> IntMap.ofList),-1) 
-        Assert.AreEqual(ic.CompareTo([(1,1);(0,0);(2,4)]|> IntMap.ofList),1)      
+        let ic = (IntMap.ofArray [|(1,1);(2,4);(3,9)|]) :> IComparable
+        Assert.AreEqual(ic.CompareTo([(1,1);(2,4);(3,9)]|> IntMap.ofList),0)
+        Assert.AreEqual(ic.CompareTo([(1,1);(3,9);(2,4)]|> IntMap.ofList),0)
+        Assert.AreEqual(ic.CompareTo([(1,1);(9,81);(2,4)]|> IntMap.ofList),-1)
+        Assert.AreEqual(ic.CompareTo([(1,1);(0,0);(2,4)]|> IntMap.ofList),1)
         checkThrowsArgumentException(fun() -> ic.CompareTo([(1,1);(2,4);(3,9)]) |> ignore)
-                  
+
         // Empty IC
-        let ic = [] |> IntMap.ofList :> IComparable   
+        let ic = [] |> IntMap.ofList :> IComparable
         Assert.AreEqual(ic.CompareTo([]|> IntMap.ofList),0)
-    
-    
+
+
     // Base class methods
     [<Test>]
     let ObjectGetHashCode() =
@@ -833,17 +836,17 @@ module MapType =
         let e = IntMap.ofList (List.empty<int * decimal>)
         let m = IntMap.ofList [ (1, -1.0M) ]
         Assert.AreNotEqual(e.GetHashCode(), m.GetHashCode())
-        
+
         // Should be order independent
         let x = IntMap.ofList [(1, -1.0M); (2, -2.0M)]
         let y = IntMap.ofList [(2, -2.0M); (1, -1.0M)]
         Assert.AreEqual(x.GetHashCode(), y.GetHashCode())
-    
+
     [<Test>]
     let ObjectToString() =
         Assert.AreEqual("intMap [(1, 1); (2, 4); (3, 9)]", (IntMap.ofArray [|(1,1);(2,4);(3,9)|]).ToString())
         Assert.AreEqual("intMap []", ([] |> IntMap.ofList).ToString())
-    
+
     [<Test>]
     let ObjectEquals() =
         // All three are different references, but equality has been
@@ -859,72 +862,72 @@ module MapType =
         let b = ([] : (int*string) list ) |> IntMap.ofList
         Assert.IsFalse( b.Equals(a) )
         Assert.IsFalse( a.Equals(b) )
-        
+
         // Co/contra varience not supported
         let a = ([] : (int*string) list) |> IntMap.ofList
         let b = ([] : (int*System.IComparable) list)    |> IntMap.ofList
         Assert.IsFalse(a.Equals(b))
         Assert.IsFalse(b.Equals(a))
-        
+
         // Self equality
         let a = [(1,1)] |> IntMap.ofList
         Assert.IsTrue( (a = a) )
         Assert.IsTrue(a.Equals(a))
-        
+
         // Null
         Assert.IsFalse(a.Equals(null))
 
     // Instance methods
     [<Test>]
-    let New() =    
+    let New() =
         let newIntMap = new IntMap<int>([|(1,1);(2,4);(3,9)|])
         let b = newIntMap.Add(4,16)
         Assert.AreEqual(b.[4], 16)
         Assert.AreEqual(b.[2], 4)
-    
+
         let e  = new  IntMap<string>([])
         let ae = e.Add(1,"Monday")
         Assert.AreEqual(ae.[1], "Monday")
-        
+
     let Add() =
-    
+
         let a = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])
         let b = a.Add(4,16)
         Assert.AreEqual(b.[4], 16)
         Assert.AreEqual(b.[2], 4)
-    
+
         let e  = IntMap.empty<string>
         let ae = e.Add(1,"Monday")
         Assert.AreEqual(ae.[1], "Monday")
-    
+
     [<Test>]
     let ContainsKey() =
-    
-        let a = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])        
+
+        let a = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])
         Assert.IsTrue(a.ContainsKey(3))
-    
+
         let e  = IntMap.empty<string>
-        Assert.IsFalse(e.ContainsKey(3)) 
-    
-    
+        Assert.IsFalse(e.ContainsKey(3))
+
+
     [<Test>]
     let Count() =
-    
+
         let a = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])
         Assert.AreEqual(a.Count, 3)
-    
+
         let e  = IntMap.empty<string>
-        Assert.AreEqual(e.Count, 0) 
-    
+        Assert.AreEqual(e.Count, 0)
+
     [<Test>]
     let IsEmpty() =
-    
+
         let l = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])
         Assert.IsFalse(l.IsEmpty)
-    
+
         let e = IntMap.empty<int>
-        Assert.IsTrue(e.IsEmpty)        
-    
+        Assert.IsTrue(e.IsEmpty)
+
     [<Test>]
     let Item() =
 
@@ -932,352 +935,352 @@ module MapType =
         Assert.AreEqual(l.[1], 1)
         l <- l.Add(100,8)
         Assert.AreEqual(l.[100], 8)
-        
+
         for testidx = 0 to 20 do
             let l = IntMap.ofSeq (seq { for i in 0..testidx do yield (i,i*i)})
             for i = 0 to l.Count - 1 do
                 Assert.AreEqual(i*i, l.[i])
                 Assert.AreEqual(i*i, l.Item(i))
-        
+
         // Invalid index
         let l = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])
         checkThrowsKeyNotFoundException(fun () -> l.[ -1 ] |> ignore)
         checkThrowsKeyNotFoundException(fun () -> l.[1000] |> ignore)
-    
+
     [<Test>]
     let Remove() =
-    
+
         let l = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])
         let rem = l.Remove(2)
-        Assert.AreEqual(rem.Count, 2) 
+        Assert.AreEqual(rem.Count, 2)
         checkThrowsKeyNotFoundException(fun () -> rem.[ 2 ] |> ignore)
-    
+
         let e  = IntMap.empty<string>
         let ae = e.Remove(2)
         Assert.AreEqual(ae.Count, 0)
-        
+
     [<Test>]
     let TryFind() =
-    
+
         let l = (IntMap.ofArray [|(1,1);(2,4);(3,9)|])
         let rem = l.TryFind(2)
-        Assert.AreEqual(l.TryFind(2),Some 4)         
-    
+        Assert.AreEqual(l.TryFind(2),Some 4)
+
         let e  = IntMap.empty<string>
-    
+
         Assert.AreEqual(e.TryFind(2), None)
 
 
 module MapModule =
     [<Test>]
     let empty () : unit =
-        let emptyMap = IntMap.empty        
+        let emptyMap = IntMap.empty
         Assert.IsTrue(IntMap.isEmpty emptyMap)
-        
+
         let a:IntMap<int>    = IntMap.empty<int>
-        let c : IntMap<string> = IntMap.empty<string>  
-              
+        let c : IntMap<string> = IntMap.empty<string>
+
         ()
-        
+
     [<Test>]
     let add () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.add 1 "a" valueKeyMap        
+        let resultValueMap = IntMap.add 1 "a" valueKeyMap
         Assert.AreEqual(resultValueMap.[1], "a")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
         let resultEpt = IntMap.add 1 "a" eptMap
         Assert.AreEqual(resultEpt.[1], "a")
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
         let resultOele = IntMap.add  7  "seven" oeleMap
-        Assert.AreEqual(resultOele.[7], "seven")     
-        
+        Assert.AreEqual(resultOele.[7], "seven")
+
         // extra test for add -- add some key which already exit in the IntMap
         let extMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultExt = IntMap.add 2 "dup" extMap        
-        Assert.AreEqual(resultExt.[2], "dup")   
-        
-         
+        let resultExt = IntMap.add 2 "dup" extMap
+        Assert.AreEqual(resultExt.[2], "dup")
+
+
         ()
 
     [<Test>]
     let exists () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.exists (fun x y -> x > 3) valueKeyMap        
+        let resultValueMap = IntMap.exists (fun x y -> x > 3) valueKeyMap
         Assert.IsTrue(resultValueMap)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.exists  (fun x y -> (x + y.Length) % 4 = 0 ) 
+        let resultOele = oeleMap |> IntMap.exists  (fun x y -> (x + y.Length) % 4 = 0 )
         Assert.IsTrue(resultOele)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
         let resultEpt = IntMap.exists (fun x y -> false) eptMap
         Assert.IsFalse(resultEpt)
-       
+
         ()
-        
+
     [<Test>]
     let filter () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap =valueKeyMap |> IntMap.filter (fun x y -> x % 3 = 0)         
+        let resultValueMap =valueKeyMap |> IntMap.filter (fun x y -> x % 3 = 0)
         Assert.AreEqual(resultValueMap,[3,"c"] |> IntMap.ofList)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.filter  (fun x y -> x<3 )         
+        let resultOele = oeleMap |> IntMap.filter  (fun x y -> x<3 )
         Assert.AreEqual(resultOele,oeleMap)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.filter (fun x y -> true) eptMap        
+        let resultEpt = IntMap.filter (fun x y -> true) eptMap
         Assert.AreEqual(resultEpt,eptMap)
-               
-        ()       
+
+        ()
 
 
     [<Test>]
     let find () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.find 5 valueKeyMap        
+        let resultValueMap = IntMap.find 5 valueKeyMap
         Assert.AreEqual(resultValueMap,"e")
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = IntMap.find 1 oeleMap        
+        let resultOele = IntMap.find 1 oeleMap
         Assert.AreEqual(resultOele,"one")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
         checkThrowsKeyNotFoundException (fun () -> IntMap.find 1 eptMap |> ignore)
-               
-        ()  
+
+        ()
 
     [<Test>]
     let findIndex () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap =valueKeyMap |> IntMap.findKey (fun x y -> x % 3 = 0)         
+        let resultValueMap =valueKeyMap |> IntMap.findKey (fun x y -> x % 3 = 0)
         Assert.AreEqual(resultValueMap,3)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.findKey  (fun x y -> x = 1 )         
+        let resultOele = oeleMap |> IntMap.findKey  (fun x y -> x = 1 )
         Assert.AreEqual(resultOele,1)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
         checkThrowsKeyNotFoundException (fun () -> IntMap.findKey (fun x y -> true) eptMap |> ignore)
-               
-        ()          
-     
+
+        ()
+
     [<Test>]
     let tryPick () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = valueKeyMap |> IntMap.tryPick (fun x y -> if x % 3 = 0 then Some (x) else None)         
+        let resultValueMap = valueKeyMap |> IntMap.tryPick (fun x y -> if x % 3 = 0 then Some (x) else None)
         Assert.AreEqual(resultValueMap,Some 3)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.tryPick  (fun x y -> if(x + y.Length) % 4 = 0 then Some y else None )         
+        let resultOele = oeleMap |> IntMap.tryPick  (fun x y -> if(x + y.Length) % 4 = 0 then Some y else None )
         Assert.AreEqual(resultOele,Some "one")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.tryPick (fun x y -> Some x) eptMap        
+        let resultEpt = IntMap.tryPick (fun x y -> Some x) eptMap
         Assert.AreEqual(resultEpt,None)
-               
-        ()     
+
+        ()
 
     [<Test>]
     let pick () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValue = valueKeyMap |> IntMap.pick (fun x y -> if x % 3 = 0 then Some (y) else None)         
+        let resultValue = valueKeyMap |> IntMap.pick (fun x y -> if x % 3 = 0 then Some (y) else None)
         Assert.AreEqual(resultValue, "c")
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.pick (fun x y -> if(x + y.Length) % 4 = 0 then Some y else None )         
+        let resultOele = oeleMap |> IntMap.pick (fun x y -> if(x + y.Length) % 4 = 0 then Some y else None )
         Assert.AreEqual(resultOele, "one")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = 
-            try 
+        let resultEpt =
+            try
                 IntMap.pick (fun x y -> Some x) eptMap
             with :? System.Collections.Generic.KeyNotFoundException -> 0
         Assert.AreEqual(resultEpt, 0)
-        
+
         ()
 
     [<Test>]
     let fold () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = valueKeyMap |> IntMap.fold (fun x y z -> x + y + z.Length) 10         
+        let resultValueMap = valueKeyMap |> IntMap.fold (fun x y z -> x + y + z.Length) 10
         Assert.AreEqual(resultValueMap,28)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele =   oeleMap |> IntMap.fold  (fun x y z -> x + y.ToString() + z)  "got"      
+        let resultOele =   oeleMap |> IntMap.fold  (fun x y z -> x + y.ToString() + z)  "got"
         Assert.AreEqual(resultOele,"got1one")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = eptMap |> IntMap.fold (fun x y z -> 1) 1         
+        let resultEpt = eptMap |> IntMap.fold (fun x y z -> 1) 1
         Assert.AreEqual(resultEpt,1)
-               
+
         ()
 
     [<Test>]
     let foldBack () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.foldBack (fun x y z -> x.ToString() + y + z.ToString()) valueKeyMap "*"     
+        let resultValueMap = IntMap.foldBack (fun x y z -> x.ToString() + y + z.ToString()) valueKeyMap "*"
         Assert.AreEqual(resultValueMap,"2b3c4d5e*")
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = IntMap.foldBack  (fun x y z -> x.ToString() + y + z) oeleMap "right"         
+        let resultOele = IntMap.foldBack  (fun x y z -> x.ToString() + y + z) oeleMap "right"
         Assert.AreEqual(resultOele,"1oneright")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.foldBack (fun x y z -> 1) eptMap 1         
+        let resultEpt = IntMap.foldBack (fun x y z -> 1) eptMap 1
         Assert.AreEqual(resultEpt,1)
-               
+
         ()
-        
+
     [<Test>]
     let forall () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = valueKeyMap |> IntMap.forall (fun x y -> x % 3 = 0)         
+        let resultValueMap = valueKeyMap |> IntMap.forall (fun x y -> x % 3 = 0)
         Assert.IsFalse(resultValueMap)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.forall  (fun x y -> x<3 )         
+        let resultOele = oeleMap |> IntMap.forall  (fun x y -> x<3 )
         Assert.IsTrue(resultOele)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt =eptMap |>  IntMap.forall (fun x y -> true)         
+        let resultEpt =eptMap |>  IntMap.forall (fun x y -> true)
         Assert.IsTrue(resultEpt)
-               
-        ()       
+
+        ()
 
 
     [<Test>]
     let isEmpty () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.isEmpty  valueKeyMap        
+        let resultValueMap = IntMap.isEmpty  valueKeyMap
         Assert.IsFalse(resultValueMap)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = IntMap.isEmpty   oeleMap        
+        let resultOele = IntMap.isEmpty   oeleMap
         Assert.IsFalse(resultOele)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.isEmpty  eptMap        
+        let resultEpt = IntMap.isEmpty  eptMap
         Assert.IsTrue(resultEpt)
-               
-        ()  
+
+        ()
 
     [<Test>]
     let iter () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = ref 0    
-        let funInt (x:int) (y:string) =   
-            resultValueMap := !resultValueMap + x + y.Length             
-            () 
-        IntMap.iter funInt valueKeyMap        
+        let resultValueMap = ref 0
+        let funInt (x:int) (y:string) =
+            resultValueMap := !resultValueMap + x + y.Length
+            ()
+        IntMap.iter funInt valueKeyMap
         Assert.AreEqual(!resultValueMap,18)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
         let resultOele = ref ""
         let funMix  (x:int) (y:string) =
             resultOele := !resultOele + x.ToString() + y
             ()
-        IntMap.iter funMix oeleMap        
+        IntMap.iter funMix oeleMap
         Assert.AreEqual(!resultOele,"1one")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = ref 0    
-        let funEpt (x:int) (y:int) =   
-            resultEpt := !resultEpt + x + y              
-            () 
-        IntMap.iter funEpt eptMap        
+        let resultEpt = ref 0
+        let funEpt (x:int) (y:int) =
+            resultEpt := !resultEpt + x + y
+            ()
+        IntMap.iter funEpt eptMap
         Assert.AreEqual(!resultEpt,0)
-               
-        ()          
-     
+
+        ()
+
     [<Test>]
     let map () : unit =
 
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = valueKeyMap |> IntMap.map (fun x y -> x.ToString() + y )         
+        let resultValueMap = valueKeyMap |> IntMap.map (fun x y -> x.ToString() + y )
         Assert.AreEqual(resultValueMap,[(2,"2b"); (3,"3c"); (4,"4d"); (5,"5e")] |> IntMap.ofList)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.map  (fun x y -> x.ToString() + y )         
+        let resultOele = oeleMap |> IntMap.map  (fun x y -> x.ToString() + y )
         Assert.AreEqual(resultOele,[1,"1one"] |> IntMap.ofList)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty<int>
-        let resultEpt = eptMap |> IntMap.map (fun x y -> x+y)         
+        let resultEpt = eptMap |> IntMap.map (fun x y -> x+y)
         Assert.AreEqual(resultEpt,eptMap)
-               
-        ()     
+
+        ()
 
     [<Test>]
     let contains () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.containsKey 2 valueKeyMap        
+        let resultValueMap = IntMap.containsKey 2 valueKeyMap
         Assert.IsTrue(resultValueMap)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = IntMap.containsKey 1 oeleMap        
+        let resultOele = IntMap.containsKey 1 oeleMap
         Assert.IsTrue(resultOele)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.containsKey 3 eptMap        
+        let resultEpt = IntMap.containsKey 3 eptMap
         Assert.IsFalse(resultEpt)
-               
-        () 
-        
+
+        ()
+
     [<Test>]
     let ofArray_ofList_ofSeq () : unit =
-        // value keys    
-        let valueKeyMapOfArr = IntMap.ofArray [|(2,"b"); (3,"c"); (4,"d"); (5,"e")|]     
+        // value keys
+        let valueKeyMapOfArr = IntMap.ofArray [|(2,"b"); (3,"c"); (4,"d"); (5,"e")|]
         let valueKeyMapOfList = IntMap.ofList [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
         let valueKeyMapOfSeq = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
 
         CollectionAssert.AreEqual(valueKeyMapOfArr,valueKeyMapOfList)
         CollectionAssert.AreEqual(valueKeyMapOfList,valueKeyMapOfSeq)
         CollectionAssert.AreEqual(valueKeyMapOfArr,valueKeyMapOfSeq)
-        
+
         // One-element IntMap
         let oeleMapOfArr = IntMap.ofArray [|(1,"one")|]
         let oeleMapOfList = IntMap.ofList [(1,"one") ]
@@ -1286,155 +1289,155 @@ module MapModule =
         CollectionAssert.AreEqual(oeleMapOfArr,oeleMapOfList)
         CollectionAssert.AreEqual(oeleMapOfList,oeleMapOfSeq)
         CollectionAssert.AreEqual(oeleMapOfArr,oeleMapOfSeq)
-                
+
         ()
 
     [<Test>]
     let partition () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.partition (fun x y  -> x%2 = 0) valueKeyMap         
+        let resultValueMap = IntMap.partition (fun x y  -> x%2 = 0) valueKeyMap
         let choosed = [(2,"b"); (4,"d")] |> IntMap.ofList
         let notChoosed = [(3,"c"); (5,"e")] |> IntMap.ofList
         Assert.AreEqual(resultValueMap,(choosed,notChoosed))
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = IntMap.partition  (fun x y  -> x<4) oeleMap     
+        let resultOele = IntMap.partition  (fun x y  -> x<4) oeleMap
         let choosed = [(1,"one")] |> IntMap.ofList
         let notChoosed = IntMap.empty<string>
         Assert.AreEqual(resultOele,(choosed,notChoosed))
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.partition (fun x y  -> true) eptMap          
+        let resultEpt = IntMap.partition (fun x y  -> true) eptMap
         Assert.AreEqual(resultEpt,(eptMap,eptMap))
-               
+
         ()
-    
-        
+
+
     [<Test>]
     let remove () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.remove 5 valueKeyMap        
+        let resultValueMap = IntMap.remove 5 valueKeyMap
         Assert.AreEqual(resultValueMap,[(2,"b"); (3,"c"); (4,"d")] |> IntMap.ofList)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = IntMap.remove  1 oeleMap             
+        let resultOele = IntMap.remove  1 oeleMap
         Assert.AreEqual(resultOele,IntMap.empty<string>)
-        
+
         // Two-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one");(2,"Two")]
-        let resultOele = IntMap.remove  1 oeleMap             
+        let resultOele = IntMap.remove  1 oeleMap
         let exOele = IntMap.ofSeq [(2, "Two")]
         Assert.AreEqual(resultOele, exOele)
-        
+
         // Item which want to be removed not included in the map
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.remove 5 valueKeyMap        
+        let resultValueMap = IntMap.remove 5 valueKeyMap
         Assert.AreEqual(resultValueMap,[(2,"b"); (3,"c"); (4,"d")] |> IntMap.ofList)
-        
-                               
+
+
         ()
-        
+
     [<Test>]
     let toArray () : unit =
-        // value keys    
-        let valueKeyMapOfArr = IntMap.ofArray [|(1,1);(2,4);(3,9)|]     
-        let resultValueMap = IntMap.toArray valueKeyMapOfArr        
+        // value keys
+        let valueKeyMapOfArr = IntMap.ofArray [|(1,1);(2,4);(3,9)|]
+        let resultValueMap = IntMap.toArray valueKeyMapOfArr
         Assert.AreEqual(resultValueMap,[|(1,1);(2,4);(3,9)|])
-        
+
         // One-element IntMap
         let oeleMapOfArr = IntMap.ofArray [|(1,"one")|]
-        let resultOele = IntMap.toArray oeleMapOfArr        
+        let resultOele = IntMap.toArray oeleMapOfArr
         Assert.AreEqual(resultOele,[|(1,"one")|])
-        
+
         // empty IntMap
         let eptMap = IntMap.ofArray [||]
-        let resultEpt = IntMap.toArray eptMap            
+        let resultEpt = IntMap.toArray eptMap
         Assert.AreEqual(resultEpt,[||])
 
-        () 
+        ()
 
     [<Test>]
     let toList () : unit =
-        // value keys    
-        let valueKeyMapOfArr = IntMap.ofList [(1,1);(2,4);(3,9)]     
-        let resultValueMap = IntMap.toList valueKeyMapOfArr        
+        // value keys
+        let valueKeyMapOfArr = IntMap.ofList [(1,1);(2,4);(3,9)]
+        let resultValueMap = IntMap.toList valueKeyMapOfArr
         Assert.AreEqual(resultValueMap,[(1,1);(2,4);(3,9)])
-        
+
         // One-element IntMap
         let oeleMapOfArr = IntMap.ofList [(1,"one")]
-        let resultOele = IntMap.toList oeleMapOfArr        
+        let resultOele = IntMap.toList oeleMapOfArr
         Assert.AreEqual(resultOele,[(1,"one")])
-        
+
         // empty IntMap
         let eptMap = IntMap.empty<string>
-        let resultEpt = IntMap.toList eptMap  
-        let eptList :(int*string) list = []          
+        let resultEpt = IntMap.toList eptMap
+        let eptList :(int*string) list = []
         Assert.AreEqual(resultEpt,eptList)
 
-        ()     
+        ()
 
     [<Test>]
     let toSeq () : unit =
-        // value keys    
-        let valueKeyMapOfArr = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]  
+        // value keys
+        let valueKeyMapOfArr = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
         let resultValueMap = IntMap.toSeq valueKeyMapOfArr
         let originInt = seq { for i in 1..3 do yield (i,i*i)}
         CollectionAssert.AreEqual (
             resultValueMap,
             [(2,"b"); (3,"c"); (4,"d"); (5,"e")] :> IEnumerable)
 
-        
+
         // One-element IntMap
         let oeleMapOfArr = IntMap.ofSeq [(1,"one")]
         let resultOele = IntMap.toSeq oeleMapOfArr
         let originMix = seq { for x in [ "is" ;"str"; "this" ;"lists"] do yield (x.Length,x.ToUpper())}
         CollectionAssert.AreEqual (resultOele, [(1,"one")])
 
-         
-        ()           
+
+        ()
 
     [<Test>]
     let tryFind () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = IntMap.tryFind 5 valueKeyMap        
+        let resultValueMap = IntMap.tryFind 5 valueKeyMap
         Assert.AreEqual(resultValueMap,Some "e")
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = IntMap.tryFind 1 oeleMap        
+        let resultOele = IntMap.tryFind 1 oeleMap
         Assert.AreEqual(resultOele,Some "one")
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.tryFind 1 eptMap        
+        let resultEpt = IntMap.tryFind 1 eptMap
         Assert.AreEqual(resultEpt,None)
-               
-        ()      
+
+        ()
 
     [<Test>]
     let tryFindIndex () : unit =
         // value keys
         let valueKeyMap = IntMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
-        let resultValueMap = valueKeyMap |> IntMap.tryFindKey (fun x y -> x+y.Length >30)         
+        let resultValueMap = valueKeyMap |> IntMap.tryFindKey (fun x y -> x+y.Length >30)
         Assert.AreEqual(resultValueMap,None)
-        
+
         // One-element IntMap
         let oeleMap = IntMap.ofSeq [(1, "one")]
-        let resultOele = oeleMap |> IntMap.tryFindKey (fun x y -> y.Contains("o"))        
+        let resultOele = oeleMap |> IntMap.tryFindKey (fun x y -> y.Contains("o"))
         Assert.AreEqual(resultOele,Some 1)
-        
+
         // empty IntMap
         let eptMap = IntMap.empty
-        let resultEpt = IntMap.tryFindKey (fun x y -> x+y >30) eptMap        
+        let resultEpt = IntMap.tryFindKey (fun x y -> x+y >30) eptMap
         Assert.AreEqual(resultEpt,None)
-               
-        ()  
+
+        ()
 
 
 /// FsCheck-based tests for IntMap.
@@ -1448,7 +1451,7 @@ module FsCheck =
             gen {
                 let! keys = Arb.generate
                 let! values = Arb.generate
-            
+
                 // It seems FsCheck requires the use of sequences here --
                 // using List.fold2 to build the IntMap causes FsCheck to crash.
                 let kvpSeq = (Seq.ofList keys, Seq.ofList values) ||> Seq.zip
@@ -1457,7 +1460,7 @@ module FsCheck =
 
     /// Registers the FsCheck generators so they're already loaded
     /// when NUnit runs the tests in this fixture.
-    [<TestFixtureSetUp>]
+    [<OneTimeSetUp>]
     let registerFsCheckGenerators =
         Arb.register<IntMapGenerator> () |> ignore
 

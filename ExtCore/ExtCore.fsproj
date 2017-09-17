@@ -1,342 +1,87 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug (net40)</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{ae097a63-ecc1-43fc-98cd-ef943b690012}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>ExtCore</RootNamespace>
-    <AssemblyName>ExtCore</AssemblyName>
-    <Name>ExtCore</Name>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (net40)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\net40\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Debug\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (net40)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\net40\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net40\Release\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (net45)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\net45\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Debug\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (net45)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFSharpCoreVersion>4.3.0.0</TargetFSharpCoreVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\net45\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\net45\Release\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile47)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
-    <TargetFSharpCoreVersion>2.3.5.0</TargetFSharpCoreVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile47\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Debug\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile47)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile47</TargetFrameworkProfile>
-    <TargetFSharpCoreVersion>2.3.5.0</TargetFSharpCoreVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile47\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile47\Release\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile7)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
-    <TargetProfile>netcore</TargetProfile>
-    <TargetFSharpCoreVersion>3.3.1.0</TargetFSharpCoreVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile7\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Debug\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile7)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
-    <TargetProfile>netcore</TargetProfile>
-    <TargetFSharpCoreVersion>3.3.1.0</TargetFSharpCoreVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile7\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile7\Release\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile78)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile78</TargetFrameworkProfile>
-    <TargetProfile>netcore</TargetProfile>
-    <TargetFSharpCoreVersion>3.78.3.1</TargetFSharpCoreVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile78\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Debug\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile78)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile78</TargetFrameworkProfile>
-    <TargetProfile>netcore</TargetProfile>
-    <TargetFSharpCoreVersion>3.78.3.1</TargetFSharpCoreVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile78\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile78\Release\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug (profile259)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
-    <TargetProfile>netcore</TargetProfile>
-    <TargetFSharpCoreVersion>3.259.3.1</TargetFSharpCoreVersion>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\profile259\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Debug\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release (profile259)|AnyCPU' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
-    <TargetProfile>netcore</TargetProfile>
-    <TargetFSharpCoreVersion>3.259.3.1</TargetFSharpCoreVersion>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\profile259\Release\</OutputPath>
-    <DefineConstants>TRACE;FX_ATLEAST_40;FX_ATLEAST_45;FX_NO_SYSTEM_CONSOLE;FX_ATLEAST_PORTABLE;FX_SIMPLE_DIAGNOSTICS;FX_NO_TPL_PARALLEL;FX_NO_THREADPOOL</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\profile259\Release\ExtCore.xml</DocumentationFile>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>20,25,64</WarningsAsErrors>
-    <OtherFlags>--warnon:1182</OtherFlags>
-  </PropertyGroup>
-  <!-- Import references according to the target framework version and profile -->
-  <Choose>
-    <!-- .NETPortable (portable profile) builds -->
-    <When Condition=" '$(TargetFrameworkProfile)' == 'Profile47' ">
-      <ItemGroup>
-        <Reference Include="FSharp.Core">
-          <Name>FSharp.Core</Name>
-          <AssemblyName>FSharp.Core.dll</AssemblyName>
-          <HintPath>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\FSharp\.NETPortable\$(TargetFSharpCoreVersion)\FSharp.Core.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </When>
-    <!-- .NETCore builds (e.g., profile7, profile78, profile259) -->
-    <When Condition=" '$(TargetProfile)' == 'netcore' ">
-      <ItemGroup>
-        <Reference Include="FSharp.Core">
-          <Name>FSharp.Core</Name>
-          <AssemblyName>FSharp.Core.dll</AssemblyName>
-          <HintPath>$(MSBuildExtensionsPath32)\..\Reference Assemblies\Microsoft\FSharp\.NETCore\$(TargetFSharpCoreVersion)\FSharp.Core.dll</HintPath>
-        </Reference>
-      </ItemGroup>
-    </When>
-    <!-- Standard builds (e.g., net40, net45) -->
-    <Otherwise>
-      <ItemGroup>
-        <Reference Include="mscorlib" />
-        <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-          <Private>True</Private>
-        </Reference>
-        <Reference Include="System" />
-        <Reference Include="System.Numerics" />
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
-  <ItemGroup>
-    <Compile Include="Pervasive.fs" />
-    <Compile Include="Substring.fs" />
-    <Compile Include="String.fs" />
-    <Compile Include="Control.Agents.fs" />
-    <Compile Include="Control.fs" />
-    <Compile Include="Control.Observable.fs" />
-    <Compile Include="Control.Indexed.fs" />
-    <Compile Include="Control.Cps.fs" />
-    <Compile Include="Control.Tasks.fs" />
-    <Compile Include="Collections.fs" />
-    <Compile Include="Collections.Seq.fs" />
-    <Compile Include="Collections.ListZipper.fs" />
-    <Compile Include="Collections.List.fs" />
-    <Compile Include="Collections.Vector.fs" />
-    <Compile Include="Collections.VectorView.fs" />
-    <Compile Include="Collections.ResizeArray.fs" />
-    <Compile Include="Collections.Array.fs" />
-    <Compile Include="Collections.TaggedArray.fs" />
-    <Compile Include="Collections.ArrayView.fs" />
-    <Compile Include="Collections.Set.fs" />
-    <Compile Include="Collections.Map.fs" />
-    <Compile Include="Collections.Dict.fs" />
-    <Compile Include="Collections.Bimap.fs" />
-    <Compile Include="Collections.IntSet.fs" />
-    <Compile Include="Collections.IntMap.fs" />
-    <Compile Include="Collections.IntBimap.fs" />
-    <Compile Include="Collections.LongSet.fs" />
-    <Compile Include="Collections.LongMap.fs" />
-    <Compile Include="Collections.LongBimap.fs" />
-    <Compile Include="Collections.HashSet.fs" />
-    <Compile Include="Collections.HashMap.fs" />
-    <Compile Include="Collections.Multiset.fs" />
-    <Compile Include="Collections.Multimap.fs" />
-    <Compile Include="Collections.LazyList.fs" />
-    <Compile Include="Collections.Queue.fs" />
-    <Compile Include="Collections.PriorityQueue.fs" />
-    <Compile Include="Collections.AsyncSeq.fs" />
-    <Compile Include="ControlCollections.State.fs" />
-    <Compile Include="ControlCollections.Reader.fs" />
-    <Compile Include="ControlCollections.ReaderState.fs" />
-    <Compile Include="ControlCollections.Maybe.fs" />
-    <Compile Include="ControlCollections.ReaderMaybe.fs" />
-    <Compile Include="ControlCollections.Choice.fs" />
-    <Compile Include="ControlCollections.ReaderChoice.fs" />
-    <Compile Include="ControlCollections.ProtectedState.fs" />
-    <Compile Include="ControlCollections.ReaderProtectedState.fs" />
-    <Compile Include="ControlCollections.StatefulChoice.fs" />
-    <Compile Include="ControlCollections.Async.fs" />
-    <Compile Include="ControlCollections.AsyncState.fs" />
-    <Compile Include="ControlCollections.AsyncMaybe.fs" />
-    <Compile Include="ControlCollections.AsyncChoice.fs" />
-    <Compile Include="ControlCollections.AsyncProtectedState.fs" />
-    <Compile Include="ControlCollections.Cont.fs" />
-    <Compile Include="ControlCollections.StateCont.fs" />
-    <Compile Include="Caching.LruCache.fs" />
-    <Compile Include="NativeInterop.fs" />
-    <Compile Include="IO.fs" />
-    <Compile Include="Net.fs" />
-    <Compile Include="Args.fs" />
-    <Compile Include="ExtraPervasives.fs" />
-    <Compile Include="AssemblyInfo.fs" />
-  </ItemGroup>
-  <PropertyGroup>
-    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">12</MinimumVisualStudioVersion>
-  </PropertyGroup>
-  <!-- Import targets according to the target framework version and profile -->
-  <Choose>
-    <!-- Get targets path for portable builds -->
-    <When Condition=" '$(TargetProfile)' == 'netcore' Or '$(TargetFrameworkProfile)' == 'Profile47'">
-      <PropertyGroup>
-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.Portable.FSharp.Targets</FSharpTargetsPath>
-      </PropertyGroup>
-    </When>
-    <!-- Targets path for standard builds (e.g., net40, net45) -->
-    <Otherwise>
-      <PropertyGroup>
-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
-  <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-	     Other similar extension points exist, see Microsoft.Common.targets.
-	<Target Name="BeforeBuild">
-	</Target>
-	<Target Name="AfterBuild">
-	</Target>
-	-->
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
+        <Title>AzureBillingApi</Title>
+        <Version>0.8.47</Version>
+        <RepositoryUrl>https://github.com/jack-pappas/ExtCore</RepositoryUrl>
+        <AssemblyVersion>8.0.30703</AssemblyVersion>
+        <FileVersion>8.0.30703</FileVersion>
+        <Description>ExtCore provides extensions to the F# core library (FSharp.Core) and aims to help you build
+            industrial-strength F# applications. These extensions include additional functions for modules such as
+            Array, List, Set, and Map; immutable IntSet, IntMap, LazyList, and Queue collections; a variety of
+            computation expressions (workflows); and "workflow collections" -- collections modules which have been
+            adapted to work seamlessly from within workflows.
+        </Description>
+        <Authors>Jack Pappas</Authors>
+        <PackageLicenseUrl>http://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
+        <PackageProjectUrl>https://github.com/jack-pappas/ExtCore</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/codehollow/AzureBillingApi/</RepositoryUrl>
+        <PackageTags>f# fsharp workflow collections immutable workflow monad computation fsharpx intmap lazylist
+        </PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="AssemblyInfo.fs"/>
+        <Compile Include="Pervasive.fs"/>
+        <Compile Include="Substring.fs"/>
+        <Compile Include="String.fs"/>
+        <Compile Include="Control.Agents.fs"/>
+        <Compile Include="Control.fs"/>
+        <Compile Include="Control.Observable.fs"/>
+        <Compile Include="Control.Indexed.fs"/>
+        <Compile Include="Control.Cps.fs"/>
+        <Compile Include="Control.Tasks.fs"/>
+        <Compile Include="Collections.fs"/>
+        <Compile Include="Collections.Seq.fs"/>
+        <Compile Include="Collections.ListZipper.fs"/>
+        <Compile Include="Collections.List.fs"/>
+        <Compile Include="Collections.Vector.fs"/>
+        <Compile Include="Collections.VectorView.fs"/>
+        <Compile Include="Collections.ResizeArray.fs"/>
+        <Compile Include="Collections.Array.fs"/>
+        <Compile Include="Collections.TaggedArray.fs"/>
+        <Compile Include="Collections.ArrayView.fs"/>
+        <Compile Include="Collections.Set.fs"/>
+        <Compile Include="Collections.Map.fs"/>
+        <Compile Include="Collections.Dict.fs"/>
+        <Compile Include="Collections.Bimap.fs"/>
+        <Compile Include="Collections.IntSet.fs"/>
+        <Compile Include="Collections.IntMap.fs"/>
+        <Compile Include="Collections.IntBimap.fs"/>
+        <Compile Include="Collections.LongSet.fs"/>
+        <Compile Include="Collections.LongMap.fs"/>
+        <Compile Include="Collections.LongBimap.fs"/>
+        <Compile Include="Collections.HashSet.fs"/>
+        <Compile Include="Collections.HashMap.fs"/>
+        <Compile Include="Collections.Multiset.fs"/>
+        <Compile Include="Collections.Multimap.fs"/>
+        <Compile Include="Collections.LazyList.fs"/>
+        <Compile Include="Collections.Queue.fs"/>
+        <Compile Include="Collections.PriorityQueue.fs"/>
+        <Compile Include="Collections.AsyncSeq.fs"/>
+        <Compile Include="ControlCollections.State.fs"/>
+        <Compile Include="ControlCollections.Reader.fs"/>
+        <Compile Include="ControlCollections.ReaderState.fs"/>
+        <Compile Include="ControlCollections.Maybe.fs"/>
+        <Compile Include="ControlCollections.ReaderMaybe.fs"/>
+        <Compile Include="ControlCollections.Choice.fs"/>
+        <Compile Include="ControlCollections.ReaderChoice.fs"/>
+        <Compile Include="ControlCollections.ProtectedState.fs"/>
+        <Compile Include="ControlCollections.ReaderProtectedState.fs"/>
+        <Compile Include="ControlCollections.StatefulChoice.fs"/>
+        <Compile Include="ControlCollections.Async.fs"/>
+        <Compile Include="ControlCollections.AsyncState.fs"/>
+        <Compile Include="ControlCollections.AsyncMaybe.fs"/>
+        <Compile Include="ControlCollections.AsyncChoice.fs"/>
+        <Compile Include="ControlCollections.AsyncProtectedState.fs"/>
+        <Compile Include="ControlCollections.Cont.fs"/>
+        <Compile Include="ControlCollections.StateCont.fs"/>
+        <Compile Include="Caching.LruCache.fs"/>
+        <Compile Include="NativeInterop.fs"/>
+        <Compile Include="IO.fs"/>
+        <Compile Include="Net.fs"/>
+        <Compile Include="Args.fs"/>
+        <Compile Include="ExtraPervasives.fs"/>
+    </ItemGroup>
 </Project>

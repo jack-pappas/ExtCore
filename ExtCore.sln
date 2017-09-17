@@ -3,16 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{B33E042E-7F6B-4C55-88D1-08117D063D7D}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExtCore", "ExtCore\ExtCore.fsproj", "{AE097A63-ECC1-43FC-98CD-EF943B690012}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ExtCore.Tests", "ExtCore.Tests\ExtCore.Tests.fsproj", "{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{308ECB02-6B2C-4D9F-94AF-32D98BAD9A5C}"
+ProjectSection(SolutionItems) = preProject
+	appveyor.yml = appveyor.yml
+	install_dotnet.ps1 = install_dotnet.ps1
+EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,54 +29,10 @@ Global
 		Release (profile259)|Any CPU = Release (profile259)|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (net40)|Any CPU.ActiveCfg = Debug (net40)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (net40)|Any CPU.Build.0 = Debug (net40)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (net45)|Any CPU.ActiveCfg = Debug (net45)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (net45)|Any CPU.Build.0 = Debug (net45)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile7)|Any CPU.ActiveCfg = Debug (profile7)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile7)|Any CPU.Build.0 = Debug (profile7)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile47)|Any CPU.ActiveCfg = Debug (profile47)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile47)|Any CPU.Build.0 = Debug (profile47)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile78)|Any CPU.ActiveCfg = Debug (profile78)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile78)|Any CPU.Build.0 = Debug (profile78)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile259)|Any CPU.ActiveCfg = Debug (profile259)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (profile259)|Any CPU.Build.0 = Debug (profile259)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (net40)|Any CPU.ActiveCfg = Release (net40)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (net40)|Any CPU.Build.0 = Release (net40)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (net45)|Any CPU.ActiveCfg = Release (net45)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (net45)|Any CPU.Build.0 = Release (net45)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile7)|Any CPU.ActiveCfg = Release (profile7)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile7)|Any CPU.Build.0 = Release (profile7)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile47)|Any CPU.ActiveCfg = Release (profile47)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile47)|Any CPU.Build.0 = Release (profile47)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile78)|Any CPU.ActiveCfg = Release (profile78)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile78)|Any CPU.Build.0 = Release (profile78)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile259)|Any CPU.ActiveCfg = Release (profile259)|Any CPU
-		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Release (profile259)|Any CPU.Build.0 = Release (profile259)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (net40)|Any CPU.ActiveCfg = Debug (net40)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (net40)|Any CPU.Build.0 = Debug (net40)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (net45)|Any CPU.ActiveCfg = Debug (net45)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (net45)|Any CPU.Build.0 = Debug (net45)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile7)|Any CPU.ActiveCfg = Debug (profile7)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile7)|Any CPU.Build.0 = Debug (profile7)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile47)|Any CPU.ActiveCfg = Debug (profile47)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile47)|Any CPU.Build.0 = Debug (profile47)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile78)|Any CPU.ActiveCfg = Debug (profile78)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile78)|Any CPU.Build.0 = Debug (profile78)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile259)|Any CPU.ActiveCfg = Debug (profile259)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (profile259)|Any CPU.Build.0 = Debug (profile259)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (net40)|Any CPU.ActiveCfg = Release (net40)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (net40)|Any CPU.Build.0 = Release (net40)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (net45)|Any CPU.ActiveCfg = Release (net45)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (net45)|Any CPU.Build.0 = Release (net45)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile7)|Any CPU.ActiveCfg = Release (profile7)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile7)|Any CPU.Build.0 = Release (profile7)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile47)|Any CPU.ActiveCfg = Release (profile47)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile47)|Any CPU.Build.0 = Release (profile47)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile78)|Any CPU.ActiveCfg = Release (profile78)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile78)|Any CPU.Build.0 = Release (profile78)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile259)|Any CPU.ActiveCfg = Release (profile259)|Any CPU
-		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Release (profile259)|Any CPU.Build.0 = Release (profile259)|Any CPU
+		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (net40)|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE097A63-ECC1-43FC-98CD-EF943B690012}.Debug (net40)|Any CPU.Build.0 = Debug|Any CPU
+		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (net40)|Any CPU.ActiveCfg = Debug|Any CPU
+		{85B78E3D-ABFD-4A79-A9F7-26B586C56A94}.Debug (net40)|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

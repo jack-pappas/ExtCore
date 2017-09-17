@@ -31,7 +31,7 @@ let isEmpty () : unit =
     LongSet.empty
     |> LongSet.isEmpty
     |> assertTrue
-    
+
     LongSet.singleton 5L
     |> LongSet.isEmpty
     |> assertFalse
@@ -90,9 +90,9 @@ let minElement () : unit =
     |> LongSet.minElement
     |> assertEqual -17L
 
-[<Test; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test>]
 let ``minElement raises exn for empty set`` () : unit =
-    LongSet.minElement LongSet.empty |> ignore
+    Assert.Throws<ArgumentException>(fun () -> LongSet.minElement LongSet.empty |> ignore) |> ignore
 
 [<Test>]
 let minElementSigned () : unit =
@@ -114,9 +114,9 @@ let minElementSigned () : unit =
     |> LongSet.minElementSigned
     |> assertEqual -17L
 
-[<Test; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test>]
 let ``minElementSigned raises exn for empty set`` () : unit =
-    LongSet.minElementSigned LongSet.empty |> ignore
+    Assert.Throws<ArgumentException>(fun () -> LongSet.minElementSigned LongSet.empty |> ignore) |> ignore
 
 [<Test>]
 let maxElement () : unit =
@@ -138,9 +138,9 @@ let maxElement () : unit =
     |> LongSet.maxElement
     |> assertEqual -2L
 
-[<Test; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test>]
 let ``maxElement raises exn for empty set`` () : unit =
-    LongSet.maxElement LongSet.empty |> ignore
+    Assert.Throws<ArgumentException>(fun () -> LongSet.maxElement LongSet.empty |> ignore) |> ignore
 
 [<Test>]
 let maxElementSigned () : unit =
@@ -162,9 +162,9 @@ let maxElementSigned () : unit =
     |> LongSet.maxElementSigned
     |> assertEqual -2L
 
-[<Test; ExpectedException(typeof<System.ArgumentException>)>]
+[<Test>]
 let ``maxElementSigned raises exn for empty set`` () : unit =
-    LongSet.maxElementSigned LongSet.empty |> ignore
+    Assert.Throws<ArgumentException>(fun () -> LongSet.maxElementSigned LongSet.empty |> ignore) |> ignore
 
 [<Test>]
 let add () : unit =
@@ -415,7 +415,7 @@ let ofSeq () : unit =
     Seq.empty
     |> LongSet.ofSeq
     |> assertEqual LongSet.empty
-    
+
     seq {
         yield! seq { 2L .. 5L }
         yield 11L
@@ -780,14 +780,15 @@ let pick () : unit =
         else None)
     |> assertEqual 3L
 
-[<Test; ExpectedException(typeof<KeyNotFoundException>)>]
+[<Test>]
 let ``pick raises exn on empty input`` () : unit =
-    LongSet.empty
-    |> LongSet.pick (fun el ->
-        if el % 3L = 2L then
-            Some (el + 1L)
-        else None)
-    |> ignore
+    Assert.Throws<KeyNotFoundException>(fun () ->
+        LongSet.empty
+        |> LongSet.pick (fun el ->
+            if el % 3L = 2L then
+                Some (el + 1L)
+            else None)
+        |> ignore) |> ignore
 
 [<Test>]
 let tryFind () : unit =
@@ -818,7 +819,7 @@ module SetType =
         let ie = (new LongSet([1L; 2L; 3L])) :> IEnumerable
         //let alphabet = new LongSet<char>([| 'a' .. 'z' |])
         let enum = ie.GetEnumerator()
-        
+
         let testStepping () : unit =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
@@ -829,11 +830,11 @@ module SetType =
             Assert.AreEqual(enum.Current, 3L)
             Assert.AreEqual(enum.MoveNext(), false)
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-    
+
         testStepping()
         enum.Reset()
         testStepping()
-    
+
     [<Test>]
     [<Ignore("The failure of this test may to be due to a bug in the compiler-generated seq implementation. \
               This test is ignored for now until that is fixed or the workaround (implementing a custom enumerator) is implemented.")>]
@@ -841,7 +842,7 @@ module SetType =
         // Empty IE
         let ie = (new LongSet([])) :> IEnumerable  // Note no type args
         let enum = ie.GetEnumerator()
-        
+
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
         Assert.AreEqual(enum.MoveNext(), false)
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
@@ -853,7 +854,7 @@ module SetType =
         // Legit IE
         let ie =(new LongSet([1L; 2L; 3L])) :> IEnumerable<int64>
         let enum = ie.GetEnumerator()
-        
+
         let testStepping () : unit =
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
             Assert.AreEqual(enum.MoveNext(), true)
@@ -864,55 +865,55 @@ module SetType =
             Assert.AreEqual(enum.Current, 3L)
             Assert.AreEqual(enum.MoveNext(), false)
             checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-        
+
         testStepping()
         enum.Reset()
         testStepping()
-    
+
     [<Test>]
     [<Ignore("The failure of this test may to be due to a bug in the compiler-generated seq implementation. \
               This test is ignored for now until that is fixed or the workaround (implementing a custom enumerator) is implemented.")>]
     let ``IEnumerable<T> (Empty)`` () : unit =
         // Empty IE
-        let ie = (new LongSet([])) :> IEnumerable<int64>  
+        let ie = (new LongSet([])) :> IEnumerable<int64>
         let enum = ie.GetEnumerator()
-        
+
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
         Assert.AreEqual(enum.MoveNext(), false)
         checkThrowsInvalidOperationExn(fun () -> enum.Current |> ignore)
-        
+
     [<Test>]
     let ``ICollection (Legit)`` () : unit =
-        // Legit IC        
+        // Legit IC
         let ic = (new LongSet([1L;2L;3L;4L])) :> ICollection<int64>
-        let st = new LongSet([1L;2L;3L;4L])        
-        
-        Assert.IsTrue(ic.Contains(3L)) 
+        let st = new LongSet([1L;2L;3L;4L])
+
+        Assert.IsTrue(ic.Contains(3L))
         let newArr = Array.create 5 0L
-        ic.CopyTo(newArr,0) 
-        Assert.IsTrue(ic.IsReadOnly)       
-    
+        ic.CopyTo(newArr,0)
+        Assert.IsTrue(ic.IsReadOnly)
+
     [<Test>]
-    let ``ICollection (Empty)`` () : unit =        
+    let ``ICollection (Empty)`` () : unit =
         // Empty IC
         let ic = (new LongSet([])) :> ICollection<int64>
-        Assert.IsFalse(ic.Contains(123L) )     
+        Assert.IsFalse(ic.Contains(123L) )
         let newArr = Array.create 5 -1L
-        ic.CopyTo(newArr,0) 
-    
+        ic.CopyTo(newArr,0)
+
     [<Test>]
     let ``IComparable (Legit)`` () : unit =
         // Legit IC
-        let ic = (new LongSet([1L;2L;3L;4L])) :> IComparable    
-        Assert.AreEqual(ic.CompareTo(new LongSet([1L;2L;3L;4L])),0) 
-    
+        let ic = (new LongSet([1L;2L;3L;4L])) :> IComparable
+        Assert.AreEqual(ic.CompareTo(new LongSet([1L;2L;3L;4L])),0)
+
     [<Test>]
     let ``IComparable (Empty)`` () : unit =
         // Empty IC
-        let ic = (new LongSet([])) :> IComparable   
+        let ic = (new LongSet([])) :> IComparable
         Assert.AreEqual(ic.CompareTo(LongSet.empty),0)
-        
-        
+
+
     // Base class methods
     [<Test>]
     let ObjectGetHashCode () : unit =
@@ -920,14 +921,14 @@ module SetType =
         let x = LongSet.ofList [1L; 2L; 3L]
         let y = LongSet.ofList [3L; 2L; 1L]
         Assert.AreEqual(x.GetHashCode(), y.GetHashCode())
-    
+
     [<Test>]
     let ObjectToString () : unit =
         Assert.AreEqual("longSet [1L; 2L; 3L; ... ]", (new LongSet([1L;2L;3L;4L])).ToString())
         Assert.AreEqual("longSet []", (LongSet.empty).ToString())
         Assert.AreEqual("longSet [1L; 3L]", (new LongSet([1L;3L])).ToString())
-        
-    
+
+
     [<Test>]
     let ObjectEquals () : unit =
         // All three are different references, but equality has been
@@ -941,100 +942,100 @@ module SetType =
         Assert.IsTrue( a.Equals(b) ); Assert.IsTrue( b.Equals(a) )
         Assert.IsTrue( b.Equals(c) ); Assert.IsTrue( c.Equals(b) )
         Assert.IsTrue( c.Equals(a) ); Assert.IsTrue( a.Equals(c) )
-        
+
         // Self equality
         let a = new LongSet([1L])
         Assert.IsTrue( (a = a) )
         Assert.IsTrue(a.Equals(a))
-        
+
         // Null
-        Assert.IsFalse(a.Equals(null))  
-        
-        
+        Assert.IsFalse(a.Equals(null))
+
+
     // Instance methods
     [<Test>]
-    let Add () : unit =    
+    let Add () : unit =
         let l = new LongSet([1L .. 10L])
         let ad = l.Add 88L
         Assert.IsTrue(ad.Contains(88L))
-    
+
         let e : LongSet = LongSet.empty
         let ade = e.Add 123L
         Assert.IsTrue(ade.Contains(123L))
-        
+
         let s = LongSet.singleton 168L
         let ads = s.Add 100L
         Assert.IsTrue(ads.Contains(100L))
-        
+
     [<Test>]
-    let Contains () : unit =    
+    let Contains () : unit =
         let i = new LongSet([1L .. 10L])
         Assert.IsTrue(i.Contains(8L))
-    
+
         let e : LongSet = LongSet.empty
         Assert.IsFalse(e.Contains(123L))
-        
+
         let s = LongSet.singleton 168L
         Assert.IsTrue(s.Contains(168L))
-    
+
     [<Test>]
-    let Count () : unit =    
+    let Count () : unit =
         let l = new LongSet([1L .. 10L])
         Assert.AreEqual(l.Count, 10)
-    
+
         let e : LongSet = LongSet.empty
         Assert.AreEqual(e.Count, 0)
-        
+
         let s = LongSet.singleton 123L
-        Assert.AreEqual(s.Count, 1)        
-        
+        Assert.AreEqual(s.Count, 1)
+
     [<Test>]
     let IsEmpty () : unit =
         let i = new LongSet([1L .. 10L])
         Assert.IsFalse(i.IsEmpty)
-    
+
         let e : LongSet = LongSet.empty
         Assert.IsTrue(e.IsEmpty)
-        
+
         let s = LongSet.singleton 168L
-        Assert.IsFalse(s.IsEmpty)   
-        
+        Assert.IsFalse(s.IsEmpty)
+
     [<Test>]
     let IsSubsetOf () : unit =
         let fir = new LongSet([1L .. 20L])
         let sec = new LongSet([1L .. 10L])
         Assert.IsTrue(sec.IsSubsetOf(fir))
         Assert.IsTrue(LongSet.isSubset sec fir)
-    
+
         let e : LongSet = LongSet.empty
         Assert.IsTrue(e.IsSubsetOf(fir))
         Assert.IsTrue(LongSet.isSubset e fir)
-        
+
         let s = LongSet.singleton 8L
-        Assert.IsTrue(s.IsSubsetOf(fir)) 
+        Assert.IsTrue(s.IsSubsetOf(fir))
         Assert.IsTrue(LongSet.isSubset s fir)
-        
+
         let s100 = longSet [0L..100L]
         let s101 = longSet [0L..101L]
         for i in 0L .. 100L do
             Assert.IsFalse( (longSet [-1L..i]).IsSubsetOf s100)
             Assert.IsTrue( (longSet [0L..i]).IsSubsetOf s100)
             Assert.IsTrue( (longSet [0L..i]).IsProperSubsetOf s101)
-           
-        
+
+
     [<Test>]
     let IsSupersetOf () : unit =
         let fir = new LongSet([1L .. 10L])
         let sec = new LongSet([1L .. 20L])
         Assert.IsTrue(sec.IsSupersetOf(fir))
         Assert.IsTrue(LongSet.isSuperset sec fir)
-    
+
         let e : LongSet = LongSet.empty
         Assert.IsFalse(e.IsSupersetOf(fir))
         Assert.IsFalse(LongSet.isSuperset e fir)
-        
+
         let s = LongSet.singleton 168L
-        Assert.IsFalse(s.IsSupersetOf(fir))  
+        Assert.IsFalse(s.IsSupersetOf(fir))
         Assert.IsFalse(LongSet.isSuperset s fir)
 
         let s100 = longSet [0L..100L]
@@ -1043,15 +1044,15 @@ module SetType =
             Assert.IsFalse( s100.IsSupersetOf (longSet [-1L..i]))
             Assert.IsTrue( s100.IsSupersetOf (longSet [0L..i]))
             Assert.IsTrue( s101.IsSupersetOf (longSet [0L..i]))
-        
+
     [<Test>]
-    let Remove () : unit =    
+    let Remove () : unit =
         let i = new LongSet([1L;2L;3L;4L])
         Assert.AreEqual(i.Remove 3L,(new LongSet([1L;2L;4L])))
-    
+
         let e : LongSet = LongSet.empty
         Assert.AreEqual(e.Remove 123L, e)
-        
+
         let s = LongSet.singleton 168L
         Assert.AreEqual(s.Remove 168L, LongSet.empty)
 
@@ -1063,7 +1064,7 @@ module SetType =
         Assert.AreEqual(sec.MinimumElement, 2L)
         Assert.AreEqual(LongSet.minElement fir, 1L)
         Assert.AreEqual(LongSet.minElement sec, 2L)
-        
+
 
     [<Test>]
     let MaximumElement () : unit =
@@ -1073,8 +1074,8 @@ module SetType =
         Assert.AreEqual(sec.MaximumElement, 7L)
         Assert.AreEqual(LongSet.maxElement fir, 6L)
         Assert.AreEqual(LongSet.maxElement sec, 7L)
-        
-        
+
+
     // Static methods
     [<Test>]
     let Addition () : unit =
@@ -1082,16 +1083,16 @@ module SetType =
         let sec = new LongSet([2L;4L;6L])
         Assert.AreEqual(fir + sec, new LongSet([1L;2L;3L;4L;5L;6L]))
         Assert.AreEqual(LongSet.op_Addition(fir,sec), new LongSet([1L;2L;3L;4L;5L;6L]))
-    
+
         let e : LongSet = LongSet.empty
         Assert.AreEqual(e + e, e)
         Assert.AreEqual(LongSet.op_Addition(e,e),e)
-        
+
         let s1 = LongSet.singleton 8L
         let s2 = LongSet.singleton 6L
         Assert.AreEqual(s1 + s2, new LongSet([8L;6L]))
         Assert.AreEqual(LongSet.op_Addition(s1,s2), new LongSet([8L;6L]))
-        
+
 
     [<Test>]
     let Subtraction () : unit =
@@ -1100,12 +1101,12 @@ module SetType =
         Assert.AreEqual(fir - sec, new LongSet([1L;3L;5L]))
         Assert.AreEqual(LongSet.difference fir sec, new LongSet([1L;3L;5L]))
         Assert.AreEqual(LongSet.op_Subtraction(fir,sec), new LongSet([1L;3L;5L]))
-    
+
         let e : LongSet = LongSet.empty
         Assert.AreEqual(e - e, e)
         Assert.AreEqual(LongSet.difference e e, e)
         Assert.AreEqual(LongSet.op_Subtraction(e,e),e)
-        
+
         let s1 = LongSet.singleton 8L
         let s2 = LongSet.singleton 6L
         Assert.AreEqual(s1 - s2, new LongSet([8L]))
@@ -1125,8 +1126,8 @@ module SetModule =
     [<Test>]
     let empty () : unit =
         let emptySet = LongSet.empty
-        if LongSet.count emptySet <> 0L then Assert.Fail()    
-        
+        if LongSet.count emptySet <> 0L then Assert.Fail()
+
         let c : LongSet    = LongSet.empty
         ()
 
@@ -1135,7 +1136,7 @@ module SetModule =
         let intSingleton = LongSet.singleton 5L
         Assert.IsTrue(intSingleton.Count = 1L)
         Assert.IsTrue(intSingleton.Contains(5L))
-        
+
     [<Test>]
     let add () : unit =
         let empty = LongSet.empty
@@ -1143,11 +1144,11 @@ module SetModule =
         let xy    = LongSet.add 456L x
         let xyz   = LongSet.add 789L xy
         let wxyz  = LongSet.add 10L xyz
-        
+
         Assert.IsTrue(LongSet.count xy   = 2L)
         Assert.IsTrue(LongSet.count xyz  = 3L)
         Assert.IsTrue(LongSet.count wxyz = 4L)
-        
+
     [<Test>]
     let contains () : unit =
         // Empty set searching for null = false
@@ -1160,48 +1161,48 @@ module SetModule =
         let odds = new LongSet([1 .. 2 .. 11])
         if LongSet.contains 6 odds <> false then Assert.Fail()
         ()
-        
+
     [<Test>]
-    let count () : unit = 
+    let count () : unit =
         let empty = LongSet.empty
         if LongSet.count empty <> 0 then Assert.Fail()
-        
+
         let one = LongSet.add 1 empty
         if LongSet.count one <> 1 then Assert.Fail()
-        
+
         let multi = new LongSet<char>([| 'a' .. 'z' |])
         if LongSet.count multi <> 26 then Assert.Fail()
         ()
-        
+
     [<Test>]
-    let diff () : unit = 
+    let diff () : unit =
         // Given a large set and removing 0, 1, x elements...
         let alphabet = new LongSet<char>([| 'a' .. 'z' |])
         let emptyChar = LongSet.empty : LongSet<char>
-        
+
         let removeEmpty = alphabet - emptyChar
         if (alphabet = removeEmpty) <> true then Assert.Fail()
-        
+
         let number = LongSet.singleton '1'
         let removeNumber = alphabet - number
         if (alphabet = removeNumber) <> true then Assert.Fail()
-        
+
         let vowels = new LongSet<char>([| 'a'; 'e'; 'i'; 'o'; 'u' |])
         let noVowels = alphabet - vowels
         if noVowels.Count <> 21 then Assert.Fail()
-        
+
         // Give a set of 0, 1, x elements remove some other set
         let odds  = new LongSet([1 .. 2 .. 10])
         let evens = new LongSet([2 .. 2 .. 10])
-        
+
         let emptyNum = LongSet.empty : LongSet
-        let removeOddsFromEmpty = emptyNum - odds 
+        let removeOddsFromEmpty = emptyNum - odds
         if (emptyNum = removeOddsFromEmpty) <> true then Assert.Fail()
-        
+
         let one = LongSet.singleton 1
         let removeOddsFrom1 = one - odds
         if (removeOddsFrom1 = emptyNum) <> true then Assert.Fail()
-        
+
         let evensSansOdds = evens - odds
         if (evensSansOdds = evens) <> true then Assert.Fail()
         ()
@@ -1211,22 +1212,22 @@ module SetModule =
         let emptySet1 : LongSet<string> = LongSet.empty
         let emptySet2 : LongSet<string> = LongSet.empty
         if (emptySet1 = emptySet2) <> true then Assert.Fail()
-        
+
         let a  = new LongSet([1; 2; 3L; 4; 5])
         let b = new LongSet([1; 3L; 5])
-        
+
         if (a = b) <> false then Assert.Fail()
-        
+
         let a = a |> LongSet.remove 2 |> LongSet.remove 4
         if (a = b) <> true then Assert.Fail()
         ()
-        
+
     [<Test>]
     let compare () : unit =
         // Comparing empty sets
         let emptyString1 = LongSet.empty : LongSet<string>
         let emptyString2 = LongSet.empty : LongSet<string>
-        
+
         if compare emptyString1 emptyString1 <> 0 then Assert.Fail()
         if compare emptyString1 emptyString2 <> 0 then Assert.Fail()
 
@@ -1241,7 +1242,7 @@ module SetModule =
         // Comparing multi-element sets
         let alphabet = new LongSet<char>(['a' .. 'z'])
         let vowels   = new LongSet<char>(['a'; 'e'; 'i'; 'o'; 'u'])
-        
+
         let noVowelAlpa = alphabet - vowels
         if compare noVowelAlpa alphabet     <> 1  then Assert.Fail()
         if compare alphabet alphabet        <> 0  then Assert.Fail()
@@ -1251,80 +1252,80 @@ module SetModule =
 
     [<Test>]
     let exists () : unit =
-        
+
         let emptyInt = LongSet.empty : LongSet
         if LongSet.exists (fun _ -> true) emptyInt <> false then Assert.Fail()
-        
+
         let x = LongSet.singleton 'x'
         if LongSet.exists (fun c -> c = 'x') x  <> true  then Assert.Fail()
         if LongSet.exists (fun c -> c <> 'x') x <> false then Assert.Fail()
-        
+
         let letNumPairs = new LongSet<string * int64>([("one", 1); ("two", 2); ("three", 3)])
         if LongSet.exists (fun (text, num) -> text = "one" && num = 1) letNumPairs <> true then Assert.Fail()
         if LongSet.exists (fun (text, num) -> text = "four") letNumPairs           <> false then Assert.Fail()
         ()
-        
+
     [<Test>]
     let filter () : unit =
         let emptyComplex = LongSet.empty : LongSet<int64 * List<string * LongSet<decimal>> * LongSet<int64 * string * (char * char * char)>>
-        let fileredEmpty = LongSet.filter (fun _ -> false) emptyComplex 
+        let fileredEmpty = LongSet.filter (fun _ -> false) emptyComplex
         if (fileredEmpty = emptyComplex) <> true then Assert.Fail()
-        
+
         let nullSet = LongSet.singleton null
         if nullSet.Count <> 1 then Assert.Fail()
         let filteredNull = LongSet.filter (fun x -> x <> null) nullSet
         if filteredNull.Count <> 0 then Assert.Fail()
-        
+
         let digits = new LongSet([1 .. 10])
         let evens  = new LongSet([2 .. 2 .. 10])
         let filteredDigits = LongSet.filter(fun i -> i % 2 = 0) digits
         if (filteredDigits = evens) <> true then Assert.Fail()
         ()
-        
+
 
     [<Test>]
     let map () : unit =
         let emptySet : LongSet<string> = LongSet.empty
-        
+
         let result = LongSet.map (fun _ -> Assert.Fail(); "") emptySet
         if (emptySet = result) <> true then Assert.Fail()
-        
+
         let alphabet = new LongSet(['a' .. 'z'])
         let capped = LongSet.map (fun c -> Char.ToUpper(c)) alphabet
-        
+
         if LongSet.exists (fun c -> c = Char.ToLower(c)) capped then Assert.Fail()
         ()
 
     [<Test>]
     let fold () : unit =
-        
+
         let emptySet : LongSet<decimal> = LongSet.empty
         let result = LongSet.fold (fun _ _ -> Assert.Fail(); -1I) 0I emptySet
         if result <> 0I then Assert.Fail()
-        
+
         let callOrder = ref ([] : (int64 * int64) list)
         let input = new LongSet([1; 2; 3L; 4; 5])
-        
-        let result = LongSet.fold 
-                            (fun acc i -> callOrder := (acc, i) :: !callOrder; acc + i) 
-                            0 
+
+        let result = LongSet.fold
+                            (fun acc i -> callOrder := (acc, i) :: !callOrder; acc + i)
+                            0
                             input
         if result    <> 15 then Assert.Fail()
         if !callOrder <> [(10, 5); (6, 4); (3, 3); (1, 2); (0, 1)] then Assert.Fail()
         ()
-        
+
     [<Test>]
     let foldBack () : unit =
-        
+
         let emptySet : LongSet<decimal> = LongSet.empty
         let result = LongSet.foldBack (fun _ _ -> Assert.Fail(); -1I) emptySet 0I
         if result <> 0I then Assert.Fail()
-        
+
         let callOrder = ref ([] : (int64 * int64) list)
         let input = new LongSet([1; 2; 3L; 4; 5])
-        
+
         let result = LongSet.foldBack
-                            (fun i acc -> callOrder := (acc, i) :: !callOrder; acc + i) 
+                            (fun i acc -> callOrder := (acc, i) :: !callOrder; acc + i)
                             input
                             0
         if result    <> 15 then Assert.Fail()
@@ -1337,7 +1338,7 @@ module SetModule =
         let emptySet : LongSet<string> = LongSet.empty
         let result = LongSet.forall (fun x -> Assert.Fail(); false) emptySet
         if result <> true then Assert.Fail()
-        
+
         let seta = new LongSet( [1 .. 99] |> List.map (fun i -> i.ToString()) )
         let result = seta |> LongSet.forall (fun str -> str.Length < 3)
         Assert.IsTrue(result)
@@ -1349,31 +1350,31 @@ module SetModule =
 
     [<Test>]
     let intersect () : unit =
-        
+
         let emptySet1 : LongSet = LongSet.empty
         let emptySet2 : LongSet = LongSet.empty
         let four                = LongSet.singleton 4
-       
+
         let emptyInterEmpty = LongSet.intersect emptySet1 emptySet2
         Assert.IsTrue( (emptyInterEmpty = emptySet1) )
-        
+
         let xInterEmpty = LongSet.intersect four emptySet1
         Assert.IsFalse( (four = xInterEmpty) )
-        
+
         let emptyInterX = LongSet.intersect emptySet1 four
         Assert.IsFalse( (four = emptyInterX) )
         ()
-    
+
     [<Test>]
     let intersect2 () : unit =
         let a = new LongSet([3L; 4; 5L; 6])
         let b = new LongSet([5L; 6; 7; 8])
-        
+
         let intersection   = LongSet.intersect a b
         let expectedResult = new LongSet([5L; 6])
         Assert.IsTrue( (intersection = expectedResult) )
 
-    
+
     [<Test>]
     let intersectMany () : unit =
         (* IntersectAll
@@ -1383,25 +1384,25 @@ module SetModule =
                4567
                 567
                  67 *)
-        let setsToIntersect = 
+        let setsToIntersect =
             [
                 for i = 1 to 6 do
                     yield new LongSet([i .. 7])
             ]
-            
+
         let result : LongSet = LongSet.intersectMany setsToIntersect
         Assert.IsTrue(result.Count = 2)
-        
-        let contains x s = s |> LongSet.exists (fun i -> i = x) 
+
+        let contains x s = s |> LongSet.exists (fun i -> i = x)
         Assert.IsTrue(contains 6 result)
         Assert.IsTrue(contains 7 result)
-                  
+
     [<Test>]
     let intersectMany2 () : unit =
         let all   = new LongSet([1 .. 10])
         let odds  = new LongSet([1 .. 2 .. 10])
         let evens = new LongSet([2 .. 2 .. 10])
-        
+
         let result = LongSet.intersectMany [odds; evens; all]
         Assert.IsTrue(LongSet.count result = 0)
 
@@ -1409,11 +1410,11 @@ module SetModule =
     let intersectMany3 () : unit =
         let all   = new LongSet([1 .. 10])
         let empty = LongSet.empty : LongSet
-        
+
         let result = LongSet.intersectMany [all; empty; all]
         Assert.IsTrue(LongSet.count result = 0)
-        
-        
+
+
     [<Test>]
     let intersectMany4 () : unit =
         checkThrowsArgumentException (fun () -> LongSet.intersectMany (Seq.empty : seq<LongSet>) |> ignore)
@@ -1424,36 +1425,36 @@ module SetModule =
         let emptySet1 : LongSet = LongSet.empty
         let emptySet2 : LongSet = LongSet.empty
         let four                 = LongSet.singleton 4
-       
+
         let emptyUnionEmpty = LongSet.union emptySet1 emptySet2
         Assert.IsTrue( (emptyUnionEmpty = emptySet1) )
-        
+
         let xUnionEmpty = LongSet.union four emptySet1
         Assert.IsTrue( (four = xUnionEmpty) )
-        
+
         let emptyUnionX = LongSet.union emptySet1 four
         Assert.IsTrue( (four = emptyUnionX) )
         ()
-    
+
     [<Test>]
     let union2 () : unit =
         let a = new LongSet([1; 2; 3L; 4])
         let b = new LongSet([5L; 6; 7; 8])
-        
+
         let union = LongSet.union a b
         let expectedResult = new LongSet([1 .. 8])
         Assert.IsTrue( (union = expectedResult) )
 
     [<Test>]
     let union3 () : unit =
-        let x : LongSet = 
+        let x : LongSet =
             LongSet.singleton 1
             |> LongSet.union (LongSet.singleton 1)
             |> LongSet.union (LongSet.singleton 1)
             |> LongSet.union (LongSet.singleton 1)
-            
+
         Assert.IsTrue(x.Count = 1)
-        
+
     [<Test>]
     let unionMany () : unit =
         let odds  = new LongSet([1 .. 2 .. 10])
@@ -1461,7 +1462,7 @@ module SetModule =
         let empty = LongSet.empty : LongSet
         let rest  = new LongSet([11 .. 19])
         let zero  = LongSet.singleton 0
-        
+
         let result : LongSet = LongSet.unionMany [odds; evens; empty; rest; zero]
         Assert.IsTrue(result.Count = 20)
 
@@ -1469,20 +1470,20 @@ module SetModule =
     let unionMany2 () : unit =
         let result : LongSet = LongSet.unionMany (Seq.empty : seq<LongSet>)
         Assert.IsTrue(result.Count = 0)
-        
+
     [<Test>]
     let isEmpty () : unit =
         let zero  = LongSet.empty : LongSet
         let zero2 = new LongSet([])
         let one   = LongSet.singleton 123
         let n     = new LongSet( [1 .. 10] )
-        
+
         Assert.IsTrue(LongSet.isEmpty zero)
         Assert.IsTrue(LongSet.isEmpty zero2)
-        
+
         Assert.IsFalse(LongSet.isEmpty one)
         Assert.IsFalse(LongSet.isEmpty n)
-        
+
     [<Test>]
     let iter () : unit =
 
@@ -1491,27 +1492,27 @@ module SetModule =
 
         // Full set
         let elements = [| for i = 3 to 12 do yield false |]
-        
+
         let set = new LongSet([3 .. 12])
         LongSet.iter (fun c ->
             let i = int64 c - 3
             elements.[i] <- true) set
-        
+
         Assert.IsTrue (Array.forall ( (=) true ) elements)
 
     [<Test>]
     let partition () : unit =
-        
+
         // Empty
         let resulta, resultb = LongSet.partition (fun (x : int64) -> Assert.Fail(); false) LongSet.empty
         Assert.IsTrue(resulta.Count = 0 && resultb.Count = 0)
 
         // One
         let single = LongSet.singleton "foo"
-        
+
         let resulta, resultb = LongSet.partition (fun (str : string) -> str.Length <> 3) single
         Assert.IsTrue(resulta.Count = 0 && resultb.Count = 1)
-        
+
         let resulta, resultb = LongSet.partition (fun (str : string) -> str.Length = 3) single
         Assert.IsTrue(resulta.Count = 1 && resultb.Count = 0)
 
@@ -1525,43 +1526,43 @@ module SetModule =
 
     [<Test>]
     let remove () : unit =
-        
+
         let emptySet : LongSet = LongSet.empty
         let result = LongSet.remove 42 emptySet
         Assert.IsTrue(result.Count = 0)
-        
+
         // One
         let single = LongSet.singleton 100I
         let resulta = LongSet.remove 100I single
         let resultb = LongSet.remove   1I single
-        
+
         Assert.IsTrue (resulta.Count = 0)
         Assert.IsTrue (resultb.Count = 1)
-        
+
         // Multi
         let a = new LongSet([1 .. 5])
         Assert.IsTrue(a.Count = 5)
-        
+
         let b = LongSet.remove 3 a
         Assert.IsTrue(b.Count = 4)
         // Call again, double delete
         let c = LongSet.remove 3 b
         Assert.IsTrue(c.Count = 4)
-        
+
         Assert.IsFalse(LongSet.exists ( (=) 3 ) c)
 
     [<Test>]
     let ofList () : unit =
-        
+
         // Empty
         let emptySet = LongSet.ofList ([] : (string * int64 * LongSet) list)
         Assert.IsTrue(LongSet.isEmpty emptySet)
-        
+
         // Single
         let single = LongSet.ofList [1]
         Assert.IsTrue(single.Count = 1)
         Assert.IsTrue(LongSet.exists ( (=) 1 ) single)
-        
+
         // Multi
         let multi = LongSet.ofList ["mon"; "tue"; "wed"; "thu"; "fri"]
         Assert.IsTrue(multi.Count = 5)
@@ -1574,27 +1575,27 @@ module SetModule =
         // Empty
         let emptySet : LongSet<byte> = LongSet.empty
         Assert.IsTrue(LongSet.toList emptySet = [])
-        
+
         // Single
         let single = LongSet.singleton "stuff"
         Assert.IsTrue(LongSet.toList single = ["stuff"])
-        
+
         // Multi
         let multi = new LongSet([5L; 2; 3L; 1; 4])
         Assert.IsTrue(LongSet.toList multi = [1; 2; 3L; 4; 5])
 
     [<Test>]
     let ofArray () : unit =
-        
+
         // Empty
         let emptySet = LongSet.ofArray ([| |] : (string * int64 * LongSet) [])
         Assert.IsTrue(LongSet.isEmpty emptySet)
-        
+
         // Single
         let single = LongSet.ofArray [| 1 |]
         Assert.IsTrue(single.Count = 1)
         Assert.IsTrue(LongSet.exists ( (=) 1 ) single)
-        
+
         // Multi
         let multi = LongSet.ofArray [| "mon"; "tue"; "wed"; "thu"; "fri" |]
         Assert.IsTrue(multi.Count = 5)
@@ -1607,11 +1608,11 @@ module SetModule =
         // Empty
         let emptySet : LongSet<byte> = LongSet.empty
         Assert.IsTrue(LongSet.toArray emptySet = [| |])
-        
+
         // Single
         let single = LongSet.singleton "stuff"
         Assert.IsTrue(LongSet.toArray single = [| "stuff" |])
-        
+
         // Multi
         let multi = new LongSet([5L; 2; 3L; 1; 4])
         Assert.IsTrue(LongSet.toArray multi = [| 1; 2; 3L; 4; 5 |])
@@ -1619,16 +1620,16 @@ module SetModule =
 
     [<Test>]
     let ofSeq () : unit =
-        
+
         // Empty
         let emptySet = LongSet.ofSeq ([| |] : (string * int64 * LongSet) [])
         Assert.IsTrue(LongSet.isEmpty emptySet)
-        
+
         // Single
         let single = LongSet.ofSeq [ 1 ]
         Assert.IsTrue(single.Count = 1)
         Assert.IsTrue(LongSet.exists ( (=) 1 ) single)
-        
+
         // Multi
         let multi = LongSet.ofSeq [| "mon"; "tue"; "wed"; "thu"; "fri" |]
         Assert.IsTrue(multi.Count = 5)
@@ -1642,36 +1643,36 @@ module SetModule =
         let emptySet : LongSet<byte> = LongSet.empty
         let emptySeq = LongSet.toSeq emptySet
         Assert.IsTrue (Seq.length emptySeq = 0)
-        
+
         // Single
         let single = LongSet.singleton "stuff"
         let singleSeq = LongSet.toSeq single
         Assert.IsTrue(Seq.toList singleSeq = [ "stuff" ])
-        
+
         // Multi
         let multi = new LongSet([5L; 2; 3L; 1; 4])
         let multiSeq = LongSet.toSeq multi
         Assert.IsTrue(Seq.toList multiSeq = [ 1; 2; 3L; 4; 5 ])
-        
+
     [<Test>]
     let minElement () : unit =
         // Check for an argument exception "Set contains no members"
         checkThrowsArgumentException(fun () -> LongSet.minElement LongSet.empty |> ignore)
-        
+
         let set1 = LongSet.ofList [10; 8; 100; 1; 50]
         Assert.AreEqual(LongSet.minElement set1, 1)
-        
+
         let set2 = LongSet.ofList ["abcd"; "a"; "abc"; "ab"]
         Assert.AreEqual(LongSet.minElement set2, "a")
-        
+
     [<Test>]
     let maxElement () : unit =
         // Check for an argument exception "Set contains no members"
         checkThrowsArgumentException(fun () -> LongSet.maxElement LongSet.empty |> ignore)
-        
+
         let set1 = LongSet.ofList [10; 8; 100; 1; 50]
         Assert.AreEqual(LongSet.maxElement set1, 100)
-        
+
         let set2 = LongSet.ofList ["abcd"; "a"; "abc"; "ab"]
         Assert.AreEqual(LongSet.maxElement set2, "abcd")
 
@@ -1694,28 +1695,28 @@ module SetModule =
         Assert.IsFalse(LongSet.isProperSuperset LongSet.empty LongSet.empty)
         Assert.IsFalse(LongSet.isProperSuperset set1 set1)
         Assert.IsFalse(LongSet.isProperSuperset set2 set1)
-        
+
     // ----- Not associated with a module function -----
 
     [<Test>]
     let ``General Test #1`` () : unit =
         // Retruns a random permutation of integers between the two bounds.
-        let randomPermutation lowerBound upperBound = 
+        let randomPermutation lowerBound upperBound =
             let items = ResizeArray<_>([lowerBound .. upperBound])
             let rng = new Random()
-            
+
             let randomPermutation = ResizeArray<int64>()
             while items.Count > 0 do
                 let idx = rng.Next() % items.Count
                 let i = items.[idx]
                 items.RemoveAt(idx)
                 randomPermutation.Add(i)
-            
+
             randomPermutation.ToArray()
-        
+
         for i in 0..50 do
             let permutation = randomPermutation 0 i
-            
+
             let set : LongSet ref = ref LongSet.empty
             // Add permutation items to set in order
             Array.iter (fun i -> set := LongSet.add i !set) permutation

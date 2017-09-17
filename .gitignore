@@ -88,3 +88,4 @@ _ReSharper*/
 
 # Ignore the NuGet build folder, it's only needed when building the package
 _NuGetBuild/*
+.idea/
