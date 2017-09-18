@@ -1,12 +1,15 @@
 language: csharp
 
 # Use container-based infrastructure with Ubuntu Trusty (14.04)
+os: linux
 dist: trusty
 sudo: false
 
 # TODO : Enable both mono and dotnet builds: https://docs.travis-ci.com/user/languages/csharp/#Testing-Against-Mono-and-.NET-Core
 mono:
   - latest
+dotnet: 2.0.0
+env: MONO_BASE_PATH=/usr/lib/mono/
 
 install:
   - dotnet restore
@@ -17,5 +20,7 @@ install:
 #        https://docs.travis-ci.com/user/customizing-the-build/#Explicitly-Including-Jobs
 
 script:
-  - dotnet build ExtCore.sln
-  - dotnet test ExtCore.Tests\ExtCore.Tests.fsproj
+  - dotnet build ExtCore/ExtCore.fsproj --framework "netstandard2.0"
+  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore/ExtCore.fsproj --framework "net45"
+  - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "netcoreapp2.0"
+  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
