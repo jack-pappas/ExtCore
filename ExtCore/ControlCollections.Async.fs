@@ -1468,6 +1468,6 @@ module Seq =
                 Seq.map Async.RunSynchronously sequence
             else
                 sequence
-                |> Seq.windowed size
+                |> Seq.splitInto size
                 |> Seq.collect (Async.Parallel >> Async.RunSynchronously)
 
