@@ -1,12 +1,15 @@
 language: csharp
 
 # Use container-based infrastructure with Ubuntu Trusty (14.04)
+os: linux
 dist: trusty
-sudo: false
+sudo: required
 
 # TODO : Enable both mono and dotnet builds: https://docs.travis-ci.com/user/languages/csharp/#Testing-Against-Mono-and-.NET-Core
 mono:
   - latest
+dotnet: 2.0.0
+env: MONO_BASE_PATH=/usr/lib/mono/
 
 install:
   - dotnet restore
@@ -17,5 +20,12 @@ install:
 #        https://docs.travis-ci.com/user/customizing-the-build/#Explicitly-Including-Jobs
 
 script:
-  - dotnet build ExtCore.sln
-  - dotnet test ExtCore.Tests\ExtCore.Tests.fsproj
+  - dotnet build ExtCore/ExtCore.fsproj --framework "netstandard2.0"
+  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore/ExtCore.fsproj --framework "net45"
+  - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "netcoreapp2.0"
+#  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
+# Workaround for dotnet test on net45:
+  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
+  - nuget install NUnit.ConsoleRunner -Version 3.7.0 -OutputDirectory $PWD/packages
+  - mono packages/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe ExtCore.Tests/bin/Debug/net45/ExtCore.Tests.dll
+
