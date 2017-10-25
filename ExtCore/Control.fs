@@ -32,8 +32,8 @@ module AsyncExtensions =
 
     type Microsoft.FSharp.Control.Async with
         /// Creates an asynchronous workflow that runs the asynchronous workflow
-        /// given as an argument at most once. When the returned workflow is 
-        /// started for the second time, it reuses the result of the 
+        /// given as an argument at most once. When the returned workflow is
+        /// started for the second time, it reuses the result of the
         /// previous execution.
         static member Cache (input : Async<'T>) =
             // Preconditions
@@ -149,6 +149,13 @@ type StatefulChoiceFunc<'State, 'T, 'Error> =
 /// <typeparam name="Error"></typeparam>
 type AsyncChoice<'T, 'Error> =
     Async<Choice<'T, 'Error>>
+
+/// <summary>
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+type AsyncResult<'T, 'Error> =
+    Async<Result<'T, 'Error>>
 
 /// <summary>
 /// </summary>
@@ -1253,8 +1260,8 @@ type StatefulChoiceBuilder () =
         | (Choice1Of2 value), state ->
             binder value state
         | (Choice2Of2 error), state ->
-            (Choice2Of2 error), state    
-        
+            (Choice2Of2 error), state
+
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
@@ -1545,6 +1552,86 @@ type AsyncChoiceBuilder () =
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
     member this.For (sequence : seq<_>, body : 'T -> Async<Choice<unit, 'Error>>) =
+        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
+        this.Using (sequence.GetEnumerator (), fun enum ->
+            this.While (
+                enum.MoveNext,
+                this.Delay (fun () ->
+                    body enum.Current)))
+
+/// <summary>
+/// </summary>
+[<Sealed>]
+type AsyncResultBuilder () =
+    // 'T -> M<'T>
+    member (*inline*) __.Return value : Async<Result<'T, 'Error>> =
+        Result.Ok value
+        |> async.Return
+
+    // M<'T> -> M<'T>
+    member (*inline*) __.ReturnFrom (asyncChoice : Async<Result<'T, 'Error>>) =
+        asyncChoice
+
+    // unit -> M<'T>
+    member inline this.Zero () : Async<Result<unit, 'Error>> =
+        this.Return ()
+
+    // (unit -> M<'T>) -> M<'T>
+    member inline this.Delay (generator : unit -> Async<Result<'T, 'Error>>) : Async<Result<'T, 'Error>> =
+        async.Delay generator
+
+    // M<'T> -> M<'T> -> M<'T>
+    // or
+    // M<unit> -> M<'T> -> M<'T>
+    member (*inline*) __.Combine (r1, r2) : Async<Result<'T, 'Error>> =
+        async {
+        let! r1' = r1
+        match r1' with
+        | Result.Error error ->
+            return Result.Error error
+        | Result.Ok () ->
+            return! r2
+        }
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member (*inline*) __.Bind (value : Async<Result<'T, 'Error>>, binder : 'T -> Async<Result<'U, 'Error>>)
+        : Async<Result<'U, 'Error>> =
+        async {
+        let! value' = value
+        match value' with
+        | Result.Error error ->
+            return Result.Error error
+        | Result.Ok x ->
+            return! binder x
+        }
+
+    // M<'T> * (exn -> M<'T>) -> M<'T>
+    member inline __.TryWith (computation : Async<Result<'T, 'Error>>, catchHandler : exn -> Async<Result<'T, 'Error>>)
+        : Async<Result<'T, 'Error>> =
+        async.TryWith(computation, catchHandler)
+
+    // M<'T> * (unit -> unit) -> M<'T>
+    member inline __.TryFinally (computation : Async<Result<'T, 'Error>>, compensation : unit -> unit)
+        : Async<Result<'T, 'Error>> =
+        async.TryFinally (computation, compensation)
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member inline __.Using (resource : ('T :> System.IDisposable), binder : _ -> Async<Result<'U, 'Error>>)
+        : Async<Result<'U, 'Error>> =
+        async.Using (resource, binder)
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : Async<Result<unit, 'Error>>) : Async<Result<_,_>> =
+        if guard () then
+            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member this.For (sequence : seq<_>, body : 'T -> Async<Result<unit, 'Error>>) =
         // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
@@ -1969,6 +2056,9 @@ module WorkflowBuilders =
     [<CompiledName("AsyncChoice")>]
     let asyncChoice = AsyncChoiceBuilder ()
     //
+    [<CompiledName("AsyncResult")>]
+    let asyncResult = AsyncResultBuilder ()
+    //
     [<CompiledName("AsyncReaderChoice")>]
     let asyncReaderChoice = AsyncReaderChoiceBuilder ()
     //
@@ -1992,7 +2082,7 @@ module State =
     [<CompiledName("Run")>]
     let inline run (stateFunc : StateFunc<'State, 'T>) initialState =
         stateFunc initialState
-    
+
     //
     [<CompiledName("Evaluate")>]
     let evaluate (stateFunc : StateFunc<'State, 'T>) initialState =
@@ -2092,7 +2182,7 @@ module ReaderState =
     let inline run (readerStateFunc : ReaderStateFunc<'Env, 'State, 'T>)
         env initialState =
         readerStateFunc env initialState
-    
+
     //
     [<CompiledName("Evaluate")>]
     let evaluate (readerStateFunc : ReaderStateFunc<'Env, 'State, 'T>)
@@ -2312,7 +2402,7 @@ module StatefulChoice =
         statefulChoice {
         let! state = getState
         let choice, state' = value state
-        return! 
+        return!
             match choice with
             | Choice1Of2 c -> fun _ -> Choice1Of2 c, state'
             | Choice2Of2 error -> fun _ -> Choice2Of2 (map error), state'
@@ -2366,7 +2456,7 @@ module AsyncChoice =
 
     /// <summary>
     /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
-    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>.
     /// </summary>
     [<CompiledName("Map")>]
     let map (mapping : 'T -> 'U) (value : AsyncChoice<'T, 'Error>) : AsyncChoice<'U, 'Error> =
@@ -2384,7 +2474,7 @@ module AsyncChoice =
 
     /// <summary>
     /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
-    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>.
     /// </summary>
     [<CompiledName("MapAsync")>]
     let mapAsync (mapping : 'T -> Async<'U>) (value : AsyncChoice<'T, 'Error>) : AsyncChoice<'U, 'Error> =
@@ -2399,4 +2489,57 @@ module AsyncChoice =
             return Choice1Of2 mappedResult
         | Choice2Of2 error ->
             return (Choice2Of2 error)
+        }
+
+/// Functions for working with AsyncResult workflows.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module AsyncResult =
+    open Microsoft.FSharp.Control
+
+    /// Creates an AsyncResult from an error value.
+    [<CompiledName("Error")>]
+    let inline error value : AsyncResult<'T, 'Error> =
+        async.Return (Result.Error value)
+
+    /// Creates an AsyncResult representing an error value.
+    /// The error value in the Choice is the specified error message.
+    [<CompiledName("FailWith")>]
+    let inline failwith errorMsg : AsyncResult<'T, string> =
+        async.Return (Result.Error errorMsg)
+
+    /// <summary>
+    /// When the choice value is <c>Ok(x)</c>, returns <c>Ok (f x)</c>.
+    /// Otherwise, when the choice value is <c>Error(x)</c>, returns <c>Error(x)</c>.
+    /// </summary>
+    [<CompiledName("Map")>]
+    let map (mapping : 'T -> 'U) (value : AsyncResult<'T, 'Error>) : AsyncResult<'U, 'Error> =
+        async {
+        // Get the input value.
+        let! x = value
+
+        // Apply the mapping function and return the result.
+        match x with
+        | Result.Ok result ->
+            return Result.Ok (mapping result)
+        | Result.Error error ->
+            return (Result.Error error)
+        }
+
+    /// <summary>
+    /// When the choice value is <c>Ok(x)</c>, returns <c>Ok (f x)</c>.
+    /// Otherwise, when the choice value is <c>Error(x)</c>, returns <c>Error(x)</c>.
+    /// </summary>
+    [<CompiledName("MapAsync")>]
+    let mapAsync (mapping : 'T -> Async<'U>) (value : AsyncResult<'T, 'Error>) : AsyncResult<'U, 'Error> =
+        async {
+        // Get the input value.
+        let! x = value
+
+        // Apply the mapping function and return the result.
+        match x with
+        | Result.Ok result ->
+            let! mappedResult = mapping result
+            return Ok mappedResult
+        | Result.Error error ->
+            return (Result.Error error)
         }
