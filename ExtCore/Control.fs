@@ -1565,7 +1565,7 @@ type AsyncChoiceBuilder () =
 type AsyncResultBuilder () =
     // 'T -> M<'T>
     member (*inline*) __.Return value : Async<Result<'T, 'Error>> =
-        Ok value
+        Result.Ok value
         |> async.Return
 
     // M<'T> -> M<'T>
@@ -1587,9 +1587,9 @@ type AsyncResultBuilder () =
         async {
         let! r1' = r1
         match r1' with
-        | Error error ->
-            return Error error
-        | Ok () ->
+        | Result.Error error ->
+            return Result.Error error
+        | Result.Ok () ->
             return! r2
         }
 
@@ -1599,9 +1599,9 @@ type AsyncResultBuilder () =
         async {
         let! value' = value
         match value' with
-        | Error error ->
-            return Error error
-        | Ok x ->
+        | Result.Error error ->
+            return Result.Error error
+        | Result.Ok x ->
             return! binder x
         }
 
@@ -2499,13 +2499,13 @@ module AsyncResult =
     /// Creates an AsyncResult from an error value.
     [<CompiledName("Error")>]
     let inline error value : AsyncResult<'T, 'Error> =
-        async.Return (Error value)
+        async.Return (Result.Error value)
 
     /// Creates an AsyncResult representing an error value.
     /// The error value in the Choice is the specified error message.
     [<CompiledName("FailWith")>]
     let inline failwith errorMsg : AsyncResult<'T, string> =
-        async.Return (Error errorMsg)
+        async.Return (Result.Error errorMsg)
 
     /// <summary>
     /// When the choice value is <c>Ok(x)</c>, returns <c>Ok (f x)</c>.
@@ -2519,10 +2519,10 @@ module AsyncResult =
 
         // Apply the mapping function and return the result.
         match x with
-        | Ok result ->
-            return Ok (mapping result)
-        | Error error ->
-            return (Error error)
+        | Result.Ok result ->
+            return Result.Ok (mapping result)
+        | Result.Error error ->
+            return (Result.Error error)
         }
 
     /// <summary>
@@ -2537,9 +2537,9 @@ module AsyncResult =
 
         // Apply the mapping function and return the result.
         match x with
-        | Ok result ->
+        | Result.Ok result ->
             let! mappedResult = mapping result
             return Ok mappedResult
-        | Error error ->
-            return (Error error)
+        | Result.Error error ->
+            return (Result.Error error)
         }
