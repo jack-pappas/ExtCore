@@ -38,7 +38,7 @@ type AsyncChoiceBuilderDisposeFixture() =
                 disposed.Value <- true }
 
     let createAsyncChoiceDisposable() =
-        async { return Choice1Of2(createDisposable disposed) }
+        async { return Ok(createDisposable disposed) }
 
     let waitAsyncChoice() =
         asyncChoice {
@@ -75,7 +75,7 @@ type AsyncChoiceBuilderDisposeFixture() =
             shouldNotBeDisposed()
         }
         |> Async.RunSynchronously
-        |> Choice.get
+        |> Result.get
         |> ignore
 
     // async - expected behavior
@@ -150,7 +150,7 @@ module ChoiceBuilder =
             assertEqual 3 !count
 
             // Check the result of the computation.
-            assertEqual (Choice1Of2 true) result
+            assertEqual (Ok true) result
 
     /// <summary>Tests for <see cref="ExtCore.Control.ChoiceBuilder.While"/>.</summary>
     module ``ChoiceBuilder_While`` =
@@ -168,7 +168,7 @@ module ChoiceBuilder =
             assertEqual 3 !count
 
             // Check the result of the computation.
-            assertEqual (Choice1Of2 true) result
+            assertEqual (Ok true) result
 
 
 /// Tests for the ExtCore.Control.State module.

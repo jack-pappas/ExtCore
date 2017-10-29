@@ -19,7 +19,7 @@ limitations under the License.
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ExtCore.Control.Collections.StatefulChoice
+module ExtCore.Control.Collections.StatefulResult
     
 open Microsoft.FSharp.Control
 open OptimizedClosures
@@ -33,8 +33,8 @@ module Array =
     /// A specialization of Array.map which threads an accumulator through the computation and which also
     /// short-circuits the computation if the mapping function returns an error when any element is applied to it.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'State -> Choice<'U, 'Error> * 'State)
-            (array : 'T[]) (state : 'State) : Choice<'U[], 'Error> * 'State =
+    let map (mapping : 'T -> 'State -> Result<'U, 'Error> * 'State)
+            (array : 'T[]) (state : 'State) : Result<'U[], 'Error> * 'State =
         // Preconditions
         checkNonNull "array" array
 
@@ -55,9 +55,9 @@ module Array =
                 
             // Check the result; short-circuit if it's an error.
             match result with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 result ->
+            | Ok result ->
                 results.[index] <- result
                 index <- index + 1
             
@@ -65,7 +65,7 @@ module Array =
         // result (or error, if set).
         match error with
         | Some error ->
-            (Choice2Of2 error), state
+            (Error error), state
         | None ->
-            (Choice1Of2 results), state
+            (Ok results), state
 

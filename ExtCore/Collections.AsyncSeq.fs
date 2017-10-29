@@ -109,9 +109,9 @@ type AsyncSeqBuilder () =
         async {
         try
             let! v = source
-            return Choice1Of2 v
+            return Ok v
         with ex ->
-            return Choice2Of2 ex
+            return Result.Error ex
         }
 
     //
@@ -119,12 +119,12 @@ type AsyncSeqBuilder () =
         this {
         let! v = AsyncSeqBuilder.TryNext source
         match v with
-        | Choice1Of2 Nil ->
+        | Ok Nil ->
             compensation ()
-        | Choice1Of2 (Cons (hd, tl)) ->
+        | Ok (Cons (hd, tl)) ->
             yield hd
             yield! this.TryFinally (tl, compensation)
-        | Choice2Of2 e ->
+        | Result.Error e ->
             compensation ()
             yield! raise e
         }
@@ -134,11 +134,11 @@ type AsyncSeqBuilder () =
         this {
         let! v = AsyncSeqBuilder.TryNext source
         match v with
-        | Choice1Of2 Nil -> ()
-        | Choice1Of2 (Cons (hd, tl)) ->
+        | Ok Nil -> ()
+        | Ok (Cons (hd, tl)) ->
             yield hd
             yield! this.TryWith (tl, handler)
-        | Choice2Of2 rest ->
+        | Result.Error rest ->
             yield! handler rest
         }
 
@@ -571,7 +571,7 @@ module AsyncSeq =
             let! msg = agent.PostAndAsyncReply Get
             match msg with
             | Notification.Completed -> ()
-            | Notification.Error e ->
+            | Notification.Exception e ->
                 raise e
             | Notification.Next v ->
                 yield v

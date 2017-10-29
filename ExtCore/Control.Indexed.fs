@@ -60,7 +60,7 @@ type ReaderWriterIndexedStateFunc<'Env, 'Writer, 'S1, 'S2, 'T> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type ProtectedIndexedStateFunc<'S1, 'S2, 'T, 'Error> =
-    'S1 -> Choice<'T * 'S2, 'Error>
+    'S1 -> Result<'T * 'S2, 'Error>
 
 /// <summary>
 /// </summary>
@@ -70,7 +70,7 @@ type ProtectedIndexedStateFunc<'S1, 'S2, 'T, 'Error> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type ReaderProtectedIndexedStateFunc<'Env, 'S1, 'S2, 'T, 'Error> =
-    'Env -> 'S1 -> Choice<'T * 'S2, 'Error>
+    'Env -> 'S1 -> Result<'T * 'S2, 'Error>
 
 /// <summary>
 /// </summary>
@@ -79,7 +79,7 @@ type ReaderProtectedIndexedStateFunc<'Env, 'S1, 'S2, 'T, 'Error> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type IndexedStatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
-    'S1 -> Choice<'T, 'Error> * 'S2
+    'S1 -> Result<'T, 'Error> * 'S2
 
 
 (*** Workflow Builders ***)
@@ -257,7 +257,7 @@ type ProtectedIndexedStateBuilder () =
     member __.Return value
         : ProtectedIndexedStateFunc<'State, 'State, 'T, 'Error> =
         fun state ->
-        Choice1Of2 (value, state)
+        Ok (value, state)
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
@@ -268,7 +268,7 @@ type ProtectedIndexedStateBuilder () =
     member this.Zero ()
         : ProtectedIndexedStateFunc<'State, 'State, unit, 'Error> =
         fun state ->
-        Choice1Of2 ((), state)
+        Ok ((), state)
 
     // (unit -> M<'T>) -> M<'T>
     member this.Delay (f : unit -> ProtectedIndexedStateFunc<_,_,_,_>)
@@ -280,9 +280,9 @@ type ProtectedIndexedStateBuilder () =
         : ProtectedIndexedStateFunc<'S1, 'S3, 'U, 'Error> =
         fun state ->
         match m state with
-        | Choice2Of2 error ->
-            Choice2Of2 error
-        | Choice1Of2 (value, state) ->
+        | Error error ->
+            Error error
+        | Ok (value, state) ->
             k value state
 
     // M<'T> -> M<'T> -> M<'T>
@@ -343,7 +343,7 @@ type ReaderProtectedIndexedStateBuilder () =
     member __.Return value
         : ReaderProtectedIndexedStateFunc<'Env, 'State, 'State, 'T, 'Error> =
         fun _ state ->
-        Choice1Of2 (value, state)
+        Ok (value, state)
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
@@ -354,7 +354,7 @@ type ReaderProtectedIndexedStateBuilder () =
     member this.Zero ()
         : ReaderProtectedIndexedStateFunc<'Env, 'State, 'State, unit, 'Error> =
         fun _ state ->
-        Choice1Of2 ((), state)
+        Ok ((), state)
 
     // (unit -> M<'T>) -> M<'T>
     member this.Delay (f : unit -> ReaderProtectedIndexedStateFunc<_,_,_,_,_>)
@@ -366,9 +366,9 @@ type ReaderProtectedIndexedStateBuilder () =
         : ReaderProtectedIndexedStateFunc<'Env, 'S1, 'S3, 'U, 'Error> =
         fun env state ->
         match m env state with
-        | Choice2Of2 error ->
-            Choice2Of2 error
-        | Choice1Of2 (value, state) ->
+        | Error error ->
+            Error error
+        | Ok (value, state) ->
             k value env state
 
     // M<'T> -> M<'T> -> M<'T>
@@ -429,7 +429,7 @@ type IndexedStatefulChoiceBuilder () =
     member __.Return value
         : IndexedStatefulChoiceFunc<'State, 'State, 'T, 'Error> =
         fun state ->
-        (Choice1Of2 value), state
+        (Ok value), state
 
     // M<'T> -> M<'T>
     member __.ReturnFrom (func)
@@ -440,7 +440,7 @@ type IndexedStatefulChoiceBuilder () =
     member this.Zero ()
         : IndexedStatefulChoiceFunc<'State, 'State, unit, 'Error> =
         fun state ->
-        (Choice1Of2 ()), state
+        (Ok ()), state
 
     // (unit -> M<'T>) -> M<'T>
     member this.Delay (f : unit -> IndexedStatefulChoiceFunc<_,_,_,_>)
@@ -452,10 +452,10 @@ type IndexedStatefulChoiceBuilder () =
         : IndexedStatefulChoiceFunc<'S1, 'S2, 'U, 'Error> =
         fun state ->
         match f state with
-        | (Choice1Of2 value), state ->
+        | (Ok value), state ->
             k value state
-        | (Choice2Of2 error), state ->
-            (Choice2Of2 error), state    
+        | (Error error), state ->
+            (Error error), state    
         
     // M<'T> -> M<'T> -> M<'T>
     // or

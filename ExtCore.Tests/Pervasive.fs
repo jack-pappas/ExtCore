@@ -433,27 +433,27 @@ module Option =
 /// Tests for the ExtCore.Choice module.
 module Choice =
     [<Test>]
-    let ``isResult on Choice1Of2`` () : unit =
-        Choice1Of2 "Hello World!"
-        |> Choice.isResult
+    let ``isResult on Ok`` () : unit =
+        Ok "Hello World!"
+        |> Result.isResult
         |> assertTrue
 
     [<Test>]
-    let ``isResult on Choice2Of2`` () : unit =
-        Choice2Of2 123456
-        |> Choice.isResult
+    let ``isResult on Error`` () : unit =
+        Error 123456
+        |> Result.isResult
         |> assertFalse
 
     [<Test>]
-    let ``isError on Choice1Of2`` () : unit =
-        Choice1Of2 "Hello World!"
-        |> Choice.isError
+    let ``isError on Error`` () : unit =
+        Ok "Hello World!"
+        |> Result.isError
         |> assertFalse
 
     [<Test>]
     let ``isError on Choice2Of2`` () : unit =
-        Choice2Of2 123456
-        |> Choice.isError
+        Error 123456
+        |> Result.isError
         |> assertTrue
 
     [<Test>]
@@ -521,25 +521,25 @@ module Choice =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>]
-    let ``bindOrRaise on Choice1Of2`` () : unit =
+    let ``bindOrRaise on Ok`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>] //        ExpectedMessage = "An error occurred within the computation.")>]
-    let ``bindOrRaise on Choice2Of2`` () : unit =
+    let ``bindOrRaise on Error`` () : unit =
         Assert.Throws<exn>(fun () ->
-            Choice2Of2 (exn "An error occurred within the computation.")
-            |> Choice.bindOrRaise
+            Error (exn "An error occurred within the computation.")
+            |> Result.bindOrRaise
             |> ignore) |> ignore
 
     [<Test>]
-    let ``bindOrFail on Choice1Of2`` () : unit =
+    let ``bindOrFail on Ok`` () : unit =
         Assert.Ignore "Test not yet implemented."
 
     [<Test>] // ExpectedMessage = "An error occurred within the computation.")>]
-    let ``bindOrFail on Choice2Of2`` () : unit =
+    let ``bindOrFail on Error`` () : unit =
         Assert.Throws<exn>(fun () ->
-            Choice2Of2 "An error occurred within the computation."
-            |> Choice.bindOrFail
+            Error "An error occurred within the computation."
+            |> Result.bindOrFail
             |> ignore) |> ignore
 
     [<Test>]
