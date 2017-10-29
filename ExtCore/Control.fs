@@ -940,7 +940,7 @@ type ResultBuilder () =
         use enumerator = sequence.GetEnumerator ()
 
         let mutable errorResult = None
-        while enumerator.MoveNext () && Option.isSome errorResult do
+        while enumerator.MoveNext () && Option.isNone errorResult do
             match body enumerator.Current with
             | Ok () -> ()
             | error ->
