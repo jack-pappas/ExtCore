@@ -25,10 +25,10 @@ open NUnit.Framework
 //open FsCheck
 
 
-/// Test fixture which tests that the .Using() member of AsyncChoiceBuilder
+/// Test fixture which tests that the .Using() member of AsyncResultBuilder
 /// disposes the supplied resource at the correct point in the program's execution.
 [<TestFixture; Sealed>]
-type AsyncChoiceBuilderDisposeFixture() =
+type AsyncResultBuilderDisposeFixture() =
     let disposed = StrongBox (false)
 
     let createDisposable (disposed : StrongBox<bool>) =
@@ -37,11 +37,11 @@ type AsyncChoiceBuilderDisposeFixture() =
                 printfn "disposing!"
                 disposed.Value <- true }
 
-    let createAsyncChoiceDisposable() =
+    let createAsyncResultDisposable() =
         async { return Ok(createDisposable disposed) }
 
-    let waitAsyncChoice() =
-        asyncChoice {
+    let waitAsyncResult() =
+        asyncResult {
             printfn "waiting"
         }
 
@@ -65,13 +65,13 @@ type AsyncChoiceBuilderDisposeFixture() =
         printfn "Should be disposed. Checking..."
         Assert.IsTrue(disposed.Value)
 
-    // asyncChoice wrong behavior
+    // asyncResult wrong behavior
     [<Test>]
     member __.UsingAsyncChoice() : unit =
-        asyncChoice {
-            use! d = createAsyncChoiceDisposable()
+        asyncResult {
+            use! d = createAsyncResultDisposable()
             shouldNotBeDisposed()
-            let! a = waitAsyncChoice()
+            let! a = waitAsyncResult()
             shouldNotBeDisposed()
         }
         |> Async.RunSynchronously
@@ -131,16 +131,16 @@ module MaybeBuilder =
 
 
 /// <summary>
-/// Tests for <see cref="ExtCore.Control.ChoiceBuilder"/>.
+/// Tests for <see cref="ExtCore.Control.ResultBuilder"/>.
 /// </summary>
-module ChoiceBuilder =
-    /// <summary>Tests for <see cref="ExtCore.Control.ChoiceBuilder.For"/>.</summary>
-    module ``ChoiceBuilder_For`` =
+module ResultBuilder =
+    /// <summary>Tests for <see cref="ExtCore.Control.ResultBuilder.For"/>.</summary>
+    module ``ResultBuilder_For`` =
         [<Test>]
         let ``simple test`` () : unit =
             let count = ref 0
             let data = [| 1..3 |]
-            let result = choice {
+            let result = result {
                 for i in data do
                     incr count
                 return true
@@ -152,13 +152,13 @@ module ChoiceBuilder =
             // Check the result of the computation.
             assertEqual (Ok true) result
 
-    /// <summary>Tests for <see cref="ExtCore.Control.ChoiceBuilder.While"/>.</summary>
-    module ``ChoiceBuilder_While`` =
+    /// <summary>Tests for <see cref="ExtCore.Control.ResultBuilder.While"/>.</summary>
+    module ``ResultBuilder_While`` =
         [<Test>]
         let ``simple test`` () : unit =
             let count = ref 0
             let data = [| 1..3 |]
-            let result = choice {
+            let result = result {
                 while !count < 3 do
                     incr count
                 return true

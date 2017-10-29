@@ -78,7 +78,7 @@ type ReaderProtectedIndexedStateFunc<'Env, 'S1, 'S2, 'T, 'Error> =
 /// <typeparam name="S2"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
-type IndexedStatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
+type IndexedStatefulResultFunc<'S1, 'S2, 'T, 'Error> =
     'S1 -> Result<'T, 'Error> * 'S2
 
 
@@ -424,32 +424,32 @@ type ReaderProtectedIndexedStateBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type IndexedStatefulChoiceBuilder () =
+type IndexedStatefulResultBuilder () =
     // 'T -> M<'T>
     member __.Return value
-        : IndexedStatefulChoiceFunc<'State, 'State, 'T, 'Error> =
+        : IndexedStatefulResultFunc<'State, 'State, 'T, 'Error> =
         fun state ->
         (Ok value), state
 
     // M<'T> -> M<'T>
     member __.ReturnFrom (func)
-        : IndexedStatefulChoiceFunc<_,_,_,_> =
+        : IndexedStatefulResultFunc<_,_,_,_> =
         func
 
     // unit -> M<'T>
     member this.Zero ()
-        : IndexedStatefulChoiceFunc<'State, 'State, unit, 'Error> =
+        : IndexedStatefulResultFunc<'State, 'State, unit, 'Error> =
         fun state ->
         (Ok ()), state
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> IndexedStatefulChoiceFunc<_,_,_,_>)
-        : IndexedStatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
+    member this.Delay (f : unit -> IndexedStatefulResultFunc<_,_,_,_>)
+        : IndexedStatefulResultFunc<'S1, 'S2, 'T, 'Error> =
         fun state -> f () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (f : IndexedStatefulChoiceFunc<_,_,_,_>, k : 'T -> IndexedStatefulChoiceFunc<_,_,_,_>)
-        : IndexedStatefulChoiceFunc<'S1, 'S2, 'U, 'Error> =
+    member __.Bind (f : IndexedStatefulResultFunc<_,_,_,_>, k : 'T -> IndexedStatefulResultFunc<_,_,_,_>)
+        : IndexedStatefulResultFunc<'S1, 'S2, 'U, 'Error> =
         fun state ->
         match f state with
         | (Ok value), state ->
@@ -460,36 +460,36 @@ type IndexedStatefulChoiceBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : IndexedStatefulChoiceFunc<_,_,_,_>, r2 : IndexedStatefulChoiceFunc<_,_,_,_>)
-        : IndexedStatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
+    member this.Combine (r1 : IndexedStatefulResultFunc<_,_,_,_>, r2 : IndexedStatefulResultFunc<_,_,_,_>)
+        : IndexedStatefulResultFunc<'S1, 'S2, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
     // M<'T> -> M<'T> -> M<'T>
-    member __.TryWith (body : IndexedStatefulChoiceFunc<_,_,_,_>, handler : exn -> IndexedStatefulChoiceFunc<_,_,_,_>)
-        : IndexedStatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
+    member __.TryWith (body : IndexedStatefulResultFunc<_,_,_,_>, handler : exn -> IndexedStatefulResultFunc<_,_,_,_>)
+        : IndexedStatefulResultFunc<'S1, 'S2, 'T, 'Error> =
         fun state ->
         try body state
         with ex ->
             handler ex state
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member __.TryFinally (body : IndexedStatefulChoiceFunc<_,_,_,_>, handler)
-        : IndexedStatefulChoiceFunc<'S1, 'S2, 'T, 'Error> =
+    member __.TryFinally (body : IndexedStatefulResultFunc<_,_,_,_>, handler)
+        : IndexedStatefulResultFunc<'S1, 'S2, 'T, 'Error> =
         fun state ->
         try body state
         finally
             handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> IndexedStatefulChoiceFunc<_,_,_,_>)
-        : IndexedStatefulChoiceFunc<'S1, 'S2, 'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> IndexedStatefulResultFunc<_,_,_,_>)
+        : IndexedStatefulResultFunc<'S1, 'S2, 'U, 'Error> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : IndexedStatefulChoiceFunc<_,_,_,_>)
-        : IndexedStatefulChoiceFunc<'State, 'State, _, 'Error> =
+    member this.While (guard, body : IndexedStatefulResultFunc<_,_,_,_>)
+        : IndexedStatefulResultFunc<'State, 'State, _, 'Error> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -498,8 +498,8 @@ type IndexedStatefulChoiceBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> IndexedStatefulChoiceFunc<_,_,_,_>)
-        : IndexedStatefulChoiceFunc<'State, 'State, _, 'Error> =
+    member this.For (sequence : seq<_>, body : 'T -> IndexedStatefulResultFunc<_,_,_,_>)
+        : IndexedStatefulResultFunc<'State, 'State, _, 'Error> =
         this.Using (sequence.GetEnumerator (),
             (fun enum ->
                 this.While (
@@ -528,6 +528,6 @@ module Indexed =
     let readerProtectedState = ReaderProtectedIndexedStateBuilder ()
 
     //
-    [<CompiledName("StatefulChoice")>]
-    let statefulChoice = IndexedStatefulChoiceBuilder ()
+    [<CompiledName("StatefulResult")>]
+    let statefulResult = IndexedStatefulResultBuilder ()
 
