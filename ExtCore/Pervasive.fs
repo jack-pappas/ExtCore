@@ -1123,13 +1123,22 @@ module Result =
             Error ()
 
     /// <summary></summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    [<CompiledName("OfChoice")>]
+    let ofChoice (value : Choice<'T,'Error>) : Result<'T, 'Error> =
+        match value with
+        | Choice1Of2 result ->
+            Ok result
+        | Choice2Of2 err ->
+            Error err
+
+    /// <summary></summary>
     /// <param name="errorValue"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    // TODO :   Rename this to 'ofOptionDefault' or 'ofOptionWithDefault'.
-    //          The "With" suffix should be reserved for higher-order functions.
     [<CompiledName("OfOptionWith")>]
-    let ofOptionWith (errorValue : 'Error) (value : 'T option) : Result<'T, 'Error> =
+    let ofOptionDefault (errorValue : 'Error) (value : 'T option) : Result<'T, 'Error> =
         match value with
         | Some result ->
             Ok result
@@ -1147,6 +1156,16 @@ module Result =
         | Error _ ->
             None
 
+    /// <summary></summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    [<CompiledName("ToChoice")>]
+    let toChoice (value : Result<'T, 'Error>) : Choice<'T,'Error> =
+        match value with
+        | Ok result ->
+            Choice1Of2 result
+        | Error err ->
+            Choice2Of2 err
 
     /// <summary>
     /// Applies the specified binding function to a choice value representing a pair of result values (Ok).
