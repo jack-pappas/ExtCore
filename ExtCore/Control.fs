@@ -939,7 +939,7 @@ type ResultBuilder () =
     member this.For (sequence : seq<_>, body : 'T -> Result<unit, 'Error>) =
         use enumerator = sequence.GetEnumerator ()
 
-        let mutable errorResult = Unchecked.defaultof<_>
+        let mutable errorResult = None
         while enumerator.MoveNext () && Option.isSome errorResult do
             match body enumerator.Current with
             | Ok () -> ()
@@ -949,7 +949,7 @@ type ResultBuilder () =
         // If we broke out of the loop early because the 'body' function
         // returned an error for some element, return the error.
         // Otherwise, return the 'zero' value (representing a 'success' which carries no value).
-        if Option.isSome errorResult then this.Zero () else errorResult.Value
+        if Option.isNone errorResult then this.Zero () else errorResult.Value
 
 
 /// <summary>
