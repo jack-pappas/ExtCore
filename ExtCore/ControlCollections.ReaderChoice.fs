@@ -19,7 +19,7 @@ limitations under the License.
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ExtCore.Control.Collections.ReaderChoice
+module ExtCore.Control.Collections.ReaderResult
     
 open Microsoft.FSharp.Control
 open OptimizedClosures
@@ -32,7 +32,7 @@ open ExtCore.Collections
 module Array =
     //
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'Env -> Choice<'U, 'Error>) (array : 'T[]) (env : 'Env) =
+    let map (mapping : 'T -> 'Env -> Result<'U, 'Error>) (array : 'T[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array" array
 
@@ -45,22 +45,22 @@ module Array =
 
         while index < len && Option.isNone error do
             match mapping.Invoke (array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 result ->
+            | Ok result ->
                 results.[index] <- result
                 index <- index + 1
             
         // If the error was set, return it; otherwise, return the array of results.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 results
+            Ok results
 
     //
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> 'Env -> Choice<'U, 'Error>) (array : 'T[]) (env : 'Env) =
+    let mapi (mapping : int -> 'T -> 'Env -> Result<'U, 'Error>) (array : 'T[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array" array
 
@@ -73,22 +73,22 @@ module Array =
 
         while index < len && Option.isNone error do
             match mapping.Invoke (index, array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 result ->
+            | Ok result ->
                 results.[index] <- result
                 index <- index + 1
             
         // If the error was set, return it; otherwise, return the array of results.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 results
+            Ok results
 
     //
     [<CompiledName("Map2")>]
-    let map2 (mapping : 'T1 -> 'T2 -> 'Env -> Choice<'U, 'Error>)
+    let map2 (mapping : 'T1 -> 'T2 -> 'Env -> Result<'U, 'Error>)
             (array1 : 'T1[]) (array2 : 'T2[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array1" array1
@@ -106,22 +106,22 @@ module Array =
 
         while index < len && Option.isNone error do
             match mapping.Invoke (array1.[index], array2.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 result ->
+            | Ok result ->
                 results.[index] <- result
                 index <- index + 1                
             
         // If the error was set, return it; otherwise, return the array of results.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 results
+            Ok results
 
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> 'Env -> Choice<'State, 'Error>)
+    let fold (folder : 'State -> 'T -> 'Env -> Result<'State, 'Error>)
             (state : 'State) (array : 'T[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array" array
@@ -135,22 +135,22 @@ module Array =
 
         while index < len && Option.isNone error do
             match folder.Invoke (state, array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 newState ->
+            | Ok newState ->
                 state <- newState
                 index <- index + 1
             
         // If the error was set, return it; otherwise, return the final state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 state
+            Ok state
 
     //
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : int -> 'State -> 'T -> 'Env -> Choice<'State, 'Error>)
+    let foldi (folder : int -> 'State -> 'T -> 'Env -> Result<'State, 'Error>)
             (state : 'State) (array : 'T[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array" array
@@ -164,22 +164,22 @@ module Array =
 
         while index < len && Option.isNone error do
             match folder.Invoke (index, state, array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 newState ->
+            | Ok newState ->
                 state <- newState
                 index <- index + 1
             
         // If the error was set, return it; otherwise, return the final state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 state
+            Ok state
 
     //
     [<CompiledName("Init")>]
-    let init (count : int) (initializer : int -> 'Env -> Choice<'T, 'Error>) (env : 'Env) =
+    let init (count : int) (initializer : int -> 'Env -> Result<'T, 'Error>) (env : 'Env) =
         // Preconditions
         if count < 0 then
             invalidArg "count" "The count cannot be negative."
@@ -191,23 +191,23 @@ module Array =
 
         while currentIndex < count && Option.isNone error do
             match initializer.Invoke (currentIndex, env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
 
-            | Choice1Of2 value ->
+            | Ok value ->
                 results.[currentIndex] <- value
                 currentIndex <- currentIndex + 1
 
         // If the error is set, return it; otherwise return the initialized array.
         match error with
         | None ->
-            Choice1Of2 results
+            Ok results
         | Some error ->
-            Choice2Of2 error
+            Error error
 
     //
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> 'Env -> Choice<unit, 'Error>) (array : 'T[]) (env : 'Env) =
+    let iter (action : 'T -> 'Env -> Result<unit, 'Error>) (array : 'T[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array" array
 
@@ -218,21 +218,21 @@ module Array =
 
         while index < len && Option.isNone error do
             match action.Invoke (array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 () ->
+            | Ok () ->
                 index <- index + 1
             
         // If the error was set, return it.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 ()
+            Ok ()
 
     //
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> 'Env -> Choice<unit, 'Error>) (array : 'T[]) (env : 'Env) =
+    let iteri (action : int -> 'T -> 'Env -> Result<unit, 'Error>) (array : 'T[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array" array
 
@@ -244,21 +244,21 @@ module Array =
 
         while index < len && Option.isNone error do
             match action.Invoke (index, array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 () ->
+            | Ok () ->
                 index <- index + 1
             
         // If the error was set, return it.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 ()
+            Ok ()
 
     //
     [<CompiledName("Reduce")>]
-    let reduce (reduction : 'T -> 'T -> 'Env -> Choice<'T, 'Error>) (array : 'T[]) (env : 'Env) =
+    let reduce (reduction : 'T -> 'T -> 'Env -> Result<'T, 'Error>) (array : 'T[]) (env : 'Env) =
         // Preconditions
         checkNonNull "array" array
         if Array.isEmpty array then
@@ -273,18 +273,18 @@ module Array =
 
         while index < len && Option.isNone error do
             match reduction.Invoke (state, array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 newState ->
+            | Ok newState ->
                 state <- newState
                 index <- index + 1
             
         // If the error was set, return it.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 state
+            Ok state
 
 
 /// The standard F# List module, lifted into the ReaderChoice monad.
@@ -292,7 +292,7 @@ module Array =
 module List =
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> 'Env -> Choice<'State, 'Error>)
+    let fold (folder : 'State -> 'T -> 'Env -> Result<'State, 'Error>)
             (state : 'State) (lst : 'T list) (env : 'Env) =
         // Preconditions
         checkNonNull "lst" lst
@@ -302,15 +302,15 @@ module List =
         let rec foldRec (state, lst) =
             match lst with
             | [] ->
-                Choice1Of2 state
+                Ok state
             | hd :: tl ->
                 // Apply the function to the head of the list.
                 // If the result is an error, return it;
                 // otherwise, continue processing recursively.
                 match folder.Invoke (state, hd, env) with
-                | (Choice2Of2 _) as error ->
+                | (Error _) as error ->
                     error
-                | Choice1Of2 state ->
+                | Ok state ->
                     foldRec (state, tl)
 
         // Call the recursive implementation function.
@@ -318,7 +318,7 @@ module List =
         
     //
     [<CompiledName("Map2")>]
-    let map2 (mapping : 'T1 -> 'T2 -> 'Env -> Choice<'U, 'Error>)
+    let map2 (mapping : 'T1 -> 'T2 -> 'Env -> Result<'U, 'Error>)
             (list1 : 'T1 list) (list2 : 'T2 list) (env : 'Env) =
         // Preconditions
         checkNonNull "list1" list1
@@ -332,16 +332,16 @@ module List =
             match list1, list2 with
             | [], [] ->
                 List.rev acc
-                |> Choice1Of2
+                |> Ok
                 
             | hd1 :: tl1, hd2 :: tl2 ->
                 // Apply the function to the heads of the lists.
                 // If the result is an error, return it;
                 // otherwise continue processing recursively.
                 match mapping.Invoke (hd1, hd2, env) with
-                | Choice2Of2 error ->
-                    Choice2Of2 error
-                | Choice1Of2 result ->
+                | Error error ->
+                    Error error
+                | Ok result ->
                     mapRec (result :: acc, tl1, tl2)
 
             | _, _ ->
@@ -352,7 +352,7 @@ module List =
 
     //
     [<CompiledName("MapIndexed2")>]
-    let mapi2 (mapping : int -> 'T1 -> 'T2 -> 'Env -> Choice<'U, 'Error>)
+    let mapi2 (mapping : int -> 'T1 -> 'T2 -> 'Env -> Result<'U, 'Error>)
             (list1 : 'T1 list) (list2 : 'T2 list) (env : 'Env) =
         // Preconditions
         checkNonNull "list1" list1
@@ -366,16 +366,16 @@ module List =
             match list1, list2 with
             | [], [] ->
                 List.rev acc
-                |> Choice1Of2
+                |> Ok
                 
             | hd1 :: tl1, hd2 :: tl2 ->
                 // Apply the function to the heads of the lists.
                 // If the result is an error, return it;
                 // otherwise continue processing recursively.
                 match mapping.Invoke (index, hd1, hd2, env) with
-                | Choice2Of2 error ->
-                    Choice2Of2 error
-                | Choice1Of2 result ->
+                | Error error ->
+                    Error error
+                | Ok result ->
                     mapRec (result :: acc, index + 1, tl1, tl2)
 
             | _, _ ->
@@ -386,8 +386,8 @@ module List =
 
     //
     [<CompiledName("Iterate2")>]
-    let iter2 (action : 'T1 -> 'T2 -> 'Env -> Choice<unit, 'Error>)
-            (list1 : 'T1 list) (list2 : 'T2 list) (env : 'Env) : Choice<unit, 'Error> =
+    let iter2 (action : 'T1 -> 'T2 -> 'Env -> Result<unit, 'Error>)
+            (list1 : 'T1 list) (list2 : 'T2 list) (env : 'Env) : Result<unit, 'Error> =
         // Preconditions
         checkNonNull "list1" list1
         checkNonNull "list2" list2
@@ -399,16 +399,16 @@ module List =
         let rec mapRec (list1, list2) =
             match list1, list2 with
             | [], [] ->
-                Choice1Of2 ()
+                Ok ()
                 
             | hd1 :: tl1, hd2 :: tl2 ->
                 // Apply the function to the heads of the lists.
                 // If the result is an error, return it;
                 // otherwise continue processing recursively.
                 match action.Invoke (hd1, hd2, env) with
-                | Choice2Of2 error ->
-                    Choice2Of2 error
-                | Choice1Of2 () ->
+                | Error error ->
+                    Error error
+                | Ok () ->
                     mapRec (tl1, tl2)
 
             | _, _ ->
@@ -422,8 +422,8 @@ module List =
 module Seq =
     //
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> 'Env -> Choice<unit, 'Error>)
-            (sequence : seq<'T>) (env : 'Env) : Choice<unit, 'Error> =
+    let iter (action : 'T -> 'Env -> Result<unit, 'Error>)
+            (sequence : seq<'T>) (env : 'Env) : Result<unit, 'Error> =
         // Preconditions
         checkNonNull "seq" seq
 
@@ -433,17 +433,17 @@ module Seq =
         use enumerator = sequence.GetEnumerator ()
         while enumerator.MoveNext () && Option.isNone error do
             match action.Invoke (enumerator.Current, env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 () ->
+            | Ok () ->
                 ()
 
         // If the error was set, return it.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 ()
+            Ok ()
 
 
 /// The standard F# Set module, lifted into the ReaderChoice monad.
@@ -451,7 +451,7 @@ module Seq =
 module Set =
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> 'Env -> Choice<'State, 'Error>)
+    let fold (folder : 'State -> 'T -> 'Env -> Result<'State, 'Error>)
             (state : 'State) (set : Set<'T>) (env : 'Env) =
         // Preconditions
         checkNonNull "set" set
@@ -468,22 +468,22 @@ module Set =
 
         while setEnumerator.MoveNext () && Option.isNone error do
             match folder.Invoke (state, setEnumerator.Current, env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 newState ->
+            | Ok newState ->
                 state <- newState
 
         // If the error was set, return it; otherwise, return the final state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 state
+            Ok state
 
     //
     [<CompiledName("MapToArray")>]
-    let mapToArray (mapping : 'T -> 'Env -> Choice<'U, 'Error>)
-            (set : Set<'T>) (env : 'Env) : Choice<'U[], 'Error> =
+    let mapToArray (mapping : 'T -> 'Env -> Result<'U, 'Error>)
+            (set : Set<'T>) (env : 'Env) : Result<'U[], 'Error> =
         // Preconditions
         checkNonNull "set" set
 
@@ -500,18 +500,18 @@ module Set =
 
         while setEnumerator.MoveNext () && Option.isNone error do
             match mapping.Invoke (setEnumerator.Current, env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 result ->
+            | Ok result ->
                 results.[index] <- result
                 index <- index + 1 
 
         // If the error was set, return it; otherwise, return the final state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 results
+            Ok results
 
 
 /// The ArrayView module, lifted into the ReaderChoice monad.
@@ -519,7 +519,7 @@ module Set =
 module ArrayView =
     //
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> 'Env -> Choice<'State, 'Error>)
+    let fold (folder : 'State -> 'T -> 'Env -> Result<'State, 'Error>)
             (state : 'State) (view : ArrayView<'T>) (env : 'Env) =
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
 
@@ -532,16 +532,16 @@ module ArrayView =
 
         while index < endExclusive && Option.isNone error do
             match folder.Invoke (state, array.[index], env) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 state' ->
+            | Ok state' ->
                 state <- state'
                 index <- index + 1
             
         // If the error was set, return it.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 state
+            Ok state
 

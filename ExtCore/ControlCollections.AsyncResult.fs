@@ -18,7 +18,7 @@ limitations under the License.
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ExtCore.Control.Collections.AsyncChoice
+module ExtCore.Control.Collections.AsyncResult
 
 open OptimizedClosures
 open ExtCore
@@ -26,14 +26,14 @@ open ExtCore.Collections
 open ExtCore.Control
 
 
-/// The standard F# Array module, adapted for use within 'asyncChoice' workflows.
+/// The standard F# Array module, adapted for use within 'asyncResult' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     open System.Collections
 
     /// AsyncChoice implementation of Array.fold.
-    let rec private foldImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) : Async<Choice<'State, 'Error>> =
-        asyncChoice {
+    let rec private foldImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) : Async<Result<'State, 'Error>> =
+        asyncResult {
         if currentIndex >= array.Length then
             // We've reached the end of the array so return the final state value.
             return state
@@ -47,7 +47,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.fold.
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> Async<Choice<'State, 'Error>>) (state : 'State) (array : 'T[]) : Async<Choice<'State, 'Error>> =
+    let fold (folder : 'State -> 'T -> Async<Result<'State, 'Error>>) (state : 'State) (array : 'T[]) : Async<Result<'State, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -56,8 +56,8 @@ module Array =
         foldImpl (folder, array, state, 0)
 
     /// AsyncChoice implementation of Array.foldBack.
-    let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) : Async<Choice<'State, 'Error>> =
-        asyncChoice {
+    let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, array : 'T[], state : 'State, currentIndex) : Async<Result<'State, 'Error>> =
+        asyncResult {
         if currentIndex < 0 then
             // We've reached the beginning of the array so return the final state value.
             return state
@@ -71,7 +71,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.foldBack.
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : 'T -> 'State -> Async<Choice<'State, 'Error>>) (array : 'T[]) (state : 'State) : Async<Choice<'State, 'Error>> =
+    let foldBack (folder : 'T -> 'State -> Async<Result<'State, 'Error>>) (array : 'T[]) (state : 'State) : Async<Result<'State, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -81,7 +81,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.foldi.
     let rec private foldiImpl (folder : FSharpFunc<_,_,_,_>, array : 'T[], state : 'State, currentIndex) =
-        asyncChoice {
+        asyncResult {
         if currentIndex >= array.Length then
             // We've reached the end of the array so return the final state value.
             return state
@@ -95,7 +95,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.foldi.
     [<CompiledName("FoldIndexed")>]
-    let foldi (folder : 'State -> int -> 'T -> Async<Choice<'State, 'Error>>) (state : 'State) (array : 'T[]) : Async<Choice<'State, 'Error>> =
+    let foldi (folder : 'State -> int -> 'T -> Async<Result<'State, 'Error>>) (state : 'State) (array : 'T[]) : Async<Result<'State, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -105,7 +105,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.foldiBack.
     let rec private foldiBackImpl (folder : FSharpFunc<_,_,_,_>, array : 'T[], state : 'State, currentIndex) =
-        asyncChoice {
+        asyncResult {
         if currentIndex < 0 then
             // We've reached the beginning of the array so return the final state value.
             return state
@@ -119,7 +119,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.foldiBack.
     [<CompiledName("FoldIndexedBack")>]
-    let foldiBack (folder : int -> 'T -> 'State -> Async<Choice<'State, 'Error>>) (array : 'T[]) (state : 'State) : Async<Choice<'State, 'Error>> =
+    let foldiBack (folder : int -> 'T -> 'State -> Async<Result<'State, 'Error>>) (array : 'T[]) (state : 'State) : Async<Result<'State, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -129,14 +129,14 @@ module Array =
 
     /// AsyncChoice implementation of Array.init.
     [<CompiledName("Init")>]
-    let init (count : int) (initializer : int -> Async<Choice<'T, 'Error>>) : Async<Choice<'T[], 'Error>> =
+    let init (count : int) (initializer : int -> Async<Result<'T, 'Error>>) : Async<Result<'T[], 'Error>> =
         // Preconditions
         if count < 0 then
             invalidArg "count" "The count cannot be negative."
 
         let result = Array.zeroCreate count
 
-        asyncChoice {
+        asyncResult {
         // Apply the mapping function to each array element.
         for i in 0 .. count - 1 do
             let! mappedValue = initializer i
@@ -147,8 +147,8 @@ module Array =
         }
 
     /// AsyncChoice implementation of Array.iter.
-    let rec private iterImpl (action, array : 'T[], currentIndex) : Async<Choice<unit, 'Error>> =
-        asyncChoice {
+    let rec private iterImpl (action, array : 'T[], currentIndex) : Async<Result<unit, 'Error>> =
+        asyncResult {
         if currentIndex < array.Length then
             // Apply the current array element to the action function.
             do! action array.[currentIndex]
@@ -159,7 +159,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.iter.
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> Async<Choice<unit, 'Error>>) (array : 'T[]) : Async<Choice<unit, 'Error>> =
+    let iter (action : 'T -> Async<Result<unit, 'Error>>) (array : 'T[]) : Async<Result<unit, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -168,7 +168,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.iteri.
     let rec private iteriImpl (action : FSharpFunc<_,_,_>, array : 'T[], currentIndex) =
-        asyncChoice {
+        asyncResult {
         if currentIndex < array.Length then
             // Invoke the action with the current index and array element.
             do! action.Invoke (currentIndex, array.[currentIndex])
@@ -179,7 +179,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.iteri.
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> Async<Choice<unit, 'Error>>) (array : 'T[]) : Async<Choice<unit, 'Error>> =
+    let iteri (action : int -> 'T -> Async<Result<unit, 'Error>>) (array : 'T[]) : Async<Result<unit, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -189,14 +189,14 @@ module Array =
 
     /// AsyncChoice implementation of Array.map.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> Async<Choice<'U, 'Error>>) (array : 'T[]) : Async<Choice<'U[], 'Error>> =
+    let map (mapping : 'T -> Async<Result<'U, 'Error>>) (array : 'T[]) : Async<Result<'U[], 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
         let len = Array.length array
         let result = Array.zeroCreate len
 
-        asyncChoice {
+        asyncResult {
         // Apply the mapping function to each array element.
         for i in 0 .. len - 1 do
             let! mappedValue = mapping array.[i]
@@ -208,7 +208,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.mapi.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> Async<Choice<'U, 'Error>>) (array : 'T[]) : Async<Choice<'U[], 'Error>> =
+    let mapi (mapping : int -> 'T -> Async<Result<'U, 'Error>>) (array : 'T[]) : Async<Result<'U[], 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -217,7 +217,7 @@ module Array =
 
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
-        asyncChoice {
+        asyncResult {
         // Apply the mapping function to each array element.
         for i in 0 .. len - 1 do
             let! mappedValue = mapping.Invoke (i, array.[i])
@@ -229,7 +229,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.map2.
     [<CompiledName("Map2")>]
-    let map2 (mapping : 'T1 -> 'T2 -> Async<Choice<'U, 'Error>>) (array1 : 'T1[]) (array2 : 'T2[]) : Async<Choice<'U[], 'Error>> =
+    let map2 (mapping : 'T1 -> 'T2 -> Async<Result<'U, 'Error>>) (array1 : 'T1[]) (array2 : 'T2[]) : Async<Result<'U[], 'Error>> =
         // Preconditions
         checkNonNull "array1" array1
         checkNonNull "array2" array2
@@ -241,7 +241,7 @@ module Array =
         let result = Array.zeroCreate len
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
-        asyncChoice {
+        asyncResult {
         // Apply the mapping function to each array element.
         for i in 0 .. len - 1 do
             let! mappedValue = mapping.Invoke (array1.[i], array2.[i])
@@ -253,7 +253,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.mapi2.
     [<CompiledName("MapIndexed2")>]
-    let mapi2 (mapping : int -> 'T1 -> 'T2 -> Async<Choice<'U, 'Error>>) (array1 : 'T1[]) (array2 : 'T2[]) : Async<Choice<'U[], 'Error>> =
+    let mapi2 (mapping : int -> 'T1 -> 'T2 -> Async<Result<'U, 'Error>>) (array1 : 'T1[]) (array2 : 'T2[]) : Async<Result<'U[], 'Error>> =
         // Preconditions
         checkNonNull "array1" array1
         checkNonNull "array2" array2
@@ -265,7 +265,7 @@ module Array =
         let result = Array.zeroCreate len
         let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
 
-        asyncChoice {
+        asyncResult {
         // Apply the mapping function to each array element.
         for i in 0 .. len - 1 do
             let! mappedValue = mapping.Invoke (i, array1.[i], array2.[i])
@@ -277,7 +277,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.reduce.
     [<CompiledName("Reduce")>]
-    let reduce (reduction : 'T -> 'T -> Async<Choice<'T, 'Error>>) (array : 'T[]) : Async<Choice<'T, 'Error>> =
+    let reduce (reduction : 'T -> 'T -> Async<Result<'T, 'Error>>) (array : 'T[]) : Async<Result<'T, 'Error>> =
         // Preconditions
         checkNonNull "array" array
         if Array.isEmpty array then
@@ -290,7 +290,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.reduceBack.
     [<CompiledName("ReduceBack")>]
-    let reduceBack (reduction : 'T -> 'T -> Async<Choice<'T, 'Error>>) (array : 'T[]) : Async<Choice<'T, 'Error>> =
+    let reduceBack (reduction : 'T -> 'T -> Async<Result<'T, 'Error>>) (array : 'T[]) : Async<Result<'T, 'Error>> =
         // Preconditions
         checkNonNull "array" array
         if Array.isEmpty array then
@@ -303,8 +303,8 @@ module Array =
         foldBackImpl (reduction, array, array.[len - 1], len - 2)
 
     /// AsyncChoice implementation of Array.exists.
-    let rec private existsImpl (predicate, array : 'T[], currentIndex) : Async<Choice<bool, 'Error>> =
-        asyncChoice {
+    let rec private existsImpl (predicate, array : 'T[], currentIndex) : Async<Result<bool, 'Error>> =
+        asyncResult {
         if currentIndex >= array.Length then
             // No matching element was found.
             return false
@@ -322,7 +322,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.exists.
     [<CompiledName("Exists")>]
-    let exists (predicate : 'T -> Async<Choice<bool, 'Error>>) (array : 'T[]) : Async<Choice<bool, 'Error>> =
+    let exists (predicate : 'T -> Async<Result<bool, 'Error>>) (array : 'T[]) : Async<Result<bool, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -330,8 +330,8 @@ module Array =
         existsImpl (predicate, array, 0)
 
     /// AsyncChoice implementation of Array.forall.
-    let rec private forallImpl (predicate, array : 'T[], currentIndex) : Async<Choice<bool, 'Error>> =
-        asyncChoice {
+    let rec private forallImpl (predicate, array : 'T[], currentIndex) : Async<Result<bool, 'Error>> =
+        asyncResult {
         if currentIndex >= array.Length then
             // All elements matched the predicate.
             return true
@@ -349,7 +349,7 @@ module Array =
 
     /// AsyncChoice implementation of Array.forall.
     [<CompiledName("Forall")>]
-    let forall (predicate : 'T -> Async<Choice<bool, 'Error>>) (array : 'T[]) : Async<Choice<bool, 'Error>> =
+    let forall (predicate : 'T -> Async<Result<bool, 'Error>>) (array : 'T[]) : Async<Result<bool, 'Error>> =
         // Preconditions
         checkNonNull "array" array
 
@@ -357,7 +357,7 @@ module Array =
         forallImpl (predicate, array, 0)
 
 
-/// The standard F# List module, adapted for use within 'asyncChoice' workflows.
+/// The standard F# List module, adapted for use within 'asyncResult' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
     (* NOTE :   Many of the functions below are implemented with a simple public "wrapper"
@@ -367,8 +367,8 @@ module List =
                 (which would consume approximately the same amount of memory as the list itself). *)
 
     /// AsyncChoice implementation of List.map.
-    let rec private mapImpl (mapping, mapped : 'U list, pending : 'T list) : Async<Choice<'U list, 'Error>> =
-        asyncChoice {
+    let rec private mapImpl (mapping, mapped : 'U list, pending : 'T list) : Async<Result<'U list, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // Reverse the list of mapped values before returning it.
@@ -385,7 +385,7 @@ module List =
 
     /// AsyncChoice implementation of List.map.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> Async<Choice<'U, 'Error>>) (list : 'T list) : Async<Choice<'U list, 'Error>> =
+    let map (mapping : 'T -> Async<Result<'U, 'Error>>) (list : 'T list) : Async<Result<'U list, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -393,8 +393,8 @@ module List =
         mapImpl (mapping, [], list)
 
     /// AsyncChoice implementation of List.mapi.
-    let rec private mapiImpl (mapping : FSharpFunc<_,_,_>, mapped : 'U list, pending : 'T list, currentIndex) : Async<Choice<'U list, 'Error>> =
-        asyncChoice {
+    let rec private mapiImpl (mapping : FSharpFunc<_,_,_>, mapped : 'U list, pending : 'T list, currentIndex) : Async<Result<'U list, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // Reverse the list of mapped values before returning it.
@@ -411,7 +411,7 @@ module List =
 
     /// AsyncChoice implementation of List.mapi.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> Async<Choice<'U, 'Error>>) (list : 'T list) : Async<Choice<'U list, 'Error>> =
+    let mapi (mapping : int -> 'T -> Async<Result<'U, 'Error>>) (list : 'T list) : Async<Result<'U list, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -420,8 +420,8 @@ module List =
         mapiImpl (mapping, [], list, 0)
 
     /// AsyncChoice implementation of List.fold.
-    let rec private foldImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) : Async<Choice<'State, 'Error>> =
-        asyncChoice {
+    let rec private foldImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) : Async<Result<'State, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // Return the final state value.
@@ -437,7 +437,7 @@ module List =
 
     /// AsyncChoice implementation of List.fold.
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> Async<Choice<'State, 'Error>>) (state : 'State) (list : 'T list) : Async<Choice<'State, 'Error>> =
+    let fold (folder : 'State -> 'T -> Async<Result<'State, 'Error>>) (state : 'State) (list : 'T list) : Async<Result<'State, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -446,8 +446,8 @@ module List =
         foldImpl (folder, list, state)
 
     /// AsyncChoice implementation of List.foldBack.
-    let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) : Async<Choice<'State, 'Error>> =
-        asyncChoice {
+    let rec private foldBackImpl (folder : FSharpFunc<_,_,_>, pending : 'T list, state : 'State) : Async<Result<'State, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // Return the final state value.
@@ -464,7 +464,7 @@ module List =
 
     /// AsyncChoice implementation of List.foldBack.
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : 'T -> 'State -> Async<Choice<'State, 'Error>>) (list : 'T list) (state : 'State) : Async<Choice<'State, 'Error>> =
+    let foldBack (folder : 'T -> 'State -> Async<Result<'State, 'Error>>) (list : 'T list) (state : 'State) : Async<Result<'State, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -476,8 +476,8 @@ module List =
     // OPTIMIZE : It may be possible to reduce memory usage by processing the "outer" list
     // backwards (like List.foldBack), in which case we could append each of the resulting
     // lists to an accumulator and we wouldn't need to reverse the result at the end.
-    let rec private collectImpl (mapping, collected : 'U list, pending : 'T list) : Async<Choice<_, 'Error>> =
-        asyncChoice {
+    let rec private collectImpl (mapping, collected : 'U list, pending : 'T list) : Async<Result<_, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // Return the collected results.
@@ -495,7 +495,7 @@ module List =
 
     /// AsyncChoice implementation of List.collect.
     [<CompiledName("Collect")>]
-    let collect (mapping : 'T -> Async<Choice<'U list, 'Error>>) (list : 'T list) : Async<Choice<'U list, 'Error>> =
+    let collect (mapping : 'T -> Async<Result<'U list, 'Error>>) (list : 'T list) : Async<Result<'U list, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -503,8 +503,8 @@ module List =
         collectImpl (mapping, [], list)
 
     /// AsyncChoice implementation of List.exists.
-    let rec private existsImpl (predicate, pending : 'T list) : Async<Choice<bool, 'Error>> =
-        asyncChoice {
+    let rec private existsImpl (predicate, pending : 'T list) : Async<Result<bool, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // None of the list elements matched the predicate.
@@ -524,7 +524,7 @@ module List =
 
     /// AsyncChoice implementation of List.exists.
     [<CompiledName("Exists")>]
-    let exists (predicate : 'T -> Async<Choice<bool, 'Error>>) (list : 'T list) : Async<Choice<bool, 'Error>> =
+    let exists (predicate : 'T -> Async<Result<bool, 'Error>>) (list : 'T list) : Async<Result<bool, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -532,8 +532,8 @@ module List =
         existsImpl (predicate, list)
 
     /// AsyncChoice implementation of List.forall.
-    let rec private forallImpl (predicate, pending : 'T list) : Async<Choice<bool, 'Error>> =
-        asyncChoice {
+    let rec private forallImpl (predicate, pending : 'T list) : Async<Result<bool, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // All of the list elements matched the predicate.
@@ -553,7 +553,7 @@ module List =
 
     /// AsyncChoice implementation of List.forall.
     [<CompiledName("Forall")>]
-    let forall (predicate : 'T -> Async<Choice<bool, 'Error>>) (list : 'T list) : Async<Choice<bool, 'Error>> =
+    let forall (predicate : 'T -> Async<Result<bool, 'Error>>) (list : 'T list) : Async<Result<bool, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -561,8 +561,8 @@ module List =
         forallImpl (predicate, list)
 
     /// AsyncChoice implementation of List.filter.
-    let rec private filterImpl (predicate, filtered : 'T list, pending : 'T list) : Async<Choice<'T list, 'Error>> =
-        asyncChoice {
+    let rec private filterImpl (predicate, filtered : 'T list, pending : 'T list) : Async<Result<'T list, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             // Reverse the list of filtered values before returning it.
@@ -580,7 +580,7 @@ module List =
 
     /// AsyncChoice implementation of List.filter.
     [<CompiledName("Filter")>]
-    let filter (predicate : 'T -> Async<Choice<bool, 'Error>>) (list : 'T list) : Async<Choice<'T list, 'Error>> =
+    let filter (predicate : 'T -> Async<Result<bool, 'Error>>) (list : 'T list) : Async<Result<'T list, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -589,7 +589,7 @@ module List =
 
     /// AsyncChoice implementation of List.init.
     let rec private initImpl (initializer, initialized : 'T list, count, index) =
-        asyncChoice {
+        asyncResult {
         if index >= count then
             // Reverse the initialized list and return it.
             return List.rev initialized
@@ -604,7 +604,7 @@ module List =
 
     /// AsyncChoice implementation of List.init.
     [<CompiledName("Initialize")>]
-    let init (count : int) (initializer : int -> Async<Choice<'T, 'Error>>) : Async<Choice<'T list, 'Error>> =
+    let init (count : int) (initializer : int -> Async<Result<'T, 'Error>>) : Async<Result<'T list, 'Error>> =
         // Preconditions
         if count < 0 then
             invalidArg "count" "The number of elements to initialize cannot be negative."
@@ -613,8 +613,8 @@ module List =
         initImpl (initializer, [], count, 0)
 
     /// AsyncChoice implementation of Async.iter.
-    let rec private iterImpl (action, pending : 'T list) : Async<Choice<unit, 'Error>> =
-        asyncChoice {
+    let rec private iterImpl (action, pending : 'T list) : Async<Result<unit, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             return ()
@@ -628,7 +628,7 @@ module List =
 
     /// AsyncChoice implementation of List.iter.
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> Async<Choice<unit, 'Error>>) (list : 'T list) : Async<Choice<unit, 'Error>> =
+    let iter (action : 'T -> Async<Result<unit, 'Error>>) (list : 'T list) : Async<Result<unit, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -636,8 +636,8 @@ module List =
         iterImpl (action, list)
 
     /// AsyncChoice implementation of Async.iteri.
-    let rec private iteriImpl (action : FSharpFunc<_,_,_>, pending : 'T list, index) : Async<Choice<unit, 'Error>> =
-        asyncChoice {
+    let rec private iteriImpl (action : FSharpFunc<_,_,_>, pending : 'T list, index) : Async<Result<unit, 'Error>> =
+        asyncResult {
         match pending with
         | [] ->
             return ()
@@ -651,7 +651,7 @@ module List =
 
     /// AsyncChoice implementation of List.iteri.
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> Async<Choice<unit, 'Error>>) (list : 'T list) : Async<Choice<unit, 'Error>> =
+    let iteri (action : int -> 'T -> Async<Result<unit, 'Error>>) (list : 'T list) : Async<Result<unit, 'Error>> =
         // Preconditions
         checkNonNull "list" list
 
@@ -660,7 +660,7 @@ module List =
         iteriImpl (action, list, 0)
 
 
-/// The standard F# Seq module, adapted for use within 'asyncChoice' workflows.
+/// The standard F# Seq module, adapted for use within 'asyncResult' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
 (*
@@ -670,7 +670,7 @@ module Seq =
         // Preconditions
         checkNonNull "sequence" sequence
 
-        asyncChoice {
+        asyncResult {
         // Apply the mapping function to each element.
         for el in sequence do
             let! mappedValue = mapping array.[i]
@@ -691,7 +691,7 @@ module Seq =
 
         let mapping = FSharpFunc<_,_,_>.Adapt mapping
 
-        asyncChoice {
+        asyncResult {
         // Apply the mapping function to each element.
         for i in 0 .. len - 1 do
             let! mappedValue = mapping.Invoke (i, array.[i])
@@ -711,7 +711,7 @@ module Seq =
 
         (async.Return state, array)
         ||> Array.fold (fun stateAsync el ->
-            asyncChoice {
+            asyncResult {
             // Get the state.
             let! state = stateAsync
 
@@ -729,7 +729,7 @@ module Seq =
 
         (async.Return state, array)
         ||> Array.foldi (fun index stateAsync el ->
-            asyncChoice {
+            asyncResult {
             // Get the state.
             let! state = stateAsync
 
@@ -739,18 +739,18 @@ module Seq =
 *)
     //
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> Async<Choice<unit, 'Error>>) (sequence : seq<'T>) : Async<Choice<unit, 'Error>> =
+    let iter (action : 'T -> Async<Result<unit, 'Error>>) (sequence : seq<'T>) : Async<Result<unit, 'Error>> =
         // Preconditions
         checkNonNull "sequence" sequence
 
-        asyncChoice {
+        asyncResult {
         for el in sequence do
             do! action el
         }
 
     //
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> Async<Choice<unit, 'Error>>) (sequence : seq<'T>) : Async<Choice<unit, 'Error>> =
+    let iteri (action : int -> 'T -> Async<Result<unit, 'Error>>) (sequence : seq<'T>) : Async<Result<unit, 'Error>> =
         // Preconditions
         checkNonNull "sequence" sequence
 
@@ -758,7 +758,7 @@ module Seq =
         let indexedSequence =
             Seq.mapi (fun i x -> i, x) sequence
 
-        asyncChoice {
+        asyncResult {
         for idx, el in indexedSequence do
             do! action.Invoke (idx, el)
         }

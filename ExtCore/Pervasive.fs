@@ -403,17 +403,6 @@ module Operators =
 
     (* Active Patterns *)
 
-    /// <summary>Classifies a Choice`2 value as a successful result or an error.</summary>
-    /// <param name="result"></param>
-    /// <returns></returns>
-    [<CompiledName("SuccessOrErrorPattern")>]
-    let inline (|Success|Error|) (result : Choice<'T, 'Error>) =
-        match result with
-        | Choice1Of2 res ->
-            Success res
-        | Choice2Of2 err ->
-            Error err
-
     /// <summary>Classifies the result of a comparison.</summary>
     /// <param name="comparisonResult"></param>
     /// <returns></returns>
@@ -850,36 +839,36 @@ module Option =
     /// <summary></summary>
     /// <param name="value"></param>
     /// <returns></returns>
-    [<CompiledName("OfChoice")>]
-    let ofChoice (value : Choice<'T, 'Error>) : 'T option =
+    [<CompiledName("OfResult")>]
+    let ofResult (value : Result<'T, 'Error>) : 'T option =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             Some result
-        | Choice2Of2 _ ->
+        | Error _ ->
             None
 
     /// <summary></summary>
     /// <param name="value"></param>
     /// <returns></returns>
-    [<CompiledName("ToChoice")>]
-    let toChoice (value : 'T option) : Choice<'T, unit> =
+    [<CompiledName("ToResult")>]
+    let toResult (value : 'T option) : Result<'T, unit> =
         match value with
         | Some result ->
-            Choice1Of2 result
+            Ok result
         | None ->
-            Choice2Of2 ()
+            Error ()
 
     /// <summary></summary>
     /// <param name="errorValue"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    [<CompiledName("ToChoiceWith")>]
-    let toChoiceWith (errorValue : 'Error) (value : 'T option) : Choice<'T, 'Error> =
+    [<CompiledName("ToResultWith")>]
+    let toResultWith (errorValue : 'Error) (value : 'T option) : Result<'T, 'Error> =
         match value with
         | Some result ->
-            Choice1Of2 result
+            Ok result
         | None ->
-            Choice2Of2 errorValue
+            Error errorValue
 
     //
     [<CompiledName("OfString")>]
@@ -1012,188 +1001,119 @@ module Option =
             None
 
 
-/// <summary>Additional functional operators on Choice<_,_> values.</summary>
+/// <summary>Additional functional operators on Result<_,_> values.</summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Choice =
-    /// <summary>Does the Choice value represent a result value?</summary>
+module Result =
+    /// <summary>Does the Result value represent a result value?</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("IsResult")>]
-    let inline isResult (value : Choice<'T, 'Error>) : bool =
-        // Preconditions
-        checkNonNull "value" value
+    let inline isResult (value : Result<'T, 'Error>) : bool =
 
         match value with
-        | Choice1Of2 _ -> true
-        | Choice2Of2 _ -> false
+        | Ok _ -> true
+        | Error _ -> false
 
-    /// <summary>Does the Choice value represent an error value?</summary>
+    /// <summary>Does the Result value represent an error value?</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("IsError")>]
-    let inline isError (value : Choice<'T, 'Error>) : bool =
-        // Preconditions
-        checkNonNull "value" value
+    let inline isError (value : Result<'T, 'Error>) : bool =
 
         match value with
-        | Choice1Of2 _ -> false
-        | Choice2Of2 _ -> true
+        | Ok _ -> false
+        | Error _ -> true
 
-    /// <summary>Gets the result value associated with the Choice.</summary>
+    /// <summary>Gets the result value associated with the Result.</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("Get")>]
-    let get (value : Choice<'T, 'Error>) =
-        // Preconditions
-        checkNonNull "value" value
-
+    let get (value : Result<'T, 'Error>) =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             result
-        | Choice2Of2 _ ->
-            invalidArg "value" "Cannot get the result because the Choice`2 instance is an error value."
+        | Error _ ->
+            invalidArg "value" "Cannot get the result because the Result`2 instance is an error value."
 
-    /// <summary>Gets the error value associated with the Choice.</summary>
+    /// <summary>Gets the error value associated with the Result.</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("GetError")>]
-    let getError (value : Choice<'T, 'Error>) =
-        // Preconditions
-        checkNonNull "value" value
-
+    let getError (value : Result<'T, 'Error>) =
         match value with
-        | Choice1Of2 _ ->
-            invalidArg "value" "Cannot get the error because the Choice`2 instance is a result value."
-        | Choice2Of2 error ->
+        | Ok _ ->
+            invalidArg "value" "Cannot get the error because the Result`2 instance is a result value."
+        | Error error ->
             error
 
-    /// <summary>Creates a Choice from a result value.</summary>
+    /// <summary>Creates a Result from a result value.</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("Result")>]
-    let inline result value : Choice<'T, 'Error> =
-        Choice1Of2 value
+    let inline result value : Result<'T, 'Error> =
+        Ok value
 
-    /// <summary>Creates a Choice from an error value.</summary>
+    /// <summary>Creates a Result from an error value.</summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("Error")>]
-    let inline error value : Choice<'T, 'Error> =
-        Choice2Of2 value
+    let inline error value : Result<'T, 'Error> =
+        Error value
 
     /// <summary>
-    /// Creates a Choice representing an error value. The error value in the Choice is the specified error message.
+    /// Creates a Result representing an error value. The error value in the Result is the specified error message.
     /// </summary>
     /// <param name="message">The error message.</param>
     /// <returns></returns>
     [<CompiledName("FailWith")>]
-    let inline failwith message : Choice<'T, string> =
-        Choice2Of2 message
+    let inline failwith message : Result<'T, string> =
+        Error message
 
     /// <summary>
-    /// Creates a Choice representing an error value. The error value in the Choice is the specified formatted error message.
+    /// Creates a Result representing an error value. The error value in the Result is the specified formatted error message.
     /// </summary>
     /// <param name="format"></param>
     /// <returns></returns>
     [<CompiledName("PrintFormatToStringThenFail")>]
-    let inline failwithf (format : Printf.StringFormat<'T, Choice<'U, string>>) =
+    let inline failwithf (format : Printf.StringFormat<'T, Result<'U, string>>) =
         Printf.ksprintf failwith format
 
     /// <summary></summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("OfOption")>]
-    let ofOption (value : 'T option) : Choice<'T, unit> =
+    let ofOption (value : 'T option) : Result<'T, unit> =
         match value with
         | Some result ->
-            Choice1Of2 result
+            Ok result
         | None ->
-            Choice2Of2 ()
+            Error ()
 
     /// <summary></summary>
     /// <param name="errorValue"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    // TODO :   Rename this to 'ofOptionDefault' or 'ofOptionWithDefault'.
-    //          The "With" suffix should be reserved for higher-order functions.
-    [<CompiledName("OfOptionWith")>]
-    let ofOptionWith (errorValue : 'Error) (value : 'T option) : Choice<'T, 'Error> =
+    [<CompiledName("OfOptionDefault")>]
+    let ofOptionDefault (errorValue : 'Error) (value : 'T option) : Result<'T, 'Error> =
         match value with
         | Some result ->
-            Choice1Of2 result
+            Ok result
         | None ->
-            Choice2Of2 errorValue
+            Error errorValue
 
     /// <summary></summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("ToOption")>]
-    let toOption (value : Choice<'T, 'Error>) : 'T option =
-        // Preconditions
-        checkNonNull "value" value
-
+    let toOption (value : Result<'T, 'Error>) : 'T option =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             Some result
-        | Choice2Of2 _ ->
+        | Error _ ->
             None
 
     /// <summary>
-    /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
-    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>.
-    /// </summary>
-    /// <param name="mapping"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) (value : Choice<'T, 'Error>) =
-        // Preconditions
-        checkNonNull "value" value
-
-        match value with
-        | Choice1Of2 result ->
-            Choice1Of2 (mapping result)
-        | Choice2Of2 error ->
-            Choice2Of2 error
-
-    /// <summary>
-    /// Applies the specified mapping function to a choice value representing an error value (Choice2Of2). If the choice
-    /// value represents a result value (Choice1Of2), the result value is passed through without modification.
-    /// </summary>
-    /// <param name="mapping"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    [<CompiledName("MapError")>]
-    let mapError (mapping : 'Error1 -> 'Error2) (value : Choice<'T, 'Error1>) =
-        // Preconditions
-        checkNonNull "value" value
-
-        match value with
-        | Choice1Of2 result ->
-            Choice1Of2 result
-        | Choice2Of2 error ->
-            Choice2Of2 (mapping error)
-
-    /// <summary>
-    /// Applies the specified binding function to a choice value representing a result value (Choice1Of2). If the choice
-    /// value represents an error value (Choice2Of2), the error value is passed through without modification.
-    /// </summary>
-    /// <param name="binding"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    [<CompiledName("Bind")>]
-    let bind (binding : 'T -> Choice<'U, 'Error>) value =
-        // Preconditions
-        checkNonNull "value" value
-
-        match value with
-        | Choice1Of2 result ->
-            binding result
-        | Choice2Of2 error ->
-            Choice2Of2 error
-
-    /// <summary>
-    /// Applies the specified binding function to a choice value representing a pair of result values (Choice1Of2).
+    /// Applies the specified binding function to a choice value representing a pair of result values (Ok).
     /// If the first component of the pair represents an error value, the error is passed through without modification;
     /// otherwise, if the second component of the pair represents an error value, the error is passed through without
     /// modification; otherwise, both components represent result values, which are applied to the specified binding function.
@@ -1203,47 +1123,38 @@ module Choice =
     /// <param name="value2"></param>
     /// <returns></returns>
     [<CompiledName("Bind2")>]
-    let bind2 (binding : 'T -> 'U -> Choice<'V, 'Error>) value1 value2 =
-        // Preconditions
-        checkNonNull "value1" value1
-        checkNonNull "value2" value2
+    let bind2 (binding : 'T -> 'U -> Result<'V, 'Error>) value1 value2 =
 
         match value1, value2 with
-        | Choice1Of2 result1, Choice1Of2 result2 ->
+        | Ok result1, Ok result2 ->
             binding result1 result2
-        | Choice1Of2 _, Choice2Of2 error
-        | Choice2Of2 error, _ ->
-            Choice2Of2 error
+        | Ok _, Error error
+        | Error error, _ ->
+            Error error
 
     /// <summary></summary>
     /// <param name="predicate"></param>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("Exists")>]
-    let exists (predicate : 'T -> bool) (value : Choice<'T, 'Error>) : bool =
-        // Preconditions
-        checkNonNull "value" value
-
+    let exists (predicate : 'T -> bool) (value : Result<'T, 'Error>) : bool =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             predicate result
-        | Choice2Of2 _ ->
+        | Error _ ->
             false
 
-    /// <summary></summary>
+    /// <summary>Returns true if predicate holds true for all Ok values, ignores any errors</summary>
     /// <param name="predicate"></param>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("Forall")>]
-    let forall (predicate : 'T -> bool) (value : Choice<'T, 'Error>) : bool =
-        // Preconditions
-        checkNonNull "value" value
-
+    let forall (predicate : 'T -> bool) (value : Result<'T, 'Error>) : bool =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             predicate result
-        | Choice2Of2 _ ->
-            true
+        | Error _ ->
+            true // why?
 
     /// <summary></summary>
     /// <param name="folder"></param>
@@ -1251,14 +1162,11 @@ module Choice =
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("Fold")>]
-    let fold (folder : 'State -> 'T -> 'State) (state : 'State) (value : Choice<'T, 'Error>) : 'State =
-        // Preconditions
-        checkNonNull "value" value
-
+    let fold (folder : 'State -> 'T -> 'State) (state : 'State) (value : Result<'T, 'Error>) : 'State =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             folder state result
-        | Choice2Of2 _ ->
+        | Error _ ->
             state
 
     /// <summary></summary>
@@ -1267,14 +1175,11 @@ module Choice =
     /// <param name="state"></param>
     /// <returns></returns>
     [<CompiledName("FoldBack")>]
-    let foldBack (folder : 'T -> 'State -> 'State) (value : Choice<'T, 'Error>) (state : 'State) : 'State =
-        // Preconditions
-        checkNonNull "value" value
-
+    let foldBack (folder : 'T -> 'State -> 'State) (value : Result<'T, 'Error>) (state : 'State) : 'State =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             folder result state
-        | Choice2Of2 _ ->
+        | Error _ ->
             state
 
     /// <summary></summary>
@@ -1282,50 +1187,41 @@ module Choice =
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> unit) (value : Choice<'T, 'Error>) : unit =
-        // Preconditions
-        checkNonNull "value" value
-
+    let iter (action : 'T -> unit) (value : Result<'T, 'Error>) : unit =
         match value with
-        | Choice2Of2 _ -> ()
-        | Choice1Of2 result ->
+        | Error _ -> ()
+        | Ok result ->
             action result
 
     /// <summary></summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("BindOrRaise")>]
-    let inline bindOrRaise (value : Choice<'T, #exn>) : 'T =
-        // Preconditions
-        checkNonNull "value" value
-
+    let inline bindOrRaise (value : Result<'T, #exn>) : 'T =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             result
-        | Choice2Of2 ex ->
+        | Error ex ->
             raise ex
 
     /// <summary></summary>
     /// <param name="value"></param>
     /// <returns></returns>
     [<CompiledName("BindOrFail")>]
-    let inline bindOrFail (value : Choice<'T, string>) : 'T =
-        // Preconditions
-        checkNonNull "value" value
-
+    let inline bindOrFail (value : Result<'T, string>) : 'T =
         match value with
-        | Choice1Of2 result ->
+        | Ok result ->
             result
-        | Choice2Of2 msg ->
+        | Error msg ->
             raise <| exn msg
 
     /// <summary></summary>
     /// <param name="generator"></param>
     /// <returns></returns>
     [<CompiledName("Attempt")>]
-    let attempt generator : Choice<'T, _> =
-        try Choice1Of2 <| generator ()
-        with ex -> Choice2Of2 ex
+    let attempt generator : Result<'T, _> =
+        try Ok <| generator ()
+        with ex -> Error ex
 
     /// <summary>
     /// Composes two functions designed for use with the 'choice' workflow.
@@ -1335,8 +1231,8 @@ module Choice =
     /// <param name="g"></param>
     /// <returns></returns>
     [<CompiledName("Compose")>]
-    let compose (f : 'T -> Choice<'U, 'Error>) (g : 'U -> Choice<'V, 'Error>) =
-        f >> (bind g)
+    let compose (f : 'T -> Result<'U, 'Error>) (g : 'U -> Result<'V, 'Error>) =
+        f >> (Result.bind g)
 
     /// <summary>
     /// Composes two functions designed for use with the 'choice' workflow.
@@ -1346,8 +1242,8 @@ module Choice =
     /// <param name="g"></param>
     /// <returns></returns>
     [<CompiledName("ComposeBack")>]
-    let composeBack (f : 'U -> Choice<'V, 'Error>) (g : 'T -> Choice<'U, 'Error>) =
-        g >> (bind f)
+    let composeBack (f : 'U -> Result<'V, 'Error>) (g : 'T -> Result<'U, 'Error>) =
+        g >> (Result.bind f)
 
 
 /// Extensible printf-style formatting for numbers and other datatypes.

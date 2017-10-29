@@ -76,8 +76,8 @@ type MaybeContFunc<'T, 'K> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
-type ChoiceContFunc<'T, 'Error, 'K> =
-    ContFunc<Choice<'T, 'Error>, 'K>
+type ResultContFunc<'T, 'Error, 'K> =
+    ContFunc<Result<'T, 'Error>, 'K>
 
 /// <summary>
 /// </summary>
@@ -86,7 +86,7 @@ type ChoiceContFunc<'T, 'Error, 'K> =
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
 type ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
-    'State -> (Choice<'T * 'State, 'Error> -> 'K) -> 'K
+    'State -> (Result<'T * 'State, 'Error> -> 'K) -> 'K
 
 
 
@@ -413,81 +413,81 @@ type MaybeContBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ChoiceContBuilder () =
+type ResultContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : ChoiceContFunc<'T, 'Error, 'K> =
+        : ResultContFunc<'T, 'Error, 'K> =
         fun cont ->
-            cont (Choice1Of2 value)
+            cont (Ok value)
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : ChoiceContFunc<'T, 'Error, 'K> =
+        : ResultContFunc<'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : ChoiceContFunc<unit, 'Error, 'K> =
+        : ResultContFunc<unit, 'Error, 'K> =
         fun cont ->
-            cont (Choice1Of2 ())
+            cont (Ok ())
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : ChoiceContFunc<'T, 'Error, 'K> =
+        : ResultContFunc<'T, 'Error, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : ChoiceContFunc<_,_,_>, k : 'T -> ChoiceContFunc<_,_,_>)
-        : ChoiceContFunc<'U, 'Error, 'K> =
+    member inline __.Bind (m : ResultContFunc<_,_,_>, k : 'T -> ResultContFunc<_,_,_>)
+        : ResultContFunc<'U, 'Error, 'K> =
         fun cont ->
             m <| fun result ->
             match result with
-            | Choice2Of2 error ->
-                Choice2Of2 error
+            | Error error ->
+                Error error
                 |> cont
-            | Choice1Of2 value ->
+            | Ok value ->
                 k value cont    
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : ChoiceContFunc<_,_,_>, r2 : ChoiceContFunc<_,_,_>)
-        : ChoiceContFunc<'T, 'Error, 'K> =
+    member inline __.Combine (r1 : ResultContFunc<_,_,_>, r2 : ResultContFunc<_,_,_>)
+        : ResultContFunc<'T, 'Error, 'K> =
         fun cont ->
             r1 <| fun result ->
             match result with
-            | Choice2Of2 error ->
-                Choice2Of2 error
+            | Error error ->
+                Error error
                 |> cont
-            | Choice1Of2 () ->
+            | Ok () ->
                 r2 cont
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member inline __.TryWith (body : ChoiceContFunc<_,_,_>, handler : exn -> ChoiceContFunc<_,_,_>)
-        : ChoiceContFunc<'T, 'Error, 'K> =
+    member inline __.TryWith (body : ResultContFunc<_,_,_>, handler : exn -> ResultContFunc<_,_,_>)
+        : ResultContFunc<'T, 'Error, 'K> =
         fun cont ->
             try body cont
             with ex ->
                 handler ex cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : ChoiceContFunc<_,_,_>, handler)
-        : ChoiceContFunc<'T, 'Error, 'K> =
+    member inline __.TryFinally (body : ResultContFunc<_,_,_>, handler)
+        : ResultContFunc<'T, 'Error, 'K> =
         fun cont ->
             try body cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ChoiceContFunc<_,_,_>)
-        : ChoiceContFunc<'U, 'Error, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ResultContFunc<_,_,_>)
+        : ResultContFunc<'U, 'Error, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ChoiceContFunc<_,_,_>)
-        : ChoiceContFunc<unit, 'Error, 'K> =
+    member this.While (guard, body : ResultContFunc<_,_,_>)
+        : ResultContFunc<unit, 'Error, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -496,8 +496,8 @@ type ChoiceContBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ChoiceContFunc<_,_,_>)
-        : ChoiceContFunc<unit, 'Error, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> ResultContFunc<_,_,_>)
+        : ResultContFunc<unit, 'Error, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -513,7 +513,7 @@ type ProtectedStateContBuilder () =
     member inline __.Return value
         : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
-            cont (Choice1Of2 (value, state))
+            cont (Ok (value, state))
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
@@ -524,7 +524,7 @@ type ProtectedStateContBuilder () =
     member inline __.Zero ()
         : ProtectedStateContFunc<'State, unit, 'Error, 'K> =
         fun state cont ->
-            cont (Choice1Of2 ((), state))
+            cont (Ok ((), state))
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
@@ -536,10 +536,10 @@ type ProtectedStateContBuilder () =
         fun state cont ->
             m state <| fun result ->
                 match result with
-                | Choice2Of2 error ->
-                    Choice2Of2 error
+                | Error error ->
+                    Error error
                     |> cont
-                | Choice1Of2 (result, state) ->
+                | Ok (result, state) ->
                     k result state cont
 
     // M<'T> -> M<'T> -> M<'T>
@@ -550,10 +550,10 @@ type ProtectedStateContBuilder () =
         fun state cont ->
             r1 state <| fun result ->
                 match result with
-                | Choice2Of2 error ->
-                    Choice2Of2 error
+                | Error error ->
+                    Error error
                     |> cont
-                | Choice1Of2 ((), state) ->
+                | Ok ((), state) ->
                     r2 state cont
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
@@ -616,8 +616,8 @@ module WorkflowBuilders =
     [<CompiledName("MaybeCont")>]
     let maybeCont = MaybeContBuilder ()
     //
-    [<CompiledName("ChoiceCont")>]
-    let choiceCont = ChoiceContBuilder ()
+    [<CompiledName("ResultCont")>]
+    let resultCont = ResultContBuilder ()
     //
     [<CompiledName("ProtectedStateCont")>]
     let protectedStateCont = ProtectedStateContBuilder ()
@@ -687,19 +687,19 @@ module MaybeCont =
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ChoiceCont =
+module ResultCont =
     //
     [<CompiledName("SetError")>]
-    let inline setError (error : 'Error) (cont : Choice<'T, 'Error> -> ChoiceContFunc<'T, 'Error, 'K>)
-        : ChoiceContFunc<'T, 'Error, 'K> =
-        Choice2Of2 error
+    let inline setError (error : 'Error) (cont : Result<'T, 'Error> -> ResultContFunc<'T, 'Error, 'K>)
+        : ResultContFunc<'T, 'Error, 'K> =
+        Error error
         |> cont
 
     //
     [<CompiledName("Failwith")>]
-    let inline failwith (errorMsg : string) (cont : Choice<'T, string> -> ChoiceContFunc<'T, string, 'K>)
-        : ChoiceContFunc<'T, string, 'K> =
-        Choice2Of2 errorMsg
+    let inline failwith (errorMsg : string) (cont : Result<'T, string> -> ResultContFunc<'T, string, 'K>)
+        : ResultContFunc<'T, string, 'K> =
+        Error errorMsg
         |> cont
 
 (*
@@ -731,7 +731,7 @@ type StateContFuncIndexed<'S1, 'S2, 'T, 'K> =
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
 type ProtectedStateContFuncIndexed<'S1, 'S2, 'T, 'Error, 'K> =
-    'S1 -> (Choice<'T * 'S2, 'Error> -> 'K) -> 'K
+    'S1 -> (Result<'T * 'S2, 'Error> -> 'K) -> 'K
 
 /// <summary>
 /// </summary>

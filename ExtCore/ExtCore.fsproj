@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
-        <Title>AzureBillingApi</Title>
+        <Title>ExtCore</Title>
         <Version>0.8.47</Version>
         <RepositoryUrl>https://github.com/jack-pappas/ExtCore</RepositoryUrl>
         <AssemblyVersion>8.0.30703</AssemblyVersion>
@@ -16,72 +16,71 @@
         <Authors>Jack Pappas</Authors>
         <PackageLicenseUrl>http://opensource.org/licenses/Apache-2.0</PackageLicenseUrl>
         <PackageProjectUrl>https://github.com/jack-pappas/ExtCore</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/codehollow/AzureBillingApi/</RepositoryUrl>
         <PackageTags>f# fsharp workflow collections immutable workflow monad computation fsharpx intmap lazylist
         </PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="AssemblyInfo.fs"/>
-        <Compile Include="Pervasive.fs"/>
-        <Compile Include="Substring.fs"/>
-        <Compile Include="String.fs"/>
-        <Compile Include="Control.Agents.fs"/>
-        <Compile Include="Control.fs"/>
-        <Compile Include="Control.Observable.fs"/>
-        <Compile Include="Control.Indexed.fs"/>
-        <Compile Include="Control.Cps.fs"/>
-        <Compile Include="Control.Tasks.fs"/>
-        <Compile Include="Collections.fs"/>
-        <Compile Include="Collections.Seq.fs"/>
-        <Compile Include="Collections.ListZipper.fs"/>
-        <Compile Include="Collections.List.fs"/>
-        <Compile Include="Collections.Vector.fs"/>
-        <Compile Include="Collections.VectorView.fs"/>
-        <Compile Include="Collections.ResizeArray.fs"/>
-        <Compile Include="Collections.Array.fs"/>
-        <Compile Include="Collections.TaggedArray.fs"/>
-        <Compile Include="Collections.ArrayView.fs"/>
-        <Compile Include="Collections.Set.fs"/>
-        <Compile Include="Collections.Map.fs"/>
-        <Compile Include="Collections.Dict.fs"/>
-        <Compile Include="Collections.Bimap.fs"/>
-        <Compile Include="Collections.IntSet.fs"/>
-        <Compile Include="Collections.IntMap.fs"/>
-        <Compile Include="Collections.IntBimap.fs"/>
-        <Compile Include="Collections.LongSet.fs"/>
-        <Compile Include="Collections.LongMap.fs"/>
-        <Compile Include="Collections.LongBimap.fs"/>
-        <Compile Include="Collections.HashSet.fs"/>
-        <Compile Include="Collections.HashMap.fs"/>
-        <Compile Include="Collections.Multiset.fs"/>
-        <Compile Include="Collections.Multimap.fs"/>
-        <Compile Include="Collections.LazyList.fs"/>
-        <Compile Include="Collections.Queue.fs"/>
-        <Compile Include="Collections.PriorityQueue.fs"/>
-        <Compile Include="Collections.AsyncSeq.fs"/>
-        <Compile Include="ControlCollections.State.fs"/>
-        <Compile Include="ControlCollections.Reader.fs"/>
-        <Compile Include="ControlCollections.ReaderState.fs"/>
-        <Compile Include="ControlCollections.Maybe.fs"/>
-        <Compile Include="ControlCollections.ReaderMaybe.fs"/>
-        <Compile Include="ControlCollections.Choice.fs"/>
-        <Compile Include="ControlCollections.ReaderChoice.fs"/>
-        <Compile Include="ControlCollections.ProtectedState.fs"/>
-        <Compile Include="ControlCollections.ReaderProtectedState.fs"/>
-        <Compile Include="ControlCollections.StatefulChoice.fs"/>
-        <Compile Include="ControlCollections.Async.fs"/>
-        <Compile Include="ControlCollections.AsyncState.fs"/>
-        <Compile Include="ControlCollections.AsyncMaybe.fs"/>
-        <Compile Include="ControlCollections.AsyncChoice.fs"/>
-        <Compile Include="ControlCollections.AsyncProtectedState.fs"/>
-        <Compile Include="ControlCollections.Cont.fs"/>
-        <Compile Include="ControlCollections.StateCont.fs"/>
-        <Compile Include="Caching.LruCache.fs"/>
-        <Compile Include="NativeInterop.fs"/>
-        <Compile Include="IO.fs"/>
-        <Compile Include="Net.fs"/>
-        <Compile Include="Args.fs"/>
-        <Compile Include="ExtraPervasives.fs"/>
+        <Compile Include="AssemblyInfo.fs" />
+        <Compile Include="Pervasive.fs" />
+        <Compile Include="Substring.fs" />
+        <Compile Include="String.fs" />
+        <Compile Include="Control.Agents.fs" />
+        <Compile Include="Control.fs" />
+        <Compile Include="Control.Observable.fs" />
+        <Compile Include="Control.Indexed.fs" />
+        <Compile Include="Control.Cps.fs" />
+        <Compile Include="Control.Tasks.fs" />
+        <Compile Include="Collections.fs" />
+        <Compile Include="Collections.Seq.fs" />
+        <Compile Include="Collections.ListZipper.fs" />
+        <Compile Include="Collections.List.fs" />
+        <Compile Include="Collections.Vector.fs" />
+        <Compile Include="Collections.VectorView.fs" />
+        <Compile Include="Collections.ResizeArray.fs" />
+        <Compile Include="Collections.Array.fs" />
+        <Compile Include="Collections.TaggedArray.fs" />
+        <Compile Include="Collections.ArrayView.fs" />
+        <Compile Include="Collections.Set.fs" />
+        <Compile Include="Collections.Map.fs" />
+        <Compile Include="Collections.Dict.fs" />
+        <Compile Include="Collections.Bimap.fs" />
+        <Compile Include="Collections.IntSet.fs" />
+        <Compile Include="Collections.IntMap.fs" />
+        <Compile Include="Collections.IntBimap.fs" />
+        <Compile Include="Collections.LongSet.fs" />
+        <Compile Include="Collections.LongMap.fs" />
+        <Compile Include="Collections.LongBimap.fs" />
+        <Compile Include="Collections.HashSet.fs" />
+        <Compile Include="Collections.HashMap.fs" />
+        <Compile Include="Collections.Multiset.fs" />
+        <Compile Include="Collections.Multimap.fs" />
+        <Compile Include="Collections.LazyList.fs" />
+        <Compile Include="Collections.Queue.fs" />
+        <Compile Include="Collections.PriorityQueue.fs" />
+        <Compile Include="Collections.AsyncSeq.fs" />
+        <Compile Include="ControlCollections.State.fs" />
+        <Compile Include="ControlCollections.Reader.fs" />
+        <Compile Include="ControlCollections.ReaderState.fs" />
+        <Compile Include="ControlCollections.Maybe.fs" />
+        <Compile Include="ControlCollections.ReaderMaybe.fs" />
+        <Compile Include="ControlCollections.Result.fs" />
+        <Compile Include="ControlCollections.ReaderChoice.fs" />
+        <Compile Include="ControlCollections.ProtectedState.fs" />
+        <Compile Include="ControlCollections.ReaderProtectedState.fs" />
+        <Compile Include="ControlCollections.StatefulResult.fs" />
+        <Compile Include="ControlCollections.Async.fs" />
+        <Compile Include="ControlCollections.AsyncState.fs" />
+        <Compile Include="ControlCollections.AsyncMaybe.fs" />
+        <Compile Include="ControlCollections.AsyncResult.fs" />
+        <Compile Include="ControlCollections.AsyncProtectedState.fs" />
+        <Compile Include="ControlCollections.Cont.fs" />
+        <Compile Include="ControlCollections.StateCont.fs" />
+        <Compile Include="Caching.LruCache.fs" />
+        <Compile Include="NativeInterop.fs" />
+        <Compile Include="IO.fs" />
+        <Compile Include="Net.fs" />
+        <Compile Include="Args.fs" />
+        <Compile Include="ExtraPervasives.fs" />
     </ItemGroup>
 </Project>
