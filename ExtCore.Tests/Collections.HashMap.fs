@@ -1271,8 +1271,9 @@ module MapModule =
 
         // reference keys
         let refMap = HashMap.ofSeq [for c in ["."; ".."; "..."; "...."] do yield (c, c.Length) ]
-        let resultRefMap = HashMap.foldBack  (fun x y z -> x + y.ToString() + z) refMap "right"
-        Assert.AreEqual(".1..2...3....4right", resultRefMap)
+        let resultRefMap =  HashMap.foldBack  (fun x y z -> (x,y) :: z) refMap [("initial",83)]
+        CollectionAssert.AreEquivalent([("initial",83);("....",4);("...",3);("..",2);(".",1)], resultRefMap)
+        Assert.AreEqual(("initial",83), resultRefMap |> Array.ofSeq |> Array.last)
 
         // One-element HashMap
         let oeleMap = HashMap.ofSeq [(1, "one")]
