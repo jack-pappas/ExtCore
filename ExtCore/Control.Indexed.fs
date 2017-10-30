@@ -507,27 +507,3 @@ type IndexedStatefulChoiceBuilder () =
                     this.Delay (fun () ->
                         body enum.Current))))
 
-
-/// Indexed-state workflows.
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Indexed =
-    //
-    [<CompiledName("State")>]
-    let state = IndexedStateBuilder ()
-
-    //
-    [<CompiledName("ReaderState")>]
-    let readerState = ReaderIndexedStateBuilder ()
-
-    //
-    [<CompiledName("ProtectedState")>]
-    let protectedState = ProtectedIndexedStateBuilder ()
-
-    //
-    [<CompiledName("ReaderProtectedState")>]
-    let readerProtectedState = ReaderProtectedIndexedStateBuilder ()
-
-    //
-    [<CompiledName("StatefulChoice")>]
-    let statefulChoice = IndexedStatefulChoiceBuilder ()
-

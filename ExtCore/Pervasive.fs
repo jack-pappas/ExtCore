@@ -35,10 +35,6 @@ type nullable<'T when 'T : struct and 'T : (new : unit -> 'T) and 'T :> System.V
 /// <typeparam name="Value"></typeparam>
 type dict<'Key, 'Value> = System.Collections.Generic.IDictionary<'Key, 'Value>
 
-/// <summary>A value whose computation has been 'protected' by capturing any raised exception.</summary>
-/// <typeparam name="T"></typeparam>
-type Protected<'T> = Choice<'T, exn>
-
 /// <summary>
 /// Array views are similar to array slices, but instead of creating a copy of the
 /// 'sliced' elements they simply provide convienient access to some section of the
@@ -402,17 +398,6 @@ module Operators =
     #endif
 
     (* Active Patterns *)
-
-    /// <summary>Classifies a Choice`2 value as a successful result or an error.</summary>
-    /// <param name="result"></param>
-    /// <returns></returns>
-    [<CompiledName("SuccessOrErrorPattern")>]
-    let inline (|Success|Error|) (result : Choice<'T, 'Error>) =
-        match result with
-        | Choice1Of2 res ->
-            Success res
-        | Choice2Of2 err ->
-            Error err
 
     /// <summary>Classifies the result of a comparison.</summary>
     /// <param name="comparisonResult"></param>
