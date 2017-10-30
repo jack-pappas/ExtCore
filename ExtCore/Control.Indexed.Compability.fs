@@ -1,5 +1,5 @@
 //
-namespace ExtCore.Control.Compability.Indexed
+namespace ExtCore.Control.Indexed.Compability
 
 open ExtCore
 open ExtCore.Control.Indexed

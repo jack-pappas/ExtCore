@@ -32,7 +32,7 @@
       <Compile Include="Control.Result.fs" />
       <Compile Include="Control.Observable.fs" />
       <Compile Include="Control.Indexed.fs" />
-      <Compile Include="Control.Compability.Indexed.fs" />
+      <Compile Include="Control.Indexed.Compability.fs" />
       <Compile Include="Control.Indexed.Result.fs" />
       <Compile Include="Control.Cps.fs" />
       <Compile Include="Control.Cps.Result.fs" />
@@ -74,10 +74,10 @@
       <Compile Include="ControlCollections.ReaderChoice.fs" />
       <Compile Include="ControlCollections.Result.fs" />
       <Compile Include="ControlCollections.ReaderResult.fs" />
+      <Compile Include="ControlCollections.ProtectedState.Compability.fs" />
       <Compile Include="ControlCollections.ProtectedState.fs" />
-      <Compile Include="ControlCollections.ProtectedResultState.fs" />
+      <Compile Include="ControlCollections.ReaderProtectedState.Compability.fs" />
       <Compile Include="ControlCollections.ReaderProtectedState.fs" />
-      <Compile Include="ControlCollections.ReaderProtectedResultState.fs" />
       <Compile Include="ControlCollections.StatefulChoice.fs" />
       <Compile Include="ControlCollections.StatefulResult.fs" />
       <Compile Include="ControlCollections.Async.fs" />
