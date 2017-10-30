@@ -571,7 +571,7 @@ module AsyncSeq =
             let! msg = agent.PostAndAsyncReply Get
             match msg with
             | Notification.Completed -> ()
-            | Notification.Error e ->
+            | Notification.Exception e ->
                 raise e
             | Notification.Next v ->
                 yield v
