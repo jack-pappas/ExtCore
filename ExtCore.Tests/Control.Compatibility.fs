@@ -1,4 +1,4 @@
-﻿(*
+(*
 
 Copyright 2013 Jack Pappas
 
@@ -16,18 +16,18 @@ limitations under the License.
 
 *)
 
-namespace Tests.ExtCore.Control
+namespace Tests.ExtCore.Control.Compatibility
 
 open System
 open System.Runtime.CompilerServices
 open ExtCore.Control
+open ExtCore.Control.Compatibility
 open NUnit.Framework
 
-
-/// Test fixture which tests that the .Using() member of AsyncResultBuilder
+/// Test fixture which tests that the .Using() member of AsyncChoiceBuilder
 /// disposes the supplied resource at the correct point in the program's execution.
 [<TestFixture; Sealed>]
-type AsyncResultBuilderDisposeFixture() =
+type AsyncChoiceBuilderDisposeFixture() =
     let disposed = StrongBox (false)
 
     let createDisposable (disposed : StrongBox<bool>) =
@@ -36,11 +36,11 @@ type AsyncResultBuilderDisposeFixture() =
                 printfn "disposing!"
                 disposed.Value <- true }
 
-    let createAsyncResultDisposable() =
-        async { return Ok(createDisposable disposed) }
+    let createAsyncChoiceDisposable() =
+        async { return Choice1Of2(createDisposable disposed) }
 
-    let waitAsyncResult() =
-        asyncResult {
+    let waitAsyncChoice() =
+        asyncChoice {
             printfn "waiting"
         }
 
@@ -64,17 +64,17 @@ type AsyncResultBuilderDisposeFixture() =
         printfn "Should be disposed. Checking..."
         Assert.IsTrue(disposed.Value)
 
-    // asyncResult wrong behavior
+    // asyncChoice wrong behavior
     [<Test>]
     member __.UsingAsyncChoice() : unit =
-        asyncResult {
-            use! d = createAsyncResultDisposable()
+        asyncChoice {
+            use! d = createAsyncChoiceDisposable()
             shouldNotBeDisposed()
-            let! a = waitAsyncResult()
+            let! a = waitAsyncChoice()
             shouldNotBeDisposed()
         }
         |> Async.RunSynchronously
-        |> Result.get
+        |> Choice.get
         |> ignore
 
     // async - expected behavior
@@ -89,17 +89,18 @@ type AsyncResultBuilderDisposeFixture() =
         |> Async.RunSynchronously
         |> ignore
 
+
 /// <summary>
-/// Tests for <see cref="ExtCore.Control.ResultBuilder"/>.
+/// Tests for <see cref="ExtCore.Control.ChoiceBuilder"/>.
 /// </summary>
-module ResultBuilder =
-    /// <summary>Tests for <see cref="ExtCore.Control.ResultBuilder.For"/>.</summary>
-    module ``ResultBuilder_For`` =
+module ChoiceBuilder =
+    /// <summary>Tests for <see cref="ExtCore.Control.ChoiceBuilder.For"/>.</summary>
+    module ``ChoiceBuilder_For`` =
         [<Test>]
         let ``simple test`` () : unit =
             let count = ref 0
             let data = [| 1..3 |]
-            let result = result {
+            let result = choice {
                 for i in data do
                     incr count
                 return true
@@ -109,15 +110,15 @@ module ResultBuilder =
             assertEqual 3 !count
 
             // Check the result of the computation.
-            assertEqual (Ok true) result
+            assertEqual (Choice1Of2 true) result
 
-    /// <summary>Tests for <see cref="ExtCore.Control.ResultBuilder.While"/>.</summary>
-    module ``ResultBuilder_While`` =
+    /// <summary>Tests for <see cref="ExtCore.Control.ChoiceBuilder.While"/>.</summary>
+    module ``ChoiceBuilder_While`` =
         [<Test>]
         let ``simple test`` () : unit =
             let count = ref 0
             let data = [| 1..3 |]
-            let result = result {
+            let result = choice {
                 while !count < 3 do
                     incr count
                 return true
@@ -127,6 +128,5 @@ module ResultBuilder =
             assertEqual 3 !count
 
             // Check the result of the computation.
-            assertEqual (Ok true) result
-
+            assertEqual (Choice1Of2 true) result
 

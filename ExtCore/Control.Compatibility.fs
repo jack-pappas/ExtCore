@@ -18,18 +18,20 @@ limitations under the License.
 
 *)
 
-namespace ExtCore.Control
+namespace ExtCore.Control.Compatibility
 
 open ExtCore
+open ExtCore.Control
 
+(*** Workflow Monoids ***)
 
 /// <summary>
 /// </summary>
-/// <typeparam name="Env"></typeparam>
+/// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
-type ReaderResultFunc<'Env, 'T, 'Error> =
-    'Env -> Result<'T, 'Error>
+type ProtectedStateFunc<'State, 'T, 'Error> =
+    'State -> Choice<'T * 'State, 'Error>
 
 /// <summary>
 /// </summary>
@@ -38,22 +40,7 @@ type ReaderResultFunc<'Env, 'T, 'Error> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-    'Env -> 'State -> Result<'T * 'State, 'Error>
-
-/// <summary>
-/// </summary>
-/// <typeparam name="State"></typeparam>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="Error"></typeparam>
-type StatefulResultFunc<'State, 'T, 'Error> =
-    'State -> Result<'T, 'Error> * 'State
-
-/// <summary>
-/// </summary>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="Error"></typeparam>
-type AsyncResult<'T, 'Error> =
-    Async<Result<'T, 'Error>>
+    'Env -> 'State -> Choice<'T * 'State, 'Error>
 
 
 /// <summary>
@@ -61,8 +48,32 @@ type AsyncResult<'T, 'Error> =
 /// <typeparam name="Env"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
-type AsyncReaderResultFunc<'Env, 'T, 'Error> =
-    'Env -> Async<Result<'T, 'Error>>
+type ReaderChoiceFunc<'Env, 'T, 'Error> =
+    'Env -> Choice<'T, 'Error>
+
+
+/// <summary>
+/// </summary>
+/// <typeparam name="State"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+type StatefulChoiceFunc<'State, 'T, 'Error> =
+    'State -> Choice<'T, 'Error> * 'State
+
+/// <summary>
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+type AsyncChoice<'T, 'Error> =
+    Async<Choice<'T, 'Error>>
+
+/// <summary>
+/// </summary>
+/// <typeparam name="Env"></typeparam>
+/// <typeparam name="T"></typeparam>
+/// <typeparam name="Error"></typeparam>
+type AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
+    'Env -> Async<Choice<'T, 'Error>>
 
 /// <summary>
 /// </summary>
@@ -70,100 +81,100 @@ type AsyncReaderResultFunc<'Env, 'T, 'Error> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 type AsyncProtectedStateFunc<'State, 'T, 'Error> =
-    'State -> Async<Result<'T * 'State, 'Error>>
+    'State -> Async<Choice<'T * 'State, 'Error>>
 
 /// <summary>
 /// </summary>
 /// <typeparam name="State"></typeparam>
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
-type AsyncStatefulResultFunc<'State, 'T, 'Error> =
-    'State -> Async<Result<'T, 'Error> * 'State>
-
+type AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
+    'State -> Async<Choice<'T, 'Error> * 'State>
 
 (*** Workflow Builders ***)
+
 
 
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ResultBuilder () =
+type ChoiceBuilder () =
     /// The zero value for this builder never changes and is immutable,
     /// so create and reuse a single instance of it to avoid unnecessary allocations.
-    static let zero = Ok ()
+    static let zero = Choice1Of2 ()
 
     // 'T -> M<'T>
-    member __.Return value : Result<'T, 'Error> =
-        Ok value
+    member __.Return value : Choice<'T, 'Error> =
+        Choice1Of2 value
 
     // Error operation. Similar to the Return method ('return'), but used for returning an error value.
     [<CustomOperation("error")>]
-    member __.Error value : Result<'T, 'Error> =
-        Error value
+    member __.Error value : Choice<'T, 'Error> =
+        Choice2Of2 value
 
     // M<'T> -> M<'T>
-    member __.ReturnFrom (m : Result<'T, 'Error>) =
+    member __.ReturnFrom (m : Choice<'T, 'Error>) =
         m
 
     // unit -> M<'T>
-    member __.Zero () : Result<unit, 'Error> =
+    member __.Zero () : Choice<unit, 'Error> =
         zero
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (generator : unit -> Result<'T, 'Error>) : unit -> Result<'T, 'Error> =
+    member __.Delay (generator : unit -> Choice<'T, 'Error>) : unit -> Choice<'T, 'Error> =
         generator
 
     //
-    member __.Run (generator : unit -> Result<'T, 'Error>) : Result<'T, 'Error> =
+    member __.Run (generator : unit -> Choice<'T, 'Error>) : Choice<'T, 'Error> =
         generator ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (value, binder : 'T -> Result<'U, 'Error>) : Result<'U, 'Error> =
+    member inline __.Bind (value, binder : 'T -> Choice<'U, 'Error>) : Choice<'U, 'Error> =
         match value with
-        | Error error ->
-            Error error
-        | Ok x ->
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 x ->
             binder x
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1, r2) : Result<'T, 'Error> =
+    member inline __.Combine (r1, r2) : Choice<'T, 'Error> =
         match r1 with
-        | Error error ->
-            Error error
-        | Ok () ->
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 () ->
             r2
 
     //
-    member __.Combine (r1 : Result<'T, 'Error>, r2) : Result<'U, 'Error> =
-        Result.bind r2 r1
+    member __.Combine (r1 : Choice<'T, 'Error>, r2) : Choice<'U, 'Error> =
+        Choice.bind r2 r1
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member inline __.TryWith (body : unit -> Result<'T, 'Error>, handler) =
+    member inline __.TryWith (body : unit -> Choice<'T, 'Error>, handler) =
         try body ()
         with ex ->
             handler ex
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member inline __.TryFinally (body : unit -> Result<'T, 'Error>, handler) =
+    member inline __.TryFinally (body : unit -> Choice<'T, 'Error>, handler) =
         try body ()
         finally
             handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : _ -> Result<_,_>)
-        : Result<'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : _ -> Choice<_,_>)
+        : Choice<'U, 'Error> =
         try body resource
         finally
             if not <| isNull (box resource) then
                 resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : unit -> Result<unit, 'Error>) : Result<_,_> =
+    member this.While (guard, body : unit -> Choice<unit, 'Error>) : Choice<_,_> =
         if guard () then
             match body () with
-            | Ok () ->
+            | Choice1Of2 () ->
                 this.While (guard, body)
             | err -> err
         else
@@ -174,87 +185,86 @@ type ResultBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> Result<unit, 'Error>) =
+    member this.For (sequence : seq<_>, body : 'T -> Choice<unit, 'Error>) =
         use enumerator = sequence.GetEnumerator ()
 
-        let mutable errorResult = None
-        while enumerator.MoveNext () && Option.isNone errorResult do
+        let mutable errorResult = Unchecked.defaultof<_>
+        while enumerator.MoveNext () && isNull errorResult do
             match body enumerator.Current with
-            | Ok () -> ()
+            | Choice1Of2 () -> ()
             | error ->
-                errorResult <- Some error
+                errorResult <- error
 
         // If we broke out of the loop early because the 'body' function
         // returned an error for some element, return the error.
         // Otherwise, return the 'zero' value (representing a 'success' which carries no value).
-        if Option.isNone errorResult then this.Zero () else errorResult.Value
-
+        if isNull errorResult then this.Zero () else errorResult
 
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ReaderResultBuilder () =
+type ReaderChoiceBuilder () =
     // 'T -> M<'T>
     member __.Return value
-        : ReaderResultFunc<'Env, 'T, 'Error> =
-        fun _ -> Ok value
+        : ReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun _ -> Choice1Of2 value
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
-        : ReaderResultFunc<'Env, 'T, 'Error> =
+        : ReaderChoiceFunc<'Env, 'T, 'Error> =
         func
 
     // unit -> M<'T>
     member __.Zero ()
-        : ReaderResultFunc<'Env, unit, 'Error> =
-        fun _ -> Ok ()
+        : ReaderChoiceFunc<'Env, unit, 'Error> =
+        fun _ -> Choice1Of2 ()
 
     // (unit -> M<'T>) -> M<'T>
-    member __.Delay (generator : unit -> ReaderResultFunc<'Env, 'T, 'Error>)
-        : ReaderResultFunc<'Env, 'T, 'Error> =
+    member __.Delay (generator : unit -> ReaderChoiceFunc<'Env, 'T, 'Error>)
+        : ReaderChoiceFunc<'Env, 'T, 'Error> =
         generator ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (f : ReaderResultFunc<_,_,_>, binder : 'T -> ReaderResultFunc<_,_,_>)
-        : ReaderResultFunc<'Env, 'U, 'Error> =
+    member __.Bind (f : ReaderChoiceFunc<_,_,_>, binder : 'T -> ReaderChoiceFunc<_,_,_>)
+        : ReaderChoiceFunc<'Env, 'U, 'Error> =
         fun env ->
         match f env with
-        | Error error ->
-            Error error
-        | Ok result ->
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 result ->
             binder result env
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member __.Combine (r1 : ReaderResultFunc<_,_,_>, r2 : ReaderResultFunc<_,_,_>)
-        : ReaderResultFunc<'Env, 'T, 'Error> =
+    member __.Combine (r1 : ReaderChoiceFunc<_,_,_>, r2 : ReaderChoiceFunc<_,_,_>)
+        : ReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
         match r1 env with
-        | Error error ->
-            Error error
-        | Ok () ->
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 () ->
             r2 env
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member __.TryWith (body : ReaderResultFunc<_,_,_>, handler : exn -> ReaderResultFunc<_,_,_>)
-        : ReaderResultFunc<'Env, 'T, 'Error> =
+    member __.TryWith (body : ReaderChoiceFunc<_,_,_>, handler : exn -> ReaderChoiceFunc<_,_,_>)
+        : ReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
         try body env
         with ex ->
             handler ex env
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member __.TryFinally (body : ReaderResultFunc<_,_,_>, handler)
-        : ReaderResultFunc<'Env, 'T, 'Error> =
+    member __.TryFinally (body : ReaderChoiceFunc<_,_,_>, handler)
+        : ReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
         try body env
         finally
             handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member __.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderResultFunc<_,_,_>)
-        : ReaderResultFunc<'Env, 'U, 'Error> =
+    member __.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderChoiceFunc<_,_,_>)
+        : ReaderChoiceFunc<'Env, 'U, 'Error> =
         fun env ->
         try body resource env
         finally
@@ -262,8 +272,8 @@ type ReaderResultBuilder () =
                 resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ReaderResultFunc<_,_,_>)
-        : ReaderResultFunc<'Env, unit, 'Error>=
+    member this.While (guard, body : ReaderChoiceFunc<_,_,_>)
+        : ReaderChoiceFunc<'Env, unit, 'Error>=
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -272,8 +282,8 @@ type ReaderResultBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ReaderResultFunc<_,_,_>)
-        : ReaderResultFunc<'Env, unit, 'Error> =
+    member this.For (sequence : seq<_>, body : 'T -> ReaderChoiceFunc<_,_,_>)
+        : ReaderChoiceFunc<'Env, unit, 'Error> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -289,7 +299,7 @@ type ProtectedStateBuilder () =
     member __.Return value
         : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
-        Ok (value, state)
+        Choice1Of2 (value, state)
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
@@ -311,9 +321,9 @@ type ProtectedStateBuilder () =
         : ProtectedStateFunc<'State, 'U, 'Error> =
         fun state ->
         match m state with
-        | Error error ->
-            Error error
-        | Ok (value, state) ->
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 (value, state) ->
             binder value state
 
     // M<'T> -> M<'T> -> M<'T>
@@ -372,12 +382,12 @@ type ProtectedStateBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ReaderProtectedResultStateBuilder () =
+type ReaderProtectedStateBuilder () =
     // 'T -> M<'T>
     member __.Return value
         : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
         fun _ state ->
-        Ok (value, state)
+        Choice1Of2 (value, state)
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
@@ -388,7 +398,7 @@ type ReaderProtectedResultStateBuilder () =
     member this.Zero ()
         : ReaderProtectedStateFunc<'Env, 'State, unit, 'Error> =
         fun _ state ->
-        Ok ((), state)
+        Choice1Of2 ((), state)
 
     // (unit -> M<'T>) -> M<'T>
     member this.Delay (f : unit -> ReaderProtectedStateFunc<_,_,_,_>)
@@ -400,9 +410,9 @@ type ReaderProtectedResultStateBuilder () =
         : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
         fun env state ->
         match m env state with
-        | Error error ->
-            Error error
-        | Ok (value, state) ->
+        | Choice2Of2 error ->
+            Choice2Of2 error
+        | Choice1Of2 (value, state) ->
             binder value env state
 
     // M<'T> -> M<'T> -> M<'T>
@@ -461,64 +471,64 @@ type ReaderProtectedResultStateBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type StatefulResultBuilder () =
+type StatefulChoiceBuilder () =
     // 'T -> M<'T>
     member __.Return value
-        : StatefulResultFunc<'State, 'T, 'Error> =
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
-        (Ok value), state
+        (Choice1Of2 value), state
 
     // M<'T> -> M<'T>
     member __.ReturnFrom (func)
-        : StatefulResultFunc<_,_,_> =
+        : StatefulChoiceFunc<_,_,_> =
         func
 
     // unit -> M<'T>
     member inline this.Zero ()
-        : StatefulResultFunc<'State, unit, 'Error> =
+        : StatefulChoiceFunc<'State, unit, 'Error> =
         this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (generator : unit -> StatefulResultFunc<_,_,_>)
-        : StatefulResultFunc<'State, 'T, 'Error> =
+    member this.Delay (generator : unit -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state -> generator () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (computation : StatefulResultFunc<_,_,_>, binder : 'T -> StatefulResultFunc<_,_,_>)
-        : StatefulResultFunc<'State, 'U, 'Error> =
+    member __.Bind (computation : StatefulChoiceFunc<_,_,_>, binder : 'T -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'U, 'Error> =
         fun state ->
         match computation state with
-        | (Ok value), state ->
+        | (Choice1Of2 value), state ->
             binder value state
-        | (Error error), state ->
-            (Error error), state
-
+        | (Choice2Of2 error), state ->
+            (Choice2Of2 error), state    
+        
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : StatefulResultFunc<_,_,_>, r2 : StatefulResultFunc<_,_,_>)
-        : StatefulResultFunc<'State, 'T, 'Error> =
+    member this.Combine (r1 : StatefulChoiceFunc<_,_,_>, r2 : StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member __.TryWith (body : StatefulResultFunc<_,_,_>, handler : exn -> StatefulResultFunc<_,_,_>)
-        : StatefulResultFunc<'State, 'T, 'Error> =
+    member __.TryWith (body : StatefulChoiceFunc<_,_,_>, handler : exn -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         try body state
         with ex ->
             handler ex state
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member __.TryFinally (body : StatefulResultFunc<_,_,_>, handler)
-        : StatefulResultFunc<'State, 'T, 'Error> =
+    member __.TryFinally (body : StatefulChoiceFunc<_,_,_>, handler)
+        : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         try body state
         finally
             handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StatefulResultFunc<_,_,_>)
-        : StatefulResultFunc<'State, 'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, 'U, 'Error> =
         fun state ->
         try
             body resource state
@@ -527,8 +537,8 @@ type StatefulResultBuilder () =
                 resource.Dispose ()
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : StatefulResultFunc<_,_,_>)
-        : StatefulResultFunc<'State, _, 'Error> =
+    member this.While (guard, body : StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, _, 'Error> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -537,8 +547,8 @@ type StatefulResultBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> StatefulResultFunc<_,_,_>)
-        : StatefulResultFunc<'State, _, 'Error> =
+    member this.For (sequence : seq<_>, body : 'T -> StatefulChoiceFunc<_,_,_>)
+        : StatefulChoiceFunc<'State, _, 'Error> =
         this.Using (sequence.GetEnumerator (),
             (fun enum ->
                 this.While (
@@ -550,132 +560,51 @@ type StatefulResultBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type AsyncResultBuilder () =
-    // 'T -> M<'T>
-    member (*inline*) __.Return value : Async<Result<'T, 'Error>> =
-        Ok value
-        |> async.Return
-
-    // M<'T> -> M<'T>
-    member (*inline*) __.ReturnFrom (asyncResult : Async<Result<'T, 'Error>>) =
-        asyncResult
-
-    // unit -> M<'T>
-    member inline this.Zero () : Async<Result<unit, 'Error>> =
-        this.Return ()
-
-    // (unit -> M<'T>) -> M<'T>
-    member inline this.Delay (generator : unit -> Async<Result<'T, 'Error>>) : Async<Result<'T, 'Error>> =
-        async.Delay generator
-
-    // M<'T> -> M<'T> -> M<'T>
-    // or
-    // M<unit> -> M<'T> -> M<'T>
-    member (*inline*) __.Combine (r1, r2) : Async<Result<'T, 'Error>> =
-        async {
-        let! r1' = r1
-        match r1' with
-        | Error error ->
-            return Error error
-        | Ok () ->
-            return! r2
-        }
-
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member (*inline*) __.Bind (value : Async<Result<'T, 'Error>>, binder : 'T -> Async<Result<'U, 'Error>>)
-        : Async<Result<'U, 'Error>> =
-        async {
-        let! value' = value
-        match value' with
-        | Error error ->
-            return Error error
-        | Ok x ->
-            return! binder x
-        }
-
-    // M<'T> * (exn -> M<'T>) -> M<'T>
-    member inline __.TryWith (computation : Async<Result<'T, 'Error>>, catchHandler : exn -> Async<Result<'T, 'Error>>)
-        : Async<Result<'T, 'Error>> =
-        async.TryWith(computation, catchHandler)
-
-    // M<'T> * (unit -> unit) -> M<'T>
-    member inline __.TryFinally (computation : Async<Result<'T, 'Error>>, compensation : unit -> unit)
-        : Async<Result<'T, 'Error>> =
-        async.TryFinally (computation, compensation)
-
-    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member inline __.Using (resource : ('T :> System.IDisposable), binder : _ -> Async<Result<'U, 'Error>>)
-        : Async<Result<'U, 'Error>> =
-        async.Using (resource, binder)
-
-    // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : Async<Result<unit, 'Error>>) : Async<Result<_,_>> =
-        if guard () then
-            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
-
-    // seq<'T> * ('T -> M<'U>) -> M<'U>
-    // or
-    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> Async<Result<unit, 'Error>>) =
-        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
-        this.Using (sequence.GetEnumerator (), fun enum ->
-            this.While (
-                enum.MoveNext,
-                this.Delay (fun () ->
-                    body enum.Current)))
-
-
-/// <summary>
-/// </summary>
-[<Sealed>]
-type AsyncReaderResultBuilder () =
+type AsyncReaderChoiceBuilder () =
     // 'T -> M<'T>
     member __.Return value
-        : AsyncReaderResultFunc<'Env, 'T, 'Error> =
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun _ ->
-            async.Return (Ok value)
+            async.Return (Choice1Of2 value)
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
-        : AsyncReaderResultFunc<'Env, 'T, 'Error> =
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         func
 
     // unit -> M<'T>
     member inline this.Zero ()
-        : AsyncReaderResultFunc<'Env, unit, 'Error> =
+        : AsyncReaderChoiceFunc<'Env, unit, 'Error> =
         this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (generator : unit -> AsyncReaderResultFunc<_,_,_>)
-        : AsyncReaderResultFunc<'Env, 'T, 'Error> =
+    member this.Delay (generator : unit -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env -> generator () env
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : AsyncReaderResultFunc<_,_,_>, k : 'T -> AsyncReaderResultFunc<_,_,_>)
-        : AsyncReaderResultFunc<'Env, 'U, 'Error> =
+    member __.Bind (m : AsyncReaderChoiceFunc<_,_,_>, k : 'T -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'U, 'Error> =
         fun env ->
             async {
             let! result = m env
             match result with
-            | Error error ->
-                return Error error
-            | Ok value ->
+            | Choice2Of2 error ->
+                return Choice2Of2 error
+            | Choice1Of2 value ->
                 return! k value env
             }
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : AsyncReaderResultFunc<_,_,_>, r2 : AsyncReaderResultFunc<_,_,_>)
-        : AsyncReaderResultFunc<'Env, 'T, 'Error> =
+    member this.Combine (r1 : AsyncReaderChoiceFunc<_,_,_>, r2 : AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member __.TryWith (body : AsyncReaderResultFunc<_,_,_>, handler : exn -> AsyncReaderResultFunc<_,_,_>)
-        : AsyncReaderResultFunc<'Env, 'T, 'Error> =
+    member __.TryWith (body : AsyncReaderChoiceFunc<_,_,_>, handler : exn -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
             async.TryWith (
                 async.Delay (fun () -> body env),
@@ -683,16 +612,16 @@ type AsyncReaderResultBuilder () =
                     async.Delay (fun () -> handler ex env))
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member this.TryFinally (body : AsyncReaderResultFunc<_,_,_>, handler)
-        : AsyncReaderResultFunc<'Env, 'T, 'Error> =
+    member this.TryFinally (body : AsyncReaderChoiceFunc<_,_,_>, handler)
+        : AsyncReaderChoiceFunc<'Env, 'T, 'Error> =
         fun env ->
             async.TryFinally (
                 async.Delay (fun () -> body env),
                 handler)
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncReaderResultFunc<_,_,_>)
-        : AsyncReaderResultFunc<'Env, 'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, 'U, 'Error> =
         this.TryFinally (
             this.Delay (fun () ->
                 body resource),
@@ -701,8 +630,8 @@ type AsyncReaderResultBuilder () =
                     resource.Dispose ())
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : AsyncReaderResultFunc<_,_,_>)
-        : AsyncReaderResultFunc<'Env, unit, 'Error> =
+    member this.While (guard, body : AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, unit, 'Error> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -711,8 +640,8 @@ type AsyncReaderResultBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> AsyncReaderResultFunc<_,_,_>)
-        : AsyncReaderResultFunc<'Env, unit, 'Error> =
+    member this.For (sequence : seq<_>, body : 'T -> AsyncReaderChoiceFunc<_,_,_>)
+        : AsyncReaderChoiceFunc<'Env, unit, 'Error> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -727,7 +656,7 @@ type AsyncProtectedStateBuilder () =
     member __.Return value
         : AsyncProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
-            Ok (value, state)
+            Choice1Of2 (value, state)
             |> async.Return
 
     // M<'T> -> M<'T>
@@ -752,9 +681,9 @@ type AsyncProtectedStateBuilder () =
             async {
             let! result = m state
             match result with
-            | Error error ->
-                return Error error
-            | Ok (value, state) ->
+            | Choice2Of2 error ->
+                return Choice2Of2 error
+            | Choice1Of2 (value, state) ->
                 return! k value state
             }
 
@@ -811,54 +740,136 @@ type AsyncProtectedStateBuilder () =
                 this.Delay (fun () ->
                     body enum.Current)))
 
+
 /// <summary>
 /// </summary>
 [<Sealed>]
-type AsyncStatefulResultBuilder () =
+type AsyncChoiceBuilder () =
+    // 'T -> M<'T>
+    member (*inline*) __.Return value : Async<Choice<'T, 'Error>> =
+        Choice1Of2 value
+        |> async.Return
+
+    // M<'T> -> M<'T>
+    member (*inline*) __.ReturnFrom (asyncChoice : Async<Choice<'T, 'Error>>) =
+        asyncChoice
+
+    // unit -> M<'T>
+    member inline this.Zero () : Async<Choice<unit, 'Error>> =
+        this.Return ()
+
+    // (unit -> M<'T>) -> M<'T>
+    member inline this.Delay (generator : unit -> Async<Choice<'T, 'Error>>) : Async<Choice<'T, 'Error>> =
+        async.Delay generator
+
+    // M<'T> -> M<'T> -> M<'T>
+    // or
+    // M<unit> -> M<'T> -> M<'T>
+    member (*inline*) __.Combine (r1, r2) : Async<Choice<'T, 'Error>> =
+        async {
+        let! r1' = r1
+        match r1' with
+        | Choice2Of2 error ->
+            return Choice2Of2 error
+        | Choice1Of2 () ->
+            return! r2
+        }
+
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    member (*inline*) __.Bind (value : Async<Choice<'T, 'Error>>, binder : 'T -> Async<Choice<'U, 'Error>>)
+        : Async<Choice<'U, 'Error>> =
+        async {
+        let! value' = value
+        match value' with
+        | Choice2Of2 error ->
+            return Choice2Of2 error
+        | Choice1Of2 x ->
+            return! binder x
+        }
+
+    // M<'T> * (exn -> M<'T>) -> M<'T>
+    member inline __.TryWith (computation : Async<Choice<'T, 'Error>>, catchHandler : exn -> Async<Choice<'T, 'Error>>)
+        : Async<Choice<'T, 'Error>> =
+        async.TryWith(computation, catchHandler)
+
+    // M<'T> * (unit -> unit) -> M<'T>
+    member inline __.TryFinally (computation : Async<Choice<'T, 'Error>>, compensation : unit -> unit)
+        : Async<Choice<'T, 'Error>> =
+        async.TryFinally (computation, compensation)
+
+    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
+    member inline __.Using (resource : ('T :> System.IDisposable), binder : _ -> Async<Choice<'U, 'Error>>)
+        : Async<Choice<'U, 'Error>> =
+        async.Using (resource, binder)
+
+    // (unit -> bool) * M<'T> -> M<'T>
+    member this.While (guard, body : Async<Choice<unit, 'Error>>) : Async<Choice<_,_>> =
+        if guard () then
+            // OPTIMIZE : This could be simplified so we don't need to make calls to Bind and While.
+            this.Bind (body, (fun () -> this.While (guard, body)))
+        else
+            this.Zero ()
+
+    // seq<'T> * ('T -> M<'U>) -> M<'U>
+    // or
+    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
+    member this.For (sequence : seq<_>, body : 'T -> Async<Choice<unit, 'Error>>) =
+        // OPTIMIZE : This could be simplified so we don't need to make calls to Using, While, Delay.
+        this.Using (sequence.GetEnumerator (), fun enum ->
+            this.While (
+                enum.MoveNext,
+                this.Delay (fun () ->
+                    body enum.Current)))
+
+
+/// <summary>
+/// </summary>
+[<Sealed>]
+type AsyncStatefulChoiceBuilder () =
     // 'T -> M<'T>
     member __.Return value
-        : AsyncStatefulResultFunc<'State, 'T, 'Error> =
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
-            async.Return (Ok value, state)
+            async.Return (Choice1Of2 value, state)
 
     // M<'T> -> M<'T>
     member __.ReturnFrom func
-        : AsyncStatefulResultFunc<'State, 'T, 'Error> =
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         func
 
     // unit -> M<'T>
     member inline this.Zero ()
-        : AsyncStatefulResultFunc<'State, unit, 'Error> =
+        : AsyncStatefulChoiceFunc<'State, unit, 'Error> =
         this.Return ()
 
     // (unit -> M<'T>) -> M<'T>
-    member this.Delay (generator : unit -> AsyncStatefulResultFunc<_,_,_>)
-        : AsyncStatefulResultFunc<'State, 'T, 'Error> =
+    member this.Delay (generator : unit -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         fun state -> generator () state
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : AsyncStatefulResultFunc<_,_,_>, k : 'T -> AsyncStatefulResultFunc<_,_,_>)
-        : AsyncStatefulResultFunc<'State, 'U, 'Error> =
+    member __.Bind (m : AsyncStatefulChoiceFunc<_,_,_>, k : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'U, 'Error> =
         fun state ->
             async {
             let! result, state = m state
             match result with
-            | Error error ->
-                return (Error error, state)
-            | Ok value ->
+            | Choice2Of2 error ->
+                return (Choice2Of2 error, state)
+            | Choice1Of2 value ->
                 return! k value state
             }
 
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : AsyncStatefulResultFunc<_,_,_>, r2 : AsyncStatefulResultFunc<_,_,_>)
-        : AsyncStatefulResultFunc<'State, 'T, 'Error> =
+    member this.Combine (r1 : AsyncStatefulChoiceFunc<_,_,_>, r2 : AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         this.Bind (r1, (fun () -> r2))
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member __.TryWith (body : AsyncStatefulResultFunc<_,_,_>, handler : exn -> AsyncStatefulResultFunc<_,_,_>)
-        : AsyncStatefulResultFunc<'State, 'T, 'Error> =
+    member __.TryWith (body : AsyncStatefulChoiceFunc<_,_,_>, handler : exn -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
             async.TryWith (
                 async.Delay (fun () -> body state),
@@ -866,16 +877,16 @@ type AsyncStatefulResultBuilder () =
                     async.Delay (fun () ->handler ex state))
 
     // M<'T> * (unit -> unit) -> M<'T>
-    member __.TryFinally (body : AsyncStatefulResultFunc<_,_,_>, handler)
-        : AsyncStatefulResultFunc<'State, 'T, 'Error> =
+    member __.TryFinally (body : AsyncStatefulChoiceFunc<_,_,_>, handler)
+        : AsyncStatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
             async.TryFinally (
                 async.Delay (fun () -> body state),
                 handler)
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncStatefulResultFunc<_,_,_>)
-        : AsyncStatefulResultFunc<'State, 'U, 'Error> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, 'U, 'Error> =
         this.TryFinally (
             this.Delay (fun () ->
                 body resource),
@@ -884,8 +895,8 @@ type AsyncStatefulResultBuilder () =
                     resource.Dispose ())
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : AsyncStatefulResultFunc<_,_,_>)
-        : AsyncStatefulResultFunc<'State, unit, 'Error> =
+    member this.While (guard, body : AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, unit, 'Error> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -894,116 +905,24 @@ type AsyncStatefulResultBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> AsyncStatefulResultFunc<_,_,_>)
-        : AsyncStatefulResultFunc<'State, unit, 'Error> =
+    member this.For (sequence : seq<_>, body : 'T -> AsyncStatefulChoiceFunc<_,_,_>)
+        : AsyncStatefulChoiceFunc<'State, unit, 'Error> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
                 this.Delay (fun () ->
                     body enum.Current)))
-
-
-/// <summary>
-/// </summary>
-[<Sealed>]
-type ReaderProtectedStateBuilder () =
-    // 'T -> M<'T>
-    member __.Return value
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun _ state ->
-        Ok (value, state)
-
-    // M<'T> -> M<'T>
-    member __.ReturnFrom func
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        func
-
-    // unit -> M<'T>
-    member this.Zero ()
-        : ReaderProtectedStateFunc<'Env, 'State, unit, 'Error> =
-        fun _ state ->
-        Ok ((), state)
-
-    // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun env state -> f () env state
-
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ReaderProtectedStateFunc<_,_,_,_>, binder : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
-        fun env state ->
-        match m env state with
-        | Error error ->
-            Error error
-        | Ok (value, state) ->
-            binder value env state
-
-    // M<'T> -> M<'T> -> M<'T>
-    // or
-    // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ReaderProtectedStateFunc<_,_,_,_>, r2 : ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        this.Bind (r1, (fun () -> r2))
-
-    // M<'T> * (exn -> M<'T>) -> M<'T>
-    member __.TryWith (body : ReaderProtectedStateFunc<_,_,_,_>, handler : exn -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun env state ->
-        try body env state
-        with ex ->
-            handler ex env state
-
-    // M<'T> * (unit -> unit) -> M<'T>
-    member __.TryFinally (body : ReaderProtectedStateFunc<_,_,_,_>, handler)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun env state ->
-        try body env state
-        finally
-            handler ()
-
-    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
-        fun env state ->
-        try
-            body resource env state
-        finally
-            if not <| isNull (box resource) then
-                resource.Dispose ()
-
-    // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, unit, 'Error> =
-        if guard () then
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
-
-    // seq<'T> * ('T -> M<'U>) -> M<'U>
-    // or
-    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, unit, 'Error> =
-        this.Using (sequence.GetEnumerator (), fun enum ->
-            this.While (
-                enum.MoveNext,
-                this.Delay (fun () ->
-                    body enum.Current)))
-
-
-
 
 /// <summary>
 /// </summary>
 [<AutoOpen>]
-module ResultWorkflowBuilders =
+module WorkflowBuilders =
     //
-    [<CompiledName("Result")>]
-    let result = ResultBuilder ()
+    [<CompiledName("Choice")>]
+    let choice = ChoiceBuilder ()
     //
-    [<CompiledName("ReaderResult")>]
-    let readerResult = ReaderResultBuilder ()
+    [<CompiledName("ReaderChoice")>]
+    let readerChoice = ReaderChoiceBuilder ()
     //
     [<CompiledName("ProtectedState")>]
     let protectedState = ProtectedStateBuilder ()
@@ -1011,45 +930,79 @@ module ResultWorkflowBuilders =
     [<CompiledName("ReaderProtectedState")>]
     let readerProtectedState = ReaderProtectedStateBuilder ()
     //
-    [<CompiledName("StatefulResult")>]
-    let statefulResult = StatefulResultBuilder ()
+    [<CompiledName("StatefulChoice")>]
+    let statefulChoice = StatefulChoiceBuilder ()
     //
-    [<CompiledName("AsyncResult")>]
-    let asyncResult = AsyncResultBuilder ()
+    [<CompiledName("AsyncChoice")>]
+    let asyncChoice = AsyncChoiceBuilder ()
     //
-    [<CompiledName("AsyncReaderResult")>]
-    let asyncReaderResult = AsyncReaderResultBuilder ()
+    [<CompiledName("AsyncReaderChoice")>]
+    let asyncReaderChoice = AsyncReaderChoiceBuilder ()
     //
     [<CompiledName("AsyncProtectedState")>]
     let asyncProtectedState = AsyncProtectedStateBuilder ()
     //
-    [<CompiledName("AsyncStatefulResult")>]
-    let asyncStatefulResult = AsyncStatefulResultBuilder ()
+    [<CompiledName("AsyncStatefulChoice")>]
+    let asyncStatefulChoice = AsyncStatefulChoiceBuilder ()
 
 
 (*** Workflow helper modules ***)
 
 /// <summary>
 /// </summary>
+[<RequireQualifiedAccess>]
+module State =
+
+    /// Adapts a ProtectedState function for use within a State workflow.
+    /// If the ProtectedState function returns an exception instance when executed,
+    /// the exception will be raised rather than being passed into the State workflow.
+    [<CompiledName("BindChoice")>]
+    let inline bindChoice (k : 'T -> StateFunc<'State, 'U>) (m : ProtectedStateFunc<_,_,_>) =
+        fun state ->
+            match m state with
+            | Choice2Of2 ex ->
+                raise ex
+            | Choice1Of2 (value, state) ->
+                k value state
+
+
+/// <summary>
+/// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ProtectedResultState =
+module ReaderChoice =
+    //
+    [<CompiledName("LiftReader")>]
+    let inline liftReader (readerFunc : ReaderFunc<'Env, 'T>) : ReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun env ->
+            Choice1Of2 (readerFunc env)
+
+    //
+    [<CompiledName("LiftChoice")>]
+    let inline liftChoice (choice : Choice<'T, 'Error>) : ReaderChoiceFunc<'Env, 'T, 'Error> =
+        fun _ -> choice
+
+
+/// <summary>
+/// </summary>
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ProtectedState =
     //
     [<CompiledName("LiftState")>]
     let inline liftState (stateFunc : StateFunc<'State, 'T>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
-            Ok (stateFunc state)
+            Choice1Of2 (stateFunc state)
 
     //
     [<CompiledName("LiftChoice")>]
-    let inline liftChoice (choice : Result<'T, 'Error>)
+    let inline liftChoice (choice : Choice<'T, 'Error>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
         match choice with
-        | Error error ->
-            fun _ -> Error error
-        | Ok value ->
+        | Choice2Of2 error ->
+            fun _ -> Choice2Of2 error
+        | Choice1Of2 value ->
             fun (state : 'State) ->
-            Ok (value, state)
+            Choice1Of2 (value, state)
 
     /// Adapts a function designed for use with the Reader monad
     /// so it can be used with the ProtectedState monad.
@@ -1059,171 +1012,171 @@ module ProtectedResultState =
         : ProtectedStateFunc<'Env, 'T, 'Error> =
         fun env ->
             let result = readerFunc env
-            Ok (result, env)
+            Choice1Of2 (result, env)
 
     //
     [<CompiledName("LiftReaderChoice")>]
-    let inline liftReaderChoice (readerResultFunc : 'State -> Result<'T, 'Error>)
+    let inline liftReaderChoice (readerChoiceFunc : 'State -> Choice<'T, 'Error>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
-            match readerResultFunc state with
-            | Error error ->
-                Error error
-            | Ok result ->
-                Ok (result, state)
+            match readerChoiceFunc state with
+            | Choice2Of2 error ->
+                Choice2Of2 error
+            | Choice1Of2 result ->
+                Choice1Of2 (result, state)
 
     //
     [<CompiledName("SetState")>]
-    let inline setState (state : 'State) : Result<unit * 'State, 'Error> =
-        Ok ((), state)
+    let inline setState (state : 'State) : Choice<unit * 'State, 'Error> =
+        Choice1Of2 ((), state)
 
     //
     [<CompiledName("GetState")>]
-    let inline getState (state : 'State) : Result<'State * 'State, 'Error> =
-        Ok (state, state)
+    let inline getState (state : 'State) : Choice<'State * 'State, 'Error> =
+        Choice1Of2 (state, state)
 
     /// Sets an error value in the computation. The monadic equivalent of raising an exception.
     [<CompiledName("SetError")>]
-    let inline setError error (_ : 'State) : Result<'T * 'State, 'Error> =
-        Error error
+    let inline setError error (_ : 'State) : Choice<'T * 'State, 'Error> =
+        Choice2Of2 error
 
     /// The monadic equivalent of F#'s built-in 'failwith' operator.
     [<CompiledName("Failwith")>]
-    let inline failwith (errorMsg : string) (_ : 'State) : Result<'T * 'State, string> =
-        Error errorMsg
+    let inline failwith (errorMsg : string) (_ : 'State) : Choice<'T * 'State, string> =
+        Choice2Of2 errorMsg
 
     /// Discards the state value.
     /// Useful when the state value is only needed during the computation;
     /// by discarding the state when the computation is complete, the return
     /// value can be adapted to the Choice workflow.
     [<CompiledName("DiscardState")>]
-    let inline discardState (protectedResultStateFunc : ProtectedStateFunc<'State, 'T, 'Error>) =
+    let inline discardState (protectedStateFunc : ProtectedStateFunc<'State, 'T, 'Error>) =
         fun state ->
-            match protectedResultStateFunc state with
-            | Error error ->
-                Error error
-            | Ok (result, _) ->
-                Ok result
+            match protectedStateFunc state with
+            | Choice2Of2 error ->
+                Choice2Of2 error
+            | Choice1Of2 (result, _) ->
+                Choice1Of2 result
+
+
 
 /// <summary>
 /// </summary>
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module StatefulResult =
+module StatefulChoice =
     //
     [<CompiledName("LiftState")>]
-    let liftState (stateFunc : StateFunc<'State, 'T>) : StatefulResultFunc<'State, 'T, 'Error> =
+    let liftState (stateFunc : StateFunc<'State, 'T>) : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         let value, state = stateFunc state
-        (Ok value), state
+        (Choice1Of2 value), state
 
     //
-    [<CompiledName("LiftResult")>]
-    let inline liftResult (choice : Result<'T, 'Error>) : StatefulResultFunc<'State, 'T, 'Error> =
+    [<CompiledName("LiftChoice")>]
+    let inline liftChoice (choice : Choice<'T, 'Error>) : StatefulChoiceFunc<'State, 'T, 'Error> =
         fun state ->
         choice, state
 
     //
     [<CompiledName("SetState")>]
-    let setState (state : 'State) : StatefulResultFunc<_,_,'Error> =
+    let setState (state : 'State) : StatefulChoiceFunc<_,_,'Error> =
         fun _ ->
-        (Ok ()), state
+        (Choice1Of2 ()), state
 
     //
     [<CompiledName("GetState")>]
     let inline getState (state : 'State) =
-        (Ok state), state
+        (Choice1Of2 state), state
 
     let private ``return`` value =
         fun state ->
-        (Ok value), state
+        (Choice1Of2 value), state
 
     //
     let private bind k m =
         fun state ->
         match m state with
-        | (Ok value), state ->
+        | (Choice1Of2 value), state ->
             k value state
-        | (Error error), state ->
-            (Error error), state
+        | (Choice2Of2 error), state ->
+            (Choice2Of2 error), state
 
     /// Transforms a value in the StatefulChoice workflow by using a specified mapping function.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) (m : StatefulResultFunc<'State, 'T, 'Error>)
-            : StatefulResultFunc<'State, 'U, 'Error> =
+    let map (mapping : 'T -> 'U) (m : StatefulChoiceFunc<'State, 'T, 'Error>)
+            : StatefulChoiceFunc<'State, 'U, 'Error> =
         bind (mapping >> ``return``) m
 
     //
     [<CompiledName("Attempt")>]
-    let attempt (generator : unit -> 'T) : StatefulResultFunc<'State, 'T, exn> =
-        statefulResult {
+    let attempt (generator : unit -> 'T) : StatefulChoiceFunc<'State, 'T, exn> =
+        statefulChoice {
         let! state = getState
-        return! fun _ -> Result.attempt generator, state
+        return! fun _ -> Choice.attempt generator, state
         }
 
     //
     [<CompiledName("MapError")>]
-    let mapError (map : 'Error1 -> 'Error2) (value : StatefulResultFunc<'State, 'T, 'Error1>)
-            : StatefulResultFunc<'State, 'T, 'Error2> =
-        statefulResult {
+    let mapError (map : 'Error1 -> 'Error2) (value : StatefulChoiceFunc<'State, 'T, 'Error1>)
+            : StatefulChoiceFunc<'State, 'T, 'Error2> =
+        statefulChoice {
         let! state = getState
         let choice, state' = value state
-        return!
+        return! 
             match choice with
-            | Ok c -> fun _ -> Ok c, state'
-            | Error error -> fun _ -> Error (map error), state'
+            | Choice1Of2 c -> fun _ -> Choice1Of2 c, state'
+            | Choice2Of2 error -> fun _ -> Choice2Of2 (map error), state'
         }
-
-
 
 /// Functions for working with AsyncChoice workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module AsyncResult =
+module AsyncChoice =
     open Microsoft.FSharp.Control
 
     /// Creates an AsyncChoice from an error value.
     [<CompiledName("Error")>]
-    let inline error value : AsyncResult<'T, 'Error> =
-        async.Return (Error value)
+    let inline error value : AsyncChoice<'T, 'Error> =
+        async.Return (Choice2Of2 value)
 
     /// Creates an AsyncChoice representing an error value.
     /// The error value in the Choice is the specified error message.
     [<CompiledName("FailWith")>]
-    let inline failwith errorMsg : AsyncResult<'T, string> =
-        async.Return (Error errorMsg)
+    let inline failwith errorMsg : AsyncChoice<'T, string> =
+        async.Return (Choice2Of2 errorMsg)
 
     /// <summary>
-    /// When the choice value is <c>Ok(x)</c>, returns <c>Ok (f x)</c>.
-    /// Otherwise, when the choice value is <c>Error(x)</c>, returns <c>Error(x)</c>.
+    /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
     /// </summary>
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) (value : AsyncResult<'T, 'Error>) : AsyncResult<'U, 'Error> =
+    let map (mapping : 'T -> 'U) (value : AsyncChoice<'T, 'Error>) : AsyncChoice<'U, 'Error> =
         async {
         // Get the input value.
         let! x = value
 
         // Apply the mapping function and return the result.
         match x with
-        | Ok result ->
-            return Ok (mapping result)
-        | Error error ->
-            return (Error error)
+        | Choice1Of2 result ->
+            return Choice1Of2 (mapping result)
+        | Choice2Of2 error ->
+            return (Choice2Of2 error)
         }
 
     /// <summary>
     /// When the choice value is <c>Choice1Of2(x)</c>, returns <c>Choice1Of2 (f x)</c>.
-    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>.
+    /// Otherwise, when the choice value is <c>Choice2Of2(x)</c>, returns <c>Choice2Of2(x)</c>. 
     /// </summary>
     [<CompiledName("MapAsync")>]
-    let mapAsync (mapping : 'T -> Async<'U>) (value : AsyncResult<'T, 'Error>) : AsyncResult<'U, 'Error> =
+    let mapAsync (mapping : 'T -> Async<'U>) (value : AsyncChoice<'T, 'Error>) : AsyncChoice<'U, 'Error> =
         async {
         // Get the input value.
         let! x = value
 
         // Apply the mapping function and return the result.
         match x with
-        | Ok result ->
+        | Choice1Of2 result ->
             let! mappedResult = mapping result
-            return Ok mappedResult
-        | Error error ->
-            return (Error error)
+            return Choice1Of2 mappedResult
+        | Choice2Of2 error ->
+            return (Choice2Of2 error)
         }

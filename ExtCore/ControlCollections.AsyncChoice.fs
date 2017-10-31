@@ -23,8 +23,7 @@ module ExtCore.Control.Collections.AsyncChoice
 open OptimizedClosures
 open ExtCore
 open ExtCore.Collections
-open ExtCore.Control
-
+open ExtCore.Control.Compatibility
 
 /// The standard F# Array module, adapted for use within 'asyncChoice' workflows.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

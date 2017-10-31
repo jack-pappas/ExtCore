@@ -19,7 +19,7 @@ limitations under the License.
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ExtCore.Control.Collections.ProtectedState.Compability
+module ExtCore.Control.Collections.ReaderProtectedState.Compatibility
     
 open Microsoft.FSharp.Control
 open OptimizedClosures
@@ -27,19 +27,19 @@ open ExtCore
 open ExtCore.Collections
 
 
-/// The standard F# Array module, lifted into the ProtectedState monad.
+/// The standard F# Array module, lifted into the ReaderProtectedState monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Array =
     /// A specialization of Array.iter which threads an accumulator through the computation
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> 'State -> Choice<unit * 'State, 'Error>)
-            (array : 'T[]) (state : 'State) : Choice<unit * 'State, 'Error> =
+    let iter (action : 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<unit * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
-        let action = FSharpFunc<_,_,_>.Adapt action
+        let action = FSharpFunc<_,_,_,_>.Adapt action
         let len = array.Length
 
         let mutable index = 0
@@ -47,7 +47,7 @@ module Array =
         let mutable error = None
 
         while index < len && Option.isNone error do
-            match action.Invoke (array.[index], state) with
+            match action.Invoke (array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 ((), state') ->
@@ -66,12 +66,12 @@ module Array =
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> 'State -> Choice<unit * 'State, 'Error>)
-            (array : 'T[]) (state : 'State) : Choice<unit * 'State, 'Error> =
+    let iteri (action : int -> 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<unit * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
-        let action = FSharpFunc<_,_,_,_>.Adapt action
+        let action = FSharpFunc<_,_,_,_,_>.Adapt action
         let len = array.Length
 
         let mutable index = 0
@@ -79,7 +79,7 @@ module Array =
         let mutable error = None
 
         while index < len && Option.isNone error do
-            match action.Invoke (index, array.[index], state) with
+            match action.Invoke (index, array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 ((), state') ->
@@ -98,12 +98,12 @@ module Array =
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
-            (array : 'T[]) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+    let map (mapping : 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<'U[] * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
-        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
         let len = array.Length
         let results = Array.zeroCreate len
 
@@ -112,7 +112,7 @@ module Array =
         let mutable error = None
 
         while index < len && Option.isNone error do
-            match mapping.Invoke (array.[index], state) with
+            match mapping.Invoke (array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 (result, state') ->
@@ -132,12 +132,12 @@ module Array =
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> 'State -> Choice<'U * 'State, 'Error>)
-            (array : 'T[]) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+    let mapi (mapping : int -> 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<'U[] * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
-        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+        let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
         let len = array.Length
         let results = Array.zeroCreate len
 
@@ -146,7 +146,7 @@ module Array =
         let mutable error = None
 
         while index < len && Option.isNone error do
-            match mapping.Invoke (index, array.[index], state) with
+            match mapping.Invoke (index, array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 (result, state') ->
@@ -163,19 +163,19 @@ module Array =
             Choice1Of2 (results, state)
 
 
-/// The standard F# List module, lifted into the ProtectedState monad.
+/// The standard F# List module, lifted into the ReaderProtectedState monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
     /// A specialization of List.map which threads an accumulator through the computation
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
-            (list : 'T list) (state : 'State) : Choice<'U list * 'State, 'Error> =
+    let map (mapping : 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
+            (list : 'T list) (env : 'Env) (state : 'State) : Choice<'U list * 'State, 'Error> =
         // Preconditions
         checkNonNull "list" list
 
-        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
             
         let rec mapRec (results, state, lst) =
             match lst with
@@ -186,7 +186,7 @@ module List =
                 // Apply the function to the head of the list.
                 // If the result is an error, return it;
                 // otherwise, continue processing recursively.
-                match mapping.Invoke (hd, state) with
+                match mapping.Invoke (hd, env, state) with
                 | Choice2Of2 error ->
                     Choice2Of2 error
                 | Choice1Of2 (result, state) ->
@@ -196,16 +196,17 @@ module List =
         mapRec ([], state, list)
 
 
-/// The ExtCore.Collections.ArrayView module, lifted into the ProtectedState monad.
+/// The ExtCore.Collections.ArrayView module, lifted into the ReaderProtectedState monad.
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ArrayView =
     /// A specialization of ArrayView.iter which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> 'State -> Choice<unit * 'State, 'Error>)
-            (view : ArrayView<'T>) (state : 'State) : Choice<unit * 'State, 'Error> =
-        let action = FSharpFunc<_,_,_>.Adapt action
+    let iter (action : 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
+            : Choice<unit * 'State, 'Error> =
+        let action = FSharpFunc<_,_,_,_>.Adapt action
 
         let array = view.Array
         let endExclusive = view.Offset + view.Count
@@ -215,7 +216,7 @@ module ArrayView =
         let mutable error = None
 
         while index < endExclusive && Option.isNone error do
-            match action.Invoke (array.[index], state) with
+            match action.Invoke (array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 ((), state') ->
@@ -233,9 +234,10 @@ module ArrayView =
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> 'State -> Choice<unit * 'State, 'Error>)
-            (view : ArrayView<'T>) (state : 'State) : Choice<unit * 'State, 'Error> =
-        let action = FSharpFunc<_,_,_,_>.Adapt action
+    let iteri (action : int -> 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
+            : Choice<unit * 'State, 'Error> =
+        let action = FSharpFunc<_,_,_,_,_>.Adapt action
 
         let array = view.Array
         let endExclusive = view.Offset + view.Count
@@ -245,7 +247,7 @@ module ArrayView =
         let mutable error = None
 
         while index < endExclusive && Option.isNone error do
-            match action.Invoke (index, array.[index], state) with
+            match action.Invoke (index, array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 ((), state') ->
@@ -263,9 +265,10 @@ module ArrayView =
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'State -> Choice<'U * 'State, 'Error>)
-            (view : ArrayView<'T>) (state : 'State) : Choice<'U[] * 'State, 'Error> =
-        let mapping = FSharpFunc<_,_,_>.Adapt mapping
+    let map (mapping : 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
+            : Choice<'U[] * 'State, 'Error> =
+        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
 
         let array = view.Array
         let endExclusive = view.Offset + view.Count
@@ -277,7 +280,7 @@ module ArrayView =
         let mutable error = None
 
         while index < endExclusive && Option.isNone error do
-            match mapping.Invoke (array.[index], state) with
+            match mapping.Invoke (array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 (result, state') ->
@@ -297,9 +300,10 @@ module ArrayView =
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> 'State -> Choice<'U * 'State, 'Error>)
-            (view : ArrayView<'T>) (state : 'State) : Choice<'U[] * 'State, 'Error> =
-        let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
+    let mapi (mapping : int -> 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
+            (view : ArrayView<'T>) (env : 'Env) (state : 'State)
+            : Choice<'U[] * 'State, 'Error> =
+        let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
 
         let array = view.Array
         let endExclusive = view.Offset + view.Count
@@ -311,7 +315,7 @@ module ArrayView =
         let mutable error = None
 
         while index < endExclusive && Option.isNone error do
-            match mapping.Invoke (index, array.[index], state) with
+            match mapping.Invoke (index, array.[index], env, state) with
             | Choice2Of2 err ->
                 error <- Some err
             | Choice1Of2 (result, state') ->
@@ -326,4 +330,3 @@ module ArrayView =
             Choice2Of2 error
         | None ->
             Choice1Of2 (results, state)
-

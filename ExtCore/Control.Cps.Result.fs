@@ -37,7 +37,7 @@ type ResultContFunc<'T, 'Error, 'K> =
 /// <typeparam name="T"></typeparam>
 /// <typeparam name="Error"></typeparam>
 /// <typeparam name="K"></typeparam>
-type ProtectedResultStateContFunc<'State, 'T, 'Error, 'K> =
+type ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
     'State -> (Result<'T * 'State, 'Error> -> 'K) -> 'K
 
 (*** Workflow Builders ***)
@@ -141,31 +141,31 @@ type ResultContBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ProtectedResultStateContBuilder () =
+type ProtectedStateContBuilder () =
     // 'T -> M<'T>
     member inline __.Return value
-        : ProtectedResultStateContFunc<'State, 'T, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             cont (Ok (value, state))
 
     // M<'T> -> M<'T>
     member inline __.ReturnFrom func
-        : ProtectedResultStateContFunc<'State, 'T, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         func
 
     // unit -> M<'T>
     member inline __.Zero ()
-        : ProtectedResultStateContFunc<'State, unit, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, unit, 'Error, 'K> =
         fun state cont ->
             cont (Ok ((), state))
 
     // (unit -> M<'T>) -> M<'T>
     member __.Delay f
-        : ProtectedResultStateContFunc<'State, 'T, 'Error, 'K> =
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         f ()
 
     // M<'T> * ('T -> M<'U>) -> M<'U>
-    member inline __.Bind (m : ProtectedResultStateContFunc<_,_,_,_>, k : 'T -> ProtectedResultStateContFunc<_,_,_,_>) =
+    member inline __.Bind (m : ProtectedStateContFunc<_,_,_,_>, k : 'T -> ProtectedStateContFunc<_,_,_,_>) =
         fun state cont ->
             m state <| fun result ->
                 match result with
@@ -178,8 +178,8 @@ type ProtectedResultStateContBuilder () =
     // M<'T> -> M<'T> -> M<'T>
     // or
     // M<unit> -> M<'T> -> M<'T>
-    member inline __.Combine (r1 : ProtectedResultStateContFunc<_,_,_,_>, r2 : ProtectedResultStateContFunc<_,_,_,_>)
-        : ProtectedResultStateContFunc<'State, 'T, 'Error, 'K>=
+    member inline __.Combine (r1 : ProtectedStateContFunc<_,_,_,_>, r2 : ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K>=
         fun state cont ->
             r1 state <| fun result ->
                 match result with
@@ -190,31 +190,31 @@ type ProtectedResultStateContBuilder () =
                     r2 state cont
 
     // M<'T> * (exn -> M<'T>) -> M<'T>
-    member inline __.TryWith (body : ProtectedResultStateContFunc<_,_,_,_>, handler : exn -> ProtectedResultStateContFunc<_,_,_,_>)
-        : ProtectedResultStateContFunc<'State, 'T, 'Error, 'K> =
+    member inline __.TryWith (body : ProtectedStateContFunc<_,_,_,_>, handler : exn -> ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             with ex ->
                 handler ex state cont
 
     // M<'T> -> M<'T> -> M<'T>
-    member inline __.TryFinally (body : ProtectedResultStateContFunc<_,_,_,_>, handler)
-        : ProtectedResultStateContFunc<'State, 'T, 'Error, 'K> =
+    member inline __.TryFinally (body : ProtectedStateContFunc<_,_,_,_>, handler)
+        : ProtectedStateContFunc<'State, 'T, 'Error, 'K> =
         fun state cont ->
             try body state cont
             finally
                 handler ()
 
     // 'T * ('T -> M<'U>) -> M<'U> when 'U :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedResultStateContFunc<_,_,_,_>)
-        : ProtectedResultStateContFunc<'State, 'U, 'Error, 'K> =
+    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, 'U, 'Error, 'K> =
         this.TryFinally (body resource, (fun () ->
             if not <| isNull (box resource) then
                 resource.Dispose ()))
 
     // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ProtectedResultStateContFunc<_,_,_,_>)
-        : ProtectedResultStateContFunc<'State, unit, 'Error, 'K> =
+    member this.While (guard, body : ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, unit, 'Error, 'K> =
         if guard () then
             this.Bind (body, (fun () -> this.While (guard, body)))
         else
@@ -223,8 +223,8 @@ type ProtectedResultStateContBuilder () =
     // seq<'T> * ('T -> M<'U>) -> M<'U>
     // or
     // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ProtectedResultStateContFunc<_,_,_,_>)
-        : ProtectedResultStateContFunc<'State, unit, 'Error, 'K> =
+    member this.For (sequence : seq<_>, body : 'T -> ProtectedStateContFunc<_,_,_,_>)
+        : ProtectedStateContFunc<'State, unit, 'Error, 'K> =
         this.Using (sequence.GetEnumerator (), fun enum ->
             this.While (
                 enum.MoveNext,
@@ -232,8 +232,7 @@ type ProtectedResultStateContBuilder () =
                     body enum.Current)))
 
 
-/// <summary>
-/// </summary>
+/// 
 [<AutoOpen>]
 module ResultWorkflowBuilders =
 
@@ -241,13 +240,12 @@ module ResultWorkflowBuilders =
     [<CompiledName("ResultCont")>]
     let resultCont = ResultContBuilder ()
     //
-    [<CompiledName("ProtectedResultStateCont")>]
-    let protectedResultStateCont = ProtectedResultStateContBuilder ()
+    [<CompiledName("ProtectedStateCont")>]
+    let protectedStateCont = ProtectedStateContBuilder ()
 
 
-/// <summary>
-/// </summary>
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+///
+[<RequireQualifiedAccess>]
 module ResultCont =
     //
     [<CompiledName("SetError")>]

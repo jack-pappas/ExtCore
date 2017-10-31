@@ -22,19 +22,21 @@
 
     <ItemGroup>
       <Compile Include="AssemblyInfo.fs" />
-      <Compile Include="Pervasive.Compability.fs" />
+      <Compile Include="Pervasive.Compatibility.fs" />
       <Compile Include="Pervasive.fs" />
       <Compile Include="Pervasive.Result.fs" />
       <Compile Include="Substring.fs" />
       <Compile Include="String.fs" />
       <Compile Include="Control.Agents.fs" />
       <Compile Include="Control.fs" />
+      <Compile Include="Control.Compatibility.fs" />
       <Compile Include="Control.Result.fs" />
       <Compile Include="Control.Observable.fs" />
       <Compile Include="Control.Indexed.fs" />
-      <Compile Include="Control.Indexed.Compability.fs" />
+      <Compile Include="Control.Indexed.Compatibility.fs" />
       <Compile Include="Control.Indexed.Result.fs" />
       <Compile Include="Control.Cps.fs" />
+      <Compile Include="Control.Cps.Compatibility.fs" />
       <Compile Include="Control.Cps.Result.fs" />
       <Compile Include="Control.Tasks.fs" />
       <Compile Include="Collections.fs" />
@@ -74,9 +76,9 @@
       <Compile Include="ControlCollections.ReaderChoice.fs" />
       <Compile Include="ControlCollections.Result.fs" />
       <Compile Include="ControlCollections.ReaderResult.fs" />
-      <Compile Include="ControlCollections.ProtectedState.Compability.fs" />
+      <Compile Include="ControlCollections.ProtectedState.Compatibility.fs" />
       <Compile Include="ControlCollections.ProtectedState.fs" />
-      <Compile Include="ControlCollections.ReaderProtectedState.Compability.fs" />
+      <Compile Include="ControlCollections.ReaderProtectedState.Compatibility.fs" />
       <Compile Include="ControlCollections.ReaderProtectedState.fs" />
       <Compile Include="ControlCollections.StatefulChoice.fs" />
       <Compile Include="ControlCollections.StatefulResult.fs" />

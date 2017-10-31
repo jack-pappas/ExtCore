@@ -11,6 +11,7 @@
     <Compile Include="String.fs" />
     <Compile Include="Control.Agents.fs" />
     <Compile Include="Control.fs" />
+    <Compile Include="Control.Compatibility.fs" />
     <Compile Include="Control.Result.fs" />
     <Compile Include="Control.Observable.fs" />
     <Compile Include="Control.Cps.fs" />
