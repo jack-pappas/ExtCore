@@ -372,7 +372,7 @@ type ProtectedStateBuilder () =
 /// <summary>
 /// </summary>
 [<Sealed>]
-type ReaderProtectedResultStateBuilder () =
+type ReaderProtectedStateBuilder () =
     // 'T -> M<'T>
     member __.Return value
         : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
@@ -903,95 +903,6 @@ type AsyncStatefulResultBuilder () =
                     body enum.Current)))
 
 
-/// <summary>
-/// </summary>
-[<Sealed>]
-type ReaderProtectedStateBuilder () =
-    // 'T -> M<'T>
-    member __.Return value
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun _ state ->
-        Ok (value, state)
-
-    // M<'T> -> M<'T>
-    member __.ReturnFrom func
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        func
-
-    // unit -> M<'T>
-    member this.Zero ()
-        : ReaderProtectedStateFunc<'Env, 'State, unit, 'Error> =
-        fun _ state ->
-        Ok ((), state)
-
-    // (unit -> M<'T>) -> M<'T>
-    member this.Delay (f : unit -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun env state -> f () env state
-
-    // M<'T> * ('T -> M<'U>) -> M<'U>
-    member __.Bind (m : ReaderProtectedStateFunc<_,_,_,_>, binder : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
-        fun env state ->
-        match m env state with
-        | Error error ->
-            Error error
-        | Ok (value, state) ->
-            binder value env state
-
-    // M<'T> -> M<'T> -> M<'T>
-    // or
-    // M<unit> -> M<'T> -> M<'T>
-    member this.Combine (r1 : ReaderProtectedStateFunc<_,_,_,_>, r2 : ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        this.Bind (r1, (fun () -> r2))
-
-    // M<'T> * (exn -> M<'T>) -> M<'T>
-    member __.TryWith (body : ReaderProtectedStateFunc<_,_,_,_>, handler : exn -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun env state ->
-        try body env state
-        with ex ->
-            handler ex env state
-
-    // M<'T> * (unit -> unit) -> M<'T>
-    member __.TryFinally (body : ReaderProtectedStateFunc<_,_,_,_>, handler)
-        : ReaderProtectedStateFunc<'Env, 'State, 'T, 'Error> =
-        fun env state ->
-        try body env state
-        finally
-            handler ()
-
-    // 'T * ('T -> M<'U>) -> M<'U> when 'T :> IDisposable
-    member this.Using (resource : ('T :> System.IDisposable), body : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, 'U, 'Error> =
-        fun env state ->
-        try
-            body resource env state
-        finally
-            if not <| isNull (box resource) then
-                resource.Dispose ()
-
-    // (unit -> bool) * M<'T> -> M<'T>
-    member this.While (guard, body : ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, unit, 'Error> =
-        if guard () then
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
-
-    // seq<'T> * ('T -> M<'U>) -> M<'U>
-    // or
-    // seq<'T> * ('T -> M<'U>) -> seq<M<'U>>
-    member this.For (sequence : seq<_>, body : 'T -> ReaderProtectedStateFunc<_,_,_,_>)
-        : ReaderProtectedStateFunc<'Env, 'State, unit, 'Error> =
-        this.Using (sequence.GetEnumerator (), fun enum ->
-            this.While (
-                enum.MoveNext,
-                this.Delay (fun () ->
-                    body enum.Current)))
-
-
 
 
 /// <summary>
@@ -1031,8 +942,8 @@ module ResultWorkflowBuilders =
 
 /// <summary>
 /// </summary>
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module ProtectedResultState =
+[<RequireQualifiedAccess>]
+module ProtectedState =
     //
     [<CompiledName("LiftState")>]
     let inline liftState (stateFunc : StateFunc<'State, 'T>)
@@ -1041,8 +952,8 @@ module ProtectedResultState =
             Ok (stateFunc state)
 
     //
-    [<CompiledName("LiftChoice")>]
-    let inline liftChoice (choice : Result<'T, 'Error>)
+    [<CompiledName("LiftResult")>]
+    let inline liftResult (choice : Result<'T, 'Error>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
         match choice with
         | Error error ->
@@ -1062,8 +973,8 @@ module ProtectedResultState =
             Ok (result, env)
 
     //
-    [<CompiledName("LiftReaderChoice")>]
-    let inline liftReaderChoice (readerResultFunc : 'State -> Result<'T, 'Error>)
+    [<CompiledName("LiftReaderResult")>]
+    let inline liftReaderResult (readerResultFunc : 'State -> Result<'T, 'Error>)
         : ProtectedStateFunc<'State, 'T, 'Error> =
         fun state ->
             match readerResultFunc state with
@@ -1097,9 +1008,9 @@ module ProtectedResultState =
     /// by discarding the state when the computation is complete, the return
     /// value can be adapted to the Choice workflow.
     [<CompiledName("DiscardState")>]
-    let inline discardState (protectedResultStateFunc : ProtectedStateFunc<'State, 'T, 'Error>) =
+    let inline discardState (protectedStateFunc : ProtectedStateFunc<'State, 'T, 'Error>) =
         fun state ->
-            match protectedResultStateFunc state with
+            match protectedStateFunc state with
             | Error error ->
                 Error error
             | Ok (result, _) ->
@@ -1107,7 +1018,7 @@ module ProtectedResultState =
 
 /// <summary>
 /// </summary>
-[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<RequireQualifiedAccess>]
 module StatefulResult =
     //
     [<CompiledName("LiftState")>]
