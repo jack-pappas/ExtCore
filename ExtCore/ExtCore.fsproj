@@ -22,8 +22,8 @@
 
     <ItemGroup>
       <Compile Include="AssemblyInfo.fs" />
-      <Compile Include="Pervasive.Compatibility.fs" />
       <Compile Include="Pervasive.fs" />
+      <Compile Include="Pervasive.Compatibility.fs" />
       <Compile Include="Pervasive.Result.fs" />
       <Compile Include="Substring.fs" />
       <Compile Include="String.fs" />
