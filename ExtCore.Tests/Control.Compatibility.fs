@@ -21,6 +21,7 @@ namespace Tests.ExtCore.Control.Compatibility
 open System
 open System.Runtime.CompilerServices
 open ExtCore.Control
+open ExtCore.Compatibility
 open ExtCore.Control.Compatibility
 open NUnit.Framework
 

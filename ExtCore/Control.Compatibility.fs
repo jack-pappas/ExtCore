@@ -22,6 +22,7 @@ namespace ExtCore.Control.Compatibility
 
 open ExtCore
 open ExtCore.Control
+open ExtCore.Compatibility
 
 (*** Workflow Monoids ***)
 
