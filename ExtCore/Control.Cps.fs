@@ -50,9 +50,10 @@ type TransactionFunc<'State, 'T, 'Error, 'K> =
     'State -> ('State -> TransactionStatus<'T, 'Error> -> 'K) -> 'K
 
 /// <summary>
+/// Incomplete continuation function
 /// </summary>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="K"></typeparam>
+/// <typeparam name="T">The type of the result value</typeparam>
+/// <typeparam name="K">The type of the continuation function</typeparam>
 type ContFunc<'T, 'K> =
     ('T -> 'K) -> 'K
 
