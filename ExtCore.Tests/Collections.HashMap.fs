@@ -1263,6 +1263,7 @@ module MapModule =
         ()
 
     [<Test>]
+    [<Ignore("Test is ignored because it relies on a certain traversal ordering, which doesn't make sense for a hash-based (unordered) map.")>]
     let foldBack () : unit =
         // value keys
         let valueKeyMap = HashMap.ofSeq [(2,"b"); (3,"c"); (4,"d"); (5,"e")]
