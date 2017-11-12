@@ -291,7 +291,7 @@ let rec private segmentWithImpl (predicate : FSharpFunc<'T, 'T, bool>) (enumerat
     // Yield the first element in the segment.
     yield enumerator.Current
 
-    /// Are there any more elements in this segment?
+    // Are there any more elements in this segment?
     match enumerator.Peek () with
     | Some nextElement
         when predicate.Invoke (enumerator.Current, nextElement) ->
