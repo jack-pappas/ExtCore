@@ -26,7 +26,7 @@ open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 open System.Security
 
-#if FX_ATLEAST_PORTABLE
+#if FX_ATLEAST_PORTABLE || NETSTANDARD1_6
 #else
 open System.Security.Permissions
 #endif
@@ -54,7 +54,7 @@ open System.Security.Permissions
     to the test project so they can be unit-tested. *)
 [<assembly: InternalsVisibleTo("ExtCore.Tests")>]
 
-#if FX_ATLEAST_PORTABLE
+#if FX_ATLEAST_PORTABLE || NETSTANDARD1_6
 #else
 (* Dependency hints for Ngen *)
 [<assembly: DependencyAttribute("FSharp.Core", LoadHint.Always)>]

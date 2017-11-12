@@ -709,7 +709,7 @@ let inline map (mapping : 'T -> 'U) (resizeArray : ResizeArray<'T>) : ResizeArra
     // Preconditions
     checkNonNull "resizeArray" resizeArray
 
-    #if FX_ATLEAST_PORTABLE
+    #if FX_ATLEAST_PORTABLE || NETSTANDARD1_6
     // Simple implementation for portable libraries.
     let results = ResizeArray (resizeArray.Count)
     for i = 0 to resizeArray.Count - 1 do

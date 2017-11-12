@@ -18,7 +18,7 @@ limitations under the License.
 
 namespace ExtCore.Net
 
-#if FX_ATLEAST_PORTABLE
+#if FX_ATLEAST_PORTABLE || NETSTANDARD1_6
 #else
 
 open System

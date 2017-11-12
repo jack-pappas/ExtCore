@@ -180,12 +180,12 @@ module Operators =
     let typehandleof () : unit =
         Assert.Ignore "Test not yet implemented."
 #endif
-
+#if !NETSTANDARD1_6
     [<Test>]
     let raiseNew () : unit =
         Assert.Throws<System.NotFiniteNumberException>(fun () ->
             raiseNew<System.NotFiniteNumberException, _> ()) |> ignore
-
+#endif
     /// Checks for a non-empty exeption message.
     let private NonEmptyExceptionMessage (ex : exn) : unit =
         Assert.IsNotNull ex.Message

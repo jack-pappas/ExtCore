@@ -1371,7 +1371,7 @@ module Printf =
     let inline dprintfn format : 'T =
         ksprintf Debug.WriteLine format
 
-#if FX_SIMPLE_DIAGNOSTICS
+#if FX_SIMPLE_DIAGNOSTICS || NETSTANDARD1_6
 #else
     /// <summary>Print formatted string to Debug listeners.</summary>
     /// <param name="format"></param>
