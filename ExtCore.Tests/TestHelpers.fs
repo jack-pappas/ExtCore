@@ -64,7 +64,13 @@ let inline assertFalse (condition: bool) =
 /// or a type which inherits from the specified exception type.
 [<RequiresExplicitTypeArguments>]
 let inline assertRaises<'T when 'T :> exn> assertion =
-    Assert.Throws (typeof<'T>, TestDelegate (assertion))
+    Assert.Catch<'T> (TestDelegate (assertion))
+    |> ignore
+
+/// Asserts that the given function raises an exception of exactly the specified exception type.
+[<RequiresExplicitTypeArguments>]
+let inline assertRaisesExact<'T when 'T :> exn> assertion =
+    Assert.Throws<'T> (TestDelegate (assertion))
     |> ignore
 
 /// Assertion functions for collections.
