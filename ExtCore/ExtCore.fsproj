@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
+        <TargetFrameworks>netstandard1.6;netstandard2.0;net45</TargetFrameworks>
         <Title>ExtCore</Title>
         <Version>0.8.47</Version>
         <RepositoryUrl>https://github.com/jack-pappas/ExtCore</RepositoryUrl>
-        <AssemblyVersion>8.0.30703</AssemblyVersion>
-        <FileVersion>8.0.30703</FileVersion>
+        <AssemblyVersion>0.8.47</AssemblyVersion>
+        <FileVersion>0.8.47</FileVersion>
         <Description>ExtCore provides extensions to the F# core library (FSharp.Core) and aims to help you build
             industrial-strength F# applications. These extensions include additional functions for modules such as
             Array, List, Set, and Map; immutable IntSet, IntMap, LazyList, and Queue collections; a variety of

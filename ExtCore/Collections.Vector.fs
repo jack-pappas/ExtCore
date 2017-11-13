@@ -58,7 +58,7 @@ type vector<'T> private (elements : 'T[]) =
         with get () =
             elements.Length
 
-#if FX_ATLEAST_PORTABLE
+#if FX_ATLEAST_PORTABLE || NETSTANDARD1_6
 #else
     /// Gets a 64-bit integer that represents the total number of elements in the Vector.
     member __.LongLength
