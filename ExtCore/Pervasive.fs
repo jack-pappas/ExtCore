@@ -791,7 +791,7 @@ module Lazy =
 #endif
 
 /// Additional functional operators on options.
-[<RequireQualifiedAccess>]
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Option =
     open System
     open System.Runtime.InteropServices
