@@ -24,10 +24,11 @@ open ExtCore
 (*** Workflow Monoids ***)
 
 /// <summary>
+/// Incomplete continuation function with a success and failure track
 /// </summary>
-/// <typeparam name="T"></typeparam>
-/// <typeparam name="Error"></typeparam>
-/// <typeparam name="K"></typeparam>
+/// <typeparam name="T">The code succeeded with a value of 'T.</typeparam>
+/// <typeparam name="Error">The code failed with a value of 'Error representing what went wrong.</typeparam>
+/// <typeparam name="K">The type of the continuation function.</typeparam>
 type ResultContFunc<'T, 'Error, 'K> =
     ContFunc<Result<'T, 'Error>, 'K>
 
