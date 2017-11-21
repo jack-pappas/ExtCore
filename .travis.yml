@@ -13,11 +13,13 @@ env: MONO_BASE_PATH=/usr/lib/mono/
 matrix:
   include:
     - dotnet: 2.0.0
-      env: DOTNETLIBFW=netstandard2.0
-      env: DOTNETFW=netcoreapp2.0
+      env: 
+        - DOTNETLIBFW=netstandard2.0
+        - DOTNETFW=netcoreapp2.0
     - dotnet: 1.1.0
-      env: DOTNETLIBFW=netstandard1.6
-      env: DOTNETFW=netcoreapp1.1
+      env:  
+        - DOTNETLIBFW=netstandard1.6
+        - DOTNETFW=netcoreapp1.1
 
 install:
   - dotnet restore
