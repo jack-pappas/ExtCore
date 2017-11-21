@@ -14,7 +14,7 @@ matrix:
   include:
     - dotnet: 2.0.0
       env: DOTNETFW=netcoreapp2.0
-    - dotnet: 1.1.5
+    - dotnet: 1.1.0
       env: DOTNETFW=netcoreapp1.1
 
 install:
@@ -26,9 +26,9 @@ install:
 #        https://docs.travis-ci.com/user/customizing-the-build/#Explicitly-Including-Jobs
 
 script:
-  - dotnet build ExtCore/ExtCore.fsproj --framework "$DOTNETFW"
+  - dotnet build ExtCore/ExtCore.fsproj --framework $DOTNETFW
   - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore/ExtCore.fsproj --framework "net45"
-  - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "$DOTNETFW"
+  - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework $DOTNETFW
 #  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
 # Workaround for dotnet test on net45:
   - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
