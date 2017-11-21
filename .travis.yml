@@ -13,12 +13,14 @@ env: MONO_BASE_PATH=/usr/lib/mono/
 matrix:
   include:
     - dotnet: 2.0.0
+      env: DOTNETLIBFW=netstandard2.0
       env: DOTNETFW=netcoreapp2.0
     - dotnet: 1.1.0
+      env: DOTNETLIBFW=netstandard1.6
       env: DOTNETFW=netcoreapp1.1
 
 install:
-  - dotnet restore --framework $DOTNETFW
+  - dotnet restore
 
 # TODO : Add before_script section to clone fsharp/fsharp repo and compile it, so fsc-proto can be used.
 #        Cache the compiled fsharp build (using travis CI caching functionality) so it doesn't have to run every time.
@@ -26,7 +28,7 @@ install:
 #        https://docs.travis-ci.com/user/customizing-the-build/#Explicitly-Including-Jobs
 
 script:
-  - dotnet build ExtCore/ExtCore.fsproj --framework $DOTNETFW
+  - dotnet build ExtCore/ExtCore.fsproj --framework $DOTNETLIBFW
   - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore/ExtCore.fsproj --framework "net45"
   - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework $DOTNETFW
 #  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
