@@ -12,3 +12,4 @@ build_script:
 - cmd: >-
     dotnet pack
 test: off
+
