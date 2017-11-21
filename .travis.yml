@@ -8,7 +8,6 @@ sudo: required
 # TODO : Enable both mono and dotnet builds: https://docs.travis-ci.com/user/languages/csharp/#Testing-Against-Mono-and-.NET-Core
 mono:
   - latest
-env: MONO_BASE_PATH=/usr/lib/mono/
 
 matrix:
   include:
@@ -16,10 +15,12 @@ matrix:
       env: 
         - DOTNETLIBFW=netstandard2.0
         - DOTNETFW=netcoreapp2.0
+        - MONO_BASE_PATH=/usr/lib/mono/
     - dotnet: 1.1.0
       env:  
         - DOTNETLIBFW=netstandard1.6
         - DOTNETFW=netcoreapp1.1
+        - MONO_BASE_PATH=/usr/lib/mono/
 
 install:
   - dotnet restore
