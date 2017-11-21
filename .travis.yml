@@ -18,7 +18,7 @@ matrix:
       env: DOTNETFW=netcoreapp1.1
 
 install:
-  - dotnet restore
+  - dotnet restore --framework $DOTNETFW
 
 # TODO : Add before_script section to clone fsharp/fsharp repo and compile it, so fsc-proto can be used.
 #        Cache the compiled fsharp build (using travis CI caching functionality) so it doesn't have to run every time.
