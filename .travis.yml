@@ -8,10 +8,14 @@ sudo: required
 # TODO : Enable both mono and dotnet builds: https://docs.travis-ci.com/user/languages/csharp/#Testing-Against-Mono-and-.NET-Core
 mono:
   - latest
-dotnet: 
-  - 2.0.0
-  - 1.1.5
 env: MONO_BASE_PATH=/usr/lib/mono/
+
+matrix:
+  include:
+    - dotnet: 2.0.0
+      env: DOTNETFW=netcoreapp2.0
+    - dotnet: 1.1.5
+      env: DOTNETFW=netcoreapp1.1
 
 install:
   - dotnet restore
@@ -22,10 +26,9 @@ install:
 #        https://docs.travis-ci.com/user/customizing-the-build/#Explicitly-Including-Jobs
 
 script:
-  - dotnet build ExtCore/ExtCore.fsproj --framework "netstandard2.0"
+  - dotnet build ExtCore/ExtCore.fsproj --framework "$DOTNETFW"
   - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore/ExtCore.fsproj --framework "net45"
-  - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "netcoreapp2.0"
-  - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "netcoreapp1.1"
+  - dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "$DOTNETFW"
 #  - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet test ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
 # Workaround for dotnet test on net45:
   - FrameworkPathOverride=$MONO_BASE_PATH/4.5-api/ dotnet build ExtCore.Tests/ExtCore.Tests.fsproj --framework "net45"
