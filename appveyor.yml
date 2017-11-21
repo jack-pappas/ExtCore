@@ -9,6 +9,6 @@ build_script:
     dotnet build ExtCore.sln
 - cmd: >-
     dotnet test ExtCore.Tests\ExtCore.Tests.fsproj
-- cmd >-
+- cmd: >-
     dotnet pack
 test: off
