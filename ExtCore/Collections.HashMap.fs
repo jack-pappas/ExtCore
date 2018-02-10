@@ -2042,3 +2042,30 @@ module HashMap =
 
         map.MapPartition partitioner
 
+    /// <summary>
+    /// Combines two HashMap's into a single HashMap. Whenever a key exists in both HashMap's, the first HashMaps entry will be added to the result HashMap.
+    /// </summary>
+    /// <param name="map1"></param>
+    /// <param name="map2"></param>
+    /// <returns></returns>
+    [<CompiledName("Union")>]
+    let union (map1 : HashMap<'Key, 'T>) (map2 : HashMap<'Key, 'T>) :  HashMap<'Key, 'T> =
+        checkNonNull "map1" map1
+        checkNonNull "map2" map2
+        
+        match   count map1, count map2 with
+        // Optimize for empty inputs
+        | 0, 0 ->
+            empty
+        | 0, _ ->
+            map2
+        | _, 0 ->
+            map1
+        | _, _ ->
+            // Start with the second map.
+            // Fold over the first map, adding it's entries to the second
+            // and overwriting any existing entries.
+            (map2, map1)
+            ||> fold (fun combinedMap key value ->
+                add key value combinedMap)
+
