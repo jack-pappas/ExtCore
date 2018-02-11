@@ -2049,17 +2049,17 @@ module HashMap =
     /// <param name="map2"></param>
     /// <returns></returns>
     [<CompiledName("Union")>]
-    let union (map1 : HashMap<'Key, 'T>) (map2 : HashMap<'Key, 'T>) :  HashMap<'Key, 'T> =
+    let inline union (map1 : HashMap<'Key, 'T>) (map2 : HashMap<'Key, 'T>) :  HashMap<'Key, 'T> =
         checkNonNull "map1" map1
         checkNonNull "map2" map2
         
-        match   count map1, count map2 with
+        match isEmpty map1, isEmpty map2 with
         // Optimize for empty inputs
-        | 0, 0 ->
+        | true, true ->
             empty
-        | 0, _ ->
+        | true, _ ->
             map2
-        | _, 0 ->
+        | _, true ->
             map1
         | _, _ ->
             // Start with the second map.
