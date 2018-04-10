@@ -1,4 +1,4 @@
-﻿(*
+(*
 
 Copyright 2010-2012 TidePowerd Ltd.
 Copyright 2013 Jack Pappas
@@ -23,8 +23,10 @@ module ExtCore.Collections.List
 
 open LanguagePrimitives
 open OptimizedClosures
-open ExtCore
 
+let private checkNonNull name value =
+    if value = Unchecked.defaultof<_> then 
+        raise <| System.ArgumentNullException(name)
 
 /// <summary>A curried "cons" operator.</summary>
 /// <param name="list"></param>
@@ -776,4 +778,3 @@ let distinct (list : 'T list) : 'T list =
 
     // Return the result list.
     result
-
