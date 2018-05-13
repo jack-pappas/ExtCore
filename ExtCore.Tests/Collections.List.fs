@@ -382,6 +382,28 @@ let distinct () : unit =
     |> List.distinct
     |> Collection.assertEqual ["A"; "N"]
 
+[<Test>]
+let difference () : unit =
+    // Test case that mirrors Haskell's for (\\)
+    List.difference ("Hello World!" |> Seq.toList) ("ell W" |> Seq.toList)
+    |> Collection.assertEqual ("Hoorld!" |> Seq.toList)
+
+    // Empty list1
+    List.difference [] [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]
+    |> Collection.assertEqual []
+
+    // Empty list2
+    List.difference [1; 2; 3; 4; 5; 6; 7; 8; 9; 0] []
+    |> Collection.assertEqual [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]
+
+    // Both empty
+    List.difference [] []
+    |> Collection.assertEqual []
+
+    // Test for removing the same list from another (invariant from Haskell docs).
+    // ((xs ++ ys) \\ xs) == ys
+    List.difference ([6; 7; 8; 9; 0] @ [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]) [6; 7; 8; 9; 0]
+    |> Collection.assertEqual [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]
 
 open FsCheck
 

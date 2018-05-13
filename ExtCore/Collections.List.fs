@@ -777,3 +777,25 @@ let distinct (list : 'T list) : 'T list =
     // Return the result list.
     result
 
+/// <summary>Returns a new list created by keeping only those elements that are not in the second list.  In the result of 'List.difference list1 list2', the first occurrence of each element of 'list2' in turn (if any) has been removed from 'list1'.</summary>
+/// <param name="list1"></param>
+/// <param name="list2"></param>
+/// <returns></returns>
+[<CompiledName("Difference")>]
+let difference (list1 : 'T list) (list2 : 'T list) : 'T list =
+    // Check pre-conditions
+    checkNonNull "list1" list1
+    checkNonNull "list2" list2
+
+    // Define helper to remove the first instance of an element 
+    let removeFirst pred list =
+        let rec loop acc =
+            function
+            | [] -> List.rev acc
+            | h::t when pred h -> (List.rev acc) @ t
+            | h::t -> loop (h :: acc) t
+        loop [] list
+    List.fold
+        (fun state el -> removeFirst ((=) el) state)
+        list1
+        list2
