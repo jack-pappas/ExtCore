@@ -267,7 +267,7 @@ let revMapIntoArray (mapping : 'T -> 'U) (list : 'T list) =
 let choosei (chooser : int -> 'T -> 'U option) list : 'U list =
     // Preconditions
     checkNonNull "list" list
-    
+
     let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
     let rec choosei chosen index list =
@@ -304,7 +304,7 @@ let choose2 (chooser : 'T1 -> 'T2 -> 'U option) list1 list2 : 'U list =
     // Preconditions
     checkNonNull "list1" list1
     checkNonNull "list2" list2
-    
+
     let chooser = FSharpFunc<_,_,_>.Adapt chooser
 
     let rec choose2 chosen list1 list2 =
@@ -353,7 +353,7 @@ let take count (list : 'T list) =
         /// The result list.
         let mutable taken = []
         let mutable list = list
-            
+
         // Take the elements from the input list and cons them onto the 'taken' list.
         for i = 0 to count - 1 do
             taken <- (List.head list) :: taken
@@ -384,7 +384,7 @@ let takeArray count (list : 'T list) =
         let takenElements = Array.zeroCreate count
 
         let mutable list = list
-            
+
         // Take the elements from the list and store them in the array.
         for i = 0 to count - 1 do
             takenElements.[i] <- List.head list
@@ -405,7 +405,7 @@ let takeArray count (list : 'T list) =
 let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) state list =
     // Preconditions
     checkNonNull "list" list
-    
+
     // OPTIMIZATION : If the list is empty or contains just one element,
     // immediately return the input state.
     match list with
@@ -413,7 +413,7 @@ let foldPairwise (folder : 'State -> 'T -> 'T -> 'State) state list =
     | [_] ->
         state
     | hd :: tl ->
-        // OPTIMIZATION : Imperative-style implementation for maximum performance.            
+        // OPTIMIZATION : Imperative-style implementation for maximum performance.
         let folder = FSharpFunc<_,_,_,_>.Adapt folder
         let mutable previousElement = hd
         let mutable list = tl
@@ -455,7 +455,7 @@ let foldBackPairwise (folder : 'T -> 'T -> 'State -> 'State) list state =
         // so we benefit from memory locality.
         let reversed = revIntoArray list
         let mutable state = state
-            
+
         let len = Array.length reversed
         for i = 1 to len - 1 do
             state <- folder.Invoke (reversed.[i - 1], reversed.[i], state)
@@ -748,7 +748,7 @@ let distinct (list : 'T list) : 'T list =
 
     // OPTIMIZATION :   This function is implemented using a mutable HashSet and ResizeArray for maximum speed.
     //                  The use of mutation is safe here because it's entirely local.
-    
+
     /// Contains the distinct elements which have been seen in the list so far.
     let itemSet = System.Collections.Generic.HashSet<_> (LanguagePrimitives.FastGenericEqualityComparer)
 
@@ -777,17 +777,17 @@ let distinct (list : 'T list) : 'T list =
     // Return the result list.
     result
 
-/// <summary>Returns a new list created by keeping only those elements that are not in the second list.  In the result of 'List.difference list1 list2', the first occurrence of each element of 'list2' in turn (if any) has been removed from 'list1'.</summary>
-/// <param name="list1"></param>
-/// <param name="list2"></param>
-/// <returns></returns>
+/// <summary>Returns a new list created by keeping only those elements that are not in the second list.  In the result of 'List.difference list1 list2', the first occurrence of each element of 'list2' in turn (if found) has been removed from 'list1'.  For example, if list1 = "Hello World!" and list2 = "ell W", the result is "Hoorld!".</summary>
+/// <param name="list1">The list from which to remove elements.</param>
+/// <param name="list2">The list representing the elements to remove.</param>
+/// <returns>A new list containing the elements from list1 that were not removed.</returns>
 [<CompiledName("Difference")>]
 let difference (list1 : 'T list) (list2 : 'T list) : 'T list =
     // Check pre-conditions
     checkNonNull "list1" list1
     checkNonNull "list2" list2
 
-    // Define helper to remove the first instance of an element 
+    // Define helper to remove the first instance of an element
     let removeFirst pred list =
         let rec loop acc =
             function
