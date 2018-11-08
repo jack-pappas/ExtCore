@@ -3,12 +3,15 @@ image: Visual Studio 2017
 build_script:
 - ps: >-
     ./install_dotnet.ps1
+- ps: >-
+    ./install_dotnet.ps1 -Version 1.1.5
 - cmd: >-
     dotnet --version
 - cmd: >-
     dotnet build ExtCore.sln
 - cmd: >-
     dotnet test ExtCore.Tests\ExtCore.Tests.fsproj
-- cmd >-
+- cmd: >-
     dotnet pack
 test: off
+

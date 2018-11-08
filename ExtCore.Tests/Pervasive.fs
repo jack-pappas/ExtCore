@@ -180,7 +180,7 @@ module Operators =
     let typehandleof () : unit =
         Assert.Ignore "Test not yet implemented."
 #endif
-#if !NETSTANDARD1_6
+#if !NETSTANDARD1_6 && !NETCOREAPP1_1
     [<Test>]
     let raiseNew () : unit =
         Assert.Throws<System.NotFiniteNumberException>(fun () ->
