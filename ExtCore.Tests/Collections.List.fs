@@ -345,7 +345,7 @@ let exactlyOne () : unit =
     assertRaises<System.ArgumentException> <| fun () ->
         List.exactlyOne []
         |> ignore
-    
+
     // Test case for a single-element list.
     ["Hello World!"]
     |> List.exactlyOne
@@ -382,7 +382,49 @@ let distinct () : unit =
     |> List.distinct
     |> Collection.assertEqual ["A"; "N"]
 
+[<Test>]
+let difference () : unit =
+    // Test case that mirrors Haskell's for (\\)
+    List.difference ("Hello World!" |> Seq.toList) ("ell W" |> Seq.toList)
+    |> Collection.assertEqual ("Hoorld!" |> Seq.toList)
 
-open FsCheck
+    // Empty list1
+    List.difference [] [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]
+    |> Collection.assertEqual []
+
+    // Empty list2
+    List.difference [1; 2; 3; 4; 5; 6; 7; 8; 9; 0] []
+    |> Collection.assertEqual [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]
+
+    // Both empty
+    List.difference [] []
+    |> Collection.assertEqual []
+
+    // Test for removing the same list from another (invariant from Haskell docs).
+    // ((xs ++ ys) \\ xs) == ys
+    List.difference ([6; 7; 8; 9; 0] @ [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]) [6; 7; 8; 9; 0]
+    |> Collection.assertEqual [1; 2; 3; 4; 5; 6; 7; 8; 9; 0]
+
+
+
+module FsCheck =
+    open FsCheck
+
+    [<Test>]
+    let ``List difference random testing``() =
+        assertProp "List difference random testing" <| fun (m:int list) (n:int list) ->
+            if isNull m || isNull n then
+                assertRaises<System.ArgumentNullException>
+                    (fun () -> List.difference m n |> ignore)
+            else ()
+
+            let removeFirst p xs =
+                match List.tryFindIndex p xs with
+                | Some i -> (List.take i xs |> fst ) @ (List.skip (i+1) xs)
+                | None -> xs
+
+            let o = List.fold (fun state el -> removeFirst ((=) el) state) m n
+
+            List.difference m n = o
 
 (* TODO : Implement randomized tests with FsCheck. *)

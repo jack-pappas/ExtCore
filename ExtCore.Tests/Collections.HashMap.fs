@@ -226,6 +226,38 @@ let remove () : unit =
     |> assertEqual (HashMap.ofArray
        [| (5, 'a'); (3, 'b'); (11, 'f'); (2, 'd');
           (17, 'a'); (12, 'b'); (14, 'c'); |])
+
+[<Test>]
+let union () : unit =
+    let initial1 =
+        HashMap.empty
+        |> HashMap.add ConsoleColor.Red "Red"
+        |> HashMap.add ConsoleColor.Green "Green"
+        |> HashMap.add ConsoleColor.Blue "Blue"
+        |> HashMap.add ConsoleColor.Black "Black"
+        |> HashMap.add ConsoleColor.Cyan "Cyan"
+
+    let initial2 =
+        HashMap.empty
+        |> HashMap.add ConsoleColor.Black "Black"
+        |> HashMap.add ConsoleColor.Cyan "Cyna"     // Note the misspelling!
+        |> HashMap.add ConsoleColor.Gray "Gray"
+        |> HashMap.add ConsoleColor.Yellow "Yellow"
+        |> HashMap.add ConsoleColor.White "White"
+
+    let expected =
+        HashMap.empty
+        |> HashMap.add ConsoleColor.Red "Red"
+        |> HashMap.add ConsoleColor.Green "Green"
+        |> HashMap.add ConsoleColor.Blue "Blue"
+        |> HashMap.add ConsoleColor.Black "Black"
+        |> HashMap.add ConsoleColor.Cyan "Cyan"
+        |> HashMap.add ConsoleColor.Gray "Gray"
+        |> HashMap.add ConsoleColor.Yellow "Yellow"
+        |> HashMap.add ConsoleColor.White "White"
+
+    HashMap.union initial1 initial2
+    |> assertEqual expected
 (*
 [<Test>]
 let union () : unit =
