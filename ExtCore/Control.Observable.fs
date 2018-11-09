@@ -48,7 +48,7 @@ type Notification<'T> =
     //
     | Next of 'T
     //
-    | Error of exn
+    | Exception of exn
 
 //
 [<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -122,7 +122,7 @@ module Observable =
                     member x.OnCompleted () =
                         observer.OnNext(Completed) 
                     member x.OnError e =
-                        observer.OnNext (Error e) }
+                        observer.OnNext (Exception e) }
                 |> input.Subscribe }
 
 

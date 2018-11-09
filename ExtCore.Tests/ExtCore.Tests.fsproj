@@ -6,10 +6,14 @@
     <Compile Include="TestHelpers.fs" />
     <Compile Include="RefCountEnumerable.fs" />
     <Compile Include="Pervasive.fs" />
+    <Compile Include="Pervasive.Compatibility.fs" />
+    <Compile Include="Pervasive.Result.fs" />
     <Compile Include="Substring.fs" />
     <Compile Include="String.fs" />
     <Compile Include="Control.Agents.fs" />
     <Compile Include="Control.fs" />
+    <Compile Include="Control.Compatibility.fs" />
+    <Compile Include="Control.Result.fs" />
     <Compile Include="Control.Observable.fs" />
     <Compile Include="Control.Cps.fs" />
     <Compile Include="Collections.Range.fs" />
@@ -45,7 +49,9 @@
     <Compile Include="ControlCollections.Maybe.fs" />
     <Compile Include="ControlCollections.ReaderMaybe.fs" />
     <Compile Include="ControlCollections.Choice.fs" />
+    <Compile Include="ControlCollections.Result.fs" />
     <Compile Include="ControlCollections.ReaderChoice.fs" />
+    <Compile Include="ControlCollections.ReaderResult.fs" />
     <Compile Include="ControlCollections.ProtectedState.fs" />
     <Compile Include="ControlCollections.ReaderProtectedState.fs" />
     <Compile Include="ControlCollections.StatefulChoice.fs" />

@@ -49,6 +49,7 @@ obj/
 *.vspscc
 *.vssscc
 Ankh.NoLoad
+*.userprefs
 
 # NuGet
 !.nuget/*
