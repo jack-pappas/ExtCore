@@ -20,92 +20,107 @@ namespace ExtCore
 
 open System
 open System.Threading
+open System.Runtime.CompilerServices
 
 [<Interface>]
 type IAtomic<'a> =
-    abstract Value: 'a
+    abstract Value: unit -> 'a
     abstract Swap: 'a -> 'a
     abstract CompareAndSwap: 'a * 'a -> bool
     
 [<Sealed>]
 type AtomicBool(initialValue: bool) =
     let mutable value: int = if initialValue then 1 else 0
-    member inline __.Value = Volatile.Read(&value) = 1
-    member inline __.Swap (nval: bool): bool = Interlocked.Exchange(&value, if nval then 1 else 0) = 1
-    member inline __.CompareAndSwap (compared: bool, nval: bool): bool =
-        let v = if compared then 1 else 0
-        Interlocked.CompareExchange(&value, (if nval then 1 else 0), v) = v
     interface IAtomic<bool> with
-        member atom.Value = atom.Value
-        member atom.Swap (nval: bool): bool = atom.Swap nval
-        member atom.CompareAndSwap (compared: bool, nval: bool): bool = atom.CompareAndSwap(nval, compared)
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Value () = Volatile.Read(&value) = 1
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Swap (nval: bool): bool = Interlocked.Exchange(&value, if nval then 1 else 0) = 1
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.CompareAndSwap (compared: bool, nval: bool): bool = 
+            let v = if compared then 1 else 0
+            Interlocked.CompareExchange(&value, (if nval then 1 else 0), v) = v
 
 [<Sealed>]
 type AtomicInt(initialValue: int) =
     let mutable value: int = initialValue
-    member inline __.Value = Volatile.Read(&value)
-    member inline __.Swap (nval: int): int = Interlocked.Exchange(&value, nval)
-    member inline __.CompareAndSwap (compared: int, nval: int): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
-    member inline __.Increment() = Interlocked.Increment(&value)
-    member inline __.Decrement() = Interlocked.Decrement(&value)
+
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member __.Increment() = Interlocked.Increment(&value)
+
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member __.Decrement() = Interlocked.Decrement(&value)
+
     interface IAtomic<int> with
-        member atom.Value = atom.Value
-        member atom.Swap (nval: int): int = atom.Swap nval
-        member atom.CompareAndSwap (compared: int, nval: int): bool = atom.CompareAndSwap(nval, compared)
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Value () = Volatile.Read(&value)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Swap (nval: int): int = Interlocked.Exchange(&value, nval)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.CompareAndSwap (compared: int, nval: int): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
 
 [<Sealed>]
 type AtomicInt64(initialValue: int64) =
     let mutable value: int64 = initialValue
-    member inline __.Value = Volatile.Read(&value)
-    member inline __.Swap (nval: int64): int64 = Interlocked.Exchange(&value, nval)
-    member inline __.CompareAndSwap (compared: int64, nval: int64): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
-    member inline __.Increment() = Interlocked.Increment(&value)
-    member inline __.Decrement() = Interlocked.Decrement(&value)
+
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member __.Increment() = Interlocked.Increment(&value)
+
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member __.Decrement() = Interlocked.Decrement(&value)
+
     interface IAtomic<int64> with
-        member atom.Value = atom.Value
-        member atom.Swap (nval: int64): int64 = atom.Swap nval
-        member atom.CompareAndSwap (compared: int64, nval: int64): bool = atom.CompareAndSwap(nval, compared)
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Value () = Volatile.Read(&value)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Swap (nval: int64): int64 = Interlocked.Exchange(&value, nval)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.CompareAndSwap (compared: int64, nval: int64): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
         
 [<Sealed>]
 type AtomicFloat(initialValue: float) =
     let mutable value: float = initialValue
-    member inline __.Value = Volatile.Read(&value)
-    member inline __.Swap (nval: float): float = Interlocked.Exchange(&value, nval)
-    member inline __.CompareAndSwap (compared: float, nval: float): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
     interface IAtomic<float> with
-        member atom.Value = atom.Value
-        member atom.Swap (nval: float): float = atom.Swap nval
-        member atom.CompareAndSwap (compared: float, nval: float): bool = atom.CompareAndSwap(nval, compared)
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Value () = Volatile.Read(&value)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Swap (nval: float): float = Interlocked.Exchange(&value, nval)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.CompareAndSwap (compared: float, nval: float): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
         
 [<Sealed>]
 type AtomicFloat32(initialValue: float32) =
     let mutable value: float32 = initialValue
-    member inline __.Value = Volatile.Read(&value)
-    member inline __.Swap (nval: float32): float32 = Interlocked.Exchange(&value, nval)
-    member inline __.CompareAndSwap (compared: float32, nval: float32): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
     interface IAtomic<float32> with
-        member atom.Value = atom.Value
-        member atom.Swap (nval: float32): float32 = atom.Swap nval
-        member atom.CompareAndSwap (compared: float32, nval: float32): bool = atom.CompareAndSwap(nval, compared)
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Value () = Volatile.Read(&value)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Swap (nval: float32): float32 = Interlocked.Exchange(&value, nval)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.CompareAndSwap (compared: float32, nval: float32): bool = Interlocked.CompareExchange(&value, nval, compared) = compared
 
 [<Sealed>]
 type AtomicRef<'a when 'a: not struct>(initialValue: 'a) =
     let mutable value: 'a = initialValue
-    member inline __.Value = Volatile.Read<'a>(&value)
-    member inline __.Swap (nval: 'a): 'a = Interlocked.Exchange<'a>(&value, nval)
-    member inline __.CompareAndSwap (compared: 'a, nval: 'a): bool = Object.ReferenceEquals(Interlocked.CompareExchange<'a>(&value, nval, compared), compared)
-    member inline atom.Update (fn: 'a -> 'a) =
-        let rec loop fn =
-            let old = atom.Value
-            let nval = fn old
-            if Object.ReferenceEquals(atom.CompareAndSwap(old, nval), old)
-            then old
-            else loop fn
-        loop fn
     interface IAtomic<'a> with
-        member atom.Value = atom.Value
-        member atom.Swap (nval: 'a): 'a = atom.Swap nval
-        member atom.CompareAndSwap (compared: 'a, nval: 'a): bool = atom.CompareAndSwap(nval, compared)
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Value () = Volatile.Read(&value)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.Swap (nval: 'a): 'a = Interlocked.Exchange<'a>(&value, nval)
+
+        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        member __.CompareAndSwap (compared: 'a, nval: 'a): bool = Object.ReferenceEquals(Interlocked.CompareExchange<'a>(&value, nval, compared), compared)
 
 [<RequireQualifiedAccess>]
 module Atomic =
@@ -140,7 +155,7 @@ module Atomic =
     /// be stored instead. Returns the last value stored prior to an update.
     let update (modify: 'a -> 'a) (atom: #IAtomic<'a>): 'a =
         let rec loop (modify: 'a -> 'a) (atom: #IAtomic<'a>) =
-            let old = atom.Value
+            let old = atom.Value ()
             let nval = modify old
             if cas old nval atom
             then old
@@ -160,8 +175,8 @@ module Atomic =
     module Operators =
 
         /// Unwraps the value stored inside of an atom.
-        let inline (!) (atom: #IAtomic<'a>) = atom.Value
+        let inline (!) (atom: #IAtomic<'a>): 'a = atom.Value ()
 
         /// Atomically swaps the value stored inside of an atom with provided one.
         /// Returns previously stored value.
-        let inline (:=) (atom: #IAtomic<'a>) (value: 'a) = atom.Swap value
+        let inline (:=) (atom: #IAtomic<'a>) (value: 'a): 'a = atom.Swap value

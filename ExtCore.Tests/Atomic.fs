@@ -39,7 +39,7 @@ module Atomic =
         !atom |> assertEqual "world"
         
     [<Test>]
-    let ``Atomic ref cas swaps value is comparand is equal`` () : unit =
+    let ``Atomic ref cas swaps value if comparand is equal`` () : unit =
         let value = "hello"
         let atom = Atomic.ref value
         let success = atom |> Atomic.cas value "world"
@@ -47,7 +47,7 @@ module Atomic =
         !atom   |> assertEqual "world"
         
     [<Test>]
-    let ``Atomic ref cas doesn't swap value is comparand is not equal`` () : unit =
+    let ``Atomic ref cas doesn't swap value if comparand is not equal`` () : unit =
         let atom = Atomic.ref "hello"
         let success = atom |> Atomic.cas "hi" "world"
         success |> assertFalse
@@ -75,14 +75,14 @@ module Atomic =
         !atom |> assertEqual 2
         
     [<Test>]
-    let ``Atomic int cas swaps value is comparand is equal`` () : unit =
+    let ``Atomic int cas swaps value if comparand is equal`` () : unit =
         let atom = Atomic.int 1
         let success = atom |> Atomic.cas 1 2
         success |> assertTrue
         !atom   |> assertEqual 2
         
     [<Test>]
-    let ``Atomic int cas doesn't swap value is comparand is not equal`` () : unit =
+    let ``Atomic int cas doesn't swap value if comparand is not equal`` () : unit =
         let atom = Atomic.int 1
         let success = atom |> Atomic.cas 3 2
         success |> assertFalse
@@ -124,14 +124,14 @@ module Atomic =
         !atom |> assertEqual 2L
         
     [<Test>]
-    let ``Atomic int64 cas swaps value is comparand is equal`` () : unit =
+    let ``Atomic int64 cas swaps value if comparand is equal`` () : unit =
         let atom = Atomic.int64 1L
         let success = atom |> Atomic.cas 1L 2L
         success |> assertTrue
         !atom   |> assertEqual 2L
         
     [<Test>]
-    let ``Atomic int64 cas doesn't swap value is comparand is not equal`` () : unit =
+    let ``Atomic int64 cas doesn't swap value if comparand is not equal`` () : unit =
         let atom = Atomic.int64 1L
         let success = atom |> Atomic.cas 3L 2L
         success |> assertFalse
@@ -173,14 +173,14 @@ module Atomic =
         !atom |> assertEqual 2.0
         
     [<Test>]
-    let ``Atomic float cas swaps value is comparand is equal`` () : unit =
+    let ``Atomic float cas swaps value if comparand is equal`` () : unit =
         let atom = Atomic.float 1.0
         let success = atom |> Atomic.cas 1.0 2.0
         success |> assertTrue
         !atom   |> assertEqual 2.0
         
     [<Test>]
-    let ``Atomic float cas doesn't swap value is comparand is not equal`` () : unit =
+    let ``Atomic float cas doesn't swap value if comparand is not equal`` () : unit =
         let atom = Atomic.float 1.0
         let success = atom |> Atomic.cas 3.0 2.0
         success |> assertFalse
@@ -208,14 +208,14 @@ module Atomic =
         !atom |> assertEqual 2.0f
         
     [<Test>]
-    let ``Atomic float32 cas swaps value is comparand is equal`` () : unit =
+    let ``Atomic float32 cas swaps value if comparand is equal`` () : unit =
         let atom = Atomic.float32 1.0f
         let success = atom |> Atomic.cas 1.0f 2.0f
         success |> assertTrue
         !atom   |> assertEqual 2.0f
         
     [<Test>]
-    let ``Atomic float32 cas doesn't swap value is comparand is not equal`` () : unit =
+    let ``Atomic float32 cas doesn't swap value if comparand is not equal`` () : unit =
         let atom = Atomic.float32 1.0f
         let success = atom |> Atomic.cas 3.0f 2.0f
         success |> assertFalse
@@ -243,14 +243,14 @@ module Atomic =
         !atom |> assertEqual false
         
     [<Test>]
-    let ``Atomic bool cas swaps value is comparand is equal`` () : unit =
+    let ``Atomic bool cas swaps value if comparand is equal`` () : unit =
         let atom = Atomic.bool true
         let success = atom |> Atomic.cas true false
         success |> assertTrue
         !atom   |> assertEqual false
         
     [<Test>]
-    let ``Atomic bool cas doesn't swap value is comparand is not equal`` () : unit =
+    let ``Atomic bool cas doesn't swap value if comparand is not equal`` () : unit =
         let atom = Atomic.bool true
         let success = atom |> Atomic.cas false true
         success |> assertFalse
