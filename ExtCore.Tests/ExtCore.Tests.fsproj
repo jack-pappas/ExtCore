@@ -5,6 +5,7 @@
   <ItemGroup>
     <Compile Include="TestHelpers.fs" />
     <Compile Include="RefCountEnumerable.fs" />
+    <Compile Include="Atomic.fs" />
     <Compile Include="Pervasive.fs" />
     <Compile Include="Substring.fs" />
     <Compile Include="String.fs" />
