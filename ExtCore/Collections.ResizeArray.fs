@@ -71,7 +71,7 @@ let init count initializer : ResizeArray<'T> =
 
     let resizeArray = ResizeArray (count)
     for i = 0 to count - 1 do
-        resizeArray.Add <| initializer count
+        resizeArray.Add <| initializer i
     resizeArray
 
 /// Adds an object to the end of the ResizeArray.
