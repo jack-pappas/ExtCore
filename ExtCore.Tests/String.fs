@@ -20,8 +20,6 @@ limitations under the License.
 module Tests.ExtCore.String
 
 open NUnit.Framework
-//open FsCheck
-
 
 [<Test>]
 let isEmpty () : unit =

@@ -1,4 +1,4 @@
-﻿(*
+(*
 
 Copyright 2010-2012 TidePowerd Ltd.
 Copyright 2013 Jack Pappas
@@ -34,8 +34,8 @@ module Array =
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
-            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<unit * 'State, 'Error> =
+    let iter (action : 'T -> 'Env -> 'State -> Result<unit * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Result<unit * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
@@ -48,9 +48,9 @@ module Array =
 
         while index < len && Option.isNone error do
             match action.Invoke (array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 ((), state') ->
+            | Ok ((), state') ->
                 state <- state'
                 index <- index + 1
             
@@ -58,16 +58,16 @@ module Array =
         // Otherwise return the result and updated state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 ((), state)
+            Ok ((), state)
 
     /// A specialization of Array.iteri which threads an accumulator through the computation
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
-            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<unit * 'State, 'Error> =
+    let iteri (action : int -> 'T -> 'Env -> 'State -> Result<unit * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Result<unit * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
@@ -80,9 +80,9 @@ module Array =
 
         while index < len && Option.isNone error do
             match action.Invoke (index, array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 ((), state') ->
+            | Ok ((), state') ->
                 state <- state'
                 index <- index + 1
             
@@ -90,16 +90,16 @@ module Array =
         // Otherwise return the result and updated state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 ((), state)
+            Ok ((), state)
 
     /// A specialization of Array.map which threads an accumulator through the computation
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
-            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+    let map (mapping : 'T -> 'Env -> 'State -> Result<'U * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Result<'U[] * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
@@ -113,9 +113,9 @@ module Array =
 
         while index < len && Option.isNone error do
             match mapping.Invoke (array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 (result, state') ->
+            | Ok (result, state') ->
                 results.[index] <- result
                 state <- state'
                 index <- index + 1
@@ -124,16 +124,16 @@ module Array =
         // Otherwise return the result and updated state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 (results, state)
+            Ok (results, state)
 
     /// A specialization of Array.mapi which threads an accumulator through the computation
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
-            (array : 'T[]) (env : 'Env) (state : 'State) : Choice<'U[] * 'State, 'Error> =
+    let mapi (mapping : int -> 'T -> 'Env -> 'State -> Result<'U * 'State, 'Error>)
+            (array : 'T[]) (env : 'Env) (state : 'State) : Result<'U[] * 'State, 'Error> =
         // Preconditions
         checkNonNull "array" array
 
@@ -147,9 +147,9 @@ module Array =
 
         while index < len && Option.isNone error do
             match mapping.Invoke (index, array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 (result, state') ->
+            | Ok (result, state') ->
                 results.[index] <- result
                 state <- state'
                 index <- index + 1
@@ -158,9 +158,9 @@ module Array =
         // Otherwise return the result and updated state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 (results, state)
+            Ok (results, state)
 
 
 /// The standard F# List module, lifted into the ReaderProtectedState monad.
@@ -170,8 +170,8 @@ module List =
     /// and which also short-circuits the computation if the mapping function returns an
     /// error when any element is applied to it.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
-            (list : 'T list) (env : 'Env) (state : 'State) : Choice<'U list * 'State, 'Error> =
+    let map (mapping : 'T -> 'Env -> 'State -> Result<'U * 'State, 'Error>)
+            (list : 'T list) (env : 'Env) (state : 'State) : Result<'U list * 'State, 'Error> =
         // Preconditions
         checkNonNull "list" list
 
@@ -181,15 +181,15 @@ module List =
             match lst with
             | [] ->
                 let results = List.rev results
-                Choice1Of2 (results, state)
+                Ok (results, state)
             | hd :: tl ->
                 // Apply the function to the head of the list.
                 // If the result is an error, return it;
                 // otherwise, continue processing recursively.
                 match mapping.Invoke (hd, env, state) with
-                | Choice2Of2 error ->
-                    Choice2Of2 error
-                | Choice1Of2 (result, state) ->
+                | Error error ->
+                    Error error
+                | Ok (result, state) ->
                     mapRec (result :: results, state, tl)
 
         // Call the recursive implementation function.
@@ -203,9 +203,9 @@ module ArrayView =
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("Iterate")>]
-    let iter (action : 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
+    let iter (action : 'T -> 'Env -> 'State -> Result<unit * 'State, 'Error>)
             (view : ArrayView<'T>) (env : 'Env) (state : 'State)
-            : Choice<unit * 'State, 'Error> =
+            : Result<unit * 'State, 'Error> =
         let action = FSharpFunc<_,_,_,_>.Adapt action
 
         let array = view.Array
@@ -217,26 +217,26 @@ module ArrayView =
 
         while index < endExclusive && Option.isNone error do
             match action.Invoke (array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 ((), state') ->
+            | Ok ((), state') ->
                 state <- state'
                 index <- index + 1
             
         // If the error was set, return it.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 ((), state)
+            Ok ((), state)
 
     /// A specialization of ArrayView.iteri which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("IterateIndexed")>]
-    let iteri (action : int -> 'T -> 'Env -> 'State -> Choice<unit * 'State, 'Error>)
+    let iteri (action : int -> 'T -> 'Env -> 'State -> Result<unit * 'State, 'Error>)
             (view : ArrayView<'T>) (env : 'Env) (state : 'State)
-            : Choice<unit * 'State, 'Error> =
+            : Result<unit * 'State, 'Error> =
         let action = FSharpFunc<_,_,_,_,_>.Adapt action
 
         let array = view.Array
@@ -248,26 +248,26 @@ module ArrayView =
 
         while index < endExclusive && Option.isNone error do
             match action.Invoke (index, array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 ((), state') ->
+            | Ok ((), state') ->
                 state <- state'
                 index <- index + 1
             
         // If the error was set, return it.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 ((), state)
+            Ok ((), state)
 
     /// A specialization of ArrayView.map which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
+    let map (mapping : 'T -> 'Env -> 'State -> Result<'U * 'State, 'Error>)
             (view : ArrayView<'T>) (env : 'Env) (state : 'State)
-            : Choice<'U[] * 'State, 'Error> =
+            : Result<'U[] * 'State, 'Error> =
         let mapping = FSharpFunc<_,_,_,_>.Adapt mapping
 
         let array = view.Array
@@ -281,9 +281,9 @@ module ArrayView =
 
         while index < endExclusive && Option.isNone error do
             match mapping.Invoke (array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 (result, state') ->
+            | Ok (result, state') ->
                 results.[index] <- result
                 state <- state'
                 index <- index + 1
@@ -292,17 +292,17 @@ module ArrayView =
         // Otherwise return the result and updated state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 (results, state)
+            Ok (results, state)
 
     /// A specialization of ArrayView.mapi which threads an accumulator through the
     /// computation and which also short-circuits the computation if the mapping function
     /// returns an error when any element is applied to it.
     [<CompiledName("MapIndexed")>]
-    let mapi (mapping : int -> 'T -> 'Env -> 'State -> Choice<'U * 'State, 'Error>)
+    let mapi (mapping : int -> 'T -> 'Env -> 'State -> Result<'U * 'State, 'Error>)
             (view : ArrayView<'T>) (env : 'Env) (state : 'State)
-            : Choice<'U[] * 'State, 'Error> =
+            : Result<'U[] * 'State, 'Error> =
         let mapping = FSharpFunc<_,_,_,_,_>.Adapt mapping
 
         let array = view.Array
@@ -316,9 +316,9 @@ module ArrayView =
 
         while index < endExclusive && Option.isNone error do
             match mapping.Invoke (index, array.[index], env, state) with
-            | Choice2Of2 err ->
+            | Error err ->
                 error <- Some err
-            | Choice1Of2 (result, state') ->
+            | Ok (result, state') ->
                 results.[index] <- result
                 state <- state'
                 index <- index + 1
@@ -327,6 +327,6 @@ module ArrayView =
         // Otherwise return the result and updated state.
         match error with
         | Some error ->
-            Choice2Of2 error
+            Error error
         | None ->
-            Choice1Of2 (results, state)
+            Ok (results, state)
